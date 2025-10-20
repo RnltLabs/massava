@@ -29,8 +29,19 @@ export default function LanguageSwitcher() {
     expires.setFullYear(expires.getFullYear() + 1);
     document.cookie = `NEXT_LOCALE=${newLocale}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
 
+    // Handle basePath in production (/massava)
+    const basePath = '/massava';
+    let pathWithoutBase = pathname;
+    let detectedBasePath = '';
+
+    // Check if pathname starts with basePath
+    if (pathname.startsWith(basePath + '/') || pathname === basePath) {
+      pathWithoutBase = pathname.slice(basePath.length) || '/';
+      detectedBasePath = basePath;
+    }
+
     // Split pathname into segments
-    const segments = pathname.split('/').filter(Boolean);
+    const segments = pathWithoutBase.split('/').filter(Boolean);
 
     // Replace first segment (which is the locale) with new locale
     if (segments.length > 0 && locales.includes(segments[0] as Locale)) {
@@ -40,8 +51,8 @@ export default function LanguageSwitcher() {
       segments.unshift(newLocale);
     }
 
-    // Reconstruct path
-    const newPath = '/' + segments.join('/');
+    // Reconstruct path with basePath
+    const newPath = detectedBasePath + '/' + segments.join('/');
     console.log('Navigating to:', newPath);
 
     // Close dropdown immediately
