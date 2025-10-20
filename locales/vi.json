@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "Còn chỗ hôm nay",
+    "hero_title": "Massage của bạn",
+    "hero_subtitle": "đặt lịch hôm nay",
+    "hero_description": "Thư giãn ngay lập tức – tìm các studio gần bạn và đặt lịch trực tiếp. Không hoa hồng, minh bạch, đơn giản.",
+    "search_location_placeholder": "Nhập thành phố hoặc mã bưu điện...",
+    "search_radius": "Bán kính",
+    "search_button": "Tìm kiếm",
+
+    "feature1_title": "Thư giãn hôm nay",
+    "feature1_description": "Có thể đặt lịch ngay lập tức. Xem ngay studio nào còn lịch trống hôm nay.",
+    "feature2_title": "Tất cả thông tin trong tầm mắt",
+    "feature2_description": "Giá cả, dịch vụ, đánh giá – mọi thứ đều minh bạch. Không có chi phí ẩn.",
+    "feature3_title": "Hỗ trợ studio địa phương",
+    "feature3_description": "100% doanh thu trực tiếp đến studio. Không hoa hồng, không trung gian.",
+
+    "how_it_works_title": "Cách thức hoạt động",
+    "step1_title": "Nhập vị trí",
+    "step1_description": "Nhập thành phố hoặc mã bưu điện của bạn và chọn bán kính mong muốn.",
+    "step2_title": "Chọn studio",
+    "step2_description": "Xem lịch trống, giá cả và đánh giá.",
+    "step3_title": "Đặt lịch",
+    "step3_description": "Đặt lịch trực tuyến – nhanh chóng, đơn giản, không vòng vo.",
+
+    "cta_title": "Sẵn sàng nghỉ ngơi chưa?",
+    "cta_description": "Thư giãn ngay lập tức – tìm studio gần bạn và đặt lịch hôm nay",
+    "cta_button": "Tìm studio gần tôi",
+
+    "footer_tagline": "Nền tảng của bạn cho việc đặt lịch massage ngay lập tức trong thành phố của bạn.",
+    "footer_for_guests": "Dành cho khách hàng",
+    "footer_how_it_works": "Cách thức hoạt động",
+    "footer_find_studios": "Tìm studio",
+    "footer_for_studios": "Dành cho studio",
+    "footer_register_studio": "Đăng ký studio",
+    "footer_pricing": "Giá cả",
+    "footer_legal": "Pháp lý",
+    "footer_imprint": "Thông tin công ty",
+    "footer_privacy": "Quyền riêng tư",
+    "footer_terms": "Điều khoản",
+    "footer_copyright": "© 2025 Massava bởi RNLT Labs. Giữ toàn quyền."
+  }
+}
