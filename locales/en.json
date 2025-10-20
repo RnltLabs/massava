@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "Available today",
+    "hero_title": "Your massage",
+    "hero_subtitle": "book today",
+    "hero_description": "Relax spontaneously – find studios near you and book directly. No commissions, transparent, uncomplicated.",
+    "search_location_placeholder": "Enter city or postal code...",
+    "search_radius": "Radius",
+    "search_button": "Search",
+
+    "feature1_title": "Relax today",
+    "feature1_description": "Spontaneous bookings possible. See immediately which studios still have appointments available today.",
+    "feature2_title": "All info at a glance",
+    "feature2_description": "Prices, services, reviews – everything transparent. No hidden costs.",
+    "feature3_title": "Support local studios",
+    "feature3_description": "100% of revenue goes directly to the studios. No commission, no intermediaries.",
+
+    "how_it_works_title": "How it works",
+    "step1_title": "Enter location",
+    "step1_description": "Enter your city or postal code and choose your desired radius.",
+    "step2_title": "Select studio",
+    "step2_description": "View available appointments, prices, and reviews.",
+    "step3_title": "Book appointment",
+    "step3_description": "Book directly online – fast, simple, no detours.",
+
+    "cta_title": "Ready for your break?",
+    "cta_description": "Relax spontaneously – find studios near you and book today",
+    "cta_button": "Find studios near me",
+
+    "footer_tagline": "Your platform for spontaneous massage bookings in your city.",
+    "footer_for_guests": "For Guests",
+    "footer_how_it_works": "How it works",
+    "footer_find_studios": "Find studios",
+    "footer_for_studios": "For Studios",
+    "footer_register_studio": "Register studio",
+    "footer_pricing": "Pricing",
+    "footer_legal": "Legal",
+    "footer_imprint": "Imprint",
+    "footer_privacy": "Privacy",
+    "footer_terms": "Terms",
+    "footer_copyright": "© 2025 Massava by RNLT Labs. All rights reserved."
+  }
+}
