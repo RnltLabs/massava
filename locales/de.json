@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "Heute noch verfügbar",
+    "hero_title": "Deine Massage",
+    "hero_subtitle": "heute noch buchen",
+    "hero_description": "Spontan entspannen – finde Studios in deiner Nähe und buche direkt. Ohne Provisionen, transparent, unkompliziert.",
+    "search_location_placeholder": "Stadt oder PLZ eingeben...",
+    "search_radius": "Umkreis",
+    "search_button": "Suchen",
+
+    "feature1_title": "Heute noch entspannen",
+    "feature1_description": "Spontane Buchungen möglich. Sieh sofort, welche Studios heute noch Termine frei haben.",
+    "feature2_title": "Alle Infos auf einen Blick",
+    "feature2_description": "Preise, Leistungen, Bewertungen – alles transparent. Keine versteckten Kosten.",
+    "feature3_title": "Lokale Studios unterstützen",
+    "feature3_description": "100% der Einnahmen gehen direkt an die Studios. Keine Provision, keine Zwischenhändler.",
+
+    "how_it_works_title": "So funktioniert's",
+    "step1_title": "Standort eingeben",
+    "step1_description": "Gib deine Stadt oder PLZ ein und wähle deinen Wunsch-Radius.",
+    "step2_title": "Studio auswählen",
+    "step2_description": "Sieh dir verfügbare Termine, Preise und Bewertungen an.",
+    "step3_title": "Termin buchen",
+    "step3_description": "Buche direkt online – schnell, einfach, ohne Umwege.",
+
+    "cta_title": "Bereit für deine Auszeit?",
+    "cta_description": "Spontan entspannen – finde Studios in deiner Nähe und buche heute noch",
+    "cta_button": "Studios in meiner Nähe finden",
+
+    "footer_tagline": "Deine Plattform für spontane Massage-Buchungen in deiner Stadt.",
+    "footer_for_guests": "Für Gäste",
+    "footer_how_it_works": "So funktioniert's",
+    "footer_find_studios": "Studios finden",
+    "footer_for_studios": "Für Studios",
+    "footer_register_studio": "Studio registrieren",
+    "footer_pricing": "Preise",
+    "footer_legal": "Rechtliches",
+    "footer_imprint": "Impressum",
+    "footer_privacy": "Datenschutz",
+    "footer_terms": "AGB",
+    "footer_copyright": "© 2025 Massava by RNLT Labs. Alle Rechte vorbehalten."
+  }
+}

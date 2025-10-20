@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "วันนี้ยังว่างอยู่",
+    "hero_title": "นวดของคุณ",
+    "hero_subtitle": "จองวันนี้เลย",
+    "hero_description": "พักผ่อนได้ทันที – ค้นหาร้านนวดใกล้คุณและจองตรง ไม่มีค่าคอมมิชชั่น โปร่งใส ไม่ยุ่งยาก",
+    "search_location_placeholder": "ใส่ชื่อเมืองหรือรหัสไปรษณีย์...",
+    "search_radius": "รัศมี",
+    "search_button": "ค้นหา",
+
+    "feature1_title": "พักผ่อนได้วันนี้",
+    "feature1_description": "สามารถจองได้ทันที ดูได้เลยว่าร้านไหนยังมีนัดหมายว่างวันนี้",
+    "feature2_title": "ข้อมูลครบในที่เดียว",
+    "feature2_description": "ราคา บริการ รีวิว – ทุกอย่างโปร่งใส ไม่มีค่าใช้จ่ายแอบแฝง",
+    "feature3_title": "สนับสนุนร้านนวดในท้องถิ่น",
+    "feature3_description": "รายได้ 100% ตรงถึงร้านนวด ไม่มีค่าคอมมิชชั่น ไม่มีคนกลาง",
+
+    "how_it_works_title": "วิธีการใช้งาน",
+    "step1_title": "ใส่ตำแหน่ง",
+    "step1_description": "ใส่ชื่อเมืองหรือรหัสไปรษณีย์และเลือกรัศมีที่ต้องการ",
+    "step2_title": "เลือกร้านนวด",
+    "step2_description": "ดูนัดหมายที่ว่าง ราคา และรีวิว",
+    "step3_title": "จองนัดหมาย",
+    "step3_description": "จองออนไลน์โดยตรง – รวดเร็ว ง่าย ไม่อ้อมค้อม",
+
+    "cta_title": "พร้อมพักผ่อนแล้วหรือยัง?",
+    "cta_description": "พักผ่อนได้ทันที – ค้นหาร้านนวดใกล้คุณและจองวันนี้",
+    "cta_button": "ค้นหาร้านนวดใกล้ฉัน",
+
+    "footer_tagline": "แพลตฟอร์มของคุณสำหรับการจองนวดแบบทันทีในเมืองของคุณ",
+    "footer_for_guests": "สำหรับลูกค้า",
+    "footer_how_it_works": "วิธีการใช้งาน",
+    "footer_find_studios": "ค้นหาร้านนวด",
+    "footer_for_studios": "สำหรับร้านนวด",
+    "footer_register_studio": "ลงทะเบียนร้านนวด",
+    "footer_pricing": "ราคา",
+    "footer_legal": "กฎหมาย",
+    "footer_imprint": "ข้อมูลบริษัท",
+    "footer_privacy": "ความเป็นส่วนตัว",
+    "footer_terms": "เงื่อนไข",
+    "footer_copyright": "© 2025 Massava โดย RNLT Labs สงวนลิขสิทธิ์"
+  }
+}

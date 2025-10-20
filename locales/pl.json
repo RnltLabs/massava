@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "Dostępne dziś",
+    "hero_title": "Twój masaż",
+    "hero_subtitle": "zarezerwuj dziś",
+    "hero_description": "Zrelaksuj się spontanicznie – znajdź studia w pobliżu i zarezerwuj bezpośrednio. Bez prowizji, przejrzyście, bez komplikacji.",
+    "search_location_placeholder": "Wpisz miasto lub kod pocztowy...",
+    "search_radius": "Promień",
+    "search_button": "Szukaj",
+
+    "feature1_title": "Zrelaksuj się dziś",
+    "feature1_description": "Możliwe rezerwacje na już. Zobacz od razu, które studia mają dziś wolne terminy.",
+    "feature2_title": "Wszystkie informacje w jednym miejscu",
+    "feature2_description": "Ceny, usługi, recenzje – wszystko przejrzyste. Bez ukrytych kosztów.",
+    "feature3_title": "Wspieraj lokalne studia",
+    "feature3_description": "100% przychodów trafia bezpośrednio do studiów. Bez prowizji, bez pośredników.",
+
+    "how_it_works_title": "Jak to działa",
+    "step1_title": "Wpisz lokalizację",
+    "step1_description": "Wpisz swoje miasto lub kod pocztowy i wybierz żądany promień.",
+    "step2_title": "Wybierz studio",
+    "step2_description": "Zobacz dostępne terminy, ceny i recenzje.",
+    "step3_title": "Zarezerwuj termin",
+    "step3_description": "Rezerwuj online – szybko, prosto, bez okrężnych dróg.",
+
+    "cta_title": "Gotowy na przerwę?",
+    "cta_description": "Zrelaksuj się spontanicznie – znajdź studia w pobliżu i zarezerwuj dziś",
+    "cta_button": "Znajdź studia w pobliżu",
+
+    "footer_tagline": "Twoja platforma do spontanicznych rezerwacji masaży w Twoim mieście.",
+    "footer_for_guests": "Dla gości",
+    "footer_how_it_works": "Jak to działa",
+    "footer_find_studios": "Znajdź studia",
+    "footer_for_studios": "Dla studiów",
+    "footer_register_studio": "Zarejestruj studio",
+    "footer_pricing": "Cennik",
+    "footer_legal": "Prawne",
+    "footer_imprint": "Stopka",
+    "footer_privacy": "Prywatność",
+    "footer_terms": "Warunki",
+    "footer_copyright": "© 2025 Massava by RNLT Labs. Wszelkie prawa zastrzeżone."
+  }
+}
