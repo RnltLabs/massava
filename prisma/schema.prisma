@@ -1,8 +1,8 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Copyright (c) 2025 Roman Reinelt / RNLT Labs
+// All rights reserved.
+//
+// Massava - Database Schema
+// Booking platform for massage studios
 
 generator client {
   provider = "prisma-client-js"
@@ -13,3 +13,98 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// Studio Model
+// Represents a massage/wellness studio
+model Studio {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+
+  // Contact Information
+  address     String
+  city        String
+  postalCode  String?
+  phone       String
+  email       String
+
+  // Business Hours (stored as JSON)
+  // Example: {"monday": "09:00-18:00", "tuesday": "09:00-18:00", ...}
+  openingHours Json?
+
+  // Relations
+  services    Service[]
+  bookings    Booking[]
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([city])
+  @@map("studios")
+}
+
+// Service Model
+// Represents a service offered by a studio (e.g., "Thai Massage 60min")
+model Service {
+  id          String   @id @default(cuid())
+  studioId    String
+
+  name        String
+  description String?  @db.Text
+  price       Float    // Price in EUR
+  duration    Int      // Duration in minutes
+
+  // Relations
+  studio      Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  bookings    Booking[]
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studioId])
+  @@map("services")
+}
+
+// Booking Model
+// Represents a booking request from a customer
+model Booking {
+  id              String        @id @default(cuid())
+  studioId        String
+  serviceId       String?       // Optional: customer might not know exact service
+
+  // Customer Information
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+
+  // Booking Details
+  preferredDate   String        // Customer's preferred date (text: "Next Monday", "15.11.2025")
+  preferredTime   String        // Customer's preferred time (text: "afternoon", "14:00")
+  message         String?       @db.Text // Additional notes/requests
+
+  // Status
+  status          BookingStatus @default(PENDING)
+
+  // Relations
+  studio          Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service         Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  // Timestamps
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([studioId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("bookings")
+}
+
+// Booking Status Enum
+enum BookingStatus {
+  PENDING    // Waiting for studio confirmation
+  CONFIRMED  // Studio confirmed the booking
+  CANCELLED  // Booking was cancelled
+}
+
