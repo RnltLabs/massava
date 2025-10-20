@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Massava
+
+Multilingual massage booking platform connecting wellness seekers with massage studios.
+
+## Features
+
+- 🌍 **Multilingual Support** - Available in 7 languages (DE, EN, TH, ZH, VI, PL, RU)
+- 💆 **Studio Discovery** - Find massage studios near you
+- 📅 **Easy Booking** - Book appointments directly
+- 🏢 **Studio Management** - Studios can manage their profile and bookings
+- 📱 **Mobile Responsive** - Optimized for all devices
+
+## Tech Stack
+
+- **Framework:** Next.js 15 with App Router
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Database:** PostgreSQL with Prisma ORM
+- **Internationalization:** next-intl
+- **Deployment:** Docker + GitHub Actions
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL database
+- npm or yarn
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Setup database
+npx prisma generate
+npx prisma db push
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) to see the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env` file with:
 
-## Learn More
+```env
+DATABASE_URL="postgresql://..."
+RESEND_API_KEY="re_..."
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Staging:** https://staging.rnltlabs.de/massava
+- **Production:** https://rnltlabs.de/massava
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Automatic deployments via GitHub Actions:
+- Push to `develop` → Staging
+- Push to `main` → Production
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Copyright (c) 2025 Roman Reinelt / RNLT Labs. All rights reserved.
