@@ -22,16 +22,16 @@ export const localeNames: Record<Locale, string> = {
 };
 
 export default getRequestConfig(async ({ locale }) => {
-  // Validate locale
-  if (!locales.includes(locale as Locale)) {
-    locale = defaultLocale;
-  }
+  // Validate locale and ensure type safety
+  const validatedLocale: Locale = locales.includes(locale as Locale)
+    ? (locale as Locale)
+    : defaultLocale;
 
   // Dynamically import the locale file
-  const messages = (await import(`./locales/${locale}.json`)).default;
+  const messages = (await import(`./locales/${validatedLocale}.json`)).default;
 
   return {
-    locale,
+    locale: validatedLocale,
     messages,
   };
 });
