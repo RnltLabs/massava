@@ -10,6 +10,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales, type Locale } from '@/i18n';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import SentryDebug from '@/components/SentryDebug';
 import "../globals.css";
 
 const geistSans = Geist({
@@ -59,6 +60,7 @@ export default async function LocaleLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SentryDebug />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <LanguageSwitcher />
           {children}
