@@ -30,3 +30,9 @@ Sentry.init({
   replaysSessionSampleRate: 0.0,
   replaysOnErrorSampleRate: 0.0,
 });
+
+// Export Sentry globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).Sentry = Sentry;
+  (window as any).sentryDebug = { dsn, environment, enabled: process.env.NODE_ENV === 'production' };
+}
