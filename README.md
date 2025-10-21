@@ -19,39 +19,6 @@ A multilingual aggregation platform connecting customers with service providers.
 - **Internationalization:** next-intl
 - **Deployment:** Docker + GitHub Actions
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 20+
-- PostgreSQL database
-- npm or yarn
-
-### Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Setup database
-npx prisma generate
-npx prisma db push
-
-# Run development server
-npm run dev
-```
-
-Open [http://localhost:3001](http://localhost:3001) to see the application.
-
-## Environment Variables
-
-Create a `.env` file with:
-
-```env
-DATABASE_URL="postgresql://..."
-RESEND_API_KEY="re_..."
-```
-
 ## Deployment
 
 - **Staging:** https://staging.rnltlabs.de/massava
