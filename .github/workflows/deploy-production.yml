@@ -38,6 +38,8 @@ jobs:
         build-args: |
           DATABASE_URL=${{ secrets.DATABASE_URL_PRODUCTION }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          NEXT_PUBLIC_VERCEL_ENV=production
+          GIT_COMMIT=${{ github.sha }}
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/massava:latest
         cache-to: type=inline
 
