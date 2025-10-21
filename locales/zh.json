@@ -1,0 +1,43 @@
+{
+  "home": {
+    "badge": "今天还可预约",
+    "hero_title": "您的按摩",
+    "hero_subtitle": "今天就预约",
+    "hero_description": "随时放松 – 找到您附近的按摩店并直接预约。无佣金，透明，简单。",
+    "search_location_placeholder": "输入城市或邮政编码...",
+    "search_radius": "半径",
+    "search_button": "搜索",
+
+    "feature1_title": "今天就能放松",
+    "feature1_description": "可以即时预约。立即查看今天哪些按摩店还有空位。",
+    "feature2_title": "一目了然的信息",
+    "feature2_description": "价格、服务、评论 – 一切透明。没有隐藏费用。",
+    "feature3_title": "支持本地按摩店",
+    "feature3_description": "100% 的收入直接归按摩店所有。无佣金，无中间商。",
+
+    "how_it_works_title": "使用方法",
+    "step1_title": "输入位置",
+    "step1_description": "输入您的城市或邮政编码，选择您想要的半径。",
+    "step2_title": "选择按摩店",
+    "step2_description": "查看可用预约、价格和评论。",
+    "step3_title": "预约",
+    "step3_description": "直接在线预约 – 快速、简单、无绕路。",
+
+    "cta_title": "准备好休息一下了吗？",
+    "cta_description": "随时放松 – 找到您附近的按摩店，今天就预约",
+    "cta_button": "找到附近的按摩店",
+
+    "footer_tagline": "您在城市中即时预约按摩的平台。",
+    "footer_for_guests": "客户专区",
+    "footer_how_it_works": "使用方法",
+    "footer_find_studios": "查找按摩店",
+    "footer_for_studios": "按摩店专区",
+    "footer_register_studio": "注册按摩店",
+    "footer_pricing": "价格",
+    "footer_legal": "法律",
+    "footer_imprint": "版权信息",
+    "footer_privacy": "隐私",
+    "footer_terms": "条款",
+    "footer_copyright": "© 2025 Massava by RNLT Labs. 保留所有权利。"
+  }
+}
