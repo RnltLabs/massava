@@ -31,8 +31,5 @@ Sentry.init({
   replaysOnErrorSampleRate: 0.0,
 });
 
-// Export Sentry globally for debugging
-if (typeof window !== 'undefined') {
-  (window as any).Sentry = Sentry;
-  (window as any).sentryDebug = { dsn, environment, enabled: process.env.NODE_ENV === 'production' };
-}
+// Note: Sentry is exported globally via the SentryDebug component in the layout
+// This allows for console testing: Sentry.captureMessage("test")
