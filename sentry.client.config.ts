@@ -23,7 +23,7 @@ Sentry.init({
   sampleRate: 1.0, // 100% of errors
   tracesSampleRate: 0.0, // No performance tracking
 
-  // Only track errors in production
+  // Always enabled in builds (DSN selection handles environment routing)
   enabled: process.env.NODE_ENV === 'production',
 
   // Privacy
