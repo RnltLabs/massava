@@ -25,6 +25,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Massava - Spontane Massage-Buchungen",
   description: "Finde und buche deine Massage spontan – ohne Provisionen, transparent, unkompliziert.",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+    },
+  },
 };
 
 export default async function LocaleLayout({
