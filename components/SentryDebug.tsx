@@ -15,31 +15,53 @@ declare global {
     sentryDebug: {
       environment: string;
       enabled: boolean;
+      dsn: string;
     };
   }
 }
 
 /**
- * Export Sentry globally for debugging in browser console
- * This component runs on the client side and makes Sentry available
- * for manual testing via console: Sentry.captureMessage("test")
+ * Initialize and export Sentry for debugging
+ * In Next.js standalone mode, we need to manually initialize Sentry client-side
  */
 export default function SentryDebug() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Detect environment
       const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV || 'production';
       const isStaging = vercelEnv === 'preview' || vercelEnv === 'staging';
       const environment = isStaging ? 'staging' : 'production';
 
+      // Select DSN based on environment
+      const dsn = isStaging
+        ? 'https://c62cdd99551a414f91a6bde0f4e2044e@errors.rnltlabs.de/6' // staging
+        : 'https://02d6100bfb5c4c53b806e97f2125dba7@errors.rnltlabs.de/3'; // production
+
+      // Initialize Sentry if not already initialized
+      if (!Sentry.getClient()) {
+        Sentry.init({
+          dsn,
+          environment,
+          release: 'massava@0.1.0',
+          sampleRate: 1.0,
+          tracesSampleRate: 0.0,
+          enabled: true,
+          replaysSessionSampleRate: 0.0,
+          replaysOnErrorSampleRate: 0.0,
+        });
+
+        console.log('[SentryDebug] Sentry initialized:', { dsn, environment });
+      }
+
+      // Export globally for debugging
       window.Sentry = Sentry;
       window.sentryDebug = {
         environment,
-        enabled: process.env.NODE_ENV === 'production',
+        enabled: true,
+        dsn,
       };
-
-      console.log('[SentryDebug] Sentry exported globally', window.sentryDebug);
     }
   }, []);
 
-  return null; // This component doesn't render anything
+  return null;
 }
