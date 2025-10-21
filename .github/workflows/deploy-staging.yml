@@ -106,7 +106,7 @@ jobs:
     - name: Notify Discord on Failure
       if: failure()
       run: |
-        curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_ERRORS }}" \
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_STAGING }}" \
           -H "Content-Type: application/json" \
           -d '{
             "embeds": [{

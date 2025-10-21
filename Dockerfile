@@ -27,7 +27,8 @@ COPY . .
 RUN npx prisma generate
 
 # Build Next.js
-# Disable telemetry during build
+# Set production env for Sentry (must be set at build time!)
+ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
