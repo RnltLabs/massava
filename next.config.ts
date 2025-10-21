@@ -5,6 +5,7 @@
 
 import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
@@ -19,6 +20,22 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Enable source maps for production (needed for GlitchTip)
+  productionBrowserSourceMaps: true,
 };
 
-export default withNextIntl(nextConfig);
+// Apply Next Intl plugin first, then Sentry
+export default withSentryConfig(withNextIntl(nextConfig), {
+  // Sentry Webpack Plugin Options
+  org: 'rnlt-labs',
+  project: 'massava',
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  automaticVercelMonitors: false,
+
+  // Source maps configuration
+  sourcemaps: {
+    disable: false, // Enable source maps for GlitchTip
+  },
+});
