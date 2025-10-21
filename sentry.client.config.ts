@@ -23,10 +23,16 @@ Sentry.init({
   sampleRate: 1.0, // 100% of errors
   tracesSampleRate: 0.0, // No performance tracking
 
-  // Only track errors in production
+  // Always enabled in builds (DSN selection handles environment routing)
   enabled: process.env.NODE_ENV === 'production',
 
   // Privacy
   replaysSessionSampleRate: 0.0,
   replaysOnErrorSampleRate: 0.0,
 });
+
+// Export Sentry globally for debugging
+if (typeof window !== 'undefined') {
+  (window as any).Sentry = Sentry;
+  (window as any).sentryDebug = { dsn, environment, enabled: process.env.NODE_ENV === 'production' };
+}

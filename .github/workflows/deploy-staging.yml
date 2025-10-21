@@ -30,6 +30,7 @@ jobs:
         build-args: |
           DATABASE_URL=${{ secrets.DATABASE_URL_STAGING }}
           RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          GIT_COMMIT=${{ github.sha }}
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/massava:staging
         cache-to: type=inline
 

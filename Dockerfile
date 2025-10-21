@@ -15,6 +15,11 @@ RUN npm ci
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Build arg to bust cache when code changes
+ARG GIT_COMMIT=unknown
+RUN echo "Building commit: $GIT_COMMIT"
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
