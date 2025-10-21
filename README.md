@@ -1,13 +1,13 @@
 # Massava
 
-Multilingual massage booking platform connecting wellness seekers with massage studios.
+A multilingual aggregation platform connecting customers with service providers.
 
 ## Features
 
 - 🌍 **Multilingual Support** - Available in 7 languages (DE, EN, TH, ZH, VI, PL, RU)
-- 💆 **Studio Discovery** - Find massage studios near you
-- 📅 **Easy Booking** - Book appointments directly
-- 🏢 **Studio Management** - Studios can manage their profile and bookings
+- 🔍 **Discovery** - Find service providers in your area
+- 📅 **Booking System** - Direct appointment scheduling
+- 🏢 **Provider Management** - Service providers can manage their profile and availability
 - 📱 **Mobile Responsive** - Optimized for all devices
 
 ## Tech Stack
@@ -64,3 +64,5 @@ Automatic deployments via GitHub Actions:
 ## License
 
 Copyright (c) 2025 Roman Reinelt / RNLT Labs. All rights reserved.
+
+This is proprietary software. Unauthorized copying, modification, distribution, or use of this software, via any medium, is strictly prohibited without explicit written permission from the copyright holder.
