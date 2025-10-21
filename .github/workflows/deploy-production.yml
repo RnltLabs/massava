@@ -1,0 +1,260 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version from package.json
+      id: package-version
+      run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ secrets.DOCKER_USERNAME }}/massava:latest
+          ${{ secrets.DOCKER_USERNAME }}/massava:v${{ steps.package-version.outputs.version }}
+        build-args: |
+          DATABASE_URL=${{ secrets.DATABASE_URL_PRODUCTION }}
+          RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+        cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/massava:latest
+        cache-to: type=inline
+
+    - name: Backup current production container
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          # Save current image as backup
+          if docker ps -a | grep -q massava; then
+            docker commit massava massava:backup-$(date +%Y%m%d-%H%M%S) || true
+          fi
+
+    - name: Deploy to Production Server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          docker pull ${{ secrets.DOCKER_USERNAME }}/massava:latest
+          docker stop massava || true
+          docker rm massava || true
+          docker run -d -p 3004:3000 \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL_PRODUCTION }}" \
+            -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+            --name massava \
+            --restart unless-stopped \
+            ${{ secrets.DOCKER_USERNAME }}/massava:latest
+          docker image prune -f
+
+    - name: Verify deployment
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          sleep 5
+          if docker ps | grep -q massava; then
+            echo "✅ Production deployment successful"
+            echo "🚀 Version: v${{ steps.package-version.outputs.version }}"
+          else
+            echo "❌ Production deployment failed"
+            exit 1
+          fi
+
+    - name: Notify Discord on Success
+      if: success()
+      run: |
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_PROD }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [{
+              "title": "🚀 Production Deployment Successful",
+              "description": "Massava v${{ steps.package-version.outputs.version }} deployed to production",
+              "color": 3066993,
+              "fields": [
+                {
+                  "name": "Version",
+                  "value": "v${{ steps.package-version.outputs.version }}",
+                  "inline": true
+                },
+                {
+                  "name": "Environment",
+                  "value": "Production",
+                  "inline": true
+                },
+                {
+                  "name": "URL",
+                  "value": "[Open App](https://rnltlabs.de/massava)",
+                  "inline": false
+                },
+                {
+                  "name": "Commit",
+                  "value": "[${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
+                  "inline": false
+                }
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+            }]
+          }'
+
+    - name: Notify Discord on Failure
+      if: failure()
+      run: |
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_ERRORS }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "embeds": [{
+              "title": "❌ Production Deployment Failed",
+              "description": "Massava production deployment encountered an error",
+              "color": 15158332,
+              "fields": [
+                {
+                  "name": "Environment",
+                  "value": "Production",
+                  "inline": true
+                },
+                {
+                  "name": "Branch",
+                  "value": "${{ github.ref_name }}",
+                  "inline": true
+                },
+                {
+                  "name": "Commit",
+                  "value": "[${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})",
+                  "inline": false
+                },
+                {
+                  "name": "Workflow Run",
+                  "value": "[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                  "inline": false
+                }
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+            }]
+          }'
+        curl -X POST "${{ secrets.DISCORD_WEBHOOK_CRITICAL }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "content": "@everyone",
+            "embeds": [{
+              "title": "🔥 CRITICAL: Production Deployment Failed",
+              "description": "Massava production deployment failed - immediate attention required",
+              "color": 15158332,
+              "fields": [
+                {
+                  "name": "Application",
+                  "value": "Massava",
+                  "inline": true
+                },
+                {
+                  "name": "Environment",
+                  "value": "Production",
+                  "inline": true
+                },
+                {
+                  "name": "Workflow Run",
+                  "value": "[View Logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})",
+                  "inline": false
+                }
+              ],
+              "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.000Z)'"
+            }]
+          }'
+
+    - name: Create Git Tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -a v${{ steps.package-version.outputs.version }} -m "Release v${{ steps.package-version.outputs.version }}" || true
+        git push origin v${{ steps.package-version.outputs.version }} || true
+
+    - name: Update Linear Issues to Done (YC-Style)
+      if: success()
+      run: |
+        # Get the PR that was merged (most recent merge commit on main)
+        PR_NUMBER=$(gh pr list --state merged --base main --limit 1 --json number --jq '.[0].number')
+
+        if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+          echo "Found merged PR #$PR_NUMBER"
+
+          # Get PR title and body
+          PR_TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
+          PR_BODY=$(gh pr view $PR_NUMBER --json body --jq '.body')
+
+          # Extract RNLT-X issue numbers from PR title and body
+          ISSUE_NUMBERS=$(echo "$PR_TITLE $PR_BODY" | grep -oE 'RNLT-[0-9]+' | sort -u)
+
+          if [ -n "$ISSUE_NUMBERS" ]; then
+            echo "Found Linear issues in PR: $ISSUE_NUMBERS"
+
+            for ISSUE in $ISSUE_NUMBERS; do
+              echo "Updating $ISSUE to Done (shipped to production)"
+
+              # Get issue UUID first
+              ISSUE_ID=$(curl -s -X POST https://api.linear.app/graphql \
+                -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "query": "query { issue(id: \"'$ISSUE'\") { id } }"
+                }' | jq -r '.data.issue.id' 2>/dev/null)
+
+              # Update issue to Done state
+              if [ -n "$ISSUE_ID" ] && [ "$ISSUE_ID" != "null" ]; then
+                curl -X POST https://api.linear.app/graphql \
+                  -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+                  -H "Content-Type: application/json" \
+                  -d '{
+                    "query": "mutation { issueUpdate(id: \"'$ISSUE_ID'\", input: { stateId: \"80530df2-d0e3-40bc-9526-eb5c0c310b6d\" }) { success issue { identifier state { name } } } }"
+                  }' && echo "✅ $ISSUE moved to Done"
+              else
+                echo "⚠️  Could not find issue $ISSUE"
+              fi
+            done
+          else
+            echo "No Linear issues found in PR #$PR_NUMBER"
+          fi
+        else
+          echo "No merged PR found"
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.package-version.outputs.version }}
+        name: Release v${{ steps.package-version.outputs.version }}
+        body: |
+          Automated release for version ${{ steps.package-version.outputs.version }}
+
+          **Deployed to:** https://rnltlabs.de/massava
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
