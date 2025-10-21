@@ -16,9 +16,20 @@ RUN npm ci
 FROM base AS builder
 WORKDIR /app
 
-# Build arg to bust cache when code changes
+# Build args
 ARG GIT_COMMIT=unknown
+ARG NEXT_PUBLIC_VERCEL_ENV=production
+ARG DATABASE_URL
+ARG RESEND_API_KEY
+
+# Echo build info
 RUN echo "Building commit: $GIT_COMMIT"
+RUN echo "Environment: $NEXT_PUBLIC_VERCEL_ENV"
+
+# Set environment variables for build
+ENV NEXT_PUBLIC_VERCEL_ENV=$NEXT_PUBLIC_VERCEL_ENV
+ENV DATABASE_URL=$DATABASE_URL
+ENV RESEND_API_KEY=$RESEND_API_KEY
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
