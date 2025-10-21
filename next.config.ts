@@ -23,10 +23,8 @@ const nextConfig: NextConfig = {
   // Enable source maps for production (needed for GlitchTip)
   productionBrowserSourceMaps: true,
 
-  // Enable instrumentation for Sentry
-  experimental: {
-    instrumentationHook: true,
-  },
+  // Note: instrumentation.ts is automatically enabled in Next.js 15+
+  // No experimental flag needed
 };
 
 // Apply Next Intl plugin first, then Sentry
