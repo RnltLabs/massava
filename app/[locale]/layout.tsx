@@ -11,7 +11,7 @@ import { notFound } from 'next/navigation';
 import { locales, type Locale } from '@/i18n';
 import Header from '@/components/Header';
 import SentryDebug from '@/components/SentryDebug';
-import { SessionProvider } from '@/components/SessionProvider';
+import SessionProvider from '@/components/SessionProvider';
 import "../globals.css";
 
 const geistSans = Geist({
