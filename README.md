@@ -22,7 +22,7 @@ A multilingual aggregation platform connecting customers with service providers.
 ## Deployment
 
 - **Staging:** https://staging.rnltlabs.de/massava
-- **Production:** https://runicorn.de
+- **Production:** https://rnltlabs.de/massava
 
 Automatic deployments via GitHub Actions:
 - Push to `develop` → Staging
