@@ -56,39 +56,37 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="fixed top-4 right-4 z-50">
-      <div className="relative">
-        <button
-          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-foreground bg-card hover:bg-accent/10 transition-colors wellness-shadow rounded-2xl"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <Globe className="h-4 w-4" />
-          <span>{localeNames[locale as Locale]}</span>
-          <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
+    <div className="relative">
+      <button
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Globe className="h-4 w-4" />
+        <span className="hidden sm:inline">{localeNames[locale as Locale]}</span>
+        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
 
-        {isOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-40"
-              onClick={() => setIsOpen(false)}
-            />
-            <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
-              {locales.map((loc) => (
-                <button
-                  key={loc}
-                  className={`w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors ${
-                    loc === locale ? 'bg-accent/20 font-semibold text-primary' : 'text-foreground'
-                  }`}
-                  onClick={() => switchLocale(loc)}
-                >
-                  {localeNames[loc]}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      {isOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
+            {locales.map((loc) => (
+              <button
+                key={loc}
+                className={`w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors ${
+                  loc === locale ? 'bg-accent/20 font-semibold text-primary' : 'text-foreground'
+                }`}
+                onClick={() => switchLocale(loc)}
+              >
+                {localeNames[loc]}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
