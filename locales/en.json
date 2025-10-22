@@ -107,7 +107,11 @@
     "success_title": "Request Sent!",
     "success_description": "The studio will contact you to confirm the appointment.",
     "book_another": "Book Another",
-    "disclaimer": "This is a non-binding request. The studio will contact you."
+    "disclaimer": "This is a non-binding request. The studio will contact you.",
+    "create_account_title": "Create free account?",
+    "create_account_description": "Keep track of all your bookings and receive reminders.",
+    "create_account_checkbox": "Yes, create free account",
+    "password": "Choose password"
   },
   "auth": {
     "signin_title": "Sign In",
@@ -156,6 +160,41 @@
     "have_account": "Already registered?",
     "signin_link": "Sign in",
     "error_invalid_credentials": "Invalid email or password",
+    "error_general": "An error occurred. Please try again."
+  },
+  "customer_dashboard": {
+    "title": "My Bookings",
+    "welcome": "Welcome, {name}",
+    "no_bookings_title": "No Bookings Yet",
+    "no_bookings_description": "You haven't booked any appointments yet. Find studios near you and book your first massage!",
+    "find_studios": "Find Studios",
+    "my_bookings": "My Bookings",
+    "my_favorites": "My Favorites",
+    "booking_status_pending": "Pending",
+    "booking_status_confirmed": "Confirmed",
+    "booking_status_completed": "Completed",
+    "booking_status_cancelled": "Cancelled",
+    "booking_date": "Date",
+    "booking_time": "Time",
+    "booking_service": "Service",
+    "booking_studio": "Studio",
+    "view_studio": "View Studio",
+    "no_favorites_title": "No Favorites Yet",
+    "no_favorites_description": "Save your favorite studios to find them quickly."
+  },
+  "post_booking_modal": {
+    "title": "Never miss a booking again!",
+    "subtitle": "Create your free account now",
+    "benefits_title": "Your benefits:",
+    "benefit_1": "All bookings organized in one place",
+    "benefit_2": "Automatic reminders for your appointments",
+    "benefit_3": "Save favorites for faster bookings",
+    "password_label": "Choose a password",
+    "password_placeholder": "At least 6 characters",
+    "password_hint": "Minimum 6 characters required",
+    "create_button": "Create Free Account",
+    "skip_button": "Later",
+    "prefill_notice": "Your information is already pre-filled",
     "error_general": "An error occurred. Please try again."
   }
 }

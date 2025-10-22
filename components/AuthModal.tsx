@@ -60,8 +60,8 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
         }
       }
 
-      // Sign in
-      const result = await signIn('credentials', {
+      // Sign in with studio credentials provider
+      const result = await signIn('studio-credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false,

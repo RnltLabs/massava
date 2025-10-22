@@ -24,7 +24,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     }),
     Credentials({
-      name: 'credentials',
+      id: 'studio-credentials',
+      name: 'Studio Owner Credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
@@ -56,6 +57,45 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.image,
+          userType: 'studioOwner',
+        };
+      },
+    }),
+    Credentials({
+      id: 'customer-credentials',
+      name: 'Customer Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const customer = await prisma.customer.findUnique({
+          where: { email: credentials.email as string },
+        });
+
+        if (!customer || !customer.password) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          customer.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
+        return {
+          id: customer.id,
+          email: customer.email,
+          name: customer.name,
+          image: customer.image,
+          userType: 'customer',
         };
       },
     }),
@@ -64,12 +104,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.userType = (user as any).userType || 'studioOwner'; // Default to studioOwner for Google auth
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        (session.user as any).userType = token.userType;
       }
       return session;
     },

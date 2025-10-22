@@ -107,7 +107,11 @@
     "success_title": "Anfrage gesendet!",
     "success_description": "Das Studio wird sich bei Ihnen melden, um den Termin zu bestätigen.",
     "book_another": "Weitere Buchung",
-    "disclaimer": "Dies ist eine unverbindliche Anfrage. Das Studio wird sich bei Ihnen melden."
+    "disclaimer": "Dies ist eine unverbindliche Anfrage. Das Studio wird sich bei Ihnen melden.",
+    "create_account_title": "Kostenlos Konto erstellen?",
+    "create_account_description": "Behalte den Überblick über alle deine Buchungen und erhalte Erinnerungen.",
+    "create_account_checkbox": "Ja, kostenloses Konto erstellen",
+    "password": "Passwort wählen"
   },
   "auth": {
     "signin_title": "Anmelden",
@@ -156,6 +160,41 @@
     "have_account": "Bereits registriert?",
     "signin_link": "Anmelden",
     "error_invalid_credentials": "Ungültige E-Mail oder Passwort",
+    "error_general": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+  },
+  "customer_dashboard": {
+    "title": "Meine Buchungen",
+    "welcome": "Willkommen, {name}",
+    "no_bookings_title": "Noch keine Buchungen",
+    "no_bookings_description": "Du hast noch keine Termine gebucht. Finde Studios in deiner Nähe und buche deine erste Massage!",
+    "find_studios": "Studios finden",
+    "my_bookings": "Meine Buchungen",
+    "my_favorites": "Meine Favoriten",
+    "booking_status_pending": "Ausstehend",
+    "booking_status_confirmed": "Bestätigt",
+    "booking_status_completed": "Abgeschlossen",
+    "booking_status_cancelled": "Storniert",
+    "booking_date": "Datum",
+    "booking_time": "Uhrzeit",
+    "booking_service": "Leistung",
+    "booking_studio": "Studio",
+    "view_studio": "Studio ansehen",
+    "no_favorites_title": "Noch keine Favoriten",
+    "no_favorites_description": "Speichere deine Lieblings-Studios, um sie schnell wiederzufinden."
+  },
+  "post_booking_modal": {
+    "title": "Verpasse keine Buchung mehr!",
+    "subtitle": "Erstelle jetzt dein kostenloses Konto",
+    "benefits_title": "Deine Vorteile:",
+    "benefit_1": "Alle Buchungen übersichtlich an einem Ort",
+    "benefit_2": "Automatische Erinnerungen für deine Termine",
+    "benefit_3": "Favoriten speichern für schnellere Buchungen",
+    "password_label": "Wähle ein Passwort",
+    "password_placeholder": "Mindestens 6 Zeichen",
+    "password_hint": "Mindestens 6 Zeichen erforderlich",
+    "create_button": "Kostenloses Konto erstellen",
+    "skip_button": "Später",
+    "prefill_notice": "Deine Daten sind bereits vorausgefüllt",
     "error_general": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
   }
 }

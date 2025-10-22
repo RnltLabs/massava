@@ -55,7 +55,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
         }
       }
 
-      // Sign in
+      // Sign in with customer credentials provider
       const result = await signIn('customer-credentials', {
         email: formData.email,
         password: formData.password,
