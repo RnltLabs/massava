@@ -14,9 +14,10 @@ import { useTranslations } from 'next-intl';
 type Props = {
   onClose: () => void;
   locale: string;
+  context?: 'general' | 'register';
 };
 
-export function AuthModal({ onClose, locale }: Props) {
+export function AuthModal({ onClose, locale, context = 'general' }: Props) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
