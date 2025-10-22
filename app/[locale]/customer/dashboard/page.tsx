@@ -8,7 +8,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { PrismaClient } from '@/app/generated/prisma';
 import Link from 'next/link';
-import { Calendar, Heart, MapPin, Clock } from 'lucide-react';
+import { Calendar, Heart, MapPin } from 'lucide-react';
 
 const prisma = new PrismaClient();
 
@@ -27,6 +27,7 @@ export default async function CustomerDashboardPage({ params }: Props) {
   }
 
   // Check if user is a customer (not studio owner)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const userType = (session.user as any).userType;
   if (userType === 'studioOwner') {
     redirect(`/${locale}/dashboard`);
