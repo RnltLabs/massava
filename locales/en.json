@@ -127,6 +127,10 @@
     "signin_link": "Sign in",
     "error_google": "Google sign-in failed",
     "error_invalid_credentials": "Invalid email or password",
-    "error_general": "An error occurred. Please try again."
+    "error_general": "An error occurred. Please try again.",
+    "for_studios_button": "For Studios",
+    "dashboard": "Dashboard",
+    "register_studio": "Register Studio",
+    "logout": "Logout"
   }
 }

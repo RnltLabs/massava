@@ -127,6 +127,10 @@
     "signin_link": "Anmelden",
     "error_google": "Anmeldung mit Google fehlgeschlagen",
     "error_invalid_credentials": "Ungültige E-Mail oder Passwort",
-    "error_general": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+    "error_general": "Ein Fehler ist aufgetreten. Bitte versuche es erneut.",
+    "for_studios_button": "Für Studios",
+    "dashboard": "Dashboard",
+    "register_studio": "Studio registrieren",
+    "logout": "Abmelden"
   }
 }
