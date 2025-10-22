@@ -131,6 +131,31 @@
     "for_studios_button": "For Studios",
     "dashboard": "Dashboard",
     "register_studio": "Register Studio",
-    "logout": "Logout"
+    "logout": "Logout",
+    "my_account": "My Account",
+    "customer_login": "Customer Login",
+    "customer_login_button": "Sign In"
+  },
+  "customer_auth": {
+    "signin_title": "Sign in as Customer",
+    "signin_subtitle": "Access your bookings and favorites",
+    "signup_title": "Create Customer Account",
+    "signup_subtitle": "Keep track of all your appointments",
+    "benefits_title": "Your benefits with an account:",
+    "benefit_history": "View all bookings",
+    "benefit_favorites": "Save favorites",
+    "benefit_reminders": "Receive reminders",
+    "name": "Name",
+    "phone": "Phone (optional)",
+    "email": "Email",
+    "password": "Password",
+    "signin_button": "Sign In",
+    "signup_button": "Create Account",
+    "no_account": "Don't have an account?",
+    "signup_link": "Sign up now",
+    "have_account": "Already registered?",
+    "signin_link": "Sign in",
+    "error_invalid_credentials": "Invalid email or password",
+    "error_general": "An error occurred. Please try again."
   }
 }
