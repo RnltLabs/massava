@@ -4,6 +4,7 @@
  */
 
 import { getTranslations } from 'next-intl/server';
+import Link from 'next/link';
 import { Clock, MapPin, TrendingUp, Search, Users, Phone } from 'lucide-react';
 
 type Props = {
@@ -209,10 +210,10 @@ export default async function Home({ params }: Props) {
           <Users className="h-16 w-16 text-primary mx-auto mb-6" />
           <h2 className="text-3xl font-bold mb-4">{t('cta_title')}</h2>
           <p className="text-lg text-muted-foreground mb-8">{t('cta_description')}</p>
-          <button className="bg-accent hover:bg-accent/90 text-primary-foreground font-semibold py-4 px-8 rounded-2xl inline-flex items-center gap-2 transition-all wellness-shadow hover:shadow-lg">
+          <Link href={`/${locale}/studios/register`} className="bg-accent hover:bg-accent/90 text-primary-foreground font-semibold py-4 px-8 rounded-2xl inline-flex items-center gap-2 transition-all wellness-shadow hover:shadow-lg">
             <Phone className="h-5 w-5" />
             {t('cta_button')}
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -229,14 +230,14 @@ export default async function Home({ params }: Props) {
               <h4 className="font-semibold mb-4">{t('footer_for_guests')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-primary transition-colors">{t('footer_how_it_works')}</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_find_studios')}</a></li>
+                <li><Link href={`/${locale}/studios`} className="hover:text-primary transition-colors">{t('footer_find_studios')}</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">{t('footer_for_studios')}</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_register_studio')}</a></li>
+                <li><Link href={`/${locale}/studios/register`} className="hover:text-primary transition-colors">{t('footer_register_studio')}</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">{t('footer_pricing')}</a></li>
               </ul>
             </div>
