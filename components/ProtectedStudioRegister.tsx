@@ -30,7 +30,7 @@ export default function ProtectedStudioRegister() {
       <>
         {/* Show form skeleton/placeholder while auth modal is open */}
         <div className="opacity-50 pointer-events-none">
-          <StudioRegistrationForm />
+          <StudioRegistrationForm locale={locale} />
         </div>
         {showAuthModal && (
           <AuthModal
@@ -56,5 +56,5 @@ export default function ProtectedStudioRegister() {
   }
 
   // Authenticated - show registration form
-  return <StudioRegistrationForm />;
+  return <StudioRegistrationForm locale={locale} />;
 }
