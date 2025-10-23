@@ -91,6 +91,7 @@ jobs:
 
     - name: Notify Discord on Success
       if: success()
+      continue-on-error: true
       run: |
         curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_PROD }}" \
           -H "Content-Type: application/json" \
@@ -127,6 +128,7 @@ jobs:
 
     - name: Notify Discord on Failure
       if: failure()
+      continue-on-error: true
       run: |
         curl -X POST "${{ secrets.DISCORD_WEBHOOK_MASSAVA_ERRORS }}" \
           -H "Content-Type: application/json" \
