@@ -7,8 +7,7 @@
  */
 
 import { Resend } from 'resend';
-import { renderToString } from 'react-dom/server';
-import * as React from 'react';
+import { render } from '@react-email/render';
 import {
   EmailVerificationTemplate,
   WelcomeEmailTemplate,
@@ -57,8 +56,8 @@ export async function sendVerificationEmail(
     }
 
     // Render email template
-    const htmlContent = renderToString(
-      React.createElement(EmailVerificationTemplate, {
+    const htmlContent = render(
+      EmailVerificationTemplate({
         verificationUrl,
         locale,
       })
@@ -147,8 +146,8 @@ export async function sendWelcomeEmail(
     }
 
     // Render email template
-    const htmlContent = renderToString(
-      React.createElement(WelcomeEmailTemplate, {
+    const htmlContent = render(
+      WelcomeEmailTemplate({
         name,
         locale,
       })
@@ -237,8 +236,8 @@ export async function sendPasswordResetEmail(
     }
 
     // Render email template
-    const htmlContent = renderToString(
-      React.createElement(PasswordResetTemplate, {
+    const htmlContent = render(
+      PasswordResetTemplate({
         resetUrl,
         locale,
       })
