@@ -5,7 +5,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/app/generated/prisma';
-import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
@@ -17,10 +16,6 @@ type ServiceInput = {
 };
 
 export async function POST(request: NextRequest) {
-  const correlationId = getCorrelationId(request);
-  const ipAddress = getClientIP(request);
-  const userAgent = getUserAgent(request);
-
   try {
     const body = await request.json();
 
@@ -28,13 +23,6 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !address || !city || !phone || !email) {
-      logger.warn('Studio creation validation failed', {
-        correlationId,
-        ipAddress,
-        action: 'CREATE_STUDIO',
-        resource: 'studio',
-        missingFields: { name: !name, address: !address, city: !city, phone: !phone, email: !email },
-      });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -65,28 +53,9 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    logger.info('Studio created successfully', {
-      correlationId,
-      ipAddress,
-      userAgent,
-      action: 'CREATE_STUDIO',
-      resource: 'studio',
-      resourceId: studio.id,
-      studioName: name,
-      city,
-    });
-
     return NextResponse.json({ success: true, studio }, { status: 201 });
   } catch (error) {
-    logger.error('Studio creation failed', {
-      correlationId,
-      ipAddress,
-      userAgent,
-      action: 'CREATE_STUDIO',
-      resource: 'studio',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error('Studio registration error:', error);
     return NextResponse.json(
       { error: 'Failed to register studio' },
       { status: 500 }
@@ -95,9 +64,6 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const correlationId = getCorrelationId(request);
-  const ipAddress = getClientIP(request);
-
   try {
     const { searchParams } = new URL(request.url);
     const city = searchParams.get('city');
@@ -112,25 +78,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    logger.info('Studios fetched successfully', {
-      correlationId,
-      ipAddress,
-      action: 'LIST_STUDIOS',
-      resource: 'studio',
-      count: studios.length,
-      filterCity: city,
-    });
-
     return NextResponse.json({ studios });
   } catch (error) {
-    logger.error('Studio listing failed', {
-      correlationId,
-      ipAddress,
-      action: 'LIST_STUDIOS',
-      resource: 'studio',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
+    console.error('Studio listing error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch studios' },
       { status: 500 }

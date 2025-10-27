@@ -6,68 +6,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { PrismaClient } from '@/app/generated/prisma';
-import { studioOwnerRegistrationSchema } from '@/lib/validation';
-import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
-import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
-import { generateEmailVerificationURL } from '@/lib/email-verification';
-import { sendVerificationEmail } from '@/lib/email/send';
 
 const prisma = new PrismaClient();
 
-// GDPR Art. 32 compliant bcrypt cost factor
-const BCRYPT_ROUNDS = 12;
-
 export async function POST(request: NextRequest) {
-  const correlationId = getCorrelationId(request);
-  const ipAddress = getClientIP(request);
-  const userAgent = getUserAgent(request);
-
   try {
-    // Rate limiting: 5 attempts per 15 minutes per IP
-    const clientIp = getClientIp(request);
-    const rateLimitResult = authRateLimit(clientIp);
+    const { email, password, name } = await request.json();
 
-    if (!rateLimitResult.success) {
-      logger.warn('Studio owner registration rate limit exceeded', {
-        correlationId,
-        ipAddress,
-        action: 'REGISTER_STUDIO_OWNER',
-        resource: 'studio_owner',
-      });
-      return NextResponse.json(
-        rateLimitErrorResponse(rateLimitResult),
-        {
-          status: 429,
-          headers: {
-            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
-          },
-        }
-      );
+    // Validate inputs
+    if (!email || !password) {
+      return NextResponse.json({ error: 'Email and password required' }, { status: 400 });
     }
-
-    const body = await request.json();
-
-    // Validate inputs with Zod schema
-    const validation = studioOwnerRegistrationSchema.safeParse(body);
-
-    if (!validation.success) {
-      logger.warn('Studio owner registration validation failed', {
-        correlationId,
-        ipAddress,
-        action: 'REGISTER_STUDIO_OWNER',
-        resource: 'studio_owner',
-        errors: validation.error.flatten().fieldErrors,
-      });
-      return NextResponse.json(
-        {
-          error: 'Validierungsfehler',
-          details: validation.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
-    }
-
-    const { email, password, name } = validation.data;
 
     // Check if user exists
     const existingUser = await prisma.studioOwner.findUnique({
@@ -75,23 +24,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      // Generic error message to prevent account enumeration
-      logger.warn('Studio owner registration failed: Email already exists', {
-        correlationId,
-        ipAddress,
-        email,
-        action: 'REGISTER_STUDIO_OWNER',
-        resource: 'studio_owner',
-        reason: 'EMAIL_EXISTS',
-      });
-      return NextResponse.json(
-        { error: 'Registrierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
     }
 
-    // Hash password with GDPR Art. 32 compliant cost factor (12 rounds)
-    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
     const user = await prisma.studioOwner.create({
@@ -102,47 +39,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate email verification URL
-    const verificationURL = await generateEmailVerificationURL(email);
-
-    // Send verification email (non-blocking - don't fail registration if email fails)
-    const emailResult = await sendVerificationEmail(email, verificationURL, 'de');
-
-    logger.info('Studio owner registered successfully', {
-      correlationId,
-      ipAddress,
-      userAgent,
-      userId: user.id,
-      email,
-      action: 'REGISTER_STUDIO_OWNER',
-      resource: 'studio_owner',
-      resourceId: user.id,
-      verificationURLGenerated: true,
-      emailSent: emailResult.success,
-    });
-
     return NextResponse.json(
-      {
-        success: true,
-        user: { id: user.id, email: user.email },
-        message: 'Registrierung erfolgreich. Bitte überprüfen Sie Ihre E-Mail zur Verifizierung.',
-      },
+      { success: true, user: { id: user.id, email: user.email } },
       { status: 201 }
     );
   } catch (error) {
-    // Generic error message - don't expose internal errors
-    logger.error('Studio owner registration failed', {
-      correlationId,
-      ipAddress,
-      userAgent,
-      action: 'REGISTER_STUDIO_OWNER',
-      resource: 'studio_owner',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-    return NextResponse.json(
-      { error: 'Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.' },
-      { status: 500 }
-    );
+    console.error('Registration error:', error);
+    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
   }
 }

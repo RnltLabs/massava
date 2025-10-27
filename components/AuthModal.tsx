@@ -75,7 +75,6 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
 
       router.push(`/${locale}/dashboard`);
       router.refresh();
-      onClose(); // Close modal after successful auth
     } catch (err) {
       const error = err as Error;
       setError(error.message || t('error_general'));

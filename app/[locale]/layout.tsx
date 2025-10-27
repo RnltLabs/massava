@@ -12,7 +12,6 @@ import { locales, type Locale } from '@/i18n';
 import Header from '@/components/Header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
-import CookieBanner from '@/components/CookieBanner';
 import "../globals.css";
 
 const geistSans = Geist({
@@ -69,7 +68,6 @@ export default async function LocaleLayout({
             <main className="pt-16">
               {children}
             </main>
-            <CookieBanner />
           </NextIntlClientProvider>
         </SessionProvider>
       </body>
