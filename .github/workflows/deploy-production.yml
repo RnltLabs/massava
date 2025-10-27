@@ -65,9 +65,14 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/massava:latest
           docker stop massava || true
           docker rm massava || true
-          docker run -d -p 3004:3000 \
+          docker run -d \
+            --network host \
+            -e PORT=3004 \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_PRODUCTION }}" \
+            -e NEXTAUTH_URL="https://rnltlabs.de/massava" \
+            -e AUTH_TRUST_HOST="true" \
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+            -e NEXT_PUBLIC_VERCEL_ENV=production \
             --name massava \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:latest

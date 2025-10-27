@@ -45,9 +45,14 @@ jobs:
           docker pull ${{ secrets.DOCKER_USERNAME }}/massava:staging
           docker stop massava-staging || true
           docker rm massava-staging || true
-          docker run -d -p 3005:3000 \
+          docker run -d \
+            --network host \
+            -e PORT=3005 \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_STAGING }}" \
+            -e NEXTAUTH_URL="https://staging.rnltlabs.de/massava" \
+            -e AUTH_TRUST_HOST="true" \
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+            -e NEXT_PUBLIC_VERCEL_ENV=staging \
             --name massava-staging \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
