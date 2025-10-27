@@ -70,7 +70,15 @@ export function AuthModal({ onClose, locale }: Props) {
       });
 
       if (result?.error) {
-        setError(t('error_invalid_credentials'));
+        console.error('SignIn failed after registration:', result.error);
+        setError(t('error_invalid_credentials') + ` (${result.error})`);
+        setLoading(false);
+        return;
+      }
+
+      if (!result?.ok) {
+        console.error('SignIn result not ok:', result);
+        setError('Login failed after registration. Please try signing in manually.');
         setLoading(false);
         return;
       }
