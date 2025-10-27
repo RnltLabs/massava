@@ -78,6 +78,14 @@ export async function generateEmailVerificationURL(email: string): Promise<strin
 }
 
 /**
+ * Generate email verification token (without creating URL)
+ * Used by email sending service
+ * @param email - Email address to verify
+ * @returns Verification token only
+ */
+export { generateEmailVerificationToken };
+
+/**
  * Mark email as verified in database
  * @param email - Email address to mark as verified
  * @param userType - 'customer' or 'studio-owner'
