@@ -15,6 +15,9 @@ import { UnifiedUserAdapter } from '@/lib/auth/adapter';
 
 const prisma = new PrismaClient();
 
+// Log basePath for debugging
+console.log('[NextAuth] Initializing with basePath:', process.env.NEXTAUTH_BASEPATH || '/api/auth');
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // NextAuth basePath must be ABSOLUTE path including Next.js basePath
   // Use NEXTAUTH_BASEPATH env var to set the full path at runtime
