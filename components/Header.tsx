@@ -14,6 +14,7 @@ import { AuthModal } from './AuthModal';
 import { CustomerAuthModal } from './CustomerAuthModal';
 import LanguageSwitcher from './LanguageSwitcher';
 import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Studio = {
   id: string;
@@ -34,7 +35,7 @@ export default function Header() {
   const isStudioOwner = session?.user?.email && studios.length > 0;
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: `/${locale}` });
+    await signOut({ callbackUrl: getAuthCallbackUrl(`/${locale}`) });
   };
 
   const openStudioAuthModal = (context: 'general' | 'register' = 'general') => {

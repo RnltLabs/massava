@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Props = {
   onClose: () => void;
@@ -69,7 +70,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
         return;
       }
 
-      router.push(`/${locale}/customer/dashboard`);
+      router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
       router.refresh();
       onClose();
     } catch (err) {
