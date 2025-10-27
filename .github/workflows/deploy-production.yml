@@ -71,6 +71,7 @@ jobs:
             -e PORT=3004 \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_PRODUCTION }}" \
             -e AUTH_URL="https://rnltlabs.de/massava/api/auth" \
+            -e NEXTAUTH_URL="https://rnltlabs.de/massava" \
             -e AUTH_TRUST_HOST="true" \
             -e AUTH_SECRET="${{ secrets.AUTH_SECRET_PRODUCTION }}" \
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
