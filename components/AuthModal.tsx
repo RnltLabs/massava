@@ -48,8 +48,8 @@ export function AuthModal({ onClose, locale }: Props) {
 
     try {
       if (mode === 'signup') {
-        // Register new user
-        const response = await apiFetch(`/${locale}/api/auth/register`, {
+        // Register new user with unified User model
+        const response = await apiFetch(`/${locale}/api/auth/register-unified`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
