@@ -1,12 +1,18 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * Internationalization Middleware with basePath support
  */
 
 import createMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default createMiddleware({
+// Detect basePath from NEXTAUTH_URL (same logic as next.config.ts)
+const basePath = process.env.NEXTAUTH_URL?.includes('/massava') ? '/massava' : '';
+
+const intlMiddleware = createMiddleware({
   // A list of all locales that are supported
   locales,
 
@@ -19,6 +25,41 @@ export default createMiddleware({
   // Enable locale detection from cookies
   localeDetection: true,
 });
+
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // If we have a basePath, check if the request is for a route under basePath
+  if (basePath && pathname.startsWith(basePath)) {
+    // Extract the path after basePath
+    const pathAfterBasePath = pathname.slice(basePath.length) || '/';
+
+    // Temporarily modify pathname for next-intl processing
+    const originalPathname = request.nextUrl.pathname;
+    request.nextUrl.pathname = pathAfterBasePath;
+
+    // Run next-intl middleware
+    const response = intlMiddleware(request);
+
+    // Restore original pathname
+    request.nextUrl.pathname = originalPathname;
+
+    // If next-intl redirects, we need to add basePath back to the redirect URL
+    if (response && response.headers.get('location')) {
+      const location = response.headers.get('location');
+      if (location && !location.startsWith('http')) {
+        // Relative redirect - add basePath back
+        const newLocation = basePath + location;
+        return NextResponse.redirect(new URL(newLocation, request.url));
+      }
+    }
+
+    return response;
+  }
+
+  // For non-basePath routes or when no basePath is configured, run middleware normally
+  return intlMiddleware(request);
+}
 
 export const config = {
   // Match all pathnames except for
