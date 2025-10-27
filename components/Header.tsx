@@ -13,6 +13,7 @@ import { User, LogOut, LayoutDashboard, ChevronDown, Building2 } from 'lucide-re
 import { AuthModal } from './AuthModal';
 import { CustomerAuthModal } from './CustomerAuthModal';
 import LanguageSwitcher from './LanguageSwitcher';
+import { apiFetch } from '@/lib/api-client';
 
 type Studio = {
   id: string;
@@ -48,7 +49,7 @@ export default function Header() {
   // Fetch user's studios when logged in
   useEffect(() => {
     if (session?.user) {
-      fetch(`/${locale}/api/user/studios`)
+      apiFetch(`/${locale}/api/user/studios`)
         .then((res) => res.json())
         .then((data) => {
           if (data.studios) {
