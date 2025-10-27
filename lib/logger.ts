@@ -115,14 +115,56 @@ export function getCorrelationId(request: Request): string {
 }
 
 /**
- * Get client IP address from request headers
+ * Anonymize IP address for GDPR compliance (Art. 25 - Privacy by Design)
+ * IPv4: 192.168.1.123 → 192.168.1.0
+ * IPv6: 2001:db8::1234:5678 → 2001:db8::
+ * @param ip - IP address to anonymize
+ * @returns Anonymized IP address
+ */
+export function anonymizeIP(ip: string): string {
+  if (!ip || ip === 'unknown') {
+    return 'unknown';
+  }
+
+  try {
+    // IPv4 address
+    if (ip.includes('.') && !ip.includes(':')) {
+      const parts = ip.split('.');
+      if (parts.length === 4) {
+        // Zero out last octet
+        return `${parts[0]}.${parts[1]}.${parts[2]}.0`;
+      }
+    }
+
+    // IPv6 address
+    if (ip.includes(':')) {
+      const parts = ip.split(':');
+      if (parts.length >= 3) {
+        // Keep first 3 segments, zero out rest
+        return `${parts[0]}:${parts[1]}:${parts[2]}::`;
+      }
+    }
+
+    // If format is unrecognized, return masked version
+    return 'anonymized';
+  } catch (error) {
+    // Failsafe: return generic anonymized value
+    return 'anonymized';
+  }
+}
+
+/**
+ * Get client IP address from request headers (anonymized for GDPR compliance)
+ * GDPR Art. 25 - Privacy by Design
  */
 export function getClientIP(request: Request): string {
-  return (
+  const rawIP = (
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
     request.headers.get('x-real-ip') ||
     'unknown'
   );
+
+  return anonymizeIP(rawIP);
 }
 
 /**

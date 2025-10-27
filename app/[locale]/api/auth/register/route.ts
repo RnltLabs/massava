@@ -10,6 +10,7 @@ import { studioOwnerRegistrationSchema } from '@/lib/validation';
 import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { generateEmailVerificationURL } from '@/lib/email-verification';
+import { sendVerificationEmail } from '@/lib/email/send';
 
 const prisma = new PrismaClient();
 
@@ -104,6 +105,9 @@ export async function POST(request: NextRequest) {
     // Generate email verification URL
     const verificationURL = await generateEmailVerificationURL(email);
 
+    // Send verification email (non-blocking - don't fail registration if email fails)
+    const emailResult = await sendVerificationEmail(email, verificationURL, 'de');
+
     logger.info('Studio owner registered successfully', {
       correlationId,
       ipAddress,
@@ -114,10 +118,8 @@ export async function POST(request: NextRequest) {
       resource: 'studio_owner',
       resourceId: user.id,
       verificationURLGenerated: true,
+      emailSent: emailResult.success,
     });
-
-    // TODO: Send verification email with verificationURL
-    // This will be implemented with email service
 
     return NextResponse.json(
       {
