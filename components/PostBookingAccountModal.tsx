@@ -50,8 +50,8 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Sign in automatically
-      const result = await signIn('customer-credentials', {
+      // Sign in automatically with unified credentials provider
+      const result = await signIn('credentials', {
         email: customerEmail,
         password,
         redirect: false,

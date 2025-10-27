@@ -72,9 +72,9 @@ export async function verifyEmailVerificationToken(token: string): Promise<strin
  */
 export async function generateEmailVerificationURL(email: string): Promise<string> {
   const token = await generateEmailVerificationToken(email);
+  // NEXTAUTH_URL already includes basePath in production/staging
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const basePath = process.env.NODE_ENV === 'production' ? '/massava' : '';
-  return `${baseUrl}${basePath}/auth/verify-email?token=${token}`;
+  return `${baseUrl}/auth/verify-email?token=${token}`;
 }
 
 /**
