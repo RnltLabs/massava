@@ -10,9 +10,9 @@ import { withSentryConfig } from '@sentry/nextjs';
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
-  // Only use basePath in production (rnltlabs.de/massava)
-  // In development, run on root (localhost:3000)
-  basePath: process.env.NODE_ENV === 'production' ? '/massava' : '',
+  // Use basePath when NEXTAUTH_URL contains /massava (staging + production)
+  // In development (localhost:3000), no basePath needed
+  basePath: process.env.NEXTAUTH_URL?.includes('/massava') ? '/massava' : '',
   output: 'standalone',
   eslint: {
     ignoreDuringBuilds: false,
