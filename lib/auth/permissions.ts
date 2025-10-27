@@ -6,7 +6,7 @@
  * Runtime permission checks for API routes and server actions
  */
 
-import { auth } from '@/auth';
+import { auth } from '@/auth-unified';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import { hasPermission, Permission } from './rbac';
 import { NextRequest, NextResponse } from 'next/server';

@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { PrismaClient } from '@/app/generated/prisma';
 import { verifyMagicLink } from '@/lib/magic-link';
 import { createAuditLog } from '@/lib/audit';
-import { signIn } from '@/auth';
+import { signIn } from '@/auth-unified';
 
 const prisma = new PrismaClient();
 
