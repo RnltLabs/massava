@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@/app/generated/prisma';
+import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import { studioOwnerRegistrationSchema } from '@/lib/validation';
 import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
 
     const { email, password, name } = validation.data;
 
-    // Check if user exists
-    const existingUser = await prisma.studioOwner.findUnique({
+    // Check if user exists (unified model)
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
@@ -93,12 +93,18 @@ export async function POST(request: NextRequest) {
     // Hash password with GDPR Art. 32 compliant cost factor (12 rounds)
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Create user
-    const user = await prisma.studioOwner.create({
+    // Create user with RBAC (unified model)
+    const user = await prisma.user.create({
       data: {
         email,
         name: name || null,
         password: hashedPassword,
+        primaryRole: UserRole.STUDIO_OWNER,
+        roles: {
+          create: {
+            role: UserRole.STUDIO_OWNER,
+          },
+        },
       },
     });
 
