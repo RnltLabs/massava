@@ -1,22 +1,30 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * User Registration API - Unified User Model
+ * Phase 3: RBAC + Role-based Registration
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { hash } from 'bcryptjs';
-import { PrismaClient } from '@/app/generated/prisma';
-import { customerRegistrationSchema } from '@/lib/validation';
+import bcrypt from 'bcryptjs';
+import { PrismaClient, UserRole } from '@/app/generated/prisma';
+import { studioOwnerRegistrationSchema } from '@/lib/validation';
 import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { generateEmailVerificationURL } from '@/lib/email-verification';
 import { sendVerificationEmail } from '@/lib/email/send';
+import { createAuditLog } from '@/lib/audit';
 
 const prisma = new PrismaClient();
 
 // GDPR Art. 32 compliant bcrypt cost factor
 const BCRYPT_ROUNDS = 12;
 
+/**
+ * POST /api/auth/register
+ * Register new user (Studio Owner or Customer)
+ */
 export async function POST(request: NextRequest) {
   const correlationId = getCorrelationId(request);
   const ipAddress = getClientIP(request);
@@ -28,11 +36,11 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = authRateLimit(clientIp);
 
     if (!rateLimitResult.success) {
-      logger.warn('Customer registration rate limit exceeded', {
+      logger.warn('Registration rate limit exceeded', {
         correlationId,
         ipAddress,
-        action: 'REGISTER_CUSTOMER',
-        resource: 'customer',
+        action: 'REGISTER_USER',
+        resource: 'user',
       });
       return NextResponse.json(
         rateLimitErrorResponse(rateLimitResult),
@@ -48,14 +56,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate inputs with Zod schema
-    const validation = customerRegistrationSchema.safeParse(body);
+    const validation = studioOwnerRegistrationSchema.safeParse(body);
 
     if (!validation.success) {
-      logger.warn('Customer registration validation failed', {
+      logger.warn('Registration validation failed', {
         correlationId,
         ipAddress,
-        action: 'REGISTER_CUSTOMER',
-        resource: 'customer',
+        action: 'REGISTER_USER',
+        resource: 'user',
         errors: validation.error.flatten().fieldErrors,
       });
       return NextResponse.json(
@@ -67,21 +75,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { name, email, password, phone } = validation.data;
+    const { email, password, name, role } = validation.data;
 
-    // Check if customer already exists
-    const existingCustomer = await prisma.customer.findUnique({
+    // Determine role (default to STUDIO_OWNER for backwards compatibility)
+    const userRole = (role as UserRole) || UserRole.STUDIO_OWNER;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
       where: { email },
     });
 
-    if (existingCustomer) {
+    if (existingUser) {
       // Generic error message to prevent account enumeration
-      logger.warn('Customer registration failed: Email already exists', {
+      logger.warn('Registration failed: Email already exists', {
         correlationId,
         ipAddress,
         email,
-        action: 'REGISTER_CUSTOMER',
-        resource: 'customer',
+        action: 'REGISTER_USER',
+        resource: 'user',
         reason: 'EMAIL_EXISTS',
       });
       return NextResponse.json(
@@ -91,16 +102,42 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password with GDPR Art. 32 compliant cost factor (12 rounds)
-    const hashedPassword = await hash(password, BCRYPT_ROUNDS);
+    const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    // Create customer
-    const customer = await prisma.customer.create({
+    // Create user
+    const user = await prisma.user.create({
       data: {
-        name,
         email,
+        name: name || null,
         password: hashedPassword,
-        phone: phone || null,
+        primaryRole: userRole,
+        isActive: true,
+        isSuspended: false,
       },
+    });
+
+    // Create role assignment
+    await prisma.userRoleAssignment.create({
+      data: {
+        userId: user.id,
+        role: userRole,
+        grantedBy: 'SELF_REGISTRATION',
+        grantedAt: new Date(),
+      },
+    });
+
+    // Audit log
+    await createAuditLog({
+      userId: user.id,
+      action: 'USER_CREATED',
+      resource: 'user',
+      resourceId: user.id,
+      metadata: {
+        email,
+        role: userRole,
+        registrationMethod: 'password',
+      },
+      request,
     });
 
     // Generate email verification URL
@@ -109,15 +146,16 @@ export async function POST(request: NextRequest) {
     // Send verification email (non-blocking - don't fail registration if email fails)
     const emailResult = await sendVerificationEmail(email, verificationURL, 'de');
 
-    logger.info('Customer registered successfully', {
+    logger.info('User registered successfully', {
       correlationId,
       ipAddress,
       userAgent,
-      userId: customer.id,
+      userId: user.id,
       email,
-      action: 'REGISTER_CUSTOMER',
-      resource: 'customer',
-      resourceId: customer.id,
+      role: userRole,
+      action: 'REGISTER_USER',
+      resource: 'user',
+      resourceId: user.id,
       verificationURLGenerated: true,
       emailSent: emailResult.success,
     });
@@ -125,23 +163,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        customer: {
-          id: customer.id,
-          name: customer.name,
-          email: customer.email,
-        },
+        user: { id: user.id, email: user.email, role: user.primaryRole },
         message: 'Registrierung erfolgreich. Bitte überprüfen Sie Ihre E-Mail zur Verifizierung.',
       },
       { status: 201 }
     );
   } catch (error) {
     // Generic error message - don't expose internal errors
-    logger.error('Customer registration failed', {
+    logger.error('Registration failed', {
       correlationId,
       ipAddress,
       userAgent,
-      action: 'REGISTER_CUSTOMER',
-      resource: 'customer',
+      action: 'REGISTER_USER',
+      resource: 'user',
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
