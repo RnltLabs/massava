@@ -75,6 +75,7 @@ jobs:
             -e AUTH_TRUST_HOST="true" \
             -e AUTH_SECRET="${{ secrets.AUTH_SECRET_PRODUCTION }}" \
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
+            -e RESEND_FROM_EMAIL="noreply@rnltlabs.de" \
             -e NEXT_PUBLIC_VERCEL_ENV=production \
             --name massava \
             --restart unless-stopped \
