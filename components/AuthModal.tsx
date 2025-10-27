@@ -50,6 +50,8 @@ export function AuthModal({ onClose, locale }: Props) {
     try {
       if (mode === 'signup') {
         // Register new user with unified User model
+        console.log('📝 Starting registration with:', { email: formData.email, name: formData.name });
+
         const response = await apiFetch(`/${locale}/api/auth/register-unified`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -60,28 +62,44 @@ export function AuthModal({ onClose, locale }: Props) {
           const data = await response.json();
           throw new Error(data.error || 'Registration failed');
         }
+
+        const registrationData = await response.json();
+        console.log('✅ Registration successful:', registrationData);
+
+        // Small delay to ensure user is fully committed to database
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       // Sign in with unified credentials provider
+      console.log('🔐 Attempting sign in with:', {
+        email: formData.email,
+        hasPassword: !!formData.password,
+        passwordLength: formData.password?.length
+      });
+
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
+      console.log('🔐 SignIn result:', result);
+
       if (result?.error) {
-        console.error('SignIn failed after registration:', result.error);
+        console.error('❌ SignIn failed:', result.error);
         setError(t('error_invalid_credentials') + ` (${result.error})`);
         setLoading(false);
         return;
       }
 
       if (!result?.ok) {
-        console.error('SignIn result not ok:', result);
+        console.error('❌ SignIn result not ok:', result);
         setError('Login failed after registration. Please try signing in manually.');
         setLoading(false);
         return;
       }
+
+      console.log('✅ SignIn successful, redirecting...');
 
       router.push(getAuthCallbackUrl(`/${locale}/dashboard`));
       router.refresh();
