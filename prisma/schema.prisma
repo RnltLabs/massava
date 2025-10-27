@@ -95,6 +95,23 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// Email Verification Token
+// For verifying email addresses during registration
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // 64 hex chars (32 bytes)
+  email     String
+  expiresAt DateTime // 24 hours from creation
+  used      Boolean  @default(false) // One-time use
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
 // Studio Model
 // Represents a massage/wellness studio
 model Studio {
