@@ -72,12 +72,9 @@ export async function verifyEmailVerificationToken(token: string): Promise<strin
  */
 export async function generateEmailVerificationURL(email: string): Promise<string> {
   const token = await generateEmailVerificationToken(email);
-  // For staging/production, use domain without basePath since /auth routes are not under basePath
-  // /app/auth/ routes are mounted at root, not under basePath
-  const hasBasePath = process.env.NEXTAUTH_URL?.includes('/massava');
-  const baseUrl = hasBasePath
-    ? (process.env.NEXTAUTH_URL?.replace('/massava', '') || 'http://localhost:3000')
-    : (process.env.NEXTAUTH_URL || 'http://localhost:3000');
+  // NEXTAUTH_URL contains the full base URL including basePath if needed
+  // Next.js automatically applies basePath to all routes in /app directory
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
   return `${baseUrl}/auth/verify-email?token=${token}`;
 }
 

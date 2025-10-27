@@ -72,18 +72,28 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
     );
   }
 
-  // Determine user type and mark as verified
-  const customer = await prisma.customer.findUnique({ where: { email } });
-  const studioOwner = await prisma.studioOwner.findUnique({ where: { email } });
+  // Update unified User model with email verification
+  const user = await prisma.user.findUnique({ where: { email } });
 
-  if (customer) {
-    await markEmailAsVerified(email, 'customer');
-  } else if (studioOwner) {
-    await markEmailAsVerified(email, 'studio-owner');
+  if (user) {
+    await prisma.user.update({
+      where: { email },
+      data: { emailVerified: new Date() }
+    });
+  } else {
+    // Fallback: Check legacy models (for users who haven't been migrated yet)
+    const customer = await prisma.customer.findUnique({ where: { email } });
+    const studioOwner = await prisma.studioOwner.findUnique({ where: { email } });
+
+    if (customer) {
+      await markEmailAsVerified(email, 'customer');
+    } else if (studioOwner) {
+      await markEmailAsVerified(email, 'studio-owner');
+    }
   }
 
-  // Success - redirect to appropriate dashboard
-  const redirectUrl = studioOwner ? '/studio-owner/dashboard' : '/customer/dashboard';
+  // Success - redirect to appropriate dashboard based on role
+  const redirectUrl = user?.primaryRole === 'STUDIO_OWNER' ? '/studio-owner/dashboard' : '/customer/dashboard';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
