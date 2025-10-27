@@ -6,6 +6,7 @@
  */
 
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Datenschutzerklärung | Massava',
@@ -156,6 +157,8 @@ export default function PrivacyPolicyPage() {
               <a
                 href="/api/user/export"
                 className="inline-block mt-2 text-primary hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 → Daten exportieren (JSON-Format)
               </a>
@@ -177,6 +180,8 @@ export default function PrivacyPolicyPage() {
               <a
                 href="/api/user/delete"
                 className="inline-block mt-2 text-destructive hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 → Konto löschen
               </a>
@@ -364,9 +369,9 @@ export default function PrivacyPolicyPage() {
 
       {/* Back to Home Link */}
       <div className="mt-12 pt-8 border-t">
-        <a href="/" className="text-primary hover:underline">
+        <Link href="/" className="text-primary hover:underline">
           ← Zurück zur Startseite
-        </a>
+        </Link>
       </div>
     </div>
   );
