@@ -60,7 +60,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: https:", // Allow external images (studio photos)
               "font-src 'self' data:",
-              "connect-src 'self' https://glitchtip.rnltlabs.de", // Allow Sentry/GlitchTip
+              "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de", // Allow Sentry/GlitchTip
               "frame-ancestors 'none'",
             ].join('; '),
           },

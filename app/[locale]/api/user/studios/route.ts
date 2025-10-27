@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { auth } from '@/auth-unified';
 import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP } from '@/lib/logger';
 

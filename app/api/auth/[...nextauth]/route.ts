@@ -3,6 +3,6 @@
  * All rights reserved.
  */
 
-import { handlers } from '@/auth';
+import { handlers } from '@/auth-unified';
 
 export const { GET, POST } = handlers;
