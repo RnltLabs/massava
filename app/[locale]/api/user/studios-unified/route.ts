@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // Check authentication
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth();
     if (authResult.response) return authResult.response;
     const user = authResult.user!;
 

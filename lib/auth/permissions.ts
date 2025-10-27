@@ -8,7 +8,7 @@
 
 import { auth } from '@/auth';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
-import { hasPermission, canAccessStudio, Permission } from './rbac';
+import { hasPermission, Permission } from './rbac';
 import { NextRequest, NextResponse } from 'next/server';
 
 const prisma = new PrismaClient();
@@ -177,9 +177,7 @@ export async function getUserStudios(): Promise<string[]> {
 /**
  * API Route Helper: Require authentication
  */
-export async function requireAuth(
-  request: NextRequest
-): Promise<{ user: AuthUser; response: null } | { user: null; response: NextResponse }> {
+export async function requireAuth(): Promise<{ user: AuthUser; response: null } | { user: null; response: NextResponse }> {
   const user = await getCurrentUser();
 
   if (!user) {
@@ -202,7 +200,7 @@ export async function requirePermissionAPI(
   request: NextRequest,
   permission: Permission
 ): Promise<{ user: AuthUser; response: null } | { user: null; response: NextResponse }> {
-  const authResult = await requireAuth(request);
+  const authResult = await requireAuth();
 
   if (authResult.response) {
     return authResult;
@@ -233,7 +231,7 @@ export async function requireStudioAccessAPI(
   request: NextRequest,
   studioId: string
 ): Promise<{ user: AuthUser; response: null } | { user: null; response: NextResponse }> {
-  const authResult = await requireAuth(request);
+  const authResult = await requireAuth();
 
   if (authResult.response) {
     return authResult;

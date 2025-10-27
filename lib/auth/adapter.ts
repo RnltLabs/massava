@@ -131,9 +131,9 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
           access_token: data.access_token,
           expires_at: data.expires_at,
           token_type: data.token_type,
-          scope: data.scope,
-          id_token: data.id_token,
-          session_state: data.session_state,
+          scope: data.scope as string | null | undefined,
+          id_token: data.id_token as string | null | undefined,
+          session_state: data.session_state as string | null | undefined,
         },
       });
     },

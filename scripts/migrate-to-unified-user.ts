@@ -342,7 +342,7 @@ async function migrateToUnifiedUser(): Promise<MigrationStats> {
         // Verify no orphaned bookings
         const orphanedBookings = await tx.newBooking.count({
           where: {
-            customer: null,
+            customer: undefined,
           },
         });
 

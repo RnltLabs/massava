@@ -75,10 +75,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, name, role } = validation.data;
+    const { email, password, name } = validation.data;
 
-    // Determine role (default to STUDIO_OWNER for backwards compatibility)
-    const userRole = (role as UserRole) || UserRole.STUDIO_OWNER;
+    // Default to STUDIO_OWNER for backwards compatibility
+    const userRole = UserRole.STUDIO_OWNER;
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({

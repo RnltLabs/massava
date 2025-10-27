@@ -147,7 +147,7 @@ export function anonymizeIP(ip: string): string {
 
     // If format is unrecognized, return masked version
     return 'anonymized';
-  } catch (error) {
+  } catch {
     // Failsafe: return generic anonymized value
     return 'anonymized';
   }

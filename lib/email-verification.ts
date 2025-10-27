@@ -83,7 +83,6 @@ export async function generateEmailVerificationURL(email: string): Promise<strin
  * @param email - Email address to verify
  * @returns Verification token only
  */
-export { generateEmailVerificationToken };
 
 /**
  * Mark email as verified in database
