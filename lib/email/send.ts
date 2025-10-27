@@ -56,7 +56,7 @@ export async function sendVerificationEmail(
     }
 
     // Render email template
-    const htmlContent = render(
+    const htmlContent = await render(
       EmailVerificationTemplate({
         verificationUrl,
         locale,
@@ -146,7 +146,7 @@ export async function sendWelcomeEmail(
     }
 
     // Render email template
-    const htmlContent = render(
+    const htmlContent = await render(
       WelcomeEmailTemplate({
         name,
         locale,
@@ -236,7 +236,7 @@ export async function sendPasswordResetEmail(
     }
 
     // Render email template
-    const htmlContent = render(
+    const htmlContent = await render(
       PasswordResetTemplate({
         resetUrl,
         locale,
