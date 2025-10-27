@@ -10,6 +10,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { verifyEmailVerificationToken, markEmailAsVerified } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
+import { getRouteWithBasePath } from '@/lib/navigation';
 
 async function VerifyEmailContent({ searchParams }: { searchParams: { token?: string } }) {
   const token = searchParams.token;
@@ -93,7 +94,8 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
   }
 
   // Success - redirect to appropriate dashboard based on role
-  const redirectUrl = user?.primaryRole === 'STUDIO_OWNER' ? '/studio-owner/dashboard' : '/customer/dashboard';
+  const basePath = user?.primaryRole === 'STUDIO_OWNER' ? '/studio-owner/dashboard' : '/customer/dashboard';
+  const redirectUrl = getRouteWithBasePath(basePath);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

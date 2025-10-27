@@ -11,6 +11,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, UserPlus, X, Star } from 'lucide-react';
 import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Props = {
   customerName: string;
@@ -62,7 +63,7 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
       }
 
       // Redirect to dashboard
-      router.push(`/${locale}/customer/dashboard`);
+      router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
       router.refresh();
       onClose();
     } catch (err) {

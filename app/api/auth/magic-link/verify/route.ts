@@ -12,6 +12,7 @@ import { PrismaClient } from '@/app/generated/prisma';
 import { verifyMagicLink } from '@/lib/magic-link';
 import { createAuditLog } from '@/lib/audit';
 import { signIn } from '@/auth-unified';
+import { getRedirectUrl } from '@/lib/navigation';
 
 const prisma = new PrismaClient();
 
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest) {
     if (!email) {
       // Redirect to error page
       return NextResponse.redirect(
-        new URL('/auth/magic-link-expired', request.url)
+        getRedirectUrl('/auth/magic-link-expired', request.url)
       );
     }
 
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(
-        new URL('/auth/error?error=UserNotFound', request.url)
+        getRedirectUrl('/auth/error?error=UserNotFound', request.url)
       );
     }
 
@@ -186,13 +187,13 @@ export async function GET(request: NextRequest) {
 
     // Set session cookie manually or redirect to sign-in with email
     return NextResponse.redirect(
-      new URL(`/auth/signin?email=${encodeURIComponent(email)}&verified=true&callbackUrl=${encodeURIComponent(callbackUrl)}`, request.url)
+      getRedirectUrl(`/auth/signin?email=${encodeURIComponent(email)}&verified=true&callbackUrl=${encodeURIComponent(callbackUrl)}`, request.url)
     );
   } catch (error) {
     console.error('Magic link verification error:', error);
 
     return NextResponse.redirect(
-      new URL('/auth/error?error=VerificationFailed', request.url)
+      getRedirectUrl('/auth/error?error=VerificationFailed', request.url)
     );
   }
 }

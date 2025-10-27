@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Props = {
   onClose: () => void;
@@ -34,7 +35,7 @@ export function AuthModal({ onClose, locale }: Props) {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: `/${locale}/dashboard` });
+      await signIn('google', { callbackUrl: getAuthCallbackUrl(`/${locale}/dashboard`) });
     } catch {
       setError(t('error_google'));
       setLoading(false);
@@ -74,7 +75,7 @@ export function AuthModal({ onClose, locale }: Props) {
         return;
       }
 
-      router.push(`/${locale}/dashboard`);
+      router.push(getAuthCallbackUrl(`/${locale}/dashboard`));
       router.refresh();
       onClose(); // Close modal after successful auth
     } catch (err) {
