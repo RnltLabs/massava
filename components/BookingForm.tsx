@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { Loader2, CheckCircle, Gift } from 'lucide-react';
 import { PostBookingAccountModal } from './PostBookingAccountModal';
+import { apiFetch } from '@/lib/api-client';
 
 type Service = {
   id: string;
@@ -58,7 +59,7 @@ export function BookingForm({ studioId, services, locale }: Props) {
     try {
       // Create account if requested
       if (createAccount && formData.password) {
-        const accountResponse = await fetch(`/${locale}/api/auth/customer/register`, {
+        const accountResponse = await apiFetch(`/${locale}/api/auth/customer/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -76,7 +77,7 @@ export function BookingForm({ studioId, services, locale }: Props) {
       }
 
       // Create booking
-      const response = await fetch(`/${locale}/api/bookings`, {
+      const response = await apiFetch(`/${locale}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

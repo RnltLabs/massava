@@ -10,6 +10,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { apiFetch } from '@/lib/api-client';
 
 type Props = {
   onClose: () => void;
@@ -43,7 +44,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
     try {
       if (mode === 'signup') {
         // Register new customer
-        const response = await fetch(`/${locale}/api/auth/customer/register`, {
+        const response = await apiFetch(`/${locale}/api/auth/customer/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),

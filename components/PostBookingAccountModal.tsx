@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, UserPlus, X, Star } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type Props = {
   customerName: string;
@@ -33,7 +34,7 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
 
     try {
       // Register new customer
-      const response = await fetch(`/${locale}/api/auth/customer/register`, {
+      const response = await apiFetch(`/${locale}/api/auth/customer/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
