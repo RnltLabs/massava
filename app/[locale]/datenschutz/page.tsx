@@ -236,15 +236,79 @@ export default function PrivacyPolicyPage() {
                 <strong>Zweck:</strong> Server-Hosting und Datenbankverwaltung
               </p>
               <p className="text-muted-foreground">
-                <strong>Standort:</strong> Deutschland (DSGVO-konform)
+                <strong>Standort:</strong> Deutschland (Falkenstein/Nürnberg) - DSGVO-konform
               </p>
               <p className="text-muted-foreground">
                 <strong>AVV:</strong> Auftragsverarbeitungsvertrag geschlossen
               </p>
+              <p className="text-muted-foreground">
+                <strong>Kontakt:</strong> support@hetzner.com
+              </p>
+              <p className="mt-2">
+                <a
+                  href="https://www.hetzner.com/rechtliches/datenschutz"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline text-sm"
+                >
+                  → Datenschutzerklärung Hetzner
+                </a>
+              </p>
             </div>
 
             <div className="border p-4 rounded-lg">
-              <h3 className="font-semibold">Massage-Studios</h3>
+              <h3 className="font-semibold">Resend Inc.</h3>
+              <p className="text-muted-foreground">
+                <strong>Zweck:</strong> E-Mail-Versand (Verifizierung, Benachrichtigungen)
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Standort:</strong> USA mit EU-Datenverarbeitung
+              </p>
+              <p className="text-muted-foreground">
+                <strong>DPA:</strong> Data Processing Agreement verfügbar (Standard Contractual Clauses)
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Datenspeicherung:</strong> E-Mail-Logs 30 Tage, keine dauerhafte Speicherung von Inhalten
+              </p>
+              <p className="mt-2">
+                <a
+                  href="https://resend.com/legal/privacy-policy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline text-sm"
+                >
+                  → Privacy Policy Resend
+                </a>
+                {' | '}
+                <a
+                  href="https://resend.com/legal/dpa"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline text-sm"
+                >
+                  → DPA Resend
+                </a>
+              </p>
+            </div>
+
+            <div className="border p-4 rounded-lg">
+              <h3 className="font-semibold">Sentry/GlitchTip</h3>
+              <p className="text-muted-foreground">
+                <strong>Zweck:</strong> Fehler-Tracking und Performance-Monitoring
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Standort:</strong> EU-Region (konfiguriert)
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Datenschutz:</strong> IP-Anonymisierung aktiviert, keine PII in Logs
+              </p>
+              <p className="text-muted-foreground">
+                <strong>Gespeicherte Daten:</strong> Anonymisierte Error-Logs, User-IDs (ohne personenbezogene Daten)
+              </p>
+            </div>
+
+            <div className="border p-4 rounded-lg">
+              <h3 className="font-semibold">Massage-Studios (Drittverantwortliche)</h3>
               <p className="text-muted-foreground">
                 <strong>Zweck:</strong> Durchführung der gebuchten Massage-Behandlung
               </p>
@@ -257,6 +321,21 @@ export default function PrivacyPolicyPage() {
                 Verarbeitung Ihrer Daten im Rahmen der Behandlung
               </p>
             </div>
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+            <p>
+              <strong>Vollständige Liste der Auftragsverarbeiter und AVV-Dokumentation:</strong>
+              <br />
+              <a
+                href="https://github.com/roman/massava/blob/main/docs/gdpr/README.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                → GDPR Compliance Dokumentation
+              </a>
+            </p>
           </div>
         </section>
 
