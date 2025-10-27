@@ -1,49 +1,62 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * User Studios API - Unified User Model
+ * Phase 3: RBAC + Studio Ownership
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP } from '@/lib/logger';
+import { requireAuth } from '@/lib/auth/permissions';
 
 const prisma = new PrismaClient();
 
+/**
+ * GET /api/user/studios
+ * Get studios owned by the current user
+ */
 export async function GET(request: NextRequest) {
   const correlationId = getCorrelationId(request);
   const ipAddress = getClientIP(request);
 
   try {
-    const session = await auth();
+    // Check authentication
+    const authResult = await requireAuth();
+    if (authResult.response) return authResult.response;
+    const user = authResult.user!;
 
-    if (!session?.user?.id) {
-      logger.warn('Unauthorized studios access attempt', {
-        correlationId,
-        ipAddress,
-        action: 'LIST_USER_STUDIOS',
-        resource: 'studio',
-      });
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const studios = await prisma.studio.findMany({
+    // Get studios via StudioOwnership
+    const ownerships = await prisma.studioOwnership.findMany({
       where: {
-        ownerId: session.user.id,
+        userId: user.id,
       },
-      select: {
-        id: true,
-        name: true,
+      include: {
+        studio: {
+          include: {
+            services: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc',
+        acceptedAt: 'desc',
       },
     });
+
+    const studios = ownerships.map((ownership) => ({
+      ...ownership.studio,
+      ownership: {
+        isPrimary: ownership.isPrimary,
+        canTransfer: ownership.canTransfer,
+        acceptedAt: ownership.acceptedAt,
+      },
+    }));
 
     logger.info('User studios fetched successfully', {
       correlationId,
       ipAddress,
-      userId: session.user.id,
+      userId: user.id,
       action: 'LIST_USER_STUDIOS',
       resource: 'studio',
       count: studios.length,
@@ -60,7 +73,7 @@ export async function GET(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined,
     });
     return NextResponse.json(
-      { error: 'Failed to fetch studios' },
+      { error: 'Abrufen fehlgeschlagen' },
       { status: 500 }
     );
   }

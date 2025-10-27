@@ -87,7 +87,7 @@ export function StudioRegistrationForm({ locale }: Props) {
         email: '',
       });
       setServices([{ name: '', description: '', price: '', duration: '' }]);
-    } catch (err) {
+    } catch {
       setError(t('error'));
     } finally {
       setLoading(false);

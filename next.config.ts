@@ -25,6 +25,49 @@ const nextConfig: NextConfig = {
 
   // Note: instrumentation.ts is automatically enabled in Next.js 15+
   // No experimental flag needed
+
+  // Security Headers (STRATEGY.md Section 8.2 - Phase 2)
+  async headers() {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY', // Prevent clickjacking
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff', // Prevent MIME sniffing
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains', // HSTS
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline for dev
+              "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
+              "img-src 'self' data: https:", // Allow external images (studio photos)
+              "font-src 'self' data:",
+              "connect-src 'self' https://glitchtip.rnltlabs.de", // Allow Sentry/GlitchTip
+              "frame-ancestors 'none'",
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
 };
 
 // Apply Next Intl plugin first, then Sentry
