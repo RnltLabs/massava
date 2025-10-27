@@ -6,21 +6,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { PrismaClient } from '@/app/generated/prisma';
+import { customerRegistrationSchema } from '@/lib/validation';
+import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 
 const prisma = new PrismaClient();
 
+// GDPR Art. 32 compliant bcrypt cost factor
+const BCRYPT_ROUNDS = 12;
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, email, password, phone } = body;
+    // Rate limiting: 5 attempts per 15 minutes per IP
+    const clientIp = getClientIp(request);
+    const rateLimitResult = authRateLimit(clientIp);
 
-    // Validate required fields
-    if (!name || !email || !password) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        rateLimitErrorResponse(rateLimitResult),
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+
+    const body = await request.json();
+
+    // Validate inputs with Zod schema
+    const validation = customerRegistrationSchema.safeParse(body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: 'Validierungsfehler',
+          details: validation.error.flatten().fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    const { name, email, password, phone } = validation.data;
 
     // Check if customer already exists
     const existingCustomer = await prisma.customer.findUnique({
@@ -28,14 +55,15 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingCustomer) {
+      // Generic error message to prevent account enumeration
       return NextResponse.json(
-        { error: 'Customer with this email already exists' },
+        { error: 'Registrierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.' },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
+    // Hash password with GDPR Art. 32 compliant cost factor (12 rounds)
+    const hashedPassword = await hash(password, BCRYPT_ROUNDS);
 
     // Create customer
     const customer = await prisma.customer.create({
@@ -59,9 +87,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
+    // Generic error message - don't expose internal errors
     console.error('Customer registration error:', error);
     return NextResponse.json(
-      { error: 'Failed to register customer' },
+      { error: 'Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.' },
       { status: 500 }
     );
   }
