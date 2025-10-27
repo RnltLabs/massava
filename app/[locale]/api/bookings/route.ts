@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/app/generated/prisma';
 import { bookingSchema } from '@/lib/validation';
 import { bookingRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
+import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 
 const prisma = new PrismaClient();
 
@@ -14,12 +15,22 @@ const prisma = new PrismaClient();
 const HEALTH_CONSENT_TEXT = `Ich willige ausdrücklich ein, dass meine im Nachrichtenfeld angegebenen Informationen (die möglicherweise Gesundheitsdaten enthalten) zum Zweck der Massage-Behandlung an das Studio weitergegeben und verarbeitet werden. Diese Einwilligung kann ich jederzeit per E-Mail an datenschutz@massava.com widerrufen.`;
 
 export async function POST(request: NextRequest) {
+  const correlationId = getCorrelationId(request);
+  const ipAddress = getClientIP(request);
+  const userAgent = getUserAgent(request);
+
   try {
     // Rate limiting: 10 bookings per hour per IP
     const clientIp = getClientIp(request);
     const rateLimitResult = bookingRateLimit(clientIp);
 
     if (!rateLimitResult.success) {
+      logger.warn('Booking rate limit exceeded', {
+        correlationId,
+        ipAddress,
+        action: 'CREATE_BOOKING',
+        resource: 'booking',
+      });
       return NextResponse.json(
         rateLimitErrorResponse(rateLimitResult),
         {
@@ -37,6 +48,13 @@ export async function POST(request: NextRequest) {
     const validation = bookingSchema.safeParse(body);
 
     if (!validation.success) {
+      logger.warn('Booking validation failed', {
+        correlationId,
+        ipAddress,
+        action: 'CREATE_BOOKING',
+        resource: 'booking',
+        errors: validation.error.flatten().fieldErrors,
+      });
       return NextResponse.json(
         {
           error: 'Validierungsfehler',
@@ -62,6 +80,14 @@ export async function POST(request: NextRequest) {
     const hasMessage = message && message.trim().length > 0;
 
     if (hasMessage && !explicitHealthConsent) {
+      logger.warn('Art. 9 GDPR violation: Health consent missing', {
+        correlationId,
+        ipAddress,
+        email: customerEmail,
+        action: 'CREATE_BOOKING',
+        resource: 'booking',
+        gdprViolation: 'ART_9_MISSING_CONSENT',
+      });
       return NextResponse.json(
         {
           error: 'Ausdrückliche Einwilligung zur Verarbeitung von Gesundheitsdaten erforderlich (Art. 9 DSGVO)',
@@ -96,9 +122,29 @@ export async function POST(request: NextRequest) {
     // TODO: Send email notification to studio
     // This will be implemented in the next step with Resend
 
+    logger.info('Booking created successfully', {
+      correlationId,
+      ipAddress,
+      userAgent,
+      email: customerEmail,
+      action: 'CREATE_BOOKING',
+      resource: 'booking',
+      resourceId: booking.id,
+      studioId,
+      hasHealthData: hasMessage,
+    });
+
     return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error) {
-    console.error('Booking error:', error);
+    logger.error('Booking creation failed', {
+      correlationId,
+      ipAddress,
+      userAgent,
+      action: 'CREATE_BOOKING',
+      resource: 'booking',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
       { error: 'Buchung fehlgeschlagen. Bitte versuchen Sie es später erneut.' },
       { status: 500 }
