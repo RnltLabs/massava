@@ -22,7 +22,7 @@ import { logger } from '@/lib/logger';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Default sender email
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@massava.de';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@rnltlabs.de';
 
 export interface SendEmailResult {
   success: boolean;
