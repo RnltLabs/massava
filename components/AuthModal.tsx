@@ -17,7 +17,7 @@ type Props = {
   context?: 'general' | 'register';
 };
 
-export function AuthModal({ onClose, locale, context = 'general' }: Props) {
+export function AuthModal({ onClose, locale }: Props) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -34,7 +34,7 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
     setLoading(true);
     try {
       await signIn('google', { callbackUrl: `/${locale}/dashboard` });
-    } catch (err) {
+    } catch {
       setError(t('error_google'));
       setLoading(false);
     }
@@ -75,6 +75,7 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
 
       router.push(`/${locale}/dashboard`);
       router.refresh();
+      onClose(); // Close modal after successful auth
     } catch (err) {
       const error = err as Error;
       setError(error.message || t('error_general'));
