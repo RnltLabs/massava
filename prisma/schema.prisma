@@ -170,6 +170,13 @@ model Booking {
   preferredTime   String        // Customer's preferred time (text: "afternoon", "14:00")
   message         String?       @db.Text // Additional notes/requests
 
+  // GDPR Art. 9 Compliance (Health Data)
+  // Special category data requires explicit consent
+  explicitHealthConsent   Boolean?  @default(false)
+  healthConsentGivenAt    DateTime?
+  healthConsentText       String?   @db.Text // Record of consent text shown to user
+  healthConsentWithdrawnAt DateTime?
+
   // Status
   status          BookingStatus @default(PENDING)
 
