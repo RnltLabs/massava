@@ -9,8 +9,9 @@ import createMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
 import { NextRequest, NextResponse } from 'next/server';
 
-// Detect basePath from NEXTAUTH_URL (same logic as next.config.ts)
-const basePath = process.env.NEXTAUTH_URL?.includes('/massava') ? '/massava' : '';
+// Detect basePath from NODE_ENV (same logic as next.config.ts)
+// IMPORTANT: Must match next.config.ts to ensure consistency
+const basePath = process.env.NODE_ENV === 'production' ? '/massava' : '';
 
 const intlMiddleware = createMiddleware({
   // A list of all locales that are supported
