@@ -17,10 +17,10 @@ const prisma = new PrismaClient();
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   // NextAuth basePath must be ABSOLUTE path including Next.js basePath
-  // NextAuth internal redirects don't respect Next.js basePath, so we need full path
-  // In production: /massava/api/auth
-  // In development: /api/auth
-  basePath: process.env.NODE_ENV === 'production' ? '/massava/api/auth' : '/api/auth',
+  // Use NEXTAUTH_BASEPATH env var to set the full path at runtime
+  // This is set in deployment configs to /massava/api/auth for staging/production
+  // Defaults to /api/auth for local development
+  basePath: process.env.NEXTAUTH_BASEPATH || '/api/auth',
   adapter: UnifiedUserAdapter(prisma),
   session: {
     strategy: 'jwt',

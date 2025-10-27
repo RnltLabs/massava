@@ -52,6 +52,7 @@ jobs:
             -e DATABASE_URL="${{ secrets.DATABASE_URL_STAGING }}" \
             -e AUTH_URL="https://staging.rnltlabs.de" \
             -e NEXTAUTH_URL="https://staging.rnltlabs.de/massava" \
+            -e NEXTAUTH_BASEPATH="/massava/api/auth" \
             -e AUTH_TRUST_HOST="true" \
             -e AUTH_SECRET="${{ secrets.AUTH_SECRET_STAGING }}" \
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
