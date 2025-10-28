@@ -83,7 +83,7 @@ export const phoneSchema = z
 /**
  * Unified Registration Schema
  * Single registration form for ALL users (customers and studio owners)
- * Role emerges from actions, not upfront selection
+ * Role determined by accountType selection
  */
 export const unifiedRegistrationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -92,16 +92,19 @@ export const unifiedRegistrationSchema = z.object({
   terms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and privacy policy',
   }),
+  accountType: z.enum(['customer', 'studio']).default('customer'),
 });
 
 /**
  * Unified Login Schema
  * Single login form with automatic role detection
+ * AccountType determines initial routing preference
  */
 export const unifiedLoginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, 'Password is required'),
   rememberMe: z.boolean().optional(),
+  accountType: z.enum(['customer', 'studio']).default('customer'),
 });
 
 /**

@@ -138,7 +138,28 @@
     "logout": "Logout",
     "my_account": "My Account",
     "customer_login": "Customer Login",
-    "customer_login_button": "Sign In"
+    "customer_login_button": "Sign In",
+    "account_type_selector": {
+      "customer": {
+        "title": "I want to book",
+        "subtitle": "Find massage studios and reserve appointments"
+      },
+      "studio": {
+        "title": "I own a studio",
+        "subtitle": "Manage my massage studio and receive bookings"
+      }
+    },
+    "account_type_toggle": {
+      "customer": "Customer",
+      "studio": "Studio Owner"
+    },
+    "dashboard_cta": {
+      "studio_setup": "Set up your studio now"
+    },
+    "role_switcher": {
+      "switch_to_customer": "Switch to customer view",
+      "switch_to_studio": "Switch to studio view"
+    }
   },
   "customer_auth": {
     "signin_title": "Sign in as Customer",

@@ -17,12 +17,15 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { signIn } from '@/app/actions/auth';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
+import type { AccountType } from './AccountTypeSelector';
 
 export function LoginForm({
   locale = 'en',
+  accountType = 'customer',
   onForgotPassword,
 }: {
   locale?: string;
+  accountType?: AccountType;
   onForgotPassword?: () => void;
 }) {
   const searchParams = useSearchParams();
@@ -53,7 +56,7 @@ export function LoginForm({
     setError(null);
     setErrors({});
 
-    const result = await signIn(formData);
+    const result = await signIn({ ...formData, accountType });
 
     if (result.success) {
       // Use window.location.href for hard redirect
@@ -78,7 +81,7 @@ export function LoginForm({
         <Alert className="border-green-200 bg-green-50">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
           <AlertDescription className="text-green-800">
-            Your email has been verified! You can now log in.
+            Deine E-Mail wurde bestätigt! Du kannst dich jetzt anmelden.
           </AlertDescription>
         </Alert>
       )}
@@ -100,7 +103,7 @@ export function LoginForm({
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with email
+            Oder mit E-Mail fortfahren
           </span>
         </div>
       </div>
@@ -109,11 +112,11 @@ export function LoginForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Email Field */}
         <div className="space-y-2">
-          <Label htmlFor="login-email">Email</Label>
+          <Label htmlFor="login-email">E-Mail</Label>
           <Input
             id="login-email"
             type="email"
-            placeholder="name@example.com"
+            placeholder="name@beispiel.de"
             value={formData.email}
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
@@ -131,7 +134,7 @@ export function LoginForm({
         {/* Password Field */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="login-password">Password</Label>
+            <Label htmlFor="login-password">Passwort</Label>
             {onForgotPassword && (
               <button
                 type="button"
@@ -139,7 +142,7 @@ export function LoginForm({
                 className="text-sm text-primary hover:underline"
                 disabled={loading}
               >
-                Forgot password?
+                Passwort vergessen?
               </button>
             )}
           </div>
@@ -147,7 +150,7 @@ export function LoginForm({
             <Input
               id="login-password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
+              placeholder="Gib dein Passwort ein"
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
@@ -191,7 +194,7 @@ export function LoginForm({
             htmlFor="remember-me"
             className="text-sm text-muted-foreground cursor-pointer"
           >
-            Remember me for 30 days
+            Angemeldet bleiben (30 Tage)
           </label>
         </div>
 
@@ -200,10 +203,10 @@ export function LoginForm({
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
+              Anmelden...
             </>
           ) : (
-            'Sign In'
+            'Anmelden'
           )}
         </Button>
       </form>

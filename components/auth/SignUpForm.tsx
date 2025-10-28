@@ -16,6 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { signUp } from '@/app/actions/auth';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
+import type { AccountType } from './AccountTypeSelector';
 import Link from 'next/link';
 
 type PasswordStrength = {
@@ -24,7 +25,13 @@ type PasswordStrength = {
   percentage: number;
 };
 
-export function SignUpForm({ locale = 'en' }: { locale?: string }) {
+export function SignUpForm({
+  locale = 'en',
+  accountType = 'customer',
+}: {
+  locale?: string;
+  accountType?: AccountType;
+}) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -72,7 +79,7 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
     setError(null);
     setErrors({});
 
-    const result = await signUp(formData, locale);
+    const result = await signUp({ ...formData, accountType }, locale);
 
     if (result.success) {
       setSuccess(true);
@@ -97,26 +104,26 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
           </div>
 
           <h3 className="text-2xl font-bold tracking-tight mb-2">
-            Check Your Email
+            E-Mail überprüfen
           </h3>
 
           <p className="text-muted-foreground mb-2">
-            We&apos;ve sent a verification link to
+            Wir haben einen Bestätigungslink an
           </p>
 
           <p className="font-medium mb-6">{formData.email}</p>
 
           <p className="text-sm text-muted-foreground mb-4">
-            Click the link in the email to verify your account and get started.
+            Klicke auf den Link in der E-Mail, um dein Konto zu verifizieren.
           </p>
 
           <p className="text-xs text-muted-foreground">
-            Didn&apos;t receive the email? Check your spam folder or{' '}
+            E-Mail nicht erhalten? Überprüfe deinen Spam-Ordner oder{' '}
             <button
               className="text-primary hover:underline"
               onClick={() => setSuccess(false)}
             >
-              try again
+              versuche es erneut
             </button>
             .
           </p>
@@ -144,7 +151,7 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with email
+            Oder mit E-Mail fortfahren
           </span>
         </div>
       </div>
@@ -153,11 +160,11 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name Field */}
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+          <Label htmlFor="name">Name</Label>
           <Input
             id="name"
             type="text"
-            placeholder="Enter your full name"
+            placeholder="Dein vollständiger Name"
             value={formData.name}
             onChange={(e) =>
               setFormData({ ...formData, name: e.target.value })
@@ -173,11 +180,11 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
 
         {/* Email Field */}
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">E-Mail</Label>
           <Input
             id="email"
             type="email"
-            placeholder="name@example.com"
+            placeholder="name@beispiel.de"
             value={formData.email}
             onChange={(e) =>
               setFormData({ ...formData, email: e.target.value })
@@ -193,12 +200,12 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
 
         {/* Password Field */}
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">Passwort</Label>
           <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
-              placeholder="Create a strong password"
+              placeholder="Erstelle ein sicheres Passwort"
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
@@ -226,7 +233,7 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">
-                  Password strength:
+                  Passwortstärke:
                 </span>
                 <span
                   className={`font-medium ${
@@ -252,14 +259,13 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
           {/* Password Requirements */}
           <div className="text-xs text-muted-foreground space-y-1">
             <p className={formData.password.length >= 10 ? 'text-green-600' : ''}>
-              {formData.password.length >= 10 ? '✓' : '○'} At least 10
-              characters
+              {formData.password.length >= 10 ? '✓' : '○'} Mindestens 10 Zeichen
             </p>
             <p className={/[A-Z]/.test(formData.password) ? 'text-green-600' : ''}>
-              {/[A-Z]/.test(formData.password) ? '✓' : '○'} One uppercase letter
+              {/[A-Z]/.test(formData.password) ? '✓' : '○'} Ein Großbuchstabe
             </p>
             <p className={/[0-9]/.test(formData.password) ? 'text-green-600' : ''}>
-              {/[0-9]/.test(formData.password) ? '✓' : '○'} One number
+              {/[0-9]/.test(formData.password) ? '✓' : '○'} Eine Zahl
             </p>
           </div>
 
@@ -282,21 +288,21 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
             disabled={loading}
           />
           <label htmlFor="terms" className="text-sm text-muted-foreground">
-            I agree to the{' '}
+            Ich akzeptiere die{' '}
             <Link
               href={`/${locale}/legal/terms`}
               className="text-primary hover:underline"
               target="_blank"
             >
-              Terms of Service
+              Nutzungsbedingungen
             </Link>{' '}
-            and{' '}
+            und{' '}
             <Link
               href={`/${locale}/legal/privacy`}
               className="text-primary hover:underline"
               target="_blank"
             >
-              Privacy Policy
+              Datenschutzerklärung
             </Link>
           </label>
         </div>
@@ -309,10 +315,10 @@ export function SignUpForm({ locale = 'en' }: { locale?: string }) {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Creating account...
+              Konto wird erstellt...
             </>
           ) : (
-            'Create Account'
+            'Konto erstellen'
           )}
         </Button>
       </form>
