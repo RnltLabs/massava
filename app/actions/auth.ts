@@ -52,7 +52,7 @@ export async function signUp(
       };
     }
 
-    const { name, email, password, accountType } = validatedFields.data;
+    const { name, email, password, phone, accountType } = validatedFields.data;
 
     // 2. Determine primary role based on account type selection
     const primaryRole =
@@ -95,6 +95,7 @@ export async function signUp(
         email,
         name,
         password: hashedPassword,
+        phone: phone || null, // Optional field
         primaryRole,
         isActive: true,
         emailVerified: null, // Not verified yet
@@ -214,12 +215,12 @@ export async function signIn(
     let redirectUrl = '/dashboard';
 
     // If user selected studio but is actually a customer, go to dashboard (with upgrade prompt)
-    // If user selected customer, always go to dashboard (works for both roles)
+    // If user selected customer, always go to landing page (search-focused experience)
     // If user selected studio and IS studio owner, go to dashboard (studio view)
     if (accountType === 'studio' && actualRole === 'STUDIO_OWNER') {
       redirectUrl = '/dashboard'; // Studio dashboard view
     } else if (accountType === 'customer') {
-      redirectUrl = '/dashboard'; // Customer dashboard view
+      redirectUrl = '/'; // Landing page with search widget
     }
 
     // 4. Now sign in via NextAuth (we know credentials are valid)

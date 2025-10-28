@@ -89,6 +89,19 @@ export const unifiedRegistrationSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: emailSchema,
   password: unifiedPasswordSchema,
+  phone: z
+    .string()
+    .optional()
+    .transform((val) => (val === '' ? undefined : val))
+    .refine(
+      (val) => {
+        if (!val) return true; // Optional field
+        return /^[\d\s\+\-\(\)]+$/.test(val) && val.length >= 7 && val.length <= 20;
+      },
+      {
+        message: 'Ungültige Telefonnummer (7-20 Zeichen, nur Zahlen und +/-/()/Leerzeichen)',
+      }
+    ),
   terms: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and privacy policy',
   }),
