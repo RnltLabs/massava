@@ -51,25 +51,49 @@ export async function POST(
 
     const body = await request.json();
 
+    logger.info('Customer registration attempt', {
+      correlationId,
+      ipAddress,
+      action: 'REGISTER_CUSTOMER',
+      resource: 'customer',
+      requestBody: {
+        name: body.name ? `${body.name.substring(0, 3)}***` : undefined,
+        email: body.email ? `${body.email.substring(0, 3)}***` : undefined,
+        phone: body.phone || '(not provided)',
+        passwordProvided: !!body.password,
+        passwordLength: body.password?.length || 0,
+      },
+    });
+
     // Validate inputs with Zod schema
     const validation = customerRegistrationSchema.safeParse(body);
 
     if (!validation.success) {
+      const fieldErrors = validation.error.flatten().fieldErrors;
       logger.warn('Customer registration validation failed', {
         correlationId,
         ipAddress,
         action: 'REGISTER_CUSTOMER',
         resource: 'customer',
-        errors: validation.error.flatten().fieldErrors,
+        errors: fieldErrors,
       });
+
+      // Log detailed validation errors for debugging
+      console.error('❌ Validation failed with errors:', fieldErrors);
+
       return NextResponse.json(
         {
           error: 'Validierungsfehler',
-          details: validation.error.flatten().fieldErrors,
+          details: fieldErrors,
         },
         { status: 400 }
       );
     }
+
+    logger.info('Customer registration validation passed', {
+      correlationId,
+      ipAddress,
+    });
 
     const { name, email, password, phone } = validation.data;
 

@@ -48,13 +48,19 @@ export const emailSchema = z
 /**
  * Phone Validation Schema (Optional)
  * Accepts various German and international formats
+ * Empty strings are transformed to undefined (optional field)
  */
 export const phoneSchema = z
   .string()
-  .regex(/^[\d\s\+\-\(\)]+$/, 'Ungültige Telefonnummer')
-  .min(7, 'Telefonnummer zu kurz')
-  .max(20, 'Telefonnummer zu lang')
-  .optional();
+  .transform((val) => (val === '' ? undefined : val))
+  .pipe(
+    z
+      .string()
+      .regex(/^[\d\s\+\-\(\)]+$/, 'Ungültige Telefonnummer')
+      .min(7, 'Telefonnummer zu kurz')
+      .max(20, 'Telefonnummer zu lang')
+      .optional()
+  );
 
 /**
  * Registration Schema for Studio Owners
