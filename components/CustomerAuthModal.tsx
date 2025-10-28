@@ -29,6 +29,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     email: prefillData?.email || '',
@@ -67,9 +68,16 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
         }
 
         console.log('✅ Customer registered successfully');
+
+        // Show success message - user needs to verify email before login
+        setRegistrationSuccess(true);
+        setLoading(false);
+        return;
       }
 
-      // Sign in with unified credentials provider
+      // Sign in (only for existing users, not after registration)
+      console.log('🔐 Attempting sign in for:', formData.email);
+
       const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
@@ -77,20 +85,66 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
       });
 
       if (result?.error) {
+        console.error('❌ Sign in failed:', result.error);
         setError(t('error_invalid_credentials'));
         setLoading(false);
         return;
       }
 
+      console.log('✅ Sign in successful');
       router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
       router.refresh();
       onClose();
     } catch (err) {
       const error = err as Error;
+      console.error('❌ Error during auth:', error);
       setError(error.message || t('error_general'));
       setLoading(false);
     }
   };
+
+  // Registration success view
+  if (registrationSuccess) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="relative w-full max-w-md bg-card rounded-3xl p-8 wellness-shadow text-center">
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {/* Success Icon */}
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+            <svg className="h-10 w-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <h2 className="text-3xl font-bold mb-4">Registrierung erfolgreich!</h2>
+          <p className="text-muted-foreground mb-6">
+            Wir haben eine Bestätigungs-E-Mail an <strong>{formData.email}</strong> gesendet.
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            Bitte überprüfen Sie Ihren Posteingang und klicken Sie auf den Verifizierungslink, um sich anmelden zu können.
+          </p>
+
+          <button
+            onClick={() => {
+              setRegistrationSuccess(false);
+              setMode('signin');
+              setFormData({ ...formData, password: '' });
+            }}
+            className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-2xl hover:bg-primary/90 transition-colors font-medium"
+          >
+            Zum Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
