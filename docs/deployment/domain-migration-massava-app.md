@@ -42,6 +42,33 @@ A       staging    91.98.69.15     3600
 
 **Note**: DNS propagation can take 15 minutes to 48 hours. Use tools like `dig massava.app` or https://dnschecker.org to verify.
 
+### Resend Email DNS Records
+
+For email functionality via Resend API, add these DNS records at IONOS:
+
+**DKIM Record (Email Authentication)**:
+```
+Type    Name                Content                                                                                                                                                                                                                                                            TTL
+TXT     resend._domainkey   p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDjfCaxY5e89irvGbrTB4kg4qbR24WwKLJMuPt+HIMQOUGWGPvxbKhNqydrtEVM+ulWJrgk4XKjom68aqXVLYjrsLw4shdBp76RhzSEwR1qr/eEsGKmFQFTYgtJntIbcUAwQwE06xdlMpZhj+WxNqVrpgvgYAx5oAN6B7lPK6X16wIDAQAB    Auto
+```
+
+**Sending Records**:
+```
+Type    Name     Content                                       TTL     Priority
+MX      send     feedback-smtp.eu-west-1.amazonses.com        Auto    10
+TXT     send     v=spf1 include:amazonses.com ~all            Auto
+TXT     _dmarc   v=DMARC1; p=none;                            Auto
+```
+
+These records enable:
+- **DKIM**: Email authentication and signature verification
+- **SPF**: Sender Policy Framework to prevent email spoofing
+- **DMARC**: Email policy and reporting
+- **MX**: Feedback loop for bounces and complaints
+
+**Environment Variable**:
+Ensure `RESEND_FROM_EMAIL="noreply@massava.app"` is set in both staging and production containers.
+
 ## Server Configuration Steps
 
 ### 1. nginx Configuration
@@ -174,8 +201,9 @@ export const authOptions: NextAuthOptions = {
 ## Testing Checklist
 
 ### Pre-deployment
-- [ ] DNS records configured at IONOS
-- [ ] DNS propagation verified (`dig massava.app`)
+- [ ] DNS A records configured at IONOS (massava.app, www, staging)
+- [ ] Resend email DNS records configured (DKIM, SPF, DMARC, MX)
+- [ ] DNS propagation verified (`dig massava.app`, `dig TXT resend._domainkey.massava.app`)
 - [ ] nginx config created and tested (`nginx -t`)
 - [ ] Staging container port 3005 mapped
 
@@ -184,10 +212,13 @@ export const authOptions: NextAuthOptions = {
 - [ ] `https://staging.massava.app/de` shows login/register
 - [ ] SSL certificate is valid (no browser warnings)
 - [ ] Login flow works on staging
+- [ ] Email verification works (test registration with real email)
+- [ ] Magic link emails arrive from noreply@massava.app
 - [ ] `https://massava.app` loads successfully
 - [ ] `https://www.massava.app` redirects to `https://massava.app`
 - [ ] Login flow works on production
 - [ ] NextAuth redirects work correctly
+- [ ] Production email functionality verified
 
 ### After full deployment
 - [ ] Update documentation with new domain
