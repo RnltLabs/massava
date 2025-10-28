@@ -44,6 +44,13 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
 
     try {
       if (mode === 'signup') {
+        console.log('📝 Starting customer registration with:', {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || '(not provided)',
+          passwordLength: formData.password?.length || 0,
+        });
+
         // Register new customer
         const response = await apiFetch(`/${locale}/api/auth/customer/register`, {
           method: 'POST',
@@ -51,10 +58,15 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
           body: JSON.stringify(formData),
         });
 
+        console.log('📥 Registration response:', response.status, response.statusText);
+
         if (!response.ok) {
           const data = await response.json();
+          console.error('❌ Registration failed:', data);
           throw new Error(data.error || 'Registration failed');
         }
+
+        console.log('✅ Customer registered successfully');
       }
 
       // Sign in with unified credentials provider
