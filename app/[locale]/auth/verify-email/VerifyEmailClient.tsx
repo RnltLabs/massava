@@ -9,7 +9,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import { CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,7 +20,6 @@ export function VerifyEmailSuccess({
   locale: string;
 }) {
   const router = useRouter();
-  const [isLoggingIn, setIsLoggingIn] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,7 +34,6 @@ export function VerifyEmailSuccess({
       } catch (err) {
         console.error('Auto-login failed:', err);
         setError('Failed to log you in automatically. Please log in manually.');
-        setIsLoggingIn(false);
       }
     };
 

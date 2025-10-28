@@ -10,7 +10,7 @@
 
 import { randomBytes } from 'crypto';
 import bcrypt from 'bcryptjs';
-import { signIn as nextAuthSignIn, auth } from '@/auth-unified';
+import { signIn as nextAuthSignIn } from '@/auth-unified';
 import { prisma } from '@/lib/prisma';
 import {
   unifiedRegistrationSchema,
@@ -211,7 +211,7 @@ export async function signIn(
         password,
         redirect: false,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // This shouldn't happen since we already verified credentials
       console.error('NextAuth sign in error:', error);
       return {

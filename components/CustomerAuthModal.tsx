@@ -97,6 +97,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
         });
 
         // Register new customer (don't send passwordConfirm to backend)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { passwordConfirm, ...registrationData } = formData;
         const response = await apiFetch(`/${locale}/api/auth/customer/register`, {
           method: 'POST',

@@ -7,10 +7,9 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { getTranslations } from 'next-intl/server';
 import { verifyEmailVerificationToken } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
-import { CheckCircle2, XCircle, Mail } from 'lucide-react';
+import { XCircle, Mail } from 'lucide-react';
 import { VerifyEmailSuccess } from './VerifyEmailClient';
 
 async function VerifyEmailContent({
@@ -20,7 +19,6 @@ async function VerifyEmailContent({
   searchParams: { token?: string };
   locale: string;
 }) {
-  const t = await getTranslations('VerifyEmail');
   const token = searchParams.token;
 
   if (!token) {

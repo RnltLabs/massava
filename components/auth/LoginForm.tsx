@@ -9,7 +9,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,6 @@ export function LoginForm({
   locale?: string;
   onForgotPassword?: () => void;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     email: '',
