@@ -112,6 +112,22 @@ model EmailVerificationToken {
   @@map("email_verification_tokens")
 }
 
+// Password Reset Token Model
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // 64 hex chars (32 bytes)
+  email     String
+  expiresAt DateTime // 1 hour from creation
+  used      Boolean  @default(false) // One-time use
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
 // Studio Model
 // Represents a massage/wellness studio
 model Studio {
