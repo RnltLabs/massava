@@ -2,16 +2,15 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * Email Verification Page
- * STRATEGY.md Section 8.2 - Phase 2
+ * Email Verification Page - Massava Design
  */
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { verifyEmailVerificationToken } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
+import { CheckCircle2, XCircle, Mail } from 'lucide-react';
 
 async function VerifyEmailContent({
   searchParams,
@@ -25,27 +24,47 @@ async function VerifyEmailContent({
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+        {/* Decorative background blobs */}
+        <div
+          className="organic-blob"
+          style={{
+            width: '500px',
+            height: '500px',
+            background: 'oklch(0.50 0.15 20 / 0.15)',
+            top: '-100px',
+            right: '-150px',
+          }}
+        />
+        <div
+          className="organic-blob"
+          style={{
+            width: '400px',
+            height: '400px',
+            background: 'oklch(0.88 0.03 80 / 0.2)',
+            bottom: '-100px',
+            left: '-100px',
+            animationDelay: '3s',
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 max-w-md w-full mx-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+              <XCircle className="h-10 w-10 text-red-600" />
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">
-              {t('invalidLink.title', { default: 'Ungültiger Link' })}
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {t('invalidLink.title')}
             </h1>
-            <p className="mt-2 text-gray-600">
-              {t('invalidLink.message', {
-                default: 'Der Verifizierungslink ist ungültig. Bitte überprüfen Sie Ihre E-Mail erneut.',
-              })}
+            <p className="text-gray-600 mb-8">
+              {t('invalidLink.message')}
             </p>
             <Link
               href={`/${locale}`}
-              className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
             >
-              {t('backToHome', { default: 'Zur Startseite' })}
+              {t('backToHome')}
             </Link>
           </div>
         </div>
@@ -58,32 +77,50 @@ async function VerifyEmailContent({
 
   if (!email) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-          <div className="text-center">
-            <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-              <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+      <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+        {/* Decorative background blobs */}
+        <div
+          className="organic-blob"
+          style={{
+            width: '500px',
+            height: '500px',
+            background: 'oklch(0.50 0.15 20 / 0.15)',
+            top: '-100px',
+            right: '-150px',
+          }}
+        />
+        <div
+          className="organic-blob"
+          style={{
+            width: '400px',
+            height: '400px',
+            background: 'oklch(0.88 0.03 80 / 0.2)',
+            bottom: '-100px',
+            left: '-100px',
+            animationDelay: '3s',
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 max-w-md w-full mx-4">
+          <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 text-center">
+            <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-amber-100 mb-6">
+              <Mail className="h-10 w-10 text-amber-600" />
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">
-              {t('expired.title', { default: 'Link abgelaufen' })}
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              {t('expired.title')}
             </h1>
-            <p className="mt-2 text-gray-600">
-              {t('expired.message', {
-                default: 'Dieser Verifizierungslink ist abgelaufen oder wurde bereits verwendet.',
-              })}
+            <p className="text-gray-600 mb-2">
+              {t('expired.message')}
             </p>
-            <p className="mt-1 text-sm text-gray-500">
-              {t('expired.hint', {
-                default: 'Bitte fordern Sie einen neuen Verifizierungslink an.',
-              })}
+            <p className="text-sm text-gray-500 mb-8">
+              {t('expired.hint')}
             </p>
             <Link
               href={`/${locale}`}
-              className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
             >
-              {t('backToHome', { default: 'Zur Startseite' })}
+              {t('backToHome')}
             </Link>
           </div>
         </div>
@@ -122,35 +159,58 @@ async function VerifyEmailContent({
     user?.primaryRole === 'STUDIO_OWNER' ? `/${locale}/dashboard` : `/${locale}/customer/dashboard`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8">
-        <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
-            <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
+      {/* Decorative background blobs - Success theme (green) */}
+      <div
+        className="organic-blob"
+        style={{
+          width: '500px',
+          height: '500px',
+          background: 'oklch(0.62 0.08 140 / 0.2)',
+          top: '-100px',
+          right: '-150px',
+        }}
+      />
+      <div
+        className="organic-blob"
+        style={{
+          width: '400px',
+          height: '400px',
+          background: 'oklch(0.88 0.03 120 / 0.25)',
+          bottom: '-100px',
+          left: '-100px',
+          animationDelay: '3s',
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 max-w-md w-full mx-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 text-center">
+          {/* Success checkmark with animation */}
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6 animate-bounce">
+            <CheckCircle2 className="h-10 w-10 text-green-600" />
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">
-            {t('success.title', { default: 'E-Mail verifiziert!' })}
+
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            {t('success.title')}
           </h1>
-          <p className="mt-2 text-gray-600">
-            {t('success.message', {
-              default: 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt.',
-            })}
+          <p className="text-gray-600 mb-2">
+            {t('success.message')}
           </p>
-          <p className="mt-4 text-sm text-gray-500">
-            {t('success.redirecting', {
-              default: 'Sie werden in wenigen Sekunden weitergeleitet...',
-            })}
+          <p className="text-sm text-gray-500 mb-8">
+            {t('success.redirecting')}
           </p>
+
           <Link
             href={dashboardPath}
-            className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
           >
-            {t('success.goToDashboard', { default: 'Zum Dashboard' })}
+            {t('success.goToDashboard')}
           </Link>
         </div>
       </div>
+
+      {/* Auto-redirect after 3 seconds */}
       <meta httpEquiv="refresh" content={`3;url=${dashboardPath}`} />
     </div>
   );
@@ -170,7 +230,7 @@ export default async function VerifyEmailPage({
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
         </div>
       }
     >
