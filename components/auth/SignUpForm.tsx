@@ -135,7 +135,7 @@ export function SignUpForm({
       formData.firstName.trim() !== '' &&
       formData.lastName.trim() !== '' &&
       formData.email.trim() !== '' &&
-      formData.password.length >= 10 &&
+      formData.password.length >= 8 &&
       formData.password === formData.passwordConfirm &&
       formData.termsAccepted &&
       !errors.firstName &&

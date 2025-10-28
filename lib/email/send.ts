@@ -18,8 +18,19 @@ import {
 } from './templates';
 import { logger } from '@/lib/logger';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization of Resend client
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set');
+    }
+    resendClient = new Resend(apiKey);
+  }
+  return resendClient;
+}
 
 // Default sender email
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@massava.app';
@@ -70,7 +81,7 @@ export async function sendVerificationEmail(
       : 'Verify Your Email Address - Massava';
 
     // Send email via Resend
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `Massava <${FROM_EMAIL}>`,
       to: email,
       subject,
@@ -160,7 +171,7 @@ export async function sendWelcomeEmail(
       : 'Welcome to Massava!';
 
     // Send email via Resend
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `Massava <${FROM_EMAIL}>`,
       to: email,
       subject,
@@ -250,7 +261,7 @@ export async function sendPasswordResetEmail(
       : 'Reset Your Password - Massava';
 
     // Send email via Resend
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `Massava <${FROM_EMAIL}>`,
       to: email,
       subject,
