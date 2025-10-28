@@ -22,8 +22,8 @@ interface DateTimePickerProps {
   className?: string
 }
 
-type DateTimeStep = 'date' | 'time'
-type TimeSlot = 'any' | 'morning' | 'afternoon' | 'evening'
+type DateTimeStep = 'date' | 'time' | 'custom-time'
+type TimeSlot = 'any' | 'morning' | 'afternoon' | 'evening' | 'custom'
 type QuickDateOption = 'any' | 'today' | 'tomorrow'
 
 export function DateTimePicker({
@@ -38,6 +38,8 @@ export function DateTimePicker({
   const [step, setStep] = useState<DateTimeStep>('date')
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(value)
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot>('any')
+  const [customHour, setCustomHour] = useState<string>('12')
+  const [customMinute, setCustomMinute] = useState<string>('00')
 
   const isMobile = useMediaQuery('(max-width: 768px)')
   const t = useTranslations('dateTimePicker')
@@ -57,6 +59,8 @@ export function DateTimePicker({
         return setHours(setMinutes(date, 0), 14) // 14:00
       case 'evening':
         return setHours(setMinutes(date, 0), 19) // 19:00
+      case 'custom':
+        return setHours(setMinutes(date, parseInt(customMinute)), parseInt(customHour))
       default:
         return setHours(setMinutes(date, 0), 12) // 12:00 for "any"
     }
@@ -103,6 +107,9 @@ export function DateTimePicker({
   // Handle time slot selection
   const handleTimeSlot = (slot: TimeSlot) => {
     setSelectedTimeSlot(slot)
+    if (slot === 'custom') {
+      setStep('custom-time')
+    }
   }
 
   // Handle "Done" button
@@ -138,6 +145,95 @@ export function DateTimePicker({
   const formatQuickDate = (date: Date): string => {
     return format(date, 'EEEE, d. MMMM', { locale })
   }
+
+  // Render custom time selection
+  const renderCustomTimeSelection = () => (
+    <div className="space-y-4">
+      {/* Back Button */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setStep('time')}
+          className="gap-1"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {t('back')}
+        </Button>
+      </div>
+
+      {selectedDate && (
+        <div className="px-4 py-3 bg-accent/50 rounded-lg">
+          <div className="text-xs text-muted-foreground mb-1">
+            {t('selected')}
+          </div>
+          <div className="font-medium">
+            {format(selectedDate, 'EEEE, d. MMMM yyyy', { locale })}
+          </div>
+        </div>
+      )}
+
+      <Separator />
+
+      {/* Time Input */}
+      <div className="space-y-3">
+        <div className="text-sm font-medium">{t('customTime') || 'Genaue Uhrzeit wählen'}</div>
+        <div className="flex gap-3 items-center justify-center">
+          {/* Hour */}
+          <div className="flex-1">
+            <label htmlFor="hour-input" className="text-xs text-muted-foreground block mb-1">
+              Stunde
+            </label>
+            <select
+              id="hour-input"
+              value={customHour}
+              onChange={(e) => setCustomHour(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card text-center font-semibold"
+            >
+              {Array.from({ length: 24 }, (_, i) => (
+                <option key={i} value={String(i).padStart(2, '0')}>
+                  {String(i).padStart(2, '0')}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="text-2xl font-bold pt-6">:</div>
+
+          {/* Minute */}
+          <div className="flex-1">
+            <label htmlFor="minute-input" className="text-xs text-muted-foreground block mb-1">
+              Minute
+            </label>
+            <select
+              id="minute-input"
+              value={customMinute}
+              onChange={(e) => setCustomMinute(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card text-center font-semibold"
+            >
+              {['00', '15', '30', '45'].map((min) => (
+                <option key={min} value={min}>
+                  {min}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Done Button */}
+      <div className="pt-4">
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={handleDone}
+          disabled={!selectedDate}
+        >
+          {t('done')}
+        </Button>
+      </div>
+    </div>
+  )
 
   // Render date selection step
   const renderDateSelection = () => (
@@ -197,13 +293,14 @@ export function DateTimePicker({
         <div className="text-sm font-medium text-muted-foreground">
           {t('orChooseDate')}
         </div>
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleDateSelect}
-          disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-          locale={locale}
-          className="rounded-lg border"
+        <div className="flex justify-center">
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={handleDateSelect}
+            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+            locale={locale}
+            className="rounded-lg border"
           classNames={{
             months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
             month: "space-y-4",
@@ -234,7 +331,8 @@ export function DateTimePicker({
             day_disabled: "text-muted-foreground opacity-50",
             day_hidden: "invisible",
           }}
-        />
+          />
+        </div>
       </div>
     </div>
   )
@@ -326,19 +424,38 @@ export function DateTimePicker({
             </div>
           </div>
         </Button>
-      </div>
 
-      {/* Done Button */}
-      <div className="pt-4">
+        {/* Custom Time Button */}
         <Button
-          className="w-full"
-          size="lg"
-          onClick={handleDone}
-          disabled={!selectedDate}
+          variant="outline"
+          className="justify-start h-auto py-4 transition-all"
+          onClick={() => handleTimeSlot('custom')}
         >
-          {t('done')}
+          <div className="flex items-center gap-3">
+            <Clock className="h-5 w-5" />
+            <div className="text-left">
+              <div className="font-semibold">{t('customTime') || 'Genaue Uhrzeit'}</div>
+              <div className="text-sm text-muted-foreground">
+                {t('selectSpecificTime') || 'Wähle eine spezifische Uhrzeit'}
+              </div>
+            </div>
+          </div>
         </Button>
       </div>
+
+      {/* Done Button - only for preset times */}
+      {selectedTimeSlot !== 'custom' && selectedTimeSlot !== 'any' && (
+        <div className="pt-4">
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleDone}
+            disabled={!selectedDate}
+          >
+            {t('done')}
+          </Button>
+        </div>
+      )}
     </div>
   )
 
@@ -403,7 +520,9 @@ export function DateTimePicker({
               </SheetTitle>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto px-6 py-4">
-              {step === 'date' ? renderDateSelection() : renderTimeSelection()}
+              {step === 'date' && renderDateSelection()}
+              {step === 'time' && renderTimeSelection()}
+              {step === 'custom-time' && renderCustomTimeSelection()}
             </div>
           </SheetContent>
         </Sheet>
@@ -418,20 +537,14 @@ export function DateTimePicker({
         {renderTrigger()}
       </PopoverTrigger>
       <PopoverContent
-        className="w-auto p-0"
+        className="w-auto p-0 max-h-[85vh] overflow-y-auto"
         align="start"
         sideOffset={8}
       >
-        <div className="p-6 space-y-4 max-w-[420px]">
-          {step === 'date' ? (
-            <>
-              {renderDateSelection()}
-            </>
-          ) : (
-            <>
-              {renderTimeSelection()}
-            </>
-          )}
+        <div className="p-6 space-y-4 w-[380px]">
+          {step === 'date' && renderDateSelection()}
+          {step === 'time' && renderTimeSelection()}
+          {step === 'custom-time' && renderCustomTimeSelection()}
         </div>
       </PopoverContent>
     </Popover>

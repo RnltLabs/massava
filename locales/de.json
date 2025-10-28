@@ -260,6 +260,8 @@
     "afternoon": "Nachmittag",
     "evening": "Abend",
     "anyTime": "Beliebige Zeit",
+    "customTime": "Genaue Uhrzeit",
+    "selectSpecificTime": "Wähle eine spezifische Uhrzeit",
     "done": "Fertig",
     "back": "Zurück",
     "selected": "Ausgewählt:",

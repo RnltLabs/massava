@@ -252,6 +252,8 @@
     "afternoon": "Afternoon",
     "evening": "Evening",
     "anyTime": "Any time",
+    "customTime": "Custom time",
+    "selectSpecificTime": "Select a specific time",
     "done": "Done",
     "back": "Back",
     "selected": "Selected:",

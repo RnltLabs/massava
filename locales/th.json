@@ -79,6 +79,8 @@
     "afternoon": "บ่าย",
     "evening": "เย็น",
     "anyTime": "เวลาใดก็ได้",
+    "customTime": "เวลาที่กำหนดเอง",
+    "selectSpecificTime": "เลือกเวลาที่ต้องการ",
     "done": "เสร็จสิ้น",
     "back": "กลับ",
     "selected": "เลือกแล้ว:",
