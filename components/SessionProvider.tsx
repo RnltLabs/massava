@@ -12,16 +12,18 @@ type Props = {
   children: ReactNode;
 };
 
-// Detect basePath from URL (same logic as lib/navigation.ts)
-// In production: URL starts with /massava -> basePath = /massava/api/auth
-// In development: URL doesn't start with /massava -> basePath = /api/auth
+// Detect basePath from URL
+// Since migration to massava.app: basePath is '/api/auth'
+// Legacy support: If URL still contains /massava (old domain), use '/massava/api/auth'
 function getBasePath(): string {
   if (typeof window !== 'undefined') {
     const pathname = window.location.pathname;
+    // Legacy support for old rnltlabs.de/massava URLs
     if (pathname.startsWith('/massava')) {
       return '/massava/api/auth';
     }
   }
+  // Default for massava.app
   return '/api/auth';
 }
 
