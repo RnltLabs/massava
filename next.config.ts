@@ -10,10 +10,10 @@ import { withSentryConfig } from '@sentry/nextjs';
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
-  // Use basePath in production (both staging and production use /massava)
-  // NODE_ENV is available at build time (set in Dockerfile)
-  // IMPORTANT: basePath is evaluated at BUILD TIME, not RUNTIME
-  basePath: process.env.NODE_ENV === 'production' ? '/massava' : '',
+  // Since migration to massava.app, no basePath is needed (runs at domain root)
+  // Previously: basePath was '/massava' for staging.rnltlabs.de/massava
+  // Now: massava.app and staging.massava.app run without basePath
+  basePath: '',
   output: 'standalone',
   eslint: {
     ignoreDuringBuilds: false,

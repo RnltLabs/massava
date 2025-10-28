@@ -21,8 +21,8 @@ A multilingual aggregation platform connecting customers with service providers.
 
 ## Deployment
 
-- **Staging:** https://staging.rnltlabs.de/massava
-- **Production:** https://rnltlabs.de/massava
+- **Staging:** https://staging.massava.app
+- **Production:** https://massava.app
 
 Automatic deployments via GitHub Actions:
 - Push to `develop` → Staging
