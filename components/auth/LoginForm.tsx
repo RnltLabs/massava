@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
@@ -71,6 +70,16 @@ export function LoginForm({
     setTouched((prev) => ({ ...prev, [name]: true }));
     const error = validateField(name, value);
     setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Check if form is valid for submit button state
+  const isFormValid = (): boolean => {
+    return (
+      formData.email.trim() !== '' &&
+      formData.password.trim() !== '' &&
+      !errors.email &&
+      !errors.password
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
@@ -246,20 +255,26 @@ export function LoginForm({
       </div>
 
       {/* Submit Button */}
-      <Button
+      <button
         type="submit"
-        disabled={isLoading}
-        className="w-full h-12 bg-sage-600 hover:bg-sage-700 text-white font-medium rounded-xl transition-all"
+        disabled={isLoading || !isFormValid()}
+        className={cn(
+          'w-full h-12 rounded-xl font-semibold text-base transition-all duration-200',
+          'flex items-center justify-center gap-2',
+          isLoading || !isFormValid()
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'bg-sage-600 hover:bg-sage-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+        )}
       >
         {isLoading ? (
           <>
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-            Anmeldung läuft...
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Anmeldung läuft...</span>
           </>
         ) : (
           'Anmelden'
         )}
-      </Button>
+      </button>
 
       {/* Switch to Signup */}
       {onSwitchToSignup && (
