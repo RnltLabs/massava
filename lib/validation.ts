@@ -9,8 +9,8 @@
 import { z } from 'zod';
 
 /**
- * Password Validation Schema
- * GDPR Art. 32 compliant - Strong password requirements
+ * Strong Password Schema
+ * GDPR Art. 32 compliant - For Studio Owners handling sensitive data
  *
  * Requirements:
  * - Minimum 12 characters
@@ -19,13 +19,24 @@ import { z } from 'zod';
  * - At least one number
  * - At least one special character
  */
-export const passwordSchema = z
+export const strongPasswordSchema = z
   .string()
   .min(12, 'Passwort muss mindestens 12 Zeichen lang sein')
   .regex(/[A-Z]/, 'Passwort muss mindestens einen Großbuchstaben enthalten')
   .regex(/[a-z]/, 'Passwort muss mindestens einen Kleinbuchstaben enthalten')
   .regex(/[0-9]/, 'Passwort muss mindestens eine Zahl enthalten')
   .regex(/[^A-Za-z0-9]/, 'Passwort muss mindestens ein Sonderzeichen enthalten');
+
+/**
+ * Basic Password Schema
+ * For customer accounts - user-friendly requirements
+ *
+ * Requirements:
+ * - Minimum 8 characters
+ */
+export const passwordSchema = z
+  .string()
+  .min(8, 'Passwort muss mindestens 8 Zeichen lang sein');
 
 /**
  * Email Validation Schema
@@ -47,10 +58,11 @@ export const phoneSchema = z
 
 /**
  * Registration Schema for Studio Owners
+ * Uses strong password requirements due to access to sensitive customer data
  */
 export const studioOwnerRegistrationSchema = z.object({
   email: emailSchema,
-  password: passwordSchema,
+  password: strongPasswordSchema,
   name: z.string().min(2, 'Name muss mindestens 2 Zeichen lang sein').optional(),
 });
 
