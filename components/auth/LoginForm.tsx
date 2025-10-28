@@ -206,46 +206,42 @@ export function LoginForm({
         )}
       </div>
 
-      {/* Remember Me & Forgot Password */}
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 cursor-pointer group">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={formData.rememberMe}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, rememberMe: e.target.checked }))
-              }
-              disabled={isLoading}
-              className="peer sr-only"
-            />
-            <div
-              className={cn(
-                'w-5 h-5 rounded-md border-2 transition-all',
-                'peer-focus:ring-2 peer-focus:ring-sage-500/20',
-                formData.rememberMe
-                  ? 'bg-sage-600 border-sage-600'
-                  : 'border-gray-400 bg-white group-hover:border-sage-500'
-              )}
-            >
-              {formData.rememberMe && (
-                <svg
-                  className="w-full h-full text-white p-0.5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-              )}
-            </div>
+      {/* Remember Me - Card Style */}
+      <div>
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((prev) => ({ ...prev, rememberMe: !prev.rememberMe }))
+          }
+          disabled={isLoading}
+          className={cn(
+            'w-full p-3 rounded-xl border-2 transition-all text-left',
+            'min-h-[56px] flex items-center gap-3',
+            'focus:outline-none',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            formData.rememberMe
+              ? 'border-gray-300 bg-white shadow-sm'
+              : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
+          )}
+        >
+          <div
+            className={cn(
+              'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
+              formData.rememberMe
+                ? 'border-gray-400'
+                : 'border-gray-400 bg-white'
+            )}
+            style={formData.rememberMe ? { backgroundColor: '#B56550' } : undefined}
+          >
           </div>
-          <span className="text-sm text-gray-700 select-none">Angemeldet bleiben</span>
-        </label>
+          <div className="flex-1 text-sm text-gray-900 leading-relaxed">
+            Angemeldet bleiben
+          </div>
+        </button>
+      </div>
 
+      {/* Forgot Password */}
+      <div className="text-center">
         <Link
           href="/auth/forgot-password"
           className="text-sm text-sage-700 hover:text-sage-800 font-medium transition-colors"

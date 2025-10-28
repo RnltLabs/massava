@@ -33,17 +33,9 @@ export function AccountTypeSelector({
         <div className="w-full">
           <Card
             onClick={() => onTypeSelect('customer')}
-            className={cn(
-              'relative cursor-pointer p-4 sm:p-6 border-2 transition-all duration-200',
-              'hover:shadow-lg active:shadow-md',
-              'min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center',
-              selectedType === 'customer'
-                ? 'border-sage-600 bg-sage-50 shadow-md'
-                : 'border-gray-200 hover:border-sage-400 bg-white'
-            )}
+            className="relative cursor-pointer p-4 sm:p-6 border-2 border-gray-200 bg-white transition-all duration-200 hover:shadow-lg hover:border-sage-400 active:shadow-md min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center"
             role="button"
             tabIndex={0}
-            aria-pressed={selectedType === 'customer'}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -52,25 +44,11 @@ export function AccountTypeSelector({
             }}
           >
             <div className="space-y-4 text-center">
-              <div
-                className={cn(
-                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0',
-                  selectedType === 'customer'
-                    ? 'bg-sage-600 text-white'
-                    : 'bg-gray-100 text-gray-600'
-                )}
-              >
-                <User className="w-8 h-8 shrink-0" />
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#B56550' }}>
+                <User className="w-8 h-8 shrink-0 text-white" />
               </div>
               <div>
-                <h3
-                  className={cn(
-                    'text-lg font-semibold mb-1',
-                    selectedType === 'customer'
-                      ? 'text-sage-900'
-                      : 'text-gray-900'
-                  )}
-                >
+                <h3 className="text-lg font-semibold mb-1 text-gray-900">
                   Kunde
                 </h3>
                 <p className="text-sm text-gray-600">
@@ -78,23 +56,6 @@ export function AccountTypeSelector({
                 </p>
               </div>
             </div>
-
-            {/* Selected indicator */}
-            {selectedType === 'customer' && (
-              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
           </Card>
         </div>
 
@@ -102,17 +63,9 @@ export function AccountTypeSelector({
         <div className="w-full">
           <Card
             onClick={() => onTypeSelect('studio')}
-            className={cn(
-              'relative cursor-pointer p-4 sm:p-6 border-2 transition-all duration-200',
-              'hover:shadow-lg active:shadow-md',
-              'min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center',
-              selectedType === 'studio'
-                ? 'border-sage-600 bg-sage-50 shadow-md'
-                : 'border-gray-200 hover:border-sage-400 bg-white'
-            )}
+            className="relative cursor-pointer p-4 sm:p-6 border-2 border-gray-200 bg-white transition-all duration-200 hover:shadow-lg hover:border-sage-400 active:shadow-md min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center"
             role="button"
             tabIndex={0}
-            aria-pressed={selectedType === 'studio'}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -121,25 +74,11 @@ export function AccountTypeSelector({
             }}
           >
             <div className="space-y-4 text-center">
-              <div
-                className={cn(
-                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0',
-                  selectedType === 'studio'
-                    ? 'bg-sage-600 text-white'
-                    : 'bg-gray-100 text-gray-600'
-                )}
-              >
-                <Briefcase className="w-8 h-8 shrink-0" />
+              <div className="mx-auto w-16 h-16 rounded-2xl flex items-center justify-center shrink-0" style={{ backgroundColor: '#B56550' }}>
+                <Briefcase className="w-8 h-8 shrink-0 text-white" />
               </div>
               <div>
-                <h3
-                  className={cn(
-                    'text-lg font-semibold mb-1',
-                    selectedType === 'studio'
-                      ? 'text-sage-900'
-                      : 'text-gray-900'
-                  )}
-                >
+                <h3 className="text-lg font-semibold mb-1 text-gray-900">
                   Studio-Inhaber
                 </h3>
                 <p className="text-sm text-gray-600">
@@ -147,23 +86,6 @@ export function AccountTypeSelector({
                 </p>
               </div>
             </div>
-
-            {/* Selected indicator */}
-            {selectedType === 'studio' && (
-              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
-                <svg
-                  className="w-4 h-4 text-white"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            )}
           </Card>
         </div>
       </div>

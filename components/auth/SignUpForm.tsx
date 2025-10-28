@@ -537,24 +537,22 @@ export function SignUpForm({
           className={cn(
             'w-full p-3 rounded-xl border-2 transition-all text-left',
             'min-h-[56px] flex items-center gap-3',
-            'focus:outline-none focus:ring-2 focus:ring-sage-500/20',
+            'focus:outline-none',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             formData.termsAccepted
-              ? 'border-sage-600 bg-sage-50 shadow-sm'
-              : 'border-gray-300 bg-white hover:border-sage-400 hover:bg-gray-50'
+              ? 'border-gray-300 bg-white shadow-sm'
+              : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
           )}
         >
           <div
             className={cn(
-              'flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all',
+              'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
               formData.termsAccepted
-                ? 'bg-sage-600 border-sage-600'
+                ? 'border-gray-400'
                 : 'border-gray-400 bg-white'
             )}
+            style={formData.termsAccepted ? { backgroundColor: '#B56550' } : undefined}
           >
-            {formData.termsAccepted && (
-              <Check className="h-4 w-4 text-white" strokeWidth={3} />
-            )}
           </div>
           <div className="flex-1 text-sm text-gray-900 leading-relaxed">
             Ich akzeptiere die{' '}
