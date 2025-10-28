@@ -62,5 +62,9 @@
       "switch_to_customer": "สลับไปหน้าลูกค้า",
       "switch_to_studio": "สลับไปหน้าร้าน"
     }
+  },
+  "search": {
+    "title": "นัดหมายที่พร้อมใช้งานใน {location}",
+    "subtitle": "ผลการค้นหาภายในรัศมี {radius} กม."
   }
 }

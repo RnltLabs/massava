@@ -235,5 +235,9 @@
       "goToDashboard": "Go to Dashboard"
     },
     "backToHome": "Back to Home"
+  },
+  "search": {
+    "title": "Available appointments in {location}",
+    "subtitle": "Search results within {radius} km"
   }
 }

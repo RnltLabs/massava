@@ -243,5 +243,9 @@
       "goToDashboard": "Zum Dashboard"
     },
     "backToHome": "Zur Startseite"
+  },
+  "search": {
+    "title": "Verfügbare Termine in {location}",
+    "subtitle": "Suchergebnisse im Umkreis von {radius} km"
   }
 }
