@@ -143,7 +143,13 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
 
       if (result?.error) {
         console.error('❌ Sign in failed:', result.error);
-        setError(t('error_invalid_credentials'));
+
+        // Show specific error messages
+        if (result.error.includes('Email not verified')) {
+          setError('Bitte verifizieren Sie zuerst Ihre E-Mail-Adresse. Überprüfen Sie Ihren Posteingang.');
+        } else {
+          setError(t('error_invalid_credentials'));
+        }
         setLoading(false);
         return;
       }

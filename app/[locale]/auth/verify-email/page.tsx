@@ -199,7 +199,7 @@ async function VerifyEmailContent({
           </p>
 
           <Link
-            href={`/${locale}`}
+            href={`/${locale}?openLogin=true`}
             className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
           >
             Zum Login

@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { User, LogOut, LayoutDashboard, ChevronDown, Building2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
@@ -25,6 +26,7 @@ export default function Header() {
   const locale = useLocale();
   const t = useTranslations('auth');
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [showStudioAuthModal, setShowStudioAuthModal] = useState(false);
   const [showCustomerAuthModal, setShowCustomerAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -33,6 +35,17 @@ export default function Header() {
 
   // Determine if user is a studio owner or customer
   const isStudioOwner = session?.user?.email && studios.length > 0;
+
+  // Auto-open customer login modal if openLogin query param is present
+  useEffect(() => {
+    if (searchParams.get('openLogin') === 'true' && !session) {
+      setShowCustomerAuthModal(true);
+      // Remove query param from URL without reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openLogin');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams, session]);
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: getAuthCallbackUrl(`/${locale}`) });

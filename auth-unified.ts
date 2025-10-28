@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        // Find user by email (unified model)
+        // Try unified User model first
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
           include: {
@@ -66,36 +66,104 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           },
         });
 
-        // Check if user exists and has a password
-        if (!user || !user.password) {
-          // Generic error to prevent enumeration
-          return null;
+        if (user && user.password) {
+          // Verify password
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          // Check email verification (unified model)
+          if (!user.emailVerified) {
+            throw new Error('Email not verified');
+          }
+
+          // Check if account is suspended
+          if (user.isSuspended) {
+            throw new Error('Account suspended');
+          }
+
+          // Return user with role information
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            primaryRole: user.primaryRole,
+            roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+          };
         }
 
-        // Verify password
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        );
+        // Fallback: Check legacy Customer model
+        const customer = await prisma.customer.findUnique({
+          where: { email: credentials.email as string },
+        });
 
-        if (!isPasswordValid) {
-          return null;
+        if (customer && customer.password) {
+          // Verify password
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            customer.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          // Check email verification (legacy model)
+          if (!customer.emailVerified) {
+            throw new Error('Email not verified');
+          }
+
+          // Return legacy customer as User with CUSTOMER role
+          return {
+            id: customer.id,
+            email: customer.email,
+            name: customer.name,
+            image: null,
+            primaryRole: UserRole.CUSTOMER,
+            roles: [UserRole.CUSTOMER],
+          };
         }
 
-        // Check if account is suspended
-        if (user.isSuspended) {
-          throw new Error('Account suspended');
+        // Fallback: Check legacy StudioOwner model
+        const studioOwner = await prisma.studioOwner.findUnique({
+          where: { email: credentials.email as string },
+        });
+
+        if (studioOwner && studioOwner.password) {
+          // Verify password
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password as string,
+            studioOwner.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          // Check email verification (legacy model)
+          if (!studioOwner.emailVerified) {
+            throw new Error('Email not verified');
+          }
+
+          // Return legacy studio owner as User with STUDIO_OWNER role
+          return {
+            id: studioOwner.id,
+            email: studioOwner.email,
+            name: studioOwner.name || studioOwner.email,
+            image: null,
+            primaryRole: UserRole.STUDIO_OWNER,
+            roles: [UserRole.STUDIO_OWNER],
+          };
         }
 
-        // Return user with role information
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          primaryRole: user.primaryRole,
-          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
-        };
+        // No user found in any table - generic error to prevent enumeration
+        return null;
       },
     }),
 
