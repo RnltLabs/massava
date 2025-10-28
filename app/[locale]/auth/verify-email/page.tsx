@@ -55,16 +55,16 @@ async function VerifyEmailContent({
               <XCircle className="h-10 w-10 text-red-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {t('invalidLink.title')}
+              Ungültiger Link
             </h1>
             <p className="text-gray-600 mb-8">
-              {t('invalidLink.message')}
+              Dieser Verifizierungslink ist ungültig. Bitte überprüfen Sie den Link in Ihrer E-Mail.
             </p>
             <Link
               href={`/${locale}`}
               className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
             >
-              {t('backToHome')}
+              Zur Startseite
             </Link>
           </div>
         </div>
@@ -108,19 +108,19 @@ async function VerifyEmailContent({
               <Mail className="h-10 w-10 text-amber-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">
-              {t('expired.title')}
+              Link abgelaufen
             </h1>
             <p className="text-gray-600 mb-2">
-              {t('expired.message')}
+              Dieser Verifizierungslink ist abgelaufen.
             </p>
             <p className="text-sm text-gray-500 mb-8">
-              {t('expired.hint')}
+              Bitte fordern Sie einen neuen Verifizierungslink an.
             </p>
             <Link
               href={`/${locale}`}
               className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
             >
-              {t('backToHome')}
+              Zur Startseite
             </Link>
           </div>
         </div>
@@ -154,10 +154,7 @@ async function VerifyEmailContent({
     }
   }
 
-  // Success - redirect to appropriate dashboard based on role
-  const dashboardPath =
-    user?.primaryRole === 'STUDIO_OWNER' ? `/${locale}/dashboard` : `/${locale}/customer/dashboard`;
-
+  // Success - no auto-redirect, user clicks to go to login
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
       {/* Decorative background blobs - Success theme (green) */}
@@ -192,26 +189,23 @@ async function VerifyEmailContent({
           </div>
 
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            {t('success.title')}
+            E-Mail verifiziert!
           </h1>
           <p className="text-gray-600 mb-2">
-            {t('success.message')}
+            Ihre E-Mail-Adresse wurde erfolgreich bestätigt.
           </p>
           <p className="text-sm text-gray-500 mb-8">
-            {t('success.redirecting')}
+            Sie können sich jetzt mit Ihrem Account anmelden.
           </p>
 
           <Link
-            href={dashboardPath}
+            href={`/${locale}`}
             className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
           >
-            {t('success.goToDashboard')}
+            Zum Login
           </Link>
         </div>
       </div>
-
-      {/* Auto-redirect after 3 seconds */}
-      <meta httpEquiv="refresh" content={`3;url=${dashboardPath}`} />
     </div>
   );
 }
