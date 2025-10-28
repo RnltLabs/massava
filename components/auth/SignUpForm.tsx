@@ -210,7 +210,7 @@ export function SignUpForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* Name fields */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* First Name */}
@@ -507,8 +507,8 @@ export function SignUpForm({
           }
           disabled={isLoading}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
-            'min-h-[64px] flex items-center gap-4',
+            'w-full p-3 rounded-xl border-2 transition-all text-left',
+            'min-h-[56px] flex items-center gap-3',
             'focus:outline-none focus:ring-2 focus:ring-sage-500/20',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             formData.termsAccepted

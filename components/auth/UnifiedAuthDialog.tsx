@@ -290,19 +290,13 @@ export function UnifiedAuthDialog({
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3, ease: 'easeInOut' }}
-                className="space-y-6"
+                className="space-y-4"
               >
-                {/* Header */}
-                <div className="text-center space-y-2">
+                {/* Header - Compact */}
+                <div className="text-center">
                   <h2 className="text-2xl font-bold text-gray-900">
                     {mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
                   </h2>
-                  <p className="text-sm text-gray-600">
-                    {mode === 'signup'
-                      ? 'Geben Sie Ihre Daten ein'
-                      : 'Geben Sie Ihre Zugangsdaten ein'
-                    }
-                  </p>
                 </div>
 
                 {/* Form */}
@@ -385,7 +379,7 @@ export function UnifiedAuthDialog({
         </button>
 
         {/* Content */}
-        <div className="p-8 pt-12 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 pt-12 max-h-[90vh] overflow-y-auto">
           {renderContent()}
         </div>
       </DialogContent>
