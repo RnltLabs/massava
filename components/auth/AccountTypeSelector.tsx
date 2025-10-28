@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { User, Briefcase } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -31,12 +30,7 @@ export function AccountTypeSelector({
 
       <div className="grid grid-cols-2 gap-4 w-full">
         {/* Customer Card */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="w-full"
-        >
+        <div className="w-full">
           <Card
             onClick={() => onTypeSelect('customer')}
             className={cn(
@@ -60,13 +54,13 @@ export function AccountTypeSelector({
             <div className="space-y-4 text-center">
               <div
                 className={cn(
-                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors',
+                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0',
                   selectedType === 'customer'
                     ? 'bg-sage-600 text-white'
                     : 'bg-gray-100 text-gray-600'
                 )}
               >
-                <User className="w-8 h-8" />
+                <User className="w-8 h-8 shrink-0" />
               </div>
               <div>
                 <h3
@@ -87,11 +81,7 @@ export function AccountTypeSelector({
 
             {/* Selected indicator */}
             {selectedType === 'customer' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center"
-              >
+              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
                 <svg
                   className="w-4 h-4 text-white"
                   fill="none"
@@ -103,18 +93,13 @@ export function AccountTypeSelector({
                 >
                   <path d="M5 13l4 4L19 7" />
                 </svg>
-              </motion.div>
+              </div>
             )}
           </Card>
-        </motion.div>
+        </div>
 
         {/* Studio Card */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.2 }}
-          className="w-full"
-        >
+        <div className="w-full">
           <Card
             onClick={() => onTypeSelect('studio')}
             className={cn(
@@ -138,13 +123,13 @@ export function AccountTypeSelector({
             <div className="space-y-4 text-center">
               <div
                 className={cn(
-                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors',
+                  'mx-auto w-16 h-16 rounded-2xl flex items-center justify-center transition-colors shrink-0',
                   selectedType === 'studio'
                     ? 'bg-sage-600 text-white'
                     : 'bg-gray-100 text-gray-600'
                 )}
               >
-                <Briefcase className="w-8 h-8" />
+                <Briefcase className="w-8 h-8 shrink-0" />
               </div>
               <div>
                 <h3
@@ -165,11 +150,7 @@ export function AccountTypeSelector({
 
             {/* Selected indicator */}
             {selectedType === 'studio' && (
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center"
-              >
+              <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-sage-600 flex items-center justify-center">
                 <svg
                   className="w-4 h-4 text-white"
                   fill="none"
@@ -181,10 +162,10 @@ export function AccountTypeSelector({
                 >
                   <path d="M5 13l4 4L19 7" />
                 </svg>
-              </motion.div>
+              </div>
             )}
           </Card>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
