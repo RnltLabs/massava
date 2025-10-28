@@ -575,20 +575,18 @@ export function SignUpForm({
         )}
       </Button>
 
-      {/* Switch to Login */}
-      {onSwitchToLogin && (
-        <div className="text-center text-sm text-gray-600">
-          Bereits ein Konto?{' '}
-          <button
-            type="button"
-            onClick={onSwitchToLogin}
-            disabled={isLoading}
-            className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
-          >
-            Jetzt anmelden
-          </button>
-        </div>
-      )}
+      {/* Switch to Login - Always visible if callback provided */}
+      <div className="text-center text-sm text-gray-600">
+        Bereits ein Konto?{' '}
+        <button
+          type="button"
+          onClick={onSwitchToLogin}
+          disabled={isLoading || !onSwitchToLogin}
+          className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
+        >
+          Jetzt anmelden
+        </button>
+      </div>
     </form>
   );
 }
