@@ -1,31 +1,29 @@
 /**
  * Navigation utilities for handling basePath in different environments
  *
- * In production, the app runs under /massava basePath on staging.rnltlabs.de/massava
- * In development, there's no basePath
+ * Since migration to massava.app domain, the app runs at root level (no basePath)
+ * Previously: staging.rnltlabs.de/massava (with /massava basePath)
+ * Now: massava.app and staging.massava.app (no basePath)
  *
- * IMPORTANT: For client-side code, we need to check if we're in a browser environment
- * and detect basePath from the current URL, since process.env is not available in the browser
- * (unless prefixed with NEXT_PUBLIC_)
+ * These utilities are kept for backwards compatibility but now return empty basePath
  */
 
 /**
  * Get the basePath for the current environment
- * @returns The basePath string (e.g., '/massava' in production, '' in development)
+ * @returns The basePath string (empty '' since we moved to dedicated domain)
  */
 export function getBasePath(): string {
-  // Client-side: Detect from browser URL
+  // Since migration to massava.app, no basePath is used
+  // Legacy support: Check if URL still contains /massava for backwards compatibility
   if (typeof window !== 'undefined') {
     const pathname = window.location.pathname;
-    // If URL starts with /massava, we're in production
     if (pathname.startsWith('/massava')) {
       return '/massava';
     }
-    return '';
   }
 
-  // Server-side: Use NODE_ENV
-  return process.env.NODE_ENV === 'production' ? '/massava' : '';
+  // Default: no basePath for massava.app
+  return '';
 }
 
 /**

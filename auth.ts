@@ -13,13 +13,16 @@ import { PrismaClient } from '@/app/generated/prisma';
 const prisma = new PrismaClient();
 
 // Detect basePath based on NEXTAUTH_URL or environment
-// In staging: NEXTAUTH_URL=https://staging.rnltlabs.de/massava -> basePath=/massava/api/auth
+// Since migration to massava.app: NEXTAUTH_URL=https://staging.massava.app -> basePath=/api/auth
+// Legacy (if URL still has /massava): NEXTAUTH_URL=https://staging.rnltlabs.de/massava -> basePath=/massava/api/auth
 // In dev: NEXTAUTH_URL=http://localhost:3000 -> basePath=/api/auth
 function getServerBasePath(): string {
   const nextAuthUrl = process.env.NEXTAUTH_URL || '';
+  // Legacy support: if NEXTAUTH_URL contains /massava subpath
   if (nextAuthUrl.includes('/massava')) {
     return '/massava/api/auth';
   }
+  // Default: standard NextAuth path (for massava.app and localhost)
   return '/api/auth';
 }
 
