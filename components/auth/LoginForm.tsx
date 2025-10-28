@@ -258,12 +258,13 @@ export function LoginForm({
       <button
         type="submit"
         disabled={isLoading || !isFormValid()}
+        style={isFormValid() && !isLoading ? { backgroundColor: '#B56550' } : undefined}
         className={cn(
           'w-full h-12 rounded-xl font-semibold text-base transition-all duration-200',
           'flex items-center justify-center gap-2',
           isLoading || !isFormValid()
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-earth-600 hover:bg-earth-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+            : 'text-white shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90'
         )}
       >
         {isLoading ? (

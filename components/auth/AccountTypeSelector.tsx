@@ -29,19 +29,20 @@ export function AccountTypeSelector({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4 w-full">
         {/* Customer Card */}
         <motion.div
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           transition={{ duration: 0.2 }}
+          className="w-full"
         >
           <Card
             onClick={() => onTypeSelect('customer')}
             className={cn(
-              'relative cursor-pointer p-6 border-2 transition-all duration-200',
+              'relative cursor-pointer p-4 sm:p-6 border-2 transition-all duration-200',
               'hover:shadow-lg active:shadow-md',
-              'min-h-[180px] flex flex-col items-center justify-center',
+              'min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center',
               selectedType === 'customer'
                 ? 'border-sage-600 bg-sage-50 shadow-md'
                 : 'border-gray-200 hover:border-sage-400 bg-white'
@@ -112,13 +113,14 @@ export function AccountTypeSelector({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           transition={{ duration: 0.2 }}
+          className="w-full"
         >
           <Card
             onClick={() => onTypeSelect('studio')}
             className={cn(
-              'relative cursor-pointer p-6 border-2 transition-all duration-200',
+              'relative cursor-pointer p-4 sm:p-6 border-2 transition-all duration-200',
               'hover:shadow-lg active:shadow-md',
-              'min-h-[180px] flex flex-col items-center justify-center',
+              'min-h-[160px] sm:min-h-[180px] w-full flex flex-col items-center justify-center',
               selectedType === 'studio'
                 ? 'border-sage-600 bg-sage-50 shadow-md'
                 : 'border-gray-200 hover:border-sage-400 bg-white'
