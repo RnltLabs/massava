@@ -584,7 +584,7 @@ export function SignUpForm({
           'flex items-center justify-center gap-2',
           isLoading || !isFormValid()
             ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            : 'bg-sage-600 hover:bg-sage-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
+            : 'bg-earth-600 hover:bg-earth-700 text-white shadow-md hover:shadow-lg active:scale-[0.98]'
         )}
       >
         {isLoading ? (

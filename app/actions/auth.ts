@@ -104,12 +104,21 @@ export async function signUp(
 
     // 6. Generate verification token (cryptographically secure)
     const verificationURL = await generateEmailVerificationURL(email, locale);
+    console.log('[AUTH] Generated verification URL:', verificationURL);
 
     // 7. Send verification email via Resend
     try {
-      await sendVerificationEmail(email, verificationURL, locale);
+      console.log('[AUTH] Attempting to send verification email to:', email);
+      const emailResult = await sendVerificationEmail(email, verificationURL, locale);
+      console.log('[AUTH] Email send result:', emailResult);
+
+      if (!emailResult.success) {
+        console.error('[AUTH] Failed to send verification email:', emailResult.error);
+      } else {
+        console.log('[AUTH] Verification email sent successfully! Message ID:', emailResult.messageId);
+      }
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      console.error('[AUTH] Exception sending verification email:', emailError);
       // Don't fail registration if email fails - user can request new link
     }
 

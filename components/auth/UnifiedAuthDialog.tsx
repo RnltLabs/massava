@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { AccountTypeSelector } from './AccountTypeSelector';
 import { SignUpForm } from './SignUpForm';
 import { LoginForm } from './LoginForm';
@@ -65,7 +65,7 @@ export function UnifiedAuthDialog({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      // Both signup AND login start with account type selection
+      // Both signup AND login start with account-type selection
       setStep('account-type');
       setAccountType('customer');
       setIsLoading(false);
@@ -86,7 +86,6 @@ export function UnifiedAuthDialog({
     if (step === 'email-form') {
       setStep('email-choice');
     } else if (step === 'email-choice') {
-      // Both signup AND login go back to account-type
       setStep('account-type');
     } else {
       onClose();
@@ -173,7 +172,7 @@ export function UnifiedAuthDialog({
     return (
       <div className="relative">
         {/* Back Button - Only show when not on first step */}
-        {((mode === 'signup' && step !== 'account-type') || (mode === 'login' && step !== 'email-choice')) && (
+        {step !== 'account-type' && (
           <button
             onClick={goBack}
             disabled={isLoading}
@@ -198,6 +197,7 @@ export function UnifiedAuthDialog({
                 <AccountTypeSelector
                   selectedType={accountType}
                   onTypeSelect={handleAccountTypeSelected}
+                  mode={mode}
                 />
               </motion.div>
             )}
@@ -332,6 +332,11 @@ export function UnifiedAuthDialog({
           className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
           showCloseButton={false}
         >
+          {/* Accessibility: Hidden title for screen readers */}
+          <SheetTitle className="sr-only">
+            {mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
+          </SheetTitle>
+
           {/* Single Close Button */}
           <button
             onClick={onClose}
@@ -363,6 +368,11 @@ export function UnifiedAuthDialog({
         className="sm:max-w-[500px] p-0 gap-0 bg-white border-0 shadow-2xl"
         showCloseButton={false}
       >
+        {/* Accessibility: Hidden title for screen readers */}
+        <DialogTitle className="sr-only">
+          {mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
+        </DialogTitle>
+
         {/* Single Close Button */}
         <button
           onClick={onClose}

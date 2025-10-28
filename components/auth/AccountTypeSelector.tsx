@@ -10,17 +10,19 @@ export type AccountType = 'customer' | 'studio';
 interface AccountTypeSelectorProps {
   selectedType: AccountType;
   onTypeSelect: (type: AccountType) => void;
+  mode?: 'signup' | 'login';
 }
 
 export function AccountTypeSelector({
   selectedType,
   onTypeSelect,
+  mode = 'signup',
 }: AccountTypeSelectorProps) {
   return (
     <div className="space-y-4">
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-semibold text-gray-900">
-          Willkommen bei Massava
+          {mode === 'login' ? 'Willkommen zurück' : 'Willkommen bei Massava'}
         </h2>
         <p className="text-sm text-gray-600">
           Wählen Sie Ihren Kontotyp
