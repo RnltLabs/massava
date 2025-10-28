@@ -1,212 +1,292 @@
-/**
- * Copyright (c) 2025 Roman Reinelt / RNLT Labs
- * All rights reserved.
- *
- * Unified Login Form Component
- * Single login form with automatic role detection
- */
-
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, Loader2, CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { signIn } from '@/app/actions/auth';
-import { GoogleOAuthButton } from './GoogleOAuthButton';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
+interface LoginFormProps {
+  accountType: 'customer' | 'studio';
+  onSubmit: (data: LoginFormData) => Promise<void>;
+  isLoading?: boolean;
+  onSwitchToSignup?: () => void;
+}
+
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
 
 export function LoginForm({
-  locale = 'en',
-  onForgotPassword,
-}: {
-  locale?: string;
-  onForgotPassword?: () => void;
-}) {
-  const searchParams = useSearchParams();
-  const [formData, setFormData] = useState({
+  accountType,
+  onSubmit,
+  isLoading = false,
+  onSwitchToSignup,
+}: LoginFormProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const accountTypeValue = accountType; // Reserved for future use
+
+  const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',
     rememberMe: false,
   });
 
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const [showVerifiedMessage, setShowVerifiedMessage] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // Check if user just verified their email
-  useEffect(() => {
-    if (searchParams.get('verified') === 'true') {
-      setShowVerifiedMessage(true);
-      // Hide message after 10 seconds
-      setTimeout(() => setShowVerifiedMessage(false), 10000);
-    }
-  }, [searchParams]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setErrors({});
-
-    const result = await signIn(formData);
-
-    if (result.success) {
-      // Use window.location.href for hard redirect
-      // This ensures the session cookie is properly loaded
-      const redirectUrl = result.data?.redirectUrl || '/dashboard';
-      window.location.href = `/${locale}${redirectUrl}`;
-      // Note: setLoading(false) not needed since page will reload
-    } else {
-      if (result.errors) {
-        setErrors(result.errors);
-      } else {
-        setError(result.error || 'Login failed. Please try again.');
-      }
-      setLoading(false);
+  // Validation
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'email':
+        if (!value) return 'E-Mail ist erforderlich';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          return 'Ungültige E-Mail-Adresse';
+        return '';
+      case 'password':
+        if (!value) return 'Passwort ist erforderlich';
+        return '';
+      default:
+        return '';
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Real-time validation for touched fields
+    if (touched[name]) {
+      const error = validateField(name, value);
+      setErrors((prev) => ({ ...prev, [name]: error }));
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const error = validateField(name, value);
+    setErrors((prev) => ({ ...prev, [name]: error }));
+  };
+
+  // Check if form is valid for submit button state
+  const isFormValid = (): boolean => {
+    return (
+      formData.email.trim() !== '' &&
+      formData.password.trim() !== '' &&
+      !errors.email &&
+      !errors.password
+    );
+  };
+
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
+    e.preventDefault();
+
+    // Validate all fields
+    const newErrors: Record<string, string> = {};
+    ['email', 'password'].forEach((key) => {
+      const error = validateField(key, formData[key as keyof typeof formData] as string);
+      if (error) newErrors[key] = error;
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setTouched({ email: true, password: true });
+      return;
+    }
+
+    await onSubmit(formData);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Email verified success message */}
-      {showVerifiedMessage && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Your email has been verified! You can now log in.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Google OAuth */}
-      <GoogleOAuthButton />
-
-      {/* Divider */}
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Email */}
       <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-2 text-muted-foreground">
-            Or continue with email
-          </span>
-        </div>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder=" "
+          disabled={isLoading}
+          autoComplete="email"
+          className={cn(
+            'peer w-full px-4 pt-6 pb-2 rounded-xl border-2 transition-all',
+            'focus:outline-none focus:ring-0',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            errors.email && touched.email
+              ? 'border-red-500 focus:border-red-600'
+              : 'border-gray-300 focus:border-sage-600'
+          )}
+        />
+        <label
+          htmlFor="email"
+          className={cn(
+            'absolute left-4 transition-all pointer-events-none',
+            'peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500',
+            'peer-focus:top-2 peer-focus:text-xs peer-focus:text-sage-700',
+            'top-2 text-xs',
+            formData.email ? 'text-sage-700' : 'text-gray-500'
+          )}
+        >
+          E-Mail
+        </label>
+        {errors.email && touched.email && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-1 text-xs text-red-600 flex items-center gap-1"
+          >
+            <AlertCircle className="w-3 h-3" />
+            {errors.email}
+          </motion.p>
+        )}
       </div>
 
-      {/* Login Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email Field */}
-        <div className="space-y-2">
-          <Label htmlFor="login-email">Email</Label>
-          <Input
-            id="login-email"
-            type="email"
-            placeholder="name@example.com"
-            value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
-            required
-            disabled={loading}
-            autoComplete="email"
-            className={errors.email ? 'border-destructive' : ''}
-          />
-          {errors.email && (
-            <p className="text-sm text-destructive">{errors.email[0]}</p>
+      {/* Password */}
+      <div className="relative">
+        <input
+          id="password"
+          name="password"
+          type={showPassword ? 'text' : 'password'}
+          value={formData.password}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          placeholder=" "
+          disabled={isLoading}
+          autoComplete="current-password"
+          className={cn(
+            'peer w-full px-4 pt-6 pb-2 pr-12 rounded-xl border-2 transition-all',
+            'focus:outline-none focus:ring-0',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            errors.password && touched.password
+              ? 'border-red-500 focus:border-red-600'
+              : 'border-gray-300 focus:border-sage-600'
           )}
-        </div>
-
-        {/* Password Field */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="login-password">Password</Label>
-            {onForgotPassword && (
-              <button
-                type="button"
-                onClick={onForgotPassword}
-                className="text-sm text-primary hover:underline"
-                disabled={loading}
-              >
-                Forgot password?
-              </button>
-            )}
-          </div>
-          <div className="relative">
-            <Input
-              id="login-password"
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
-              required
-              disabled={loading}
-              autoComplete="current-password"
-              className={errors.password ? 'border-destructive pr-10' : 'pr-10'}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              disabled={loading}
-            >
-              {showPassword ? (
-                <EyeOff className="h-4 w-4" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-            </button>
-          </div>
-          {errors.password && (
-            <p className="text-sm text-destructive">{errors.password[0]}</p>
+        />
+        <label
+          htmlFor="password"
+          className={cn(
+            'absolute left-4 transition-all pointer-events-none',
+            'peer-placeholder-shown:top-4 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500',
+            'peer-focus:top-2 peer-focus:text-xs peer-focus:text-sage-700',
+            'top-2 text-xs',
+            formData.password ? 'text-sage-700' : 'text-gray-500'
           )}
-        </div>
-
-        {/* Remember Me Checkbox */}
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            id="remember-me"
-            checked={formData.rememberMe}
-            onChange={(e) =>
-              setFormData({ ...formData, rememberMe: e.target.checked })
-            }
-            className="rounded"
-            disabled={loading}
-          />
-          <label
-            htmlFor="remember-me"
-            className="text-sm text-muted-foreground cursor-pointer"
-          >
-            Remember me for 30 days
-          </label>
-        </div>
-
-        {/* Submit Button */}
-        <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing in...
-            </>
+        >
+          Passwort
+        </label>
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 transition-colors"
+          tabIndex={-1}
+          aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+        >
+          {showPassword ? (
+            <EyeOff className="w-5 h-5" />
           ) : (
-            'Sign In'
+            <Eye className="w-5 h-5" />
           )}
-        </Button>
-      </form>
-    </div>
+        </button>
+        {errors.password && touched.password && (
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-1 text-xs text-red-600 flex items-center gap-1"
+          >
+            <AlertCircle className="w-3 h-3" />
+            {errors.password}
+          </motion.p>
+        )}
+      </div>
+
+      {/* Remember Me - Card Style */}
+      <div>
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((prev) => ({ ...prev, rememberMe: !prev.rememberMe }))
+          }
+          disabled={isLoading}
+          className={cn(
+            'w-full p-3 rounded-xl border-2 transition-all text-left',
+            'min-h-[56px] flex items-center gap-3',
+            'focus:outline-none',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            formData.rememberMe
+              ? 'border-gray-300 bg-white shadow-sm'
+              : 'border-gray-300 bg-white hover:border-gray-400 hover:bg-gray-50'
+          )}
+        >
+          <div
+            className={cn(
+              'flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
+              formData.rememberMe
+                ? 'border-gray-400'
+                : 'border-gray-400 bg-white'
+            )}
+            style={formData.rememberMe ? { backgroundColor: '#B56550' } : undefined}
+          >
+          </div>
+          <div className="flex-1 text-sm text-gray-900 leading-relaxed">
+            Angemeldet bleiben
+          </div>
+        </button>
+      </div>
+
+      {/* Forgot Password */}
+      <div className="text-center">
+        <Link
+          href="/auth/forgot-password"
+          className="text-sm text-sage-700 hover:text-sage-800 font-medium transition-colors"
+        >
+          Passwort vergessen?
+        </Link>
+      </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isLoading || !isFormValid()}
+        style={isFormValid() && !isLoading ? { backgroundColor: '#B56550' } : undefined}
+        className={cn(
+          'w-full h-12 rounded-xl font-semibold text-base transition-all duration-200',
+          'flex items-center justify-center gap-2',
+          isLoading || !isFormValid()
+            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+            : 'text-white shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90'
+        )}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span>Anmeldung läuft...</span>
+          </>
+        ) : (
+          'Anmelden'
+        )}
+      </button>
+
+      {/* Switch to Signup */}
+      {onSwitchToSignup && (
+        <div className="text-center text-sm text-gray-600">
+          Noch kein Konto?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToSignup}
+            disabled={isLoading}
+            className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
+          >
+            Jetzt registrieren
+          </button>
+        </div>
+      )}
+    </form>
   );
 }
