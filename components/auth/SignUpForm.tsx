@@ -496,62 +496,52 @@ export function SignUpForm({
           )}
       </div>
 
-      {/* Terms Acceptance Card */}
+      {/* Terms Acceptance - Simple Checkbox */}
       <div>
-        <div
-          onClick={() =>
-            !isLoading &&
-            setFormData((prev) => ({ ...prev, termsAccepted: !prev.termsAccepted }))
-          }
-          className={cn(
-            'w-full min-h-[60px] p-4 rounded-xl border-2 cursor-pointer transition-all duration-200',
-            'hover:shadow-sm active:scale-[0.99]',
-            isLoading && 'opacity-50 cursor-not-allowed',
-            formData.termsAccepted
-              ? 'border-sage-600 bg-sage-50'
-              : 'border-gray-300 hover:border-sage-400 bg-white'
-          )}
-          role="checkbox"
-          aria-checked={formData.termsAccepted}
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && !isLoading) {
-              e.preventDefault();
-              setFormData((prev) => ({ ...prev, termsAccepted: !prev.termsAccepted }));
-            }
-          }}
-        >
-          <div className="flex items-start gap-3">
+        <label className="flex items-start gap-3 cursor-pointer group">
+          <div className="relative pt-0.5">
+            <input
+              type="checkbox"
+              checked={formData.termsAccepted}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, termsAccepted: e.target.checked }))
+              }
+              disabled={isLoading}
+              className="peer sr-only"
+            />
             <div
               className={cn(
-                'w-6 h-6 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                'w-5 h-5 rounded border-2 transition-all',
+                'peer-focus:ring-2 peer-focus:ring-sage-500/20',
                 formData.termsAccepted
                   ? 'bg-sage-600 border-sage-600'
-                  : 'border-gray-400 bg-white'
+                  : 'border-gray-400 bg-white group-hover:border-sage-500'
               )}
             >
-              {formData.termsAccepted && <Check className="h-4 w-4 text-white" />}
-            </div>
-            <div className="flex-1 text-sm text-gray-700 leading-relaxed">
-              Ich akzeptiere die{' '}
-              <Link
-                href="/legal/terms"
-                onClick={(e) => e.stopPropagation()}
-                className="text-sage-700 hover:text-sage-800 underline font-medium"
-              >
-                Nutzungsbedingungen
-              </Link>{' '}
-              und{' '}
-              <Link
-                href="/legal/privacy"
-                onClick={(e) => e.stopPropagation()}
-                className="text-sage-700 hover:text-sage-800 underline font-medium"
-              >
-                Datenschutzerklärung
-              </Link>
+              {formData.termsAccepted && (
+                <Check className="h-4 w-4 text-white" strokeWidth={3} />
+              )}
             </div>
           </div>
-        </div>
+          <div className="flex-1 text-sm text-gray-900 leading-relaxed select-none">
+            Ich akzeptiere die{' '}
+            <Link
+              href="/legal/terms"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sage-700 hover:text-sage-800 underline font-medium"
+            >
+              Nutzungsbedingungen
+            </Link>{' '}
+            und{' '}
+            <Link
+              href="/legal/privacy"
+              onClick={(e) => e.stopPropagation()}
+              className="text-sage-700 hover:text-sage-800 underline font-medium"
+            >
+              Datenschutzerklärung
+            </Link>
+          </div>
+        </label>
         {errors.terms && (
           <motion.p
             initial={{ opacity: 0, y: -10 }}

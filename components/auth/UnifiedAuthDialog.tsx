@@ -2,21 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetHeader } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { X, ArrowLeft } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { AccountTypeSelector } from './AccountTypeSelector';
 import { SignUpForm } from './SignUpForm';
 import { LoginForm } from './LoginForm';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
-import { AccountTypeToggle } from './AccountTypeToggle';
 import { cn } from '@/lib/utils';
 import { signUp, signIn, signInWithGoogle } from '@/app/actions/auth';
 
 type AuthMode = 'signup' | 'login';
-type AuthStep = 'type-selection' | 'form';
+type AuthStep = 'account-type' | 'email-choice' | 'email-form';
 type AccountType = 'customer' | 'studio';
 
 interface UnifiedAuthDialogProps {
@@ -48,7 +45,7 @@ export function UnifiedAuthDialog({
   onSuccess,
 }: UnifiedAuthDialogProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [step, setStep] = useState<AuthStep>('type-selection');
+  const [step, setStep] = useState<AuthStep>('account-type');
   const [accountType, setAccountType] = useState<AccountType>('customer');
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -68,22 +65,31 @@ export function UnifiedAuthDialog({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      setStep('type-selection');
+      // For signup: start with account type selection
+      // For login: skip directly to email-choice
+      setStep(initialMode === 'signup' ? 'account-type' : 'email-choice');
       setAccountType('customer');
       setIsLoading(false);
     }
   }, [isOpen, initialMode]);
 
   // Step navigation
-  const goToNextStep = (): void => {
-    if (step === 'type-selection') {
-      setStep('form');
-    }
+  const handleAccountTypeSelected = (type: AccountType): void => {
+    setAccountType(type);
+    setStep('email-choice');
   };
 
-  const goToPreviousStep = (): void => {
-    if (step === 'form') {
-      setStep('type-selection');
+  const handleEmailMethodSelected = (): void => {
+    setStep('email-form');
+  };
+
+  const goBack = (): void => {
+    if (step === 'email-form') {
+      setStep('email-choice');
+    } else if (step === 'email-choice' && mode === 'signup') {
+      setStep('account-type');
+    } else {
+      onClose();
     }
   };
 
@@ -156,159 +162,196 @@ export function UnifiedAuthDialog({
 
   // Mode toggle
   const toggleMode = (): void => {
-    setMode(mode === 'signup' ? 'login' : 'signup');
+    const newMode = mode === 'signup' ? 'login' : 'signup';
+    setMode(newMode);
+    // Reset to appropriate starting step
+    setStep(newMode === 'signup' ? 'account-type' : 'email-choice');
   };
 
-  // Progress indicator
-  const currentStepNumber = step === 'type-selection' ? 1 : 2;
-  const totalSteps = mode === 'signup' ? 2 : 1;
-
-  // Content to render
+  // Content to render - Modern .io-style
   const renderContent = () => {
     return (
-      <div className="space-y-6">
-        {/* Progress and Mode Indicators */}
-        <div className="flex items-center justify-between">
-          <Badge
-            variant="secondary"
-            className={cn(
-              'text-xs font-medium px-3 py-1',
-              mode === 'signup' ? 'bg-sage-100 text-sage-800' : 'bg-blue-100 text-blue-800'
-            )}
+      <div className="relative">
+        {/* Back Button - Only show when not on first step */}
+        {((mode === 'signup' && step !== 'account-type') || (mode === 'login' && step !== 'email-choice')) && (
+          <button
+            onClick={goBack}
+            disabled={isLoading}
+            className="absolute left-0 top-0 p-2 -m-2 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50 z-10"
+            aria-label="Zurück"
           >
-            {mode === 'signup' ? 'REGISTRIERUNG' : 'ANMELDUNG'}
-          </Badge>
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
 
-          {mode === 'signup' && (
-            <Badge variant="outline" className="text-xs font-medium px-3 py-1">
-              Schritt {currentStepNumber} von {totalSteps}
-            </Badge>
-          )}
-        </div>
+        <div className="space-y-8">
+          <AnimatePresence mode="wait">
+            {/* Step 1: Account Type Selection (Signup Only) */}
+            {step === 'account-type' && mode === 'signup' && (
+              <motion.div
+                key="account-type"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+              >
+                <AccountTypeSelector
+                  selectedType={accountType}
+                  onTypeSelect={handleAccountTypeSelected}
+                />
+              </motion.div>
+            )}
 
-        {/* Step Content with Animations */}
-        <AnimatePresence mode="wait">
-          {step === 'type-selection' && mode === 'signup' && (
-            <motion.div
-              key="type-selection"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <AccountTypeSelector
-                selectedType={accountType}
-                onTypeSelect={(type) => {
-                  setAccountType(type);
-                  goToNextStep();
-                }}
-              />
-            </motion.div>
-          )}
-
-          {(step === 'form' || mode === 'login') && (
-            <motion.div
-              key="form"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="space-y-6"
-            >
-              {/* Title */}
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                  {mode === 'signup' ? 'Konto erstellen' : 'Willkommen zurück'}
-                </h2>
-                {mode === 'login' && (
-                  <p className="text-sm text-gray-600">
-                    Melden Sie sich an, um fortzufahren
+            {/* Step 2: Email Method Choice (Google or Email) */}
+            {step === 'email-choice' && (
+              <motion.div
+                key="email-choice"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="space-y-6"
+              >
+                {/* Header */}
+                <div className="text-center space-y-3">
+                  <h2 className="text-3xl font-bold text-gray-900">
+                    {mode === 'signup' ? 'Konto erstellen' : 'Willkommen zurück'}
+                  </h2>
+                  <p className="text-base text-gray-600">
+                    {mode === 'signup'
+                      ? `Als ${accountType === 'customer' ? 'Kunde' : 'Studio-Inhaber'} registrieren`
+                      : 'Melden Sie sich an, um fortzufahren'
+                    }
                   </p>
-                )}
-              </div>
-
-              {/* Account Type Toggle for Login or Back Button for Signup */}
-              {mode === 'login' ? (
-                <div className="flex justify-center">
-                  <AccountTypeToggle
-                    value={accountType}
-                    onChange={setAccountType}
-                    translations={{
-                      customer: 'Kunde',
-                      studio: 'Studio-Inhaber',
-                    }}
-                  />
                 </div>
-              ) : (
-                <button
-                  onClick={goToPreviousStep}
+
+                {/* Google OAuth Button */}
+                <GoogleOAuthButton
+                  mode={mode}
+                  onAuth={handleGoogleAuth}
+                  isLoading={isLoading}
                   disabled={isLoading}
-                  className="text-sm text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
+                />
+
+                {/* Email Button */}
+                <button
+                  onClick={handleEmailMethodSelected}
+                  disabled={isLoading}
+                  className={cn(
+                    'w-full h-12 px-6 rounded-xl border-2 border-gray-300',
+                    'bg-white hover:bg-gray-50 hover:border-gray-400',
+                    'text-gray-900 font-medium transition-all',
+                    'disabled:opacity-50 disabled:cursor-not-allowed',
+                    'flex items-center justify-center gap-3'
+                  )}
                 >
-                  ← Kontotyp ändern ({accountType === 'customer' ? 'Kunde' : 'Studio-Inhaber'})
+                  <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span>{mode === 'signup' ? 'Mit E-Mail registrieren' : 'Mit E-Mail anmelden'}</span>
                 </button>
-              )}
 
-              {/* Google OAuth */}
-              <GoogleOAuthButton
-                mode={mode}
-                onAuth={handleGoogleAuth}
-                isLoading={isLoading}
-                disabled={isLoading}
-              />
+                {/* Toggle Mode Link */}
+                <div className="text-center pt-4">
+                  <p className="text-sm text-gray-600">
+                    {mode === 'signup' ? (
+                      <>
+                        Bereits ein Konto?{' '}
+                        <button
+                          onClick={toggleMode}
+                          disabled={isLoading}
+                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
+                        >
+                          Anmelden
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Noch kein Konto?{' '}
+                        <button
+                          onClick={toggleMode}
+                          disabled={isLoading}
+                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
+                        >
+                          Registrieren
+                        </button>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
-              {/* Divider */}
-              <div className="relative">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-3 text-xs text-gray-500">
-                  oder
-                </span>
-              </div>
+            {/* Step 3: Email Form */}
+            {step === 'email-form' && (
+              <motion.div
+                key="email-form"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: 'easeInOut' }}
+                className="space-y-6"
+              >
+                {/* Header */}
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {mode === 'signup' ? 'Konto erstellen' : 'Anmelden'}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    {mode === 'signup'
+                      ? 'Geben Sie Ihre Daten ein'
+                      : 'Geben Sie Ihre Zugangsdaten ein'
+                    }
+                  </p>
+                </div>
 
-              {/* Form */}
-              {mode === 'signup' ? (
-                <SignUpForm
-                  accountType={accountType}
-                  onSubmit={handleSignUp}
-                  isLoading={isLoading}
-                />
-              ) : (
-                <LoginForm
-                  accountType={accountType}
-                  onSubmit={handleLogin}
-                  isLoading={isLoading}
-                />
-              )}
-
-              {/* Toggle Mode */}
-              <div className="text-center text-sm text-gray-600">
+                {/* Form */}
                 {mode === 'signup' ? (
-                  <>
-                    Bereits ein Konto?{' '}
-                    <button
-                      onClick={toggleMode}
-                      disabled={isLoading}
-                      className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
-                    >
-                      Jetzt anmelden
-                    </button>
-                  </>
+                  <SignUpForm
+                    accountType={accountType}
+                    onSubmit={handleSignUp}
+                    isLoading={isLoading}
+                  />
                 ) : (
-                  <>
-                    Noch kein Konto?{' '}
-                    <button
-                      onClick={toggleMode}
-                      disabled={isLoading}
-                      className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
-                    >
-                      Jetzt registrieren
-                    </button>
-                  </>
+                  <LoginForm
+                    accountType={accountType}
+                    onSubmit={handleLogin}
+                    isLoading={isLoading}
+                  />
                 )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+                {/* Toggle Mode Link */}
+                <div className="text-center pt-2">
+                  <p className="text-sm text-gray-600">
+                    {mode === 'signup' ? (
+                      <>
+                        Bereits ein Konto?{' '}
+                        <button
+                          onClick={toggleMode}
+                          disabled={isLoading}
+                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
+                        >
+                          Anmelden
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        Noch kein Konto?{' '}
+                        <button
+                          onClick={toggleMode}
+                          disabled={isLoading}
+                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
+                        >
+                          Registrieren
+                        </button>
+                      </>
+                    )}
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     );
   };
@@ -319,19 +362,26 @@ export function UnifiedAuthDialog({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200"
+          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
+          showCloseButton={false}
         >
-          <SheetHeader className="p-6 pb-0">
-            <button
-              onClick={onClose}
-              disabled={isLoading}
-              className="absolute right-6 top-6 rounded-full p-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
-              aria-label="Schließen"
-            >
-              <X className="h-5 w-5 text-gray-500" />
-            </button>
-          </SheetHeader>
-          <div className="overflow-y-auto h-[calc(100%-80px)] px-6 py-4">
+          {/* Single Close Button */}
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className={cn(
+              'absolute right-6 top-6 z-20',
+              'rounded-full p-2 bg-white hover:bg-gray-100',
+              'transition-colors disabled:opacity-50',
+              'shadow-sm border border-gray-200'
+            )}
+            aria-label="Schließen"
+          >
+            <X className="h-5 w-5 text-gray-700" />
+          </button>
+
+          {/* Content */}
+          <div className="overflow-y-auto h-full px-6 py-8 pt-16">
             {renderContent()}
           </div>
         </SheetContent>
@@ -342,18 +392,27 @@ export function UnifiedAuthDialog({
   // Desktop: Dialog
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[520px] p-0 gap-0 border-2">
-        <DialogHeader className="p-6 pb-0">
-          <button
-            onClick={onClose}
-            disabled={isLoading}
-            className="absolute right-6 top-6 rounded-full p-2 hover:bg-gray-100 transition-colors disabled:opacity-50"
-            aria-label="Schließen"
-          >
-            <X className="h-5 w-5 text-gray-500" />
-          </button>
-        </DialogHeader>
-        <div className="p-6 pt-4 max-h-[85vh] overflow-y-auto">
+      <DialogContent
+        className="sm:max-w-[500px] p-0 gap-0 bg-white border-0 shadow-2xl"
+        showCloseButton={false}
+      >
+        {/* Single Close Button */}
+        <button
+          onClick={onClose}
+          disabled={isLoading}
+          className={cn(
+            'absolute right-6 top-6 z-20',
+            'rounded-full p-2 bg-white hover:bg-gray-100',
+            'transition-colors disabled:opacity-50',
+            'border border-gray-200'
+          )}
+          aria-label="Schließen"
+        >
+          <X className="h-5 w-5 text-gray-700" />
+        </button>
+
+        {/* Content */}
+        <div className="p-8 pt-12 max-h-[90vh] overflow-y-auto">
           {renderContent()}
         </div>
       </DialogContent>
