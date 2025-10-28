@@ -10,10 +10,11 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth-unified';
-import { PrismaClient } from '@/app/generated/prisma';
+import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import Link from 'next/link';
-import { Building2, Sparkles, Clock, Plus, Eye } from 'lucide-react';
+import { Building2, Sparkles, Clock, Plus, Eye, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const prisma = new PrismaClient();
 
@@ -31,6 +32,9 @@ export default async function DashboardPage({ params }: Props) {
   }
 
   const user = session.user;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userRole = (user as any).primaryRole as UserRole;
+  const isStudioOwner = userRole === UserRole.STUDIO_OWNER;
 
   // Check if user owns any studios
   const studios = await prisma.studio.findMany({
@@ -62,7 +66,7 @@ export default async function DashboardPage({ params }: Props) {
                 Studio Dashboard
               </h1>
               <p className="text-lg text-muted-foreground">
-                Welcome, {user.name || user.email}
+                Willkommen, {user.name || user.email}
               </p>
             </div>
 
@@ -71,7 +75,7 @@ export default async function DashboardPage({ params }: Props) {
               className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all wellness-shadow"
             >
               <Plus className="h-5 w-5" />
-              Register Another Studio
+              Weiteres Studio registrieren
             </Link>
           </div>
 
@@ -98,7 +102,7 @@ export default async function DashboardPage({ params }: Props) {
                     <span className="font-medium">{studio.services.length}</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Bookings: </span>
+                    <span className="text-muted-foreground">Buchungen: </span>
                     <span className="font-medium">{studio._count.bookings}</span>
                   </div>
                 </div>
@@ -108,7 +112,7 @@ export default async function DashboardPage({ params }: Props) {
                   className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-accent/20 hover:bg-accent/30 text-foreground font-medium rounded-xl transition-colors"
                 >
                   <Eye className="h-4 w-4" />
-                  View Studio
+                  Studio ansehen
                 </Link>
               </div>
             ))}
@@ -136,16 +140,107 @@ export default async function DashboardPage({ params }: Props) {
 
   const hasBookings = bookings.length > 0;
 
+  // Studio Owner without studios: Show prominent Studio Setup CTA
+  if (isStudioOwner && studios.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Hero Section for Studio Owners */}
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold tracking-tight mb-4">
+              Willkommen, {user.name || 'Studio-Besitzer'}!
+            </h1>
+            <p className="text-xl text-muted-foreground mb-8">
+              Bereit, dein Studio auf Massava zu präsentieren?
+            </p>
+          </div>
+
+          {/* Prominent Studio Setup CTA Card */}
+          <Card className="mb-12 border-2 border-primary/50 shadow-2xl">
+            <CardContent className="p-12">
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="p-6 bg-primary/10 rounded-full">
+                  <Building2 className="h-16 w-16 text-primary" />
+                </div>
+
+                <div className="space-y-4">
+                  <h2 className="text-3xl font-bold">
+                    Jetzt dein Studio einrichten
+                  </h2>
+                  <p className="text-lg text-muted-foreground max-w-2xl">
+                    Registriere dein Studio in wenigen Schritten und erreiche tausende potenzielle Kunden.
+                    Komplett kostenlos, keine versteckten Gebühren.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
+                  <Button asChild size="lg" className="text-lg px-8 py-6">
+                    <Link href={`/${locale}/studios/register`} className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      Studio jetzt einrichten
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+
+                {/* Benefits */}
+                <div className="grid md:grid-cols-3 gap-6 pt-8 w-full">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary mb-2">100%</div>
+                    <div className="text-sm text-muted-foreground">
+                      Der Einnahmen bleiben bei dir
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary mb-2">0€</div>
+                    <div className="text-sm text-muted-foreground">
+                      Keine Provisionen oder versteckten Kosten
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary mb-2">5 Min</div>
+                    <div className="text-sm text-muted-foreground">
+                      Schnelle und einfache Registrierung
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Secondary: Browse Studios Option */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Oder entdecke andere Studios</CardTitle>
+              <CardDescription>
+                Schau dir an, wie andere Studios sich auf Massava präsentieren
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" size="lg" className="w-full">
+                <Link href={`/${locale}/studios`} className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  Studios durchsuchen
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular customers or users without specific role: Show welcome dashboard
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Header */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold tracking-tight mb-2">
-            Welcome back, {user.name || 'there'}!
+            Willkommen zurück, {user.name || 'dort'}!
           </h1>
           <p className="text-lg text-muted-foreground">
-            What would you like to do today?
+            Was möchtest du heute tun?
           </p>
         </div>
 
@@ -159,18 +254,18 @@ export default async function DashboardPage({ params }: Props) {
                   <div className="p-3 bg-primary/10 rounded-lg">
                     <Sparkles className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-2xl">Find a Massage</CardTitle>
+                  <CardTitle className="text-2xl">Massage finden</CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Browse Thai massage studios and book appointments
+                  Thai-Massage-Studios durchsuchen und Termine buchen
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Discover top-rated massage studios in your area, compare services, and book your next wellness session.
+                  Entdecke top-bewertete Massage-Studios in deiner Nähe, vergleiche Services und buche deine nächste Wellness-Session.
                 </p>
                 <div className="flex items-center text-primary font-medium">
-                  Browse Studios
+                  Studios durchsuchen
                   <svg
                     className="ml-2 h-4 w-4"
                     fill="none"
@@ -197,18 +292,18 @@ export default async function DashboardPage({ params }: Props) {
                   <div className="p-3 bg-secondary/10 rounded-lg">
                     <Building2 className="h-6 w-6 text-secondary-foreground" />
                   </div>
-                  <CardTitle className="text-2xl">List My Studio</CardTitle>
+                  <CardTitle className="text-2xl">Mein Studio listen</CardTitle>
                 </div>
                 <CardDescription className="text-base">
-                  Register your massage studio and start accepting bookings
+                  Registriere dein Massage-Studio und akzeptiere Buchungen
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Join our platform to reach more customers, manage bookings, and grow your wellness business.
+                  Tritt unserer Plattform bei, um mehr Kunden zu erreichen, Buchungen zu verwalten und dein Wellness-Business zu vergrößern.
                 </p>
                 <div className="flex items-center text-primary font-medium">
-                  Get Started
+                  Jetzt starten
                   <svg
                     className="ml-2 h-4 w-4"
                     fill="none"
@@ -231,15 +326,15 @@ export default async function DashboardPage({ params }: Props) {
         {/* Recent Activity Section */}
         <div>
           <h2 className="text-2xl font-bold tracking-tight mb-6">
-            Recent Activity
+            Letzte Aktivitäten
           </h2>
 
           {hasBookings ? (
             <Card>
               <CardHeader>
-                <CardTitle>Your Recent Bookings</CardTitle>
+                <CardTitle>Deine letzten Buchungen</CardTitle>
                 <CardDescription>
-                  Your latest massage appointments
+                  Deine letzten Massage-Termine
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -292,15 +387,15 @@ export default async function DashboardPage({ params }: Props) {
                   <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-muted mb-4">
                     <Clock className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">No bookings yet</h3>
+                  <h3 className="text-lg font-semibold mb-2">Noch keine Buchungen</h3>
                   <p className="text-muted-foreground mb-6">
-                    Start your wellness journey by booking your first massage.
+                    Starte deine Wellness-Reise, indem du deine erste Massage buchst.
                   </p>
                   <Link
                     href={`/${locale}/studios`}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
                   >
-                    Browse Studios
+                    Studios durchsuchen
                   </Link>
                 </div>
               </CardContent>

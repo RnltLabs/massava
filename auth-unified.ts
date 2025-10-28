@@ -48,11 +48,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        accountType: { label: 'Account Type', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
+
+        // Extract account type preference (for routing)
+        const accountType = credentials.accountType as 'customer' | 'studio' | undefined;
 
         // Try unified User model first
         const user = await prisma.user.findUnique({
@@ -87,7 +91,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             throw new Error('Account suspended');
           }
 
-          // Return user with role information
+          // Return user with role information and account type preference
           return {
             id: user.id,
             email: user.email,
@@ -95,6 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: user.image,
             primaryRole: user.primaryRole,
             roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+            accountType: accountType || 'customer',
           };
         }
 
@@ -127,6 +132,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: null,
             primaryRole: UserRole.CUSTOMER,
             roles: [UserRole.CUSTOMER],
+            accountType: accountType || 'customer',
           };
         }
 
@@ -159,6 +165,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             image: null,
             primaryRole: UserRole.STUDIO_OWNER,
             roles: [UserRole.STUDIO_OWNER],
+            accountType: accountType || 'studio',
           };
         }
 
@@ -229,6 +236,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.primaryRole = (user as any).primaryRole || UserRole.CUSTOMER;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.roles = (user as any).roles || [UserRole.CUSTOMER];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.accountType = (user as any).accountType || 'customer';
       }
 
       // OAuth sign in - fetch roles from database
@@ -263,6 +272,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         (session.user as any).primaryRole = token.primaryRole;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).roles = token.roles;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).accountType = token.accountType || 'customer';
       }
 
       return session;

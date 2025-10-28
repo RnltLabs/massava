@@ -138,7 +138,36 @@
     "logout": "Abmelden",
     "my_account": "Mein Account",
     "customer_login": "Kundenlogin",
-    "customer_login_button": "Anmelden"
+    "customer_login_button": "Anmelden",
+    "account_type_selector": {
+      "customer": {
+        "title": "Ich möchte buchen",
+        "subtitle": "Massagen finden und Termine online reservieren"
+      },
+      "studio": {
+        "title": "Ich habe ein Studio",
+        "subtitle": "Mein Massage-Studio verwalten und Kunden empfangen"
+      },
+      "welcome_signup": "Willkommen bei Massava",
+      "welcome_login": "Willkommen zurück",
+      "subtitle_signup": "Wähle aus, wie du Massava nutzen möchtest",
+      "subtitle_login": "Weiter als Kunde oder Studio-Inhaber"
+    },
+    "account_type_toggle": {
+      "customer": "Kunde",
+      "studio": "Studio-Inhaber"
+    },
+    "tabs": {
+      "login": "Anmelden",
+      "signup": "Registrieren"
+    },
+    "dashboard_cta": {
+      "studio_setup": "Studio jetzt einrichten"
+    },
+    "role_switcher": {
+      "switch_to_customer": "Zur Kunden-Ansicht wechseln",
+      "switch_to_studio": "Zur Studio-Ansicht wechseln"
+    }
   },
   "customer_auth": {
     "signin_title": "Als Kunde anmelden",

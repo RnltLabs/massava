@@ -152,7 +152,7 @@ export default function Header() {
                     }
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors rounded-2xl"
                   >
-                    Login
+                    Anmelden
                   </button>
 
                   <button
@@ -161,7 +161,7 @@ export default function Header() {
                     }
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors rounded-2xl wellness-shadow"
                   >
-                    Sign Up
+                    Registrieren
                   </button>
                 </>
               )}
@@ -172,10 +172,9 @@ export default function Header() {
 
       {/* Unified Auth Dialog */}
       <UnifiedAuthDialog
-        open={authDialog.open}
-        onOpenChange={(open) => setAuthDialog({ ...authDialog, open })}
-        defaultTab={authDialog.tab}
-        locale={locale}
+        isOpen={authDialog.open}
+        onClose={() => setAuthDialog({ ...authDialog, open: false })}
+        initialMode={authDialog.tab}
       />
     </>
   );

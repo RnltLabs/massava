@@ -52,9 +52,13 @@ export async function signUp(
       };
     }
 
-    const { name, email, password } = validatedFields.data;
+    const { name, email, password, phone, accountType } = validatedFields.data;
 
-    // 2. Check if email already exists (in unified User model)
+    // 2. Determine primary role based on account type selection
+    const primaryRole =
+      accountType === 'studio' ? UserRole.STUDIO_OWNER : UserRole.CUSTOMER;
+
+    // 3. Check if email already exists (in unified User model)
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -66,7 +70,7 @@ export async function signUp(
       };
     }
 
-    // 3. Check legacy models (for backward compatibility)
+    // 4. Check legacy models (for backward compatibility)
     const legacyCustomer = await prisma.customer.findUnique({
       where: { email },
     });
@@ -82,16 +86,17 @@ export async function signUp(
       };
     }
 
-    // 4. Hash password with bcrypt (cost factor 12)
+    // 5. Hash password with bcrypt (cost factor 12)
     const hashedPassword = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
 
-    // 5. Create User record in database (default role: CUSTOMER)
+    // 6. Create User record in database with selected role
     const user = await prisma.user.create({
       data: {
         email,
         name,
         password: hashedPassword,
-        primaryRole: UserRole.CUSTOMER,
+        phone: phone || null, // Optional field
+        primaryRole,
         isActive: true,
         emailVerified: null, // Not verified yet
       },
@@ -99,12 +104,21 @@ export async function signUp(
 
     // 6. Generate verification token (cryptographically secure)
     const verificationURL = await generateEmailVerificationURL(email, locale);
+    console.log('[AUTH] Generated verification URL:', verificationURL);
 
     // 7. Send verification email via Resend
     try {
-      await sendVerificationEmail(email, verificationURL, locale);
+      console.log('[AUTH] Attempting to send verification email to:', email);
+      const emailResult = await sendVerificationEmail(email, verificationURL, locale);
+      console.log('[AUTH] Email send result:', emailResult);
+
+      if (!emailResult.success) {
+        console.error('[AUTH] Failed to send verification email:', emailResult.error);
+      } else {
+        console.log('[AUTH] Verification email sent successfully! Message ID:', emailResult.messageId);
+      }
     } catch (emailError) {
-      console.error('Failed to send verification email:', emailError);
+      console.error('[AUTH] Exception sending verification email:', emailError);
       // Don't fail registration if email fails - user can request new link
     }
 
@@ -139,7 +153,7 @@ export async function signIn(
       };
     }
 
-    const { email, password } = validatedFields.data;
+    const { email, password, accountType } = validatedFields.data;
 
     // 2. Manually verify credentials before NextAuth sign in
     // This gives us better control over error messages
@@ -151,6 +165,7 @@ export async function signIn(
         password: true,
         emailVerified: true,
         isActive: true,
+        primaryRole: true,
       },
     });
 
@@ -204,11 +219,25 @@ export async function signIn(
       };
     }
 
-    // 3. Now sign in via NextAuth (we know credentials are valid)
+    // 3. Determine redirect URL based on account type preference and actual role
+    const actualRole = user?.primaryRole || 'CUSTOMER';
+    let redirectUrl = '/dashboard';
+
+    // If user selected studio but is actually a customer, go to dashboard (with upgrade prompt)
+    // If user selected customer, always go to landing page (search-focused experience)
+    // If user selected studio and IS studio owner, go to dashboard (studio view)
+    if (accountType === 'studio' && actualRole === 'STUDIO_OWNER') {
+      redirectUrl = '/dashboard'; // Studio dashboard view
+    } else if (accountType === 'customer') {
+      redirectUrl = '/'; // Landing page with search widget
+    }
+
+    // 4. Now sign in via NextAuth (we know credentials are valid)
     try {
       await nextAuthSignIn('credentials', {
         email,
         password,
+        accountType, // Pass account type preference for session
         redirect: false,
       });
     } catch (error: unknown) {
@@ -220,12 +249,12 @@ export async function signIn(
       };
     }
 
-    // 4. Login successful - return redirect URL
+    // 5. Login successful - return redirect URL
     // Note: Session may not be immediately available in Server Action
     // but will be available after client-side navigation
     return {
       success: true,
-      data: { redirectUrl: '/dashboard' },
+      data: { redirectUrl },
     };
   } catch (error) {
     console.error('Login error:', error);
