@@ -196,5 +196,23 @@
     "skip_button": "Später",
     "prefill_notice": "Deine Daten sind bereits vorausgefüllt",
     "error_general": "Ein Fehler ist aufgetreten. Bitte versuche es erneut."
+  },
+  "VerifyEmail": {
+    "invalidLink": {
+      "title": "Ungültiger Link",
+      "message": "Der Verifizierungslink ist ungültig. Bitte überprüfen Sie Ihre E-Mail erneut."
+    },
+    "expired": {
+      "title": "Link abgelaufen",
+      "message": "Dieser Verifizierungslink ist abgelaufen oder wurde bereits verwendet.",
+      "hint": "Bitte fordern Sie einen neuen Verifizierungslink an."
+    },
+    "success": {
+      "title": "E-Mail verifiziert!",
+      "message": "Ihre E-Mail-Adresse wurde erfolgreich bestätigt.",
+      "redirecting": "Sie werden in wenigen Sekunden weitergeleitet...",
+      "goToDashboard": "Zum Dashboard"
+    },
+    "backToHome": "Zur Startseite"
   }
 }
