@@ -239,5 +239,26 @@
   "search": {
     "title": "Available appointments in {location}",
     "subtitle": "Search results within {radius} km"
+  },
+  "dateTimePicker": {
+    "placeholder": "Select date and time",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "anyDate": "Any date",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "orChooseDate": "Or choose a date:",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "anyTime": "Any time",
+    "done": "Done",
+    "back": "Back",
+    "selected": "Selected:",
+    "timeRange": {
+      "morning": "06:00 - 12:00",
+      "afternoon": "12:00 - 18:00",
+      "evening": "18:00 - 24:00"
+    }
   }
 }

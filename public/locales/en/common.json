@@ -1,0 +1,28 @@
+{
+  "dateTimePicker": {
+    "placeholder": "Select date and time",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "anyDate": "Any Date",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "orChooseDate": "Or choose a date:",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "done": "Done",
+    "back": "Back",
+    "selected": "Selected:",
+    "timeRange": {
+      "morning": "06:00 AM - 12:00 PM",
+      "afternoon": "12:00 PM - 06:00 PM",
+      "evening": "06:00 PM - 12:00 AM"
+    }
+  },
+  "search": {
+    "selectDateTime": "Select date and time",
+    "location": "Location",
+    "treatment": "Treatment",
+    "search": "Search"
+  }
+}

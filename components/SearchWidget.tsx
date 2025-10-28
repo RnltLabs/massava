@@ -7,10 +7,10 @@
 
 import { useState, type FormEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { LocationAutocomplete } from '@/components/LocationAutocomplete';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 interface SearchWidgetProps {
   autoFocus?: boolean;
@@ -32,20 +32,8 @@ export function SearchWidget({
   const [location, setLocation] = useState<string>('');
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [radius, setRadius] = useState<string>('20');
-  const [dateTime, setDateTime] = useState<string>('');
+  const [dateTime, setDateTime] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
-  // Get minimum datetime (now)
-  const getMinDateTime = (): string => {
-    const now = new Date();
-    // Format: YYYY-MM-DDTHH:mm
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
 
   const handleLocationChange = (value: string, location?: { lat: number; lng: number }): void => {
     setLocation(value);
@@ -76,7 +64,7 @@ export function SearchWidget({
     }
 
     if (dateTime) {
-      params.set('datetime', dateTime);
+      params.set('datetime', dateTime.toISOString());
     }
 
     // Navigate to search results page
@@ -117,24 +105,12 @@ export function SearchWidget({
         </div>
 
         {/* Second row: Date and Time */}
-        <div className="relative flex-1">
-          <label htmlFor="datetime-input" className="sr-only">
-            Datum und Uhrzeit
-          </label>
-          <Calendar
-            className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10"
-            aria-hidden="true"
-          />
-          <Input
-            id="datetime-input"
-            type="datetime-local"
-            value={dateTime}
-            onChange={(e) => setDateTime(e.target.value)}
-            min={getMinDateTime()}
-            className="w-full pl-12 pr-4 py-6 rounded-2xl border-2 border-muted focus:border-primary text-lg h-auto"
-            aria-label="Datum und Uhrzeit auswählen"
-          />
-        </div>
+        <DateTimePicker
+          value={dateTime}
+          onChange={setDateTime}
+          minDate={new Date()}
+          placeholder="Datum und Uhrzeit wählen (optional)"
+        />
 
         {/* Search button */}
         <Button
