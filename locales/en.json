@@ -196,5 +196,23 @@
     "skip_button": "Later",
     "prefill_notice": "Your information is already pre-filled",
     "error_general": "An error occurred. Please try again."
+  },
+  "VerifyEmail": {
+    "invalidLink": {
+      "title": "Invalid Link",
+      "message": "The verification link is invalid. Please check your email again."
+    },
+    "expired": {
+      "title": "Link Expired",
+      "message": "This verification link has expired or has already been used.",
+      "hint": "Please request a new verification link."
+    },
+    "success": {
+      "title": "Email Verified!",
+      "message": "Your email address has been successfully verified.",
+      "redirecting": "You will be redirected in a few seconds...",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "backToHome": "Back to Home"
   }
 }

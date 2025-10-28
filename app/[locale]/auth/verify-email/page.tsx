@@ -8,11 +8,19 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { verifyEmailVerificationToken, markEmailAsVerified } from '@/lib/email-verification';
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
+import { verifyEmailVerificationToken } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
-import { getRouteWithBasePath } from '@/lib/navigation';
 
-async function VerifyEmailContent({ searchParams }: { searchParams: { token?: string } }) {
+async function VerifyEmailContent({
+  searchParams,
+  locale,
+}: {
+  searchParams: { token?: string };
+  locale: string;
+}) {
+  const t = await getTranslations('VerifyEmail');
   const token = searchParams.token;
 
   if (!token) {
@@ -25,15 +33,19 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">Ungültiger Link</h1>
+            <h1 className="mt-4 text-2xl font-bold text-gray-900">
+              {t('invalidLink.title', { default: 'Ungültiger Link' })}
+            </h1>
             <p className="mt-2 text-gray-600">
-              Der Verifizierungslink ist ungültig. Bitte überprüfen Sie Ihre E-Mail erneut.
+              {t('invalidLink.message', {
+                default: 'Der Verifizierungslink ist ungültig. Bitte überprüfen Sie Ihre E-Mail erneut.',
+              })}
             </p>
             <Link
-              href="/"
+              href={`/${locale}`}
               className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Zur Startseite
+              {t('backToHome', { default: 'Zur Startseite' })}
             </Link>
           </div>
         </div>
@@ -54,18 +66,24 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </div>
-            <h1 className="mt-4 text-2xl font-bold text-gray-900">Link abgelaufen</h1>
+            <h1 className="mt-4 text-2xl font-bold text-gray-900">
+              {t('expired.title', { default: 'Link abgelaufen' })}
+            </h1>
             <p className="mt-2 text-gray-600">
-              Dieser Verifizierungslink ist abgelaufen oder wurde bereits verwendet.
+              {t('expired.message', {
+                default: 'Dieser Verifizierungslink ist abgelaufen oder wurde bereits verwendet.',
+              })}
             </p>
             <p className="mt-1 text-sm text-gray-500">
-              Bitte fordern Sie einen neuen Verifizierungslink an.
+              {t('expired.hint', {
+                default: 'Bitte fordern Sie einen neuen Verifizierungslink an.',
+              })}
             </p>
             <Link
-              href="/"
+              href={`/${locale}`}
               className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              Zur Startseite
+              {t('backToHome', { default: 'Zur Startseite' })}
             </Link>
           </div>
         </div>
@@ -79,7 +97,7 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
   if (user) {
     await prisma.user.update({
       where: { email },
-      data: { emailVerified: new Date() }
+      data: { emailVerified: new Date() },
     });
   } else {
     // Fallback: Check legacy models (for users who haven't been migrated yet)
@@ -87,15 +105,21 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
     const studioOwner = await prisma.studioOwner.findUnique({ where: { email } });
 
     if (customer) {
-      await markEmailAsVerified(email, 'customer');
+      await prisma.customer.update({
+        where: { email },
+        data: { emailVerified: new Date() },
+      });
     } else if (studioOwner) {
-      await markEmailAsVerified(email, 'studio-owner');
+      await prisma.studioOwner.update({
+        where: { email },
+        data: { emailVerified: new Date() },
+      });
     }
   }
 
   // Success - redirect to appropriate dashboard based on role
-  const basePath = user?.primaryRole === 'STUDIO_OWNER' ? '/studio-owner/dashboard' : '/customer/dashboard';
-  const redirectUrl = getRouteWithBasePath(basePath);
+  const dashboardPath =
+    user?.primaryRole === 'STUDIO_OWNER' ? `/${locale}/dashboard` : `/${locale}/customer/dashboard`;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -106,28 +130,51 @@ async function VerifyEmailContent({ searchParams }: { searchParams: { token?: st
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="mt-4 text-2xl font-bold text-gray-900">E-Mail verifiziert!</h1>
+          <h1 className="mt-4 text-2xl font-bold text-gray-900">
+            {t('success.title', { default: 'E-Mail verifiziert!' })}
+          </h1>
           <p className="mt-2 text-gray-600">
-            Ihre E-Mail-Adresse wurde erfolgreich bestätigt.
+            {t('success.message', {
+              default: 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt.',
+            })}
           </p>
           <p className="mt-4 text-sm text-gray-500">
-            Sie werden in wenigen Sekunden weitergeleitet...
+            {t('success.redirecting', {
+              default: 'Sie werden in wenigen Sekunden weitergeleitet...',
+            })}
           </p>
+          <Link
+            href={dashboardPath}
+            className="mt-6 inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            {t('success.goToDashboard', { default: 'Zum Dashboard' })}
+          </Link>
         </div>
       </div>
-      <meta httpEquiv="refresh" content={`3;url=${redirectUrl}`} />
+      <meta httpEquiv="refresh" content={`3;url=${dashboardPath}`} />
     </div>
   );
 }
 
-export default function VerifyEmailPage({ searchParams }: { searchParams: { token?: string } }) {
+export default async function VerifyEmailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ token?: string }>;
+}) {
+  const { locale } = await params;
+  const search = await searchParams;
+
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    }>
-      <VerifyEmailContent searchParams={searchParams} />
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      }
+    >
+      <VerifyEmailContent searchParams={search} locale={locale} />
     </Suspense>
   );
 }
