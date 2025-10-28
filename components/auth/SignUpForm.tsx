@@ -11,6 +11,7 @@ interface SignUpFormProps {
   accountType: 'customer' | 'studio';
   onSubmit: (data: SignUpFormData) => Promise<void>;
   isLoading?: boolean;
+  onSwitchToLogin?: () => void;
 }
 
 interface SignUpFormData {
@@ -32,6 +33,7 @@ export function SignUpForm({
   accountType,
   onSubmit,
   isLoading = false,
+  onSwitchToLogin,
 }: SignUpFormProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const accountTypeValue = accountType; // Reserved for future use
@@ -496,34 +498,37 @@ export function SignUpForm({
           )}
       </div>
 
-      {/* Terms Acceptance - Simple Checkbox */}
+      {/* Terms Acceptance - Large Tappable Card (Mobile-Friendly) */}
       <div>
-        <label className="flex items-start gap-3 cursor-pointer group">
-          <div className="relative pt-0.5">
-            <input
-              type="checkbox"
-              checked={formData.termsAccepted}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, termsAccepted: e.target.checked }))
-              }
-              disabled={isLoading}
-              className="peer sr-only"
-            />
-            <div
-              className={cn(
-                'w-5 h-5 rounded border-2 transition-all',
-                'peer-focus:ring-2 peer-focus:ring-sage-500/20',
-                formData.termsAccepted
-                  ? 'bg-sage-600 border-sage-600'
-                  : 'border-gray-400 bg-white group-hover:border-sage-500'
-              )}
-            >
-              {formData.termsAccepted && (
-                <Check className="h-4 w-4 text-white" strokeWidth={3} />
-              )}
-            </div>
+        <button
+          type="button"
+          onClick={() =>
+            setFormData((prev) => ({ ...prev, termsAccepted: !prev.termsAccepted }))
+          }
+          disabled={isLoading}
+          className={cn(
+            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'min-h-[64px] flex items-center gap-4',
+            'focus:outline-none focus:ring-2 focus:ring-sage-500/20',
+            'disabled:opacity-50 disabled:cursor-not-allowed',
+            formData.termsAccepted
+              ? 'border-sage-600 bg-sage-50 shadow-sm'
+              : 'border-gray-300 bg-white hover:border-sage-400 hover:bg-gray-50'
+          )}
+        >
+          <div
+            className={cn(
+              'flex-shrink-0 w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all',
+              formData.termsAccepted
+                ? 'bg-sage-600 border-sage-600'
+                : 'border-gray-400 bg-white'
+            )}
+          >
+            {formData.termsAccepted && (
+              <Check className="h-4 w-4 text-white" strokeWidth={3} />
+            )}
           </div>
-          <div className="flex-1 text-sm text-gray-900 leading-relaxed select-none">
+          <div className="flex-1 text-sm text-gray-900 leading-relaxed">
             Ich akzeptiere die{' '}
             <Link
               href="/legal/terms"
@@ -541,7 +546,7 @@ export function SignUpForm({
               Datenschutzerklärung
             </Link>
           </div>
-        </label>
+        </button>
         {errors.terms && (
           <motion.p
             initial={{ opacity: 0, y: -10 }}
@@ -569,6 +574,21 @@ export function SignUpForm({
           'Konto erstellen'
         )}
       </Button>
+
+      {/* Switch to Login */}
+      {onSwitchToLogin && (
+        <div className="text-center text-sm text-gray-600">
+          Bereits ein Konto?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToLogin}
+            disabled={isLoading}
+            className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
+          >
+            Jetzt anmelden
+          </button>
+        </div>
+      )}
     </form>
   );
 }

@@ -65,9 +65,8 @@ export function UnifiedAuthDialog({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      // For signup: start with account type selection
-      // For login: skip directly to email-choice
-      setStep(initialMode === 'signup' ? 'account-type' : 'email-choice');
+      // Both signup AND login start with account type selection
+      setStep('account-type');
       setAccountType('customer');
       setIsLoading(false);
     }
@@ -86,7 +85,8 @@ export function UnifiedAuthDialog({
   const goBack = (): void => {
     if (step === 'email-form') {
       setStep('email-choice');
-    } else if (step === 'email-choice' && mode === 'signup') {
+    } else if (step === 'email-choice') {
+      // Both signup AND login go back to account-type
       setStep('account-type');
     } else {
       onClose();
@@ -186,8 +186,8 @@ export function UnifiedAuthDialog({
 
         <div className="space-y-8">
           <AnimatePresence mode="wait">
-            {/* Step 1: Account Type Selection (Signup Only) */}
-            {step === 'account-type' && mode === 'signup' && (
+            {/* Step 1: Account Type Selection (Both Signup AND Login) */}
+            {step === 'account-type' && (
               <motion.div
                 key="account-type"
                 initial={{ opacity: 0, x: 20 }}
@@ -311,43 +311,16 @@ export function UnifiedAuthDialog({
                     accountType={accountType}
                     onSubmit={handleSignUp}
                     isLoading={isLoading}
+                    onSwitchToLogin={() => setMode('login')}
                   />
                 ) : (
                   <LoginForm
                     accountType={accountType}
                     onSubmit={handleLogin}
                     isLoading={isLoading}
+                    onSwitchToSignup={() => setMode('signup')}
                   />
                 )}
-
-                {/* Toggle Mode Link */}
-                <div className="text-center pt-2">
-                  <p className="text-sm text-gray-600">
-                    {mode === 'signup' ? (
-                      <>
-                        Bereits ein Konto?{' '}
-                        <button
-                          onClick={toggleMode}
-                          disabled={isLoading}
-                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
-                        >
-                          Anmelden
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        Noch kein Konto?{' '}
-                        <button
-                          onClick={toggleMode}
-                          disabled={isLoading}
-                          className="text-sage-700 hover:text-sage-800 font-semibold transition-colors disabled:opacity-50"
-                        >
-                          Registrieren
-                        </button>
-                      </>
-                    )}
-                  </p>
-                </div>
               </motion.div>
             )}
           </AnimatePresence>

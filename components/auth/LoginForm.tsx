@@ -11,6 +11,7 @@ interface LoginFormProps {
   accountType: 'customer' | 'studio';
   onSubmit: (data: LoginFormData) => Promise<void>;
   isLoading?: boolean;
+  onSwitchToSignup?: () => void;
 }
 
 interface LoginFormData {
@@ -23,6 +24,7 @@ export function LoginForm({
   accountType,
   onSubmit,
   isLoading = false,
+  onSwitchToSignup,
 }: LoginFormProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const accountTypeValue = accountType; // Reserved for future use
@@ -258,6 +260,21 @@ export function LoginForm({
           'Anmelden'
         )}
       </Button>
+
+      {/* Switch to Signup */}
+      {onSwitchToSignup && (
+        <div className="text-center text-sm text-gray-600">
+          Noch kein Konto?{' '}
+          <button
+            type="button"
+            onClick={onSwitchToSignup}
+            disabled={isLoading}
+            className="text-sage-700 hover:text-sage-800 font-medium transition-colors disabled:opacity-50"
+          >
+            Jetzt registrieren
+          </button>
+        </div>
+      )}
     </form>
   );
 }

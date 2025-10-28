@@ -77,7 +77,7 @@ export function AccountTypeSelector({
                   Kunde
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Finden Sie Wellness-Profis
+                  Massage buchen
                 </p>
               </div>
             </div>
