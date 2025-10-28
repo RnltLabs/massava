@@ -29,7 +29,7 @@ export function AccountTypeSelector({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {/* Customer Card */}
         <motion.div
           whileHover={{ scale: 1.02 }}

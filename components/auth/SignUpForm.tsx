@@ -148,6 +148,15 @@ export function SignUpForm({
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
+    console.log('🟢 [SIGNUP FORM] Submit button clicked!');
+    console.log('🟢 [SIGNUP FORM] Form data:', {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      termsAccepted: formData.termsAccepted,
+      passwordLength: formData.password.length,
+      passwordsMatch: formData.password === formData.passwordConfirm,
+    });
 
     // Validate all fields
     const newErrors: Record<string, string> = {};
@@ -163,6 +172,7 @@ export function SignUpForm({
     }
 
     if (Object.keys(newErrors).length > 0) {
+      console.error('❌ [SIGNUP FORM] Validation errors:', newErrors);
       setErrors(newErrors);
       setTouched({
         email: true,
@@ -174,12 +184,14 @@ export function SignUpForm({
       return;
     }
 
+    console.log('✅ [SIGNUP FORM] Validation passed, calling onSubmit...');
     try {
       await onSubmit(formData);
+      console.log('✅ [SIGNUP FORM] onSubmit completed successfully');
       setSuccess(true);
     } catch (error) {
+      console.error('❌ [SIGNUP FORM] Form submission error:', error);
       // Error will be shown by the form
-      console.error('Form submission error:', error);
     }
   };
 

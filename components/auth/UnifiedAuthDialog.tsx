@@ -94,8 +94,17 @@ export function UnifiedAuthDialog({
 
   // Auth handlers
   const handleSignUp = async (data: SignUpFormData): Promise<void> => {
+    console.log('🔵 [CLIENT] handleSignUp called with data:', {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      accountType,
+      termsAccepted: data.termsAccepted,
+    });
+
     setIsLoading(true);
     try {
+      console.log('🔵 [CLIENT] Calling signUp server action...');
       const result = await signUp({
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
@@ -105,20 +114,23 @@ export function UnifiedAuthDialog({
         accountType,
       }, 'de');
 
+      console.log('🔵 [CLIENT] signUp result:', result);
+
       if (result.success) {
+        console.log('✅ [CLIENT] Signup successful! Email verification sent to:', result.data?.email);
         // Success! Email verification sent
         onSuccess?.();
         // Don't close - show success message in form
       } else {
-        // Show error in form
-        console.error('Signup error:', result.error, result.errors);
+        console.error('❌ [CLIENT] Signup error:', result.error, result.errors);
         throw new Error(result.error || 'Registration failed');
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('❌ [CLIENT] Signup exception:', error);
       throw error; // Let form handle error display
     } finally {
       setIsLoading(false);
+      console.log('🔵 [CLIENT] handleSignUp completed');
     }
   };
 
