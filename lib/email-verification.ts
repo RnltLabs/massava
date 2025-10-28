@@ -68,14 +68,14 @@ export async function verifyEmailVerificationToken(token: string): Promise<strin
 /**
  * Generate email verification URL
  * @param email - Email address to verify
- * @returns Full verification URL
+ * @param locale - Locale for the URL (e.g., 'de', 'en')
+ * @returns Full verification URL with locale prefix
  */
-export async function generateEmailVerificationURL(email: string): Promise<string> {
+export async function generateEmailVerificationURL(email: string, locale: string = 'de'): Promise<string> {
   const token = await generateEmailVerificationToken(email);
 
-  // AUTH_URL contains full path to NextAuth: https://example.com/massava/api/auth
-  // We need the base URL with basePath: https://example.com/massava
-  // NEXTAUTH_URL (legacy) contains the base URL with basePath
+  // NEXTAUTH_URL contains the base URL
+  // Since migration to massava.app, no basePath is used
   let baseUrl = process.env.NEXTAUTH_URL;
 
   // If NEXTAUTH_URL is not set, try to extract from AUTH_URL
@@ -89,7 +89,8 @@ export async function generateEmailVerificationURL(email: string): Promise<strin
     baseUrl = 'http://localhost:3000';
   }
 
-  return `${baseUrl}/auth/verify-email?token=${token}`;
+  // Include locale prefix as required by next-intl with localePrefix: 'always'
+  return `${baseUrl}/${locale}/auth/verify-email?token=${token}`;
 }
 
 /**
