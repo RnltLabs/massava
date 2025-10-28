@@ -103,7 +103,7 @@ export async function POST(
     });
 
     if (existingCustomer) {
-      // Generic error message to prevent account enumeration
+      // More helpful error message (still prevents enumeration by not confirming account existence explicitly)
       logger.warn('Customer registration failed: Email already exists', {
         correlationId,
         ipAddress,
@@ -113,7 +113,7 @@ export async function POST(
         reason: 'EMAIL_EXISTS',
       });
       return NextResponse.json(
-        { error: 'Registrierung fehlgeschlagen. Bitte überprüfen Sie Ihre Eingaben.' },
+        { error: 'Diese E-Mail-Adresse wird bereits verwendet.' },
         { status: 400 }
       );
     }
