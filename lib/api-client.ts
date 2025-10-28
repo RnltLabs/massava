@@ -3,17 +3,21 @@
  * All rights reserved.
  *
  * API Client Helper
- * Handles basePath for API requests in production environments
+ * Since migration to massava.app domain, no basePath is used
  */
 
 /**
  * Get the basePath for the application
- * Returns '/massava' in production, '' in development
+ * Since migration to massava.app: always returns '' (no basePath)
+ * Previously: returned '/massava' for rnltlabs.de/massava subdomain
  */
 export function getBasePath(): string {
-  // In production, use /massava basePath
-  // In development, use root
-  return process.env.NODE_ENV === 'production' ? '/massava' : '';
+  // Since migration to massava.app, no basePath is used
+  // Legacy support: Check if we're still on old domain
+  if (typeof window !== 'undefined' && window.location.pathname.startsWith('/massava')) {
+    return '/massava';
+  }
+  return '';
 }
 
 /**

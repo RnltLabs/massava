@@ -201,7 +201,8 @@ export function WelcomeEmailTemplate({
 
   const t = content[locale as keyof typeof content] || content.de;
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const basePath = process.env.NODE_ENV === 'production' ? '/massava' : '';
+  // Since migration to massava.app, no basePath is used
+  const basePath = '';
   const studiosUrl = `${appUrl}${basePath}/studios`;
 
   return (
@@ -362,7 +363,8 @@ If you didn't create this account, please ignore this email.
 
 export function getPlainTextWelcome(name: string, locale = 'de'): string {
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  const basePath = process.env.NODE_ENV === 'production' ? '/massava' : '';
+  // Since migration to massava.app, no basePath is used
+  const basePath = '';
   const studiosUrl = `${appUrl}${basePath}/studios`;
 
   const content = {
