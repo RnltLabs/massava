@@ -12,7 +12,7 @@ import { bookingSchema } from '@/lib/validation';
 import { bookingRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit';
-import { requirePermission, getCurrentUser } from '@/lib/auth/permissions';
+import { getCurrentUser } from '@/lib/auth/permissions';
 import { generateMagicLink } from '@/lib/magic-link';
 
 const prisma = new PrismaClient();
