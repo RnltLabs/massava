@@ -19,9 +19,9 @@ const BCRYPT_ROUNDS = 12;
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { locale: string } }
+  { params }: { params: Promise<{ locale: string }> }
 ) {
-  const locale = params.locale || 'de'; // Extract locale from route params
+  const { locale } = await params; // Extract locale from route params (Next.js 15: params is async)
   const correlationId = getCorrelationId(request);
   const ipAddress = getClientIP(request);
   const userAgent = getUserAgent(request);
