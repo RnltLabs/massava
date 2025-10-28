@@ -11,6 +11,7 @@ import { getTranslations } from 'next-intl/server';
 import { verifyEmailVerificationToken } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
 import { CheckCircle2, XCircle, Mail } from 'lucide-react';
+import { VerifyEmailSuccess } from './VerifyEmailClient';
 
 async function VerifyEmailContent({
   searchParams,
@@ -154,60 +155,8 @@ async function VerifyEmailContent({
     }
   }
 
-  // Success - no auto-redirect, user clicks to go to login
-  return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center">
-      {/* Decorative background blobs - Success theme (green) */}
-      <div
-        className="organic-blob"
-        style={{
-          width: '500px',
-          height: '500px',
-          background: 'oklch(0.62 0.08 140 / 0.2)',
-          top: '-100px',
-          right: '-150px',
-        }}
-      />
-      <div
-        className="organic-blob"
-        style={{
-          width: '400px',
-          height: '400px',
-          background: 'oklch(0.88 0.03 120 / 0.25)',
-          bottom: '-100px',
-          left: '-100px',
-          animationDelay: '3s',
-        }}
-      />
-
-      {/* Content */}
-      <div className="relative z-10 max-w-md w-full mx-4">
-        <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl p-8 text-center">
-          {/* Success checkmark with animation */}
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6 animate-bounce">
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
-          </div>
-
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            E-Mail verifiziert!
-          </h1>
-          <p className="text-gray-600 mb-2">
-            Ihre E-Mail-Adresse wurde erfolgreich bestätigt.
-          </p>
-          <p className="text-sm text-gray-500 mb-8">
-            Sie können sich jetzt mit Ihrem Account anmelden.
-          </p>
-
-          <Link
-            href={`/${locale}?openLogin=true`}
-            className="inline-block px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
-          >
-            Zum Login
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
+  // Success - Use client component for auto-redirect to login
+  return <VerifyEmailSuccess email={email} locale={locale} />;
 }
 
 export default async function VerifyEmailPage({

@@ -10,9 +10,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, LogOut, LayoutDashboard, ChevronDown, Building2 } from 'lucide-react';
-import { AuthModal } from './AuthModal';
-import { CustomerAuthModal } from './CustomerAuthModal';
+import { User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react';
+import { UnifiedAuthDialog } from './auth/UnifiedAuthDialog';
 import LanguageSwitcher from './LanguageSwitcher';
 import { apiFetch } from '@/lib/api-client';
 import { getAuthCallbackUrl } from '@/lib/navigation';
@@ -27,21 +26,33 @@ export default function Header() {
   const t = useTranslations('auth');
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const [showStudioAuthModal, setShowStudioAuthModal] = useState(false);
-  const [showCustomerAuthModal, setShowCustomerAuthModal] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [authContext, setAuthContext] = useState<'general' | 'register'>('general');
   const [studios, setStudios] = useState<Studio[]>([]);
 
-  // Determine if user is a studio owner or customer
-  const isStudioOwner = session?.user?.email && studios.length > 0;
+  // Unified Auth Dialog State
+  const [authDialog, setAuthDialog] = useState<{
+    open: boolean;
+    tab: 'login' | 'signup';
+  }>({
+    open: false,
+    tab: 'login',
+  });
 
-  // Auto-open customer login modal if openLogin query param is present
+
+  // Auto-open auth dialog if openAuth or openLogin query param is present
   useEffect(() => {
-    if (searchParams.get('openLogin') === 'true' && !session) {
-      setShowCustomerAuthModal(true);
+    const openAuth = searchParams.get('openAuth');
+    const openLogin = searchParams.get('openLogin');
+
+    if ((openAuth || openLogin) && !session) {
+      setAuthDialog({
+        open: true,
+        tab: openAuth === 'signup' ? 'signup' : 'login',
+      });
+
       // Remove query param from URL without reload
       const url = new URL(window.location.href);
+      url.searchParams.delete('openAuth');
       url.searchParams.delete('openLogin');
       window.history.replaceState({}, '', url.toString());
     }
@@ -49,15 +60,6 @@ export default function Header() {
 
   const handleLogout = async () => {
     await signOut({ callbackUrl: getAuthCallbackUrl(`/${locale}`) });
-  };
-
-  const openStudioAuthModal = (context: 'general' | 'register' = 'general') => {
-    setAuthContext(context);
-    setShowStudioAuthModal(true);
-  };
-
-  const openCustomerAuthModal = () => {
-    setShowCustomerAuthModal(true);
   };
 
   // Fetch user's studios when logged in
@@ -107,11 +109,7 @@ export default function Header() {
                     onClick={() => setShowUserMenu(!showUserMenu)}
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
                   >
-                    {isStudioOwner ? (
-                      <Building2 className="h-4 w-4" />
-                    ) : (
-                      <User className="h-4 w-4" />
-                    )}
+                    <User className="h-4 w-4" />
                     <span className="hidden sm:inline max-w-[150px] truncate">{getDisplayName()}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                   </button>
@@ -124,23 +122,13 @@ export default function Header() {
                       />
                       <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
                         <Link
-                          href={`/${locale}/${isStudioOwner ? 'dashboard' : 'customer/dashboard'}`}
+                          href={`/${locale}/dashboard`}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >
                           <LayoutDashboard className="h-4 w-4" />
-                          {t('dashboard')}
+                          Dashboard
                         </Link>
-                        {isStudioOwner && (
-                          <Link
-                            href={`/${locale}/studios/register`}
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
-                            onClick={() => setShowUserMenu(false)}
-                          >
-                            <Building2 className="h-4 w-4" />
-                            {t('register_studio')}
-                          </Link>
-                        )}
                         <button
                           onClick={() => {
                             setShowUserMenu(false);
@@ -149,33 +137,31 @@ export default function Header() {
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-600 dark:text-red-400"
                         >
                           <LogOut className="h-4 w-4" />
-                          {t('logout')}
+                          Logout
                         </button>
                       </div>
                     </>
                   )}
                 </div>
               ) : (
-                // Not logged in - Show both auth buttons
+                // Not logged in - Show unified auth buttons
                 <>
-                  {/* Customer Login Button */}
                   <button
-                    onClick={openCustomerAuthModal}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
-                    title={t('customer_login')}
+                    onClick={() =>
+                      setAuthDialog({ open: true, tab: 'login' })
+                    }
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors rounded-2xl"
                   >
-                    <User className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('customer_login_button')}</span>
+                    Login
                   </button>
 
-                  {/* Studio Login Button (Primary CTA) */}
                   <button
-                    onClick={() => openStudioAuthModal('general')}
+                    onClick={() =>
+                      setAuthDialog({ open: true, tab: 'signup' })
+                    }
                     className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors rounded-2xl wellness-shadow"
-                    title={t('for_studios_button')}
                   >
-                    <Building2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">{t('for_studios_button')}</span>
+                    Sign Up
                   </button>
                 </>
               )}
@@ -184,22 +170,13 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Studio Auth Modal */}
-      {showStudioAuthModal && (
-        <AuthModal
-          onClose={() => setShowStudioAuthModal(false)}
-          locale={locale}
-          context={authContext}
-        />
-      )}
-
-      {/* Customer Auth Modal */}
-      {showCustomerAuthModal && (
-        <CustomerAuthModal
-          onClose={() => setShowCustomerAuthModal(false)}
-          locale={locale}
-        />
-      )}
+      {/* Unified Auth Dialog */}
+      <UnifiedAuthDialog
+        open={authDialog.open}
+        onOpenChange={(open) => setAuthDialog({ ...authDialog, open })}
+        defaultTab={authDialog.tab}
+        locale={locale}
+      />
     </>
   );
 }

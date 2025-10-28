@@ -9,8 +9,25 @@
 import { z } from 'zod';
 
 /**
- * Strong Password Schema
- * GDPR Art. 32 compliant - For Studio Owners handling sensitive data
+ * Unified Password Schema
+ * Modern, industry-standard requirements for ALL users
+ * Aligned with NIST guidelines and modern best practices
+ *
+ * Requirements (as per UX design spec):
+ * - Minimum 10 characters
+ * - At least one uppercase letter
+ * - At least one number
+ */
+export const unifiedPasswordSchema = z
+  .string()
+  .min(10, 'Password must be at least 10 characters')
+  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+  .regex(/[0-9]/, 'Password must contain at least one number');
+
+/**
+ * Legacy Strong Password Schema
+ * DEPRECATED: Use unifiedPasswordSchema instead
+ * Kept for backward compatibility with existing studio owner accounts
  *
  * Requirements:
  * - Minimum 12 characters
@@ -28,8 +45,9 @@ export const strongPasswordSchema = z
   .regex(/[^A-Za-z0-9]/, 'Passwort muss mindestens ein Sonderzeichen enthalten');
 
 /**
- * Basic Password Schema
- * For customer accounts - user-friendly requirements
+ * Legacy Basic Password Schema
+ * DEPRECATED: Use unifiedPasswordSchema instead
+ * Kept for backward compatibility with existing customer accounts
  *
  * Requirements:
  * - Minimum 8 characters
@@ -63,8 +81,48 @@ export const phoneSchema = z
   );
 
 /**
- * Registration Schema for Studio Owners
- * Uses strong password requirements due to access to sensitive customer data
+ * Unified Registration Schema
+ * Single registration form for ALL users (customers and studio owners)
+ * Role emerges from actions, not upfront selection
+ */
+export const unifiedRegistrationSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: emailSchema,
+  password: unifiedPasswordSchema,
+  terms: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the terms and privacy policy',
+  }),
+});
+
+/**
+ * Unified Login Schema
+ * Single login form with automatic role detection
+ */
+export const unifiedLoginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
+});
+
+/**
+ * Forgot Password Schema
+ */
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+/**
+ * Reset Password Schema
+ */
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Reset token is required'),
+  password: unifiedPasswordSchema,
+});
+
+/**
+ * Legacy Registration Schema for Studio Owners
+ * DEPRECATED: Use unifiedRegistrationSchema instead
+ * Kept for backward compatibility
  */
 export const studioOwnerRegistrationSchema = z.object({
   email: emailSchema,
@@ -73,7 +131,9 @@ export const studioOwnerRegistrationSchema = z.object({
 });
 
 /**
- * Registration Schema for Customers
+ * Legacy Registration Schema for Customers
+ * DEPRECATED: Use unifiedRegistrationSchema instead
+ * Kept for backward compatibility
  */
 export const customerRegistrationSchema = z.object({
   name: z.string().min(2, 'Name muss mindestens 2 Zeichen lang sein'),
@@ -112,6 +172,13 @@ export const bookingSchema = z.object({
   }
 );
 
+// Unified Auth Types
+export type UnifiedRegistration = z.infer<typeof unifiedRegistrationSchema>;
+export type UnifiedLogin = z.infer<typeof unifiedLoginSchema>;
+export type ForgotPassword = z.infer<typeof forgotPasswordSchema>;
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+
+// Legacy Types (backward compatibility)
 export type StudioOwnerRegistration = z.infer<typeof studioOwnerRegistrationSchema>;
 export type CustomerRegistration = z.infer<typeof customerRegistrationSchema>;
 export type BookingInput = z.infer<typeof bookingSchema>;
