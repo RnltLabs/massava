@@ -17,7 +17,11 @@ const prisma = new PrismaClient();
 // GDPR Art. 32 compliant bcrypt cost factor
 const BCRYPT_ROUNDS = 12;
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { locale: string } }
+) {
+  const locale = params.locale || 'de'; // Extract locale from route params
   const correlationId = getCorrelationId(request);
   const ipAddress = getClientIP(request);
   const userAgent = getUserAgent(request);
@@ -108,11 +112,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generate email verification URL
-    const verificationURL = await generateEmailVerificationURL(email);
+    // Generate email verification URL with locale prefix
+    const verificationURL = await generateEmailVerificationURL(email, locale);
 
     // Send verification email (non-blocking - don't fail registration if email fails)
-    const emailResult = await sendVerificationEmail(email, verificationURL, 'de');
+    const emailResult = await sendVerificationEmail(email, verificationURL, locale);
 
     logger.info('Studio owner registered successfully', {
       correlationId,
