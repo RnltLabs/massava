@@ -100,9 +100,9 @@ export function BasicInfoStep(): React.JSX.Element {
     >
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Studio Information</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Studio-Informationen</h2>
         <p className="text-sm text-gray-600">
-          Tell us about your wellness studio
+          Erzähl uns von deinem Wellness-Studio
         </p>
       </div>
 
@@ -111,7 +111,7 @@ export function BasicInfoStep(): React.JSX.Element {
         {/* Studio Name */}
         <div className="space-y-2">
           <Label htmlFor="name" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            Studio Name
+            Studio-Name
           </Label>
           <Input
             id="name"
@@ -128,7 +128,7 @@ export function BasicInfoStep(): React.JSX.Element {
               'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
               touched.name && localErrors.name && 'border-red-500 focus:border-red-500 focus:ring-red-100'
             )}
-            placeholder="e.g., Serenity Wellness Studio"
+            placeholder="z.B. Serenity Wellness Studio"
             aria-invalid={touched.name && !!localErrors.name}
             aria-describedby={touched.name && localErrors.name ? 'name-error' : 'name-hint'}
           />
@@ -139,7 +139,7 @@ export function BasicInfoStep(): React.JSX.Element {
               </p>
             ) : (
               <p id="name-hint" className="text-sm text-gray-500">
-                This will be displayed to clients
+                Wird Kunden angezeigt
               </p>
             )}
             <p className={cn(
@@ -154,7 +154,7 @@ export function BasicInfoStep(): React.JSX.Element {
         {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="description" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            Description
+            Beschreibung
           </Label>
           <Textarea
             id="description"
@@ -170,7 +170,7 @@ export function BasicInfoStep(): React.JSX.Element {
               'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
               touched.description && localErrors.description && 'border-red-500 focus:border-red-500 focus:ring-red-100'
             )}
-            placeholder="Describe your studio, services, and what makes you unique..."
+            placeholder="Beschreibe dein Studio, deine Services und was dich besonders macht..."
             aria-invalid={touched.description && !!localErrors.description}
             aria-describedby={touched.description && localErrors.description ? 'description-error' : 'description-hint'}
           />
@@ -181,7 +181,7 @@ export function BasicInfoStep(): React.JSX.Element {
               </p>
             ) : (
               <p id="description-hint" className="text-sm text-gray-500">
-                Highlight your specialties and unique offerings
+                Hebe deine Spezialitäten und besonderen Angebote hervor
               </p>
             )}
             <p className={cn(
@@ -198,9 +198,10 @@ export function BasicInfoStep(): React.JSX.Element {
       <Button
         onClick={handleContinue}
         disabled={!isValid}
-        className="w-full h-12 bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={isValid ? { backgroundColor: '#B56550' } : undefined}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        Continue
+        Weiter
       </Button>
     </motion.div>
   );
