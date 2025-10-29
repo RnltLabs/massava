@@ -4,7 +4,7 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import { auth } from '@/auth';
+import { auth } from '@/auth-unified';
 import { redirect } from 'next/navigation';
 import { PrismaClient } from '@/app/generated/prisma';
 import Link from 'next/link';

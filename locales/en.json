@@ -138,7 +138,28 @@
     "logout": "Logout",
     "my_account": "My Account",
     "customer_login": "Customer Login",
-    "customer_login_button": "Sign In"
+    "customer_login_button": "Sign In",
+    "account_type_selector": {
+      "customer": {
+        "title": "I want to book",
+        "subtitle": "Find massage studios and reserve appointments"
+      },
+      "studio": {
+        "title": "I own a studio",
+        "subtitle": "Manage my massage studio and receive bookings"
+      }
+    },
+    "account_type_toggle": {
+      "customer": "Customer",
+      "studio": "Studio Owner"
+    },
+    "dashboard_cta": {
+      "studio_setup": "Set up your studio now"
+    },
+    "role_switcher": {
+      "switch_to_customer": "Switch to customer view",
+      "switch_to_studio": "Switch to studio view"
+    }
   },
   "customer_auth": {
     "signin_title": "Sign in as Customer",
@@ -196,5 +217,70 @@
     "skip_button": "Later",
     "prefill_notice": "Your information is already pre-filled",
     "error_general": "An error occurred. Please try again."
+  },
+  "VerifyEmail": {
+    "invalidLink": {
+      "title": "Invalid Link",
+      "message": "The verification link is invalid. Please check your email again."
+    },
+    "expired": {
+      "title": "Link Expired",
+      "message": "This verification link has expired or has already been used.",
+      "hint": "Please request a new verification link."
+    },
+    "success": {
+      "title": "Email Verified!",
+      "message": "Your email address has been successfully verified.",
+      "redirecting": "You will be redirected in a few seconds...",
+      "goToDashboard": "Go to Dashboard"
+    },
+    "backToHome": "Back to Home"
+  },
+  "search": {
+    "title": "Available appointments in {location}",
+    "subtitle": "Search results within {radius} km"
+  },
+  "dateTimePicker": {
+    "placeholder": "Select date and time",
+    "selectDate": "Select date",
+    "selectTime": "Select time",
+    "anyDate": "Any date",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "orChooseDate": "Or choose a date:",
+    "morning": "Morning",
+    "afternoon": "Afternoon",
+    "evening": "Evening",
+    "anyTime": "Any time",
+    "customTime": "Custom time",
+    "selectSpecificTime": "Select a specific time",
+    "done": "Done",
+    "back": "Back",
+    "selected": "Selected:",
+    "timeRange": {
+      "morning": "06:00 - 12:00",
+      "afternoon": "12:00 - 18:00",
+      "evening": "18:00 - 24:00"
+    }
+  },
+  "navigation": {
+    "openMenu": "Open menu",
+    "welcome": "Welcome to Massava",
+    "welcomeBack": "Welcome back, {name}",
+    "getStarted": "Book your perfect massage experience",
+    "manageAccount": "Manage your account and bookings",
+    "register": "Register",
+    "signIn": "Sign In",
+    "registerBenefit": "Create an account to manage bookings and get exclusive offers",
+    "studioOwnerTitle": "Do you own a studio?",
+    "studioOwnerDescription": "Reach more customers and increase your utilization",
+    "registerStudioCta": "Register Studio Now",
+    "myProfile": "My Profile",
+    "myBookings": "My Bookings",
+    "helpSupport": "Help & Support",
+    "signOut": "Sign Out",
+    "language": "Language",
+    "selectLanguage": "Select Language",
+    "appVersion": "Version {version}"
   }
 }

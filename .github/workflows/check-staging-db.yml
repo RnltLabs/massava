@@ -1,0 +1,30 @@
+name: Check Staging DB Config
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check-db:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Staging Database Config
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Running Containers ==="
+            docker ps
+            echo ""
+            echo "=== Massava Staging Container Env ==="
+            docker exec massava-staging env | grep -i "database\|postgres" || echo "No database env vars"
+            echo ""
+            echo "=== PostgreSQL Containers ==="
+            docker ps | grep postgres || echo "No postgres containers"
+            echo ""
+            echo "=== Check for docker-compose files ==="
+            find /opt -name "docker-compose*.yml" 2>/dev/null || echo "No docker-compose files found"
+            echo ""
+            echo "=== Check running services ==="
+            systemctl list-units --type=service --state=running | grep -i postgres || echo "No postgres service"

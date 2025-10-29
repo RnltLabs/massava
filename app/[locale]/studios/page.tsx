@@ -9,22 +9,26 @@ import { PrismaClient } from '@/app/generated/prisma';
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ city?: string }>;
+  searchParams: Promise<{ city?: string; location?: string; radius?: string }>;
 };
 
 const prisma = new PrismaClient();
 
 export default async function StudiosPage({ params, searchParams }: Props) {
   const { locale } = await params;
-  const { city } = await searchParams;
+  const searchParamsResolved = await searchParams;
+  const { city, location, radius } = searchParamsResolved;
   const t = await getTranslations({ locale, namespace: 'studios' });
 
-  // Fetch studios with optional city filter
+  // Use location from search widget, fallback to legacy city param
+  const searchLocation = location || city;
+
+  // Fetch studios with optional location filter
   const studios = await prisma.studio.findMany({
-    where: city
+    where: searchLocation
       ? {
           city: {
-            contains: city,
+            contains: searchLocation,
             mode: 'insensitive',
           },
         }
@@ -43,11 +47,23 @@ export default async function StudiosPage({ params, searchParams }: Props) {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            {city ? t('title_with_city', { city }) : t('title')}
+            {searchLocation ? t('title_with_city', { city: searchLocation }) : t('title')}
           </h1>
+          {searchLocation && radius && (
+            <p className="text-lg text-accent font-medium mb-2">
+              Ergebnisse für: {searchLocation} (Umkreis: {radius} km)
+            </p>
+          )}
           <p className="text-lg text-muted-foreground">
-            {t('description', { count: studios.length })}
+            {studios.length > 0
+              ? t('description', { count: studios.length })
+              : 'Keine Studios gefunden'}
           </p>
+          {searchLocation && studios.length === 0 && (
+            <p className="text-sm text-muted-foreground mt-4">
+              Versuchen Sie eine andere Stadt oder erweitern Sie den Suchradius.
+            </p>
+          )}
         </div>
 
         {/* Studio List */}

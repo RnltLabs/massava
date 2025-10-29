@@ -39,5 +39,75 @@
     "footer_privacy": "ความเป็นส่วนตัว",
     "footer_terms": "เงื่อนไข",
     "footer_copyright": "© 2025 Massava โดย RNLT Labs สงวนลิขสิทธิ์"
+  },
+  "auth": {
+    "account_type_selector": {
+      "customer": {
+        "title": "ฉันต้องการจองนวด",
+        "subtitle": "ค้นหาร้านนวดและจองคิวออนไลน์"
+      },
+      "studio": {
+        "title": "ฉันเป็นเจ้าของร้าน",
+        "subtitle": "จัดการร้านนวดและรับจองลูกค้า"
+      }
+    },
+    "account_type_toggle": {
+      "customer": "ลูกค้า",
+      "studio": "เจ้าของร้าน"
+    },
+    "dashboard_cta": {
+      "studio_setup": "เปิดร้านของคุณเลย"
+    },
+    "role_switcher": {
+      "switch_to_customer": "สลับไปหน้าลูกค้า",
+      "switch_to_studio": "สลับไปหน้าร้าน"
+    }
+  },
+  "search": {
+    "title": "นัดหมายที่พร้อมใช้งานใน {location}",
+    "subtitle": "ผลการค้นหาภายในรัศมี {radius} กม."
+  },
+  "dateTimePicker": {
+    "placeholder": "เลือกวันที่และเวลา",
+    "selectDate": "เลือกวันที่",
+    "selectTime": "เลือกเวลา",
+    "anyDate": "วันใดก็ได้",
+    "today": "วันนี้",
+    "tomorrow": "พรุ่งนี้",
+    "orChooseDate": "หรือเลือกวันที่:",
+    "morning": "เช้า",
+    "afternoon": "บ่าย",
+    "evening": "เย็น",
+    "anyTime": "เวลาใดก็ได้",
+    "customTime": "เวลาที่กำหนดเอง",
+    "selectSpecificTime": "เลือกเวลาที่ต้องการ",
+    "done": "เสร็จสิ้น",
+    "back": "กลับ",
+    "selected": "เลือกแล้ว:",
+    "timeRange": {
+      "morning": "06:00 - 12:00",
+      "afternoon": "12:00 - 18:00",
+      "evening": "18:00 - 24:00"
+    }
+  },
+  "navigation": {
+    "openMenu": "เปิดเมนู",
+    "welcome": "ยินดีต้อนรับสู่ Massava",
+    "welcomeBack": "ยินดีต้อนรับกลับมา {name}",
+    "getStarted": "จองประสบการณ์นวดที่สมบูรณ์แบบของคุณ",
+    "manageAccount": "จัดการบัญชีและการจองของคุณ",
+    "register": "ลงทะเบียน",
+    "signIn": "เข้าสู่ระบบ",
+    "registerBenefit": "สร้างบัญชีเพื่อจัดการการจองและรับข้อเสนอพิเศษ",
+    "studioOwnerTitle": "คุณเป็นเจ้าของสตูดิโอหรือไม่?",
+    "studioOwnerDescription": "เข้าถึงลูกค้ามากขึ้นและเพิ่มการใช้งาน",
+    "registerStudioCta": "ลงทะเบียนสตูดิโอตอนนี้",
+    "myProfile": "โปรไฟล์ของฉัน",
+    "myBookings": "การจองของฉัน",
+    "helpSupport": "ความช่วยเหลือและสนับสนุน",
+    "signOut": "ออกจากระบบ",
+    "language": "ภาษา",
+    "selectLanguage": "เลือกภาษา",
+    "appVersion": "เวอร์ชัน {version}"
   }
 }

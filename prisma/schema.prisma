@@ -95,6 +95,39 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// Email Verification Token
+// For verifying email addresses during registration
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // 64 hex chars (32 bytes)
+  email     String
+  expiresAt DateTime // 24 hours from creation
+  used      Boolean  @default(false) // One-time use
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_verification_tokens")
+}
+
+// Password Reset Token Model
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // 64 hex chars (32 bytes)
+  email     String
+  expiresAt DateTime // 1 hour from creation
+  used      Boolean  @default(false) // One-time use
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
 // Studio Model
 // Represents a massage/wellness studio
 model Studio {
@@ -110,6 +143,10 @@ model Studio {
   phone       String
   email       String
 
+  // Geolocation for radius-based search
+  latitude    Float?
+  longitude   Float?
+
   // Business Hours (stored as JSON)
   // Example: {"monday": "09:00-18:00", "tuesday": "09:00-18:00", ...}
   openingHours Json?
@@ -119,6 +156,13 @@ model Studio {
   services      Service[]
   bookings      Booking[]
   favoritedBy   Customer[]   @relation("CustomerFavorites")
+  timeSlots     TimeSlot[]   // Available appointment slots
+
+  // Phase 3 relations
+  newFavoritedBy  User[]   @relation("UserFavorites")
+  ownerships      StudioOwnership[]
+  roleAssignments UserRoleAssignment[]
+  newBookings     NewBooking[]
 
   // Timestamps
   createdAt   DateTime @default(now())
@@ -126,6 +170,7 @@ model Studio {
 
   @@index([city])
   @@index([ownerId])
+  @@index([latitude, longitude])
   @@map("studios")
 }
 
@@ -143,6 +188,8 @@ model Service {
   // Relations
   studio      Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
   bookings    Booking[]
+  newBookings NewBooking[]
+  timeSlots   TimeSlot[]  // Available time slots for this service
 
   // Timestamps
   createdAt   DateTime @default(now())
@@ -170,6 +217,13 @@ model Booking {
   preferredTime   String        // Customer's preferred time (text: "afternoon", "14:00")
   message         String?       @db.Text // Additional notes/requests
 
+  // GDPR Art. 9 Compliance (Health Data)
+  // Special category data requires explicit consent
+  explicitHealthConsent   Boolean?  @default(false)
+  healthConsentGivenAt    DateTime?
+  healthConsentText       String?   @db.Text // Record of consent text shown to user
+  healthConsentWithdrawnAt DateTime?
+
   // Status
   status          BookingStatus @default(PENDING)
 
@@ -195,5 +249,250 @@ enum BookingStatus {
   PENDING    // Waiting for studio confirmation
   CONFIRMED  // Studio confirmed the booking
   CANCELLED  // Booking was cancelled
+}
+
+// ============================================
+// Phase 3: Unified User Model + RBAC
+// ============================================
+
+// User Role Enum
+enum UserRole {
+  SUPER_ADMIN
+  STUDIO_OWNER
+  CUSTOMER
+  GUEST
+}
+
+// Unified User Model
+// Replaces separate StudioOwner and Customer tables
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime? // NULL until magic link clicked or OAuth verified
+  password      String?   // NULL = passwordless account
+  name          String?
+  phone         String?   // Optional, collected progressively
+  image         String?
+
+  // Primary role (users can have multiple via UserRoleAssignment)
+  primaryRole   UserRole  @default(CUSTOMER)
+
+  // Account status
+  isActive      Boolean   @default(true)
+  isSuspended   Boolean   @default(false)
+
+  // Relations
+  newAccounts      NewAccount[]           // OAuth accounts
+  newSessions      NewSession[]           // Active sessions
+  roles            UserRoleAssignment[]   // Multiple roles possible
+  ownedStudios     StudioOwnership[]      // Studio ownership records
+  newBookings      NewBooking[]           // All bookings
+  newFavorites     Studio[]   @relation("UserFavorites")
+  auditLogs        AuditLog[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([primaryRole])
+  @@map("users")
+}
+
+// OAuth Account for User model (separate from old Account)
+model NewAccount {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("new_accounts")
+}
+
+// Session for User model (separate from old Session)
+model NewSession {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("new_sessions")
+}
+
+// RBAC - Multiple Roles per User
+model UserRoleAssignment {
+  id        String   @id @default(cuid())
+  userId    String
+  role      UserRole
+
+  // Optional: Role can be scoped to specific resource
+  studioId  String?  // If role is scoped to a studio
+
+  // Audit trail
+  grantedBy String?  // Who granted this role
+  grantedAt DateTime @default(now())
+  expiresAt DateTime? // Optional: time-limited roles
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studio    Studio?  @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role, studioId])
+  @@index([userId])
+  @@index([studioId])
+  @@map("user_role_assignments")
+}
+
+// Studio Ownership - Multiple Owners per Studio
+model StudioOwnership {
+  id        String   @id @default(cuid())
+  userId    String
+  studioId  String
+
+  // Ownership details
+  isPrimary Boolean  @default(false) // Primary owner has special privileges
+  canTransfer Boolean @default(false) // Can transfer ownership
+
+  // Team invitation (future)
+  invitedBy String?
+  invitedAt DateTime @default(now())
+  acceptedAt DateTime?
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studio    Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, studioId])
+  @@index([userId])
+  @@index([studioId])
+  @@map("studio_ownership")
+}
+
+// Magic Link Tokens (Passwordless Auth)
+model MagicLinkToken {
+  id        String   @id @default(cuid())
+  token     String   @unique // 64 hex chars (32 bytes)
+  email     String
+  expiresAt DateTime // 15 minutes from creation
+  used      Boolean  @default(false) // One-time use
+
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("magic_link_tokens")
+}
+
+// New Booking Model (links to User instead of Customer)
+model NewBooking {
+  id                      String        @id @default(cuid())
+  studioId                String
+  serviceId               String?
+  customerId              String        // References User now
+
+  // Customer info (denormalized for studio convenience)
+  customerName            String
+  customerEmail           String
+  customerPhone           String?       // Optional
+
+  // Booking details
+  preferredDate           String
+  preferredTime           String
+  message                 String?       @db.Text
+
+  // GDPR Art. 9 Compliance (Health Data)
+  explicitHealthConsent   Boolean?      @default(false)
+  healthConsentGivenAt    DateTime?
+  healthConsentText       String?       @db.Text
+  healthConsentWithdrawnAt DateTime?
+
+  // Status
+  status                  BookingStatus @default(PENDING)
+
+  // Confirmation audit
+  confirmedBy             String?
+  confirmedAt             DateTime?
+  cancelledBy             String?
+  cancelledAt             DateTime?
+
+  // Relations
+  studio                  Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service                 Service?      @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+  customer                User          @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  @@index([studioId])
+  @@index([customerId])
+  @@index([customerEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@map("new_bookings")
+}
+
+// Audit Log (GDPR Compliance)
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  // Who performed the action
+  action      String   // e.g., "BOOKING_CREATE", "STUDIO_UPDATE"
+  resource    String   // e.g., "booking", "studio"
+  resourceId  String   // ID of affected resource
+  metadata    Json?    // Additional context
+  ipAddress   String?  // Anonymized (hash last octet)
+  userAgent   String?
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// TimeSlot Model
+// Represents available appointment time slots for studios/services
+model TimeSlot {
+  id          String   @id @default(cuid())
+  studioId    String
+  serviceId   String?  // Optional: slot can be for specific service or general availability
+
+  // Time slot details
+  startTime   DateTime
+  endTime     DateTime
+
+  // Availability status
+  isAvailable Boolean  @default(true)  // Can be booked
+  isBooked    Boolean  @default(false) // Already booked
+
+  // Optional: linked booking
+  bookingId   String?  @unique
+
+  // Relations
+  studio      Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  service     Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studioId])
+  @@index([serviceId])
+  @@index([startTime])
+  @@index([isAvailable, isBooked])
+  @@index([studioId, startTime, isAvailable])
+  @@map("time_slots")
 }
 

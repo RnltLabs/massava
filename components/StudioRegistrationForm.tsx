@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 type Service = {
   name: string;
@@ -61,7 +62,7 @@ export function StudioRegistrationForm({ locale }: Props) {
     setError('');
 
     try {
-      const response = await fetch(`/${locale}/api/studios`, {
+      const response = await apiFetch(`/${locale}/api/studios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,7 +88,7 @@ export function StudioRegistrationForm({ locale }: Props) {
         email: '',
       });
       setServices([{ name: '', description: '', price: '', duration: '' }]);
-    } catch (err) {
+    } catch {
       setError(t('error'));
     } finally {
       setLoading(false);

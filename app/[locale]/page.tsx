@@ -5,7 +5,9 @@
 
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
-import { Clock, MapPin, TrendingUp, Search, Users, Phone } from 'lucide-react';
+import { Clock, MapPin, TrendingUp, Store } from 'lucide-react';
+import { auth } from '@/auth';
+import { SearchWidget } from '@/components/SearchWidget';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,6 +16,8 @@ type Props = {
 export default async function Home({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'home' });
+  const tNav = await getTranslations({ locale, namespace: 'navigation' });
+  const session = await auth();
 
   return (
     <div className="min-h-screen relative overflow-x-hidden">
@@ -86,7 +90,7 @@ export default async function Home({ params }: Props) {
       />
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 bg-accent/20 text-accent px-4 py-2 rounded-full mb-6 wellness-shadow">
@@ -104,32 +108,23 @@ export default async function Home({ params }: Props) {
               {t('hero_description')}
             </p>
 
-            {/* Location Search Widget */}
-            <div className="max-w-2xl mx-auto wellness-shadow rounded-3xl bg-card p-6 mb-8">
-              <div className="flex flex-col gap-4">
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                      type="text"
-                      placeholder={t('search_location_placeholder')}
-                      className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg"
-                    />
-                  </div>
-                  <select defaultValue="20" className="px-4 py-4 rounded-2xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card cursor-pointer">
-                    <option value="5">5 km</option>
-                    <option value="10">10 km</option>
-                    <option value="20">20 km</option>
-                    <option value="50">50 km</option>
-                  </select>
+            {/* Welcome Banner for Logged-in Users */}
+            {session?.user && (
+              <div className="max-w-2xl mx-auto mb-4">
+                <div className="bg-accent/20 rounded-2xl p-4 text-center">
+                  <p className="text-lg font-medium text-foreground">
+                    Willkommen zurück, {session.user.name}! Finde deine nächste Massage
+                  </p>
                 </div>
-
-                <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-4 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all wellness-shadow hover:shadow-lg">
-                  <Search className="h-5 w-5" />
-                  {t('search_button')}
-                </button>
               </div>
-            </div>
+            )}
+
+            {/* Location Search Widget */}
+            <SearchWidget
+              autoFocus={!!session?.user}
+              placeholder={t('search_location_placeholder')}
+              searchButtonText={t('search_button')}
+            />
           </div>
         </div>
       </section>
@@ -204,16 +199,24 @@ export default async function Home({ params }: Props) {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Studio Registration CTA Section */}
       <section className="relative py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center wellness-shadow rounded-3xl bg-card p-12">
-          <Users className="h-16 w-16 text-primary mx-auto mb-6" />
-          <h2 className="text-3xl font-bold mb-4">{t('cta_title')}</h2>
-          <p className="text-lg text-muted-foreground mb-8">{t('cta_description')}</p>
-          <Link href={`/${locale}/studios/register`} className="bg-accent hover:bg-accent/90 text-primary-foreground font-semibold py-4 px-8 rounded-2xl inline-flex items-center gap-2 transition-all wellness-shadow hover:shadow-lg">
-            <Phone className="h-5 w-5" />
-            {t('cta_button')}
-          </Link>
+        <div className="max-w-4xl mx-auto wellness-shadow rounded-3xl bg-card p-12">
+          <div className="text-center mb-8">
+            <div className="bg-accent/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Store className="h-10 w-10 text-accent" />
+            </div>
+            <h2 className="text-3xl font-bold mb-4">{tNav('studioOwnerTitle')}</h2>
+            <p className="text-lg text-muted-foreground mb-8">{tNav('studioOwnerDescription')}</p>
+          </div>
+          <div className="text-center">
+            <Link
+              href={`/${locale}/studios/register`}
+              className="bg-accent hover:bg-accent/90 text-primary-foreground font-semibold py-4 px-8 rounded-2xl inline-flex items-center gap-2 transition-all wellness-shadow hover:shadow-lg"
+            >
+              {tNav('registerStudioCta')}
+            </Link>
+          </div>
         </div>
       </section>
 

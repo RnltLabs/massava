@@ -10,6 +10,8 @@ import { useTranslations } from 'next-intl';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, UserPlus, X, Star } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Props = {
   customerName: string;
@@ -33,7 +35,7 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
 
     try {
       // Register new customer
-      const response = await fetch(`/${locale}/api/auth/customer/register`, {
+      const response = await apiFetch(`/${locale}/api/auth/customer/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -49,8 +51,8 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
         throw new Error(data.error || 'Registration failed');
       }
 
-      // Sign in automatically
-      const result = await signIn('customer-credentials', {
+      // Sign in automatically with unified credentials provider
+      const result = await signIn('credentials', {
         email: customerEmail,
         password,
         redirect: false,
@@ -61,7 +63,7 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
       }
 
       // Redirect to dashboard
-      router.push(`/${locale}/customer/dashboard`);
+      router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
       router.refresh();
       onClose();
     } catch (err) {
