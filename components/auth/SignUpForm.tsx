@@ -50,6 +50,7 @@ export function SignUpForm({
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState<string>('');
   const [success, setSuccess] = useState(false);
 
   // Calculate password strength
@@ -109,6 +110,11 @@ export function SignUpForm({
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
+    // Clear submit error when user starts typing
+    if (submitError) {
+      setSubmitError('');
+    }
+
     // Real-time validation for touched fields
     if (touched[name]) {
       const error = validateField(name, value);
@@ -158,6 +164,9 @@ export function SignUpForm({
       passwordsMatch: formData.password === formData.passwordConfirm,
     });
 
+    // Clear previous submit error
+    setSubmitError('');
+
     // Validate all fields
     const newErrors: Record<string, string> = {};
     Object.keys(formData).forEach((key) => {
@@ -191,7 +200,9 @@ export function SignUpForm({
       setSuccess(true);
     } catch (error) {
       console.error('❌ [SIGNUP FORM] Form submission error:', error);
-      // Error will be shown by the form
+      // Display user-friendly error message
+      const errorMessage = error instanceof Error ? error.message : 'Ein unerwarteter Fehler ist aufgetreten';
+      setSubmitError(errorMessage);
     }
   };
 
@@ -584,6 +595,24 @@ export function SignUpForm({
           </motion.p>
         )}
       </div>
+
+      {/* Submit Error Message */}
+      {submitError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-xl bg-red-50 border-2 border-red-200"
+        >
+          <div className="flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-red-900">
+                {submitError}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Submit Button */}
       <button
