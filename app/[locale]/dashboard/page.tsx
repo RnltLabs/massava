@@ -10,13 +10,12 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth-unified';
-import { PrismaClient, UserRole } from '@/app/generated/prisma';
+import { UserRole } from '@/app/generated/prisma';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 import { Building2, Sparkles, Clock, Plus, Eye, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const prisma = new PrismaClient();
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -37,7 +36,7 @@ export default async function DashboardPage({ params }: Props) {
   const isStudioOwner = userRole === UserRole.STUDIO_OWNER;
 
   // Check if user owns any studios
-  const studios = await prisma.studio.findMany({
+  const studios = await db.studio.findMany({
     where: {
       ownerId: user.id,
     },
@@ -124,7 +123,7 @@ export default async function DashboardPage({ params }: Props) {
 
   // New user: Show welcome dashboard with action cards
   // Check if user has any bookings
-  const bookings = await prisma.newBooking.findMany({
+  const bookings = await db.newBooking.findMany({
     where: { customerId: user.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
