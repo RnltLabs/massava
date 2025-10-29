@@ -8,7 +8,6 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useLocale } from 'next-intl';
-import { Loader2 } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { StudioRegistrationForm } from './StudioRegistrationForm';
 

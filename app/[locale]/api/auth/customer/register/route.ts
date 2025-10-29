@@ -6,21 +6,96 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { PrismaClient } from '@/app/generated/prisma';
+import { customerRegistrationSchema } from '@/lib/validation';
+import { authRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
+import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
+import { generateEmailVerificationURL } from '@/lib/email-verification';
+import { sendVerificationEmail } from '@/lib/email/send';
 
 const prisma = new PrismaClient();
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { name, email, password, phone } = body;
+// GDPR Art. 32 compliant bcrypt cost factor
+const BCRYPT_ROUNDS = 12;
 
-    // Validate required fields
-    if (!name || !email || !password) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ locale: string }> }
+) {
+  const { locale } = await params; // Extract locale from route params (Next.js 15: params is async)
+  const correlationId = getCorrelationId(request);
+  const ipAddress = getClientIP(request);
+  const userAgent = getUserAgent(request);
+
+  try {
+    // Rate limiting: 5 attempts per 15 minutes per IP
+    const clientIp = getClientIp(request);
+    const rateLimitResult = authRateLimit(clientIp);
+
+    if (!rateLimitResult.success) {
+      logger.warn('Customer registration rate limit exceeded', {
+        correlationId,
+        ipAddress,
+        action: 'REGISTER_CUSTOMER',
+        resource: 'customer',
+      });
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        rateLimitErrorResponse(rateLimitResult),
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
+          },
+        }
+      );
+    }
+
+    const body = await request.json();
+
+    logger.info('Customer registration attempt', {
+      correlationId,
+      ipAddress,
+      action: 'REGISTER_CUSTOMER',
+      resource: 'customer',
+      requestBody: {
+        name: body.name ? `${body.name.substring(0, 3)}***` : undefined,
+        email: body.email ? `${body.email.substring(0, 3)}***` : undefined,
+        phone: body.phone || '(not provided)',
+        passwordProvided: !!body.password,
+        passwordLength: body.password?.length || 0,
+      },
+    });
+
+    // Validate inputs with Zod schema
+    const validation = customerRegistrationSchema.safeParse(body);
+
+    if (!validation.success) {
+      const fieldErrors = validation.error.flatten().fieldErrors;
+      logger.warn('Customer registration validation failed', {
+        correlationId,
+        ipAddress,
+        action: 'REGISTER_CUSTOMER',
+        resource: 'customer',
+        errors: fieldErrors,
+      });
+
+      // Log detailed validation errors for debugging
+      console.error('❌ Validation failed with errors:', fieldErrors);
+
+      return NextResponse.json(
+        {
+          error: 'Validierungsfehler',
+          details: fieldErrors,
+        },
         { status: 400 }
       );
     }
+
+    logger.info('Customer registration validation passed', {
+      correlationId,
+      ipAddress,
+    });
+
+    const { name, email, password, phone } = validation.data;
 
     // Check if customer already exists
     const existingCustomer = await prisma.customer.findUnique({
@@ -28,14 +103,23 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingCustomer) {
+      // More helpful error message (still prevents enumeration by not confirming account existence explicitly)
+      logger.warn('Customer registration failed: Email already exists', {
+        correlationId,
+        ipAddress,
+        email,
+        action: 'REGISTER_CUSTOMER',
+        resource: 'customer',
+        reason: 'EMAIL_EXISTS',
+      });
       return NextResponse.json(
-        { error: 'Customer with this email already exists' },
+        { error: 'Diese E-Mail-Adresse wird bereits verwendet.' },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12);
+    // Hash password with GDPR Art. 32 compliant cost factor (12 rounds)
+    const hashedPassword = await hash(password, BCRYPT_ROUNDS);
 
     // Create customer
     const customer = await prisma.customer.create({
@@ -47,6 +131,25 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Generate email verification URL with locale prefix
+    const verificationURL = await generateEmailVerificationURL(email, locale);
+
+    // Send verification email (non-blocking - don't fail registration if email fails)
+    const emailResult = await sendVerificationEmail(email, verificationURL, locale);
+
+    logger.info('Customer registered successfully', {
+      correlationId,
+      ipAddress,
+      userAgent,
+      userId: customer.id,
+      email,
+      action: 'REGISTER_CUSTOMER',
+      resource: 'customer',
+      resourceId: customer.id,
+      verificationURLGenerated: true,
+      emailSent: emailResult.success,
+    });
+
     return NextResponse.json(
       {
         success: true,
@@ -54,14 +157,24 @@ export async function POST(request: NextRequest) {
           id: customer.id,
           name: customer.name,
           email: customer.email,
-        }
+        },
+        message: 'Registrierung erfolgreich. Bitte überprüfen Sie Ihre E-Mail zur Verifizierung.',
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Customer registration error:', error);
+    // Generic error message - don't expose internal errors
+    logger.error('Customer registration failed', {
+      correlationId,
+      ipAddress,
+      userAgent,
+      action: 'REGISTER_CUSTOMER',
+      resource: 'customer',
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return NextResponse.json(
-      { error: 'Failed to register customer' },
+      { error: 'Registrierung fehlgeschlagen. Bitte versuchen Sie es später erneut.' },
       { status: 500 }
     );
   }

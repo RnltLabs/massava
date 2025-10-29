@@ -10,6 +10,8 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { apiFetch } from '@/lib/api-client';
+import { getAuthCallbackUrl } from '@/lib/navigation';
 
 type Props = {
   onClose: () => void;
@@ -17,7 +19,7 @@ type Props = {
   context?: 'general' | 'register';
 };
 
-export function AuthModal({ onClose, locale, context = 'general' }: Props) {
+export function AuthModal({ onClose, locale }: Props) {
   const t = useTranslations('auth');
   const router = useRouter();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -33,8 +35,8 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      await signIn('google', { callbackUrl: `/${locale}/dashboard` });
-    } catch (err) {
+      await signIn('google', { callbackUrl: getAuthCallbackUrl(`/${locale}/dashboard`) });
+    } catch {
       setError(t('error_google'));
       setLoading(false);
     }
@@ -47,8 +49,10 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
 
     try {
       if (mode === 'signup') {
-        // Register new user
-        const response = await fetch(`/${locale}/api/auth/register`, {
+        // Register new user with unified User model
+        console.log('📝 Starting registration with:', { email: formData.email, name: formData.name });
+
+        const response = await apiFetch(`/${locale}/api/auth/register-unified`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData),
@@ -58,23 +62,48 @@ export function AuthModal({ onClose, locale, context = 'general' }: Props) {
           const data = await response.json();
           throw new Error(data.error || 'Registration failed');
         }
+
+        const registrationData = await response.json();
+        console.log('✅ Registration successful:', registrationData);
+
+        // Small delay to ensure user is fully committed to database
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      // Sign in with studio credentials provider
-      const result = await signIn('studio-credentials', {
+      // Sign in with unified credentials provider
+      console.log('🔐 Attempting sign in with:', {
+        email: formData.email,
+        hasPassword: !!formData.password,
+        passwordLength: formData.password?.length
+      });
+
+      const result = await signIn('credentials', {
         email: formData.email,
         password: formData.password,
         redirect: false,
       });
 
+      console.log('🔐 SignIn result:', result);
+
       if (result?.error) {
-        setError(t('error_invalid_credentials'));
+        console.error('❌ SignIn failed:', result.error);
+        setError(t('error_invalid_credentials') + ` (${result.error})`);
         setLoading(false);
         return;
       }
 
-      router.push(`/${locale}/dashboard`);
+      if (!result?.ok) {
+        console.error('❌ SignIn result not ok:', result);
+        setError('Login failed after registration. Please try signing in manually.');
+        setLoading(false);
+        return;
+      }
+
+      console.log('✅ SignIn successful, redirecting...');
+
+      router.push(getAuthCallbackUrl(`/${locale}/dashboard`));
       router.refresh();
+      onClose(); // Close modal after successful auth
     } catch (err) {
       const error = err as Error;
       setError(error.message || t('error_general'));
