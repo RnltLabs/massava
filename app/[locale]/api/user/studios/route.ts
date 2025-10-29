@@ -27,18 +27,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const studios = await prisma.studio.findMany({
+    // Fetch studios via StudioOwnership junction table
+    const ownerships = await prisma.studioOwnership.findMany({
       where: {
-        ownerId: session.user.id,
+        userId: session.user.id,
       },
-      select: {
-        id: true,
-        name: true,
+      include: {
+        studio: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc',
+        invitedAt: 'desc',
       },
     });
+
+    const studios = ownerships.map(ownership => ownership.studio);
 
     logger.info('User studios fetched successfully', {
       correlationId,
