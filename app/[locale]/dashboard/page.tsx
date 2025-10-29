@@ -35,23 +35,30 @@ export default async function DashboardPage({ params }: Props) {
   const userRole = (user as any).primaryRole as UserRole;
   const isStudioOwner = userRole === UserRole.STUDIO_OWNER;
 
-  // Check if user owns any studios
-  const studios = await db.studio.findMany({
+  // Check if user owns any studios (via StudioOwnership junction table)
+  const ownerships = await db.studioOwnership.findMany({
     where: {
-      ownerId: user.id,
+      userId: user.id,
     },
     include: {
-      services: true,
-      _count: {
-        select: {
-          bookings: true,
+      studio: {
+        include: {
+          services: true,
+          _count: {
+            select: {
+              bookings: true,
+            },
+          },
         },
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      invitedAt: 'desc',
     },
   });
+
+  // Extract studios from ownerships
+  const studios = ownerships.map(ownership => ownership.studio);
 
   // If user has studios, show studio owner dashboard
   if (studios.length > 0) {

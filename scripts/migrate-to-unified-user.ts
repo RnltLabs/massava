@@ -47,11 +47,15 @@ async function migrateToUnifiedUser(): Promise<MigrationStats> {
 
         const studioOwners = await tx.studioOwner.findMany({
           include: {
-            studios: true,
             accounts: true,
             sessions: true,
           },
         });
+
+        // Get studios via manual query since relation is removed
+        const studioOwnerships = await tx.$queryRaw<Array<{id: string, ownerId: string}>>`
+          SELECT id, "ownerId" FROM studios WHERE "ownerId" IS NOT NULL
+        `;
 
         console.log(`   Found ${studioOwners.length} studio owners to migrate`);
 
@@ -83,7 +87,8 @@ async function migrateToUnifiedUser(): Promise<MigrationStats> {
             });
 
             // Create StudioOwnership records
-            for (const studio of owner.studios) {
+            const ownerStudios = studioOwnerships.filter(s => s.ownerId === owner.id);
+            for (const studio of ownerStudios) {
               await tx.studioOwnership.create({
                 data: {
                   userId: user.id,

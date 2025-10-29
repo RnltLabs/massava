@@ -77,23 +77,6 @@ export async function GET(request: NextRequest) {
     const studioOwner = await prisma.studioOwner.findUnique({
       where: { email },
       include: {
-        studios: {
-          include: {
-            services: true,
-            bookings: {
-              select: {
-                id: true,
-                customerName: true,
-                customerEmail: true,
-                customerPhone: true,
-                preferredDate: true,
-                preferredTime: true,
-                status: true,
-                createdAt: true,
-              },
-            },
-          },
-        },
         accounts: {
           select: {
             provider: true,
@@ -103,7 +86,41 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    if (!customer && !studioOwner) {
+    // Also fetch unified User data if exists
+    const unifiedUser = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        ownedStudios: {
+          include: {
+            studio: {
+              include: {
+                services: true,
+                bookings: {
+                  select: {
+                    id: true,
+                    customerName: true,
+                    customerEmail: true,
+                    customerPhone: true,
+                    preferredDate: true,
+                    preferredTime: true,
+                    status: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        newAccounts: {
+          select: {
+            provider: true,
+            type: true,
+          },
+        },
+      },
+    });
+
+    if (!customer && !studioOwner && !unifiedUser) {
       logger.warn('Data export failed: User not found', {
         correlationId,
         ipAddress,
@@ -133,6 +150,19 @@ export async function GET(request: NextRequest) {
             emailVerified: customer.emailVerified,
             accountCreated: customer.createdAt,
             lastUpdated: customer.updatedAt,
+          }
+        : unifiedUser
+        ? {
+            userType: 'user',
+            id: unifiedUser.id,
+            name: unifiedUser.name,
+            email: unifiedUser.email,
+            phone: unifiedUser.phone,
+            emailVerified: unifiedUser.emailVerified,
+            primaryRole: unifiedUser.primaryRole,
+            accountCreated: unifiedUser.createdAt,
+            lastUpdated: unifiedUser.updatedAt,
+            oauthProviders: unifiedUser.newAccounts.map((acc) => acc.provider),
           }
         : {
             userType: 'studioOwner',
@@ -168,19 +198,20 @@ export async function GET(request: NextRequest) {
             email: studio.email,
           }))
         : [],
-      studios: studioOwner
-        ? studioOwner.studios.map((studio) => ({
-            id: studio.id,
-            name: studio.name,
-            description: studio.description,
-            address: studio.address,
-            city: studio.city,
-            postalCode: studio.postalCode,
-            phone: studio.phone,
-            email: studio.email,
-            services: studio.services,
-            bookingsCount: studio.bookings.length,
-            createdAt: studio.createdAt,
+      studios: unifiedUser
+        ? unifiedUser.ownedStudios.map((ownership) => ({
+            id: ownership.studio.id,
+            name: ownership.studio.name,
+            description: ownership.studio.description,
+            address: ownership.studio.address,
+            city: ownership.studio.city,
+            postalCode: ownership.studio.postalCode,
+            phone: ownership.studio.phone,
+            email: ownership.studio.email,
+            services: ownership.studio.services,
+            bookingsCount: ownership.studio.bookings.length,
+            createdAt: ownership.studio.createdAt,
+            isPrimaryOwner: ownership.isPrimary,
           }))
         : [],
     };

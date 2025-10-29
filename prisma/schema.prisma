@@ -26,10 +26,10 @@ model StudioOwner {
   password      String?   // Hashed password for credentials login
   image         String?
 
-  // Relations
+  // Relations (legacy - being phased out)
   accounts      Account[]
   sessions      Session[]
-  studios       Studio[]
+  // studios relation removed - use User -> StudioOwnership instead
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -132,7 +132,6 @@ model PasswordResetToken {
 // Represents a massage/wellness studio
 model Studio {
   id          String   @id @default(cuid())
-  ownerId     String?  // Studio owner who registered this studio (optional for MVP)
   name        String
   description String?  @db.Text
 
@@ -152,15 +151,14 @@ model Studio {
   openingHours Json?
 
   // Relations
-  owner         StudioOwner? @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   services      Service[]
   bookings      Booking[]
   favoritedBy   Customer[]   @relation("CustomerFavorites")
   timeSlots     TimeSlot[]   // Available appointment slots
 
-  // Phase 3 relations
+  // New unified relations (Phase 3)
   newFavoritedBy  User[]   @relation("UserFavorites")
-  ownerships      StudioOwnership[]
+  ownerships      StudioOwnership[]  // Multiple owners possible via User model
   roleAssignments UserRoleAssignment[]
   newBookings     NewBooking[]
 
@@ -169,7 +167,6 @@ model Studio {
   updatedAt   DateTime @updatedAt
 
   @@index([city])
-  @@index([ownerId])
   @@index([latitude, longitude])
   @@map("studios")
 }
