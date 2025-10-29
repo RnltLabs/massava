@@ -11,7 +11,11 @@ import { usePathname } from 'next/navigation';
 import { locales, localeNames, type Locale } from '@/i18n';
 import { Globe, ChevronDown } from 'lucide-react';
 
-export default function LanguageSwitcher() {
+interface LanguageSwitcherProps {
+  compact?: boolean;
+}
+
+export default function LanguageSwitcher({ compact = false }: LanguageSwitcherProps) {
   const locale = useLocale();
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
@@ -58,13 +62,13 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative w-full">
       <button
-        className="w-full flex items-center gap-2 h-11 px-4 text-base font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-xl"
+        className={`w-full flex items-center gap-2 ${compact ? 'h-8 px-3 text-xs' : 'h-11 px-4 text-base'} font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-xl`}
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Select language"
       >
-        <Globe className="h-5 w-5 flex-shrink-0" />
+        <Globe className={`${compact ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0`} />
         <span className="flex-1 text-center">{localeNames[locale as Locale]}</span>
-        <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`${compact ? 'h-3 w-3' : 'h-4 w-4'} flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -77,7 +81,7 @@ export default function LanguageSwitcher() {
             {locales.map((loc) => (
               <button
                 key={loc}
-                className={`w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors ${
+                className={`w-full text-left ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm'} hover:bg-accent/10 transition-colors ${
                   loc === locale ? 'bg-accent/20 font-semibold text-primary' : 'text-foreground'
                 }`}
                 onClick={() => switchLocale(loc)}
