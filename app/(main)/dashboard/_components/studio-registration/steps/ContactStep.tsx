@@ -154,8 +154,8 @@ export function ContactStep(): React.JSX.Element {
     >
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
-        <p className="text-sm text-gray-600">How clients can reach you</p>
+        <h2 className="text-2xl font-bold text-gray-900">Kontaktinformationen</h2>
+        <p className="text-sm text-gray-600">Wie Kunden dich erreichen können</p>
       </div>
 
       {/* Form */}
@@ -164,7 +164,7 @@ export function ContactStep(): React.JSX.Element {
         <PhoneInput
           id="phone"
           name="phone"
-          label="Phone Number"
+          label="Telefonnummer"
           value={phone}
           onChange={setPhone}
           onBlur={() => handleBlur('phone')}
@@ -176,7 +176,7 @@ export function ContactStep(): React.JSX.Element {
         {/* Email */}
         <div className="space-y-2">
           <Label htmlFor="email" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            Email Address
+            E-Mail-Adresse
           </Label>
           <Input
             id="email"
@@ -192,7 +192,7 @@ export function ContactStep(): React.JSX.Element {
               'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
               touched.email && localErrors.email && 'border-red-500 focus:border-red-500 focus:ring-red-100'
             )}
-            placeholder="contact@studio.com"
+            placeholder="kontakt@studio.de"
             aria-invalid={touched.email && !!localErrors.email}
             aria-describedby={touched.email && localErrors.email ? 'email-error' : undefined}
           />
@@ -205,7 +205,7 @@ export function ContactStep(): React.JSX.Element {
 
         {/* Website */}
         <div className="space-y-2">
-          <Label htmlFor="website">Website (Optional)</Label>
+          <Label htmlFor="website">Webseite (Optional)</Label>
           <Input
             id="website"
             name="website"
@@ -219,7 +219,7 @@ export function ContactStep(): React.JSX.Element {
               'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
               touched.website && localErrors.website && 'border-red-500 focus:border-red-500 focus:ring-red-100'
             )}
-            placeholder="https://www.yourstudio.com"
+            placeholder="https://www.deinstudio.de"
             aria-invalid={touched.website && !!localErrors.website}
             aria-describedby={touched.website && localErrors.website ? 'website-error' : undefined}
           />
@@ -242,15 +242,16 @@ export function ContactStep(): React.JSX.Element {
       <Button
         onClick={handleCompleteRegistration}
         disabled={!isValid || state.isSubmitting}
-        className="w-full h-12 bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={isValid && !state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
         {state.isSubmitting ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Registering...
+            Registrierung läuft...
           </>
         ) : (
-          'Complete Registration'
+          'Registrierung abschließen'
         )}
       </Button>
     </motion.div>

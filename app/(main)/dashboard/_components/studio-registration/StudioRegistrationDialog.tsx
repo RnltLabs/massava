@@ -85,7 +85,7 @@ function StudioRegistrationContent({
   return (
     <div className="relative">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         {/* Back Button */}
         {currentStep > 0 && currentStep < 4 && (
           <button
@@ -120,7 +120,7 @@ function StudioRegistrationContent({
 
       {/* Progress Indicator */}
       {showProgress && (
-        <div className="mb-6">
+        <div className="mb-4">
           <ProgressIndicator currentStep={currentStep} totalSteps={3} />
         </div>
       )}
@@ -175,7 +175,7 @@ export function StudioRegistrationDialog({
           showCloseButton={false}
         >
           <SheetTitle className="sr-only">Studio Registration</SheetTitle>
-          <div className="overflow-y-auto h-full px-6 py-8">
+          <div className="overflow-y-auto h-full px-6 pt-4 pb-8">
             {content}
           </div>
         </SheetContent>
@@ -191,7 +191,7 @@ export function StudioRegistrationDialog({
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Studio Registration</DialogTitle>
-        <div className="p-6 max-h-[90vh] overflow-y-auto">
+        <div className="px-6 pt-4 pb-6 max-h-[90vh] overflow-y-auto">
           {content}
         </div>
       </DialogContent>

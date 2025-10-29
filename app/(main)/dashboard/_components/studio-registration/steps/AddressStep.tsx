@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,10 +8,12 @@ import { Label } from '@/components/ui/label';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { addressSchema } from '../validation/studioSchemas';
 import { cn } from '@/lib/utils';
+import { AddressAutocomplete } from '../components/AddressAutocomplete';
+import { CountrySelect } from '../components/CountrySelect';
 
 /**
  * Address Step - Step 2
- * Collects studio address information
+ * Collects studio address with smart autocomplete
  */
 export function AddressStep(): React.JSX.Element {
   const { state, updateAddress, goToNextStep, setErrors } = useStudioRegistration();
@@ -20,14 +21,12 @@ export function AddressStep(): React.JSX.Element {
   const [street, setStreet] = useState(state.formData.address.street || '');
   const [line2, setLine2] = useState(state.formData.address.line2 || '');
   const [city, setCity] = useState(state.formData.address.city || '');
-  const [stateProvince, setStateProvince] = useState(state.formData.address.state || '');
   const [postalCode, setPostalCode] = useState(state.formData.address.postalCode || '');
-  const [country, setCountry] = useState(state.formData.address.country || '');
+  const [country, setCountry] = useState(state.formData.address.country || 'Deutschland');
 
   const [touched, setTouched] = useState({
     street: false,
     city: false,
-    state: false,
     postalCode: false,
     country: false,
   });
@@ -35,7 +34,7 @@ export function AddressStep(): React.JSX.Element {
 
   // Validate field
   const validateField = (
-    field: 'street' | 'city' | 'state' | 'postalCode' | 'country',
+    field: 'street' | 'city' | 'postalCode' | 'country',
     value: string
   ): void => {
     try {
@@ -43,8 +42,6 @@ export function AddressStep(): React.JSX.Element {
         addressSchema.shape.street.parse(value);
       } else if (field === 'city') {
         addressSchema.shape.city.parse(value);
-      } else if (field === 'state') {
-        addressSchema.shape.state.parse(value);
       } else if (field === 'postalCode') {
         addressSchema.shape.postalCode.parse(value);
       } else if (field === 'country') {
@@ -61,11 +58,45 @@ export function AddressStep(): React.JSX.Element {
   };
 
   // Handle blur
-  const handleBlur = (field: 'street' | 'city' | 'state' | 'postalCode' | 'country'): void => {
+  const handleBlur = (field: 'street' | 'city' | 'postalCode' | 'country'): void => {
     setTouched((prev) => ({ ...prev, [field]: true }));
-    const values = { street, city, state: stateProvince, postalCode, country };
-    validateField(field, values[field]);
+    const value =
+      field === 'street'
+        ? street
+        : field === 'city'
+        ? city
+        : field === 'postalCode'
+        ? postalCode
+        : country;
+    validateField(field, value);
   };
+
+  // Handle address selection from autocomplete
+  const handleAddressSelect = (address: {
+    street: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  }): void => {
+    setStreet(address.street);
+    setCity(address.city);
+    setPostalCode(address.postalCode);
+    setCountry(address.country);
+
+    // Mark all fields as touched
+    setTouched({
+      street: true,
+      city: true,
+      postalCode: true,
+      country: true,
+    });
+
+    // Clear errors
+    setLocalErrors({});
+  };
+
+  // Note: City auto-fill is now handled by AddressAutocomplete component
+  // which fills all fields when user selects an address suggestion
 
   // Handle continue
   const handleContinue = (): void => {
@@ -73,18 +104,17 @@ export function AddressStep(): React.JSX.Element {
     setTouched({
       street: true,
       city: true,
-      state: true,
       postalCode: true,
       country: true,
     });
 
-    // Validate all fields
+    // Validate all fields (Bundesland removed from validation)
     try {
       const validated = addressSchema.parse({
         street,
-        line2: line2 || undefined,
+        line2,
         city,
-        state: stateProvince,
+        state: '', // Not needed anymore
         postalCode,
         country,
       });
@@ -93,7 +123,9 @@ export function AddressStep(): React.JSX.Element {
       goToNextStep();
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'errors' in error) {
-        const zodError = error as { errors: Array<{ path: string[]; message: string }> };
+        const zodError = error as {
+          errors: Array<{ path: string[]; message: string }>;
+        };
         const errors: Record<string, string> = {};
         zodError.errors.forEach((err: { path: string[]; message: string }) => {
           if (err.path[0]) {
@@ -113,20 +145,19 @@ export function AddressStep(): React.JSX.Element {
         street,
         line2,
         city,
-        state: stateProvince,
+        state: '', // Not needed anymore
         postalCode,
         country,
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [street, line2, city, stateProvince, postalCode, country]);
+  }, [street, line2, city, postalCode, country]);
 
   const isValid =
-    street.trim().length >= 5 &&
-    city.trim().length >= 2 &&
-    stateProvince.trim().length >= 2 &&
-    postalCode.trim().length >= 3 &&
-    country.trim().length >= 2;
+    street.trim().length > 0 &&
+    city.trim().length > 0 &&
+    postalCode.trim().length > 0 &&
+    country.trim().length > 0;
 
   return (
     <motion.div
@@ -138,44 +169,25 @@ export function AddressStep(): React.JSX.Element {
     >
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Studio Location</h2>
-        <p className="text-sm text-gray-600">Where clients can find you</p>
+        <h2 className="text-2xl font-bold text-gray-900">Studio-Standort</h2>
+        <p className="text-sm text-gray-600">Wo Kunden dich finden können</p>
       </div>
 
       {/* Form */}
       <div className="space-y-4">
-        {/* Street Address */}
-        <div className="space-y-2">
-          <Label htmlFor="street" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            Street Address
-          </Label>
-          <Input
-            id="street"
-            name="street"
-            type="text"
-            autoComplete="street-address"
-            value={street}
-            onChange={(e) => setStreet(e.target.value)}
-            onBlur={() => handleBlur('street')}
-            required
-            className={cn(
-              'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-              touched.street && localErrors.street && 'border-red-500 focus:border-red-500 focus:ring-red-100'
-            )}
-            placeholder="123 Main Street"
-            aria-invalid={touched.street && !!localErrors.street}
-            aria-describedby={touched.street && localErrors.street ? 'street-error' : undefined}
-          />
-          {touched.street && localErrors.street && (
-            <p id="street-error" className="text-sm text-red-600" role="alert">
-              {localErrors.street}
-            </p>
-          )}
-        </div>
+        {/* Smart Address Autocomplete */}
+        <AddressAutocomplete
+          value={street}
+          onChange={setStreet}
+          onAddressSelect={handleAddressSelect}
+          onBlur={() => handleBlur('street')}
+          error={touched.street ? localErrors.street : undefined}
+          required
+        />
 
         {/* Address Line 2 */}
         <div className="space-y-2">
-          <Label htmlFor="line2">Address Line 2 (Optional)</Label>
+          <Label htmlFor="line2">Adresszusatz (Optional)</Label>
           <Input
             id="line2"
             name="line2"
@@ -184,74 +196,55 @@ export function AddressStep(): React.JSX.Element {
             value={line2}
             onChange={(e) => setLine2(e.target.value)}
             className="focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100"
-            placeholder="Suite, Unit, Building, Floor"
+            placeholder="Stockwerk, Gebäude, etc."
           />
         </div>
 
-        {/* City */}
-        <div className="space-y-2">
-          <Label htmlFor="city" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            City
-          </Label>
-          <Input
-            id="city"
-            name="city"
-            type="text"
-            autoComplete="address-level2"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onBlur={() => handleBlur('city')}
-            required
-            className={cn(
-              'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-              touched.city && localErrors.city && 'border-red-500 focus:border-red-500 focus:ring-red-100'
-            )}
-            placeholder="San Francisco"
-            aria-invalid={touched.city && !!localErrors.city}
-            aria-describedby={touched.city && localErrors.city ? 'city-error' : undefined}
-          />
-          {touched.city && localErrors.city && (
-            <p id="city-error" className="text-sm text-red-600" role="alert">
-              {localErrors.city}
-            </p>
-          )}
-        </div>
-
-        {/* State and Postal Code - Two Column Layout on Desktop */}
+        {/* City and Postal Code - Two Column Layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* State/Province */}
+          {/* City */}
           <div className="space-y-2">
-            <Label htmlFor="state" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-              State/Province
+            <Label
+              htmlFor="city"
+              className="after:content-['*'] after:ml-0.5 after:text-red-500"
+            >
+              Stadt
             </Label>
             <Input
-              id="state"
-              name="state"
+              id="city"
+              name="city"
               type="text"
-              autoComplete="address-level1"
-              value={stateProvince}
-              onChange={(e) => setStateProvince(e.target.value)}
-              onBlur={() => handleBlur('state')}
+              autoComplete="address-level2"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              onBlur={() => handleBlur('city')}
               required
               className={cn(
                 'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-                touched.state && localErrors.state && 'border-red-500 focus:border-red-500 focus:ring-red-100'
+                touched.city &&
+                  localErrors.city &&
+                  'border-red-500 focus:border-red-500 focus:ring-red-100'
               )}
-              placeholder="CA"
-              aria-invalid={touched.state && !!localErrors.state}
-              aria-describedby={touched.state && localErrors.state ? 'state-error' : undefined}
+              placeholder="Karlsruhe"
+              aria-invalid={touched.city && !!localErrors.city}
+              aria-describedby={
+                touched.city && localErrors.city ? 'city-error' : undefined
+              }
             />
-            {touched.state && localErrors.state && (
-              <p id="state-error" className="text-sm text-red-600" role="alert">
-                {localErrors.state}
+            {touched.city && localErrors.city && (
+              <p id="city-error" className="text-sm text-red-600" role="alert">
+                {localErrors.city}
               </p>
             )}
           </div>
 
           {/* Postal Code */}
           <div className="space-y-2">
-            <Label htmlFor="postalCode" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-              Postal Code
+            <Label
+              htmlFor="postalCode"
+              className="after:content-['*'] after:ml-0.5 after:text-red-500"
+            >
+              Postleitzahl
             </Label>
             <Input
               id="postalCode"
@@ -264,11 +257,17 @@ export function AddressStep(): React.JSX.Element {
               required
               className={cn(
                 'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-                touched.postalCode && localErrors.postalCode && 'border-red-500 focus:border-red-500 focus:ring-red-100'
+                touched.postalCode &&
+                  localErrors.postalCode &&
+                  'border-red-500 focus:border-red-500 focus:ring-red-100'
               )}
-              placeholder="94102"
+              placeholder="76133"
               aria-invalid={touched.postalCode && !!localErrors.postalCode}
-              aria-describedby={touched.postalCode && localErrors.postalCode ? 'postalCode-error' : undefined}
+              aria-describedby={
+                touched.postalCode && localErrors.postalCode
+                  ? 'postalCode-error'
+                  : undefined
+              }
             />
             {touched.postalCode && localErrors.postalCode && (
               <p id="postalCode-error" className="text-sm text-red-600" role="alert">
@@ -278,43 +277,24 @@ export function AddressStep(): React.JSX.Element {
           </div>
         </div>
 
-        {/* Country */}
-        <div className="space-y-2">
-          <Label htmlFor="country" className="after:content-['*'] after:ml-0.5 after:text-red-500">
-            Country
-          </Label>
-          <Input
-            id="country"
-            name="country"
-            type="text"
-            autoComplete="country-name"
-            value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            onBlur={() => handleBlur('country')}
-            required
-            className={cn(
-              'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-              touched.country && localErrors.country && 'border-red-500 focus:border-red-500 focus:ring-red-100'
-            )}
-            placeholder="United States"
-            aria-invalid={touched.country && !!localErrors.country}
-            aria-describedby={touched.country && localErrors.country ? 'country-error' : undefined}
-          />
-          {touched.country && localErrors.country && (
-            <p id="country-error" className="text-sm text-red-600" role="alert">
-              {localErrors.country}
-            </p>
-          )}
-        </div>
+        {/* Country Dropdown */}
+        <CountrySelect
+          value={country}
+          onChange={setCountry}
+          onBlur={() => handleBlur('country')}
+          error={touched.country ? localErrors.country : undefined}
+          required
+        />
       </div>
 
       {/* Continue Button */}
       <Button
         onClick={handleContinue}
         disabled={!isValid}
-        className="w-full h-12 bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        style={isValid ? { backgroundColor: '#B56550' } : undefined}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        Continue
+        Weiter
       </Button>
     </motion.div>
   );

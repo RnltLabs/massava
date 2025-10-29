@@ -25,13 +25,13 @@ export function SuccessStep({
   const nextSteps = [
     {
       icon: Calendar,
-      title: 'Add Services',
-      description: 'Create your service offerings and pricing',
+      title: 'Services hinzufügen',
+      description: 'Erstelle deine Service-Angebote und Preise',
     },
     {
       icon: LayoutDashboard,
-      title: 'Customize Your Profile',
-      description: 'Add photos and complete your studio profile',
+      title: 'Profil anpassen',
+      description: 'Füge Fotos hinzu und vervollständige dein Studio-Profil',
     },
   ];
 
@@ -79,11 +79,11 @@ export function SuccessStep({
         className="text-center space-y-3"
       >
         <h2 className="text-3xl font-bold text-gray-900">
-          Welcome to Massava!
+          Willkommen bei Massava!
         </h2>
         <p className="text-base text-gray-600">
-          <span className="font-semibold text-terracotta-600">{studioName}</span> has been
-          successfully registered
+          <span className="font-semibold text-terracotta-600">{studioName}</span> wurde
+          erfolgreich registriert
         </p>
       </motion.div>
 
@@ -95,7 +95,7 @@ export function SuccessStep({
         className="space-y-4"
       >
         <h3 className="text-lg font-semibold text-gray-900 text-center">
-          What&apos;s next?
+          Was kommt als Nächstes?
         </h3>
 
         <div className="space-y-3">
@@ -132,17 +132,18 @@ export function SuccessStep({
       >
         <Button
           onClick={onAddService}
-          className="w-full h-12 bg-terracotta-500 hover:bg-terracotta-600 text-white font-medium rounded-xl transition-colors"
+          style={{ backgroundColor: '#B56550' }}
+          className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
         >
-          Add Your First Service
+          Ersten Service hinzufügen
         </Button>
 
         <Button
           onClick={onGoToDashboard}
           variant="outline"
-          className="w-full h-12 border-2 border-gray-300 hover:bg-gray-50 font-medium rounded-xl transition-colors"
+          className="w-full h-12 border-2 border-gray-300 hover:bg-gray-50 font-semibold rounded-xl transition-all duration-200"
         >
-          Go to Dashboard
+          Zum Dashboard
         </Button>
       </motion.div>
     </motion.div>
