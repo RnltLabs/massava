@@ -72,10 +72,10 @@ export function SearchWidget({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-3xl mx-auto wellness-shadow rounded-3xl bg-card p-6">
-      <div className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto wellness-shadow rounded-2xl bg-card p-4 md:p-5">
+      <div className="flex flex-col gap-3">
         {/* First row: Location and Radius */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
           {/* Location input with autocomplete */}
           <LocationAutocomplete
             value={location}
@@ -85,7 +85,7 @@ export function SearchWidget({
           />
 
           {/* Radius dropdown */}
-          <div className="sm:w-auto">
+          <div className="w-full md:w-[140px]">
             <label htmlFor="radius-select" className="sr-only">
               Umkreis
             </label>
@@ -93,7 +93,7 @@ export function SearchWidget({
               id="radius-select"
               value={radius}
               onChange={(e) => setRadius(e.target.value)}
-              className="w-full sm:w-auto px-4 py-6 rounded-2xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card cursor-pointer min-h-[56px]"
+              className="w-full h-11 px-4 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-sm bg-card cursor-pointer"
               aria-label="Suchradius auswählen"
             >
               <option value="5">5 km</option>
@@ -109,16 +109,16 @@ export function SearchWidget({
           value={dateTime}
           onChange={setDateTime}
           minDate={new Date()}
-          placeholder="Datum und Uhrzeit wählen (optional)"
+          placeholder="Datum und Uhrzeit wählen"
         />
 
         {/* Search button */}
         <Button
           type="submit"
           disabled={isSubmitting || !location.trim()}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-6 px-6 rounded-2xl flex items-center justify-center gap-2 transition-all wellness-shadow hover:shadow-lg h-auto text-lg"
+          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 transition-all wellness-shadow hover:shadow-lg text-sm"
         >
-          <Search className="h-5 w-5" aria-hidden="true" />
+          <Search className="h-4 w-4" aria-hidden="true" />
           {isSubmitting ? 'Suche läuft...' : searchButtonText}
         </Button>
       </div>

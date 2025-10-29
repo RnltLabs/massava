@@ -262,5 +262,25 @@
       "afternoon": "12:00 - 18:00",
       "evening": "18:00 - 24:00"
     }
+  },
+  "navigation": {
+    "openMenu": "Open menu",
+    "welcome": "Welcome to Massava",
+    "welcomeBack": "Welcome back, {name}",
+    "getStarted": "Book your perfect massage experience",
+    "manageAccount": "Manage your account and bookings",
+    "register": "Register",
+    "signIn": "Sign In",
+    "registerBenefit": "Create an account to manage bookings and get exclusive offers",
+    "studioOwnerTitle": "Do you own a studio?",
+    "studioOwnerDescription": "Reach more customers and increase your utilization",
+    "registerStudioCta": "Register Studio Now",
+    "myProfile": "My Profile",
+    "myBookings": "My Bookings",
+    "helpSupport": "Help & Support",
+    "signOut": "Sign Out",
+    "language": "Language",
+    "selectLanguage": "Select Language",
+    "appVersion": "Version {version}"
   }
 }

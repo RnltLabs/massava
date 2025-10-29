@@ -463,9 +463,9 @@ export function DateTimePicker({
   const renderTrigger = () => (
     <div
       className={cn(
-        "relative flex items-center gap-2 px-4 py-3 border rounded-lg bg-background",
+        "relative flex items-center gap-2 h-11 px-3 border-2 border-muted rounded-xl bg-background",
         "cursor-pointer transition-colors",
-        "hover:bg-accent hover:border-accent-foreground/20",
+        "hover:bg-accent hover:border-primary/50",
         disabled && "opacity-50 cursor-not-allowed hover:bg-background",
         className
       )}
@@ -476,13 +476,15 @@ export function DateTimePicker({
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
-          !disabled && setOpen(true)
+          if (!disabled) {
+            setOpen(true)
+          }
         }
       }}
     >
-      <CalendarIcon className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+      <CalendarIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
       <span className={cn(
-        "flex-1 text-left",
+        "flex-1 text-left text-sm",
         !value && "text-muted-foreground"
       )}>
         {value ? formatDateTime(value) : (placeholder || t('placeholder'))}
