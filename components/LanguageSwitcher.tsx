@@ -56,14 +56,15 @@ export default function LanguageSwitcher() {
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
-        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
+        className="w-full flex items-center gap-2 h-11 px-4 text-base font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-xl"
         onClick={() => setIsOpen(!isOpen)}
+        aria-label="Select language"
       >
-        <Globe className="h-4 w-4" />
-        <span className="hidden sm:inline">{localeNames[locale as Locale]}</span>
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <Globe className="h-5 w-5 flex-shrink-0" />
+        <span className="flex-1 text-center">{localeNames[locale as Locale]}</span>
+        <ChevronDown className={`h-4 w-4 flex-shrink-0 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
@@ -72,7 +73,7 @@ export default function LanguageSwitcher() {
             className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
-          <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
+          <div className="absolute left-0 right-0 mt-2 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
             {locales.map((loc) => (
               <button
                 key={loc}

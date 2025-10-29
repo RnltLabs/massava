@@ -1,0 +1,28 @@
+{
+  "dateTimePicker": {
+    "placeholder": "เลือกวันที่และเวลา",
+    "selectDate": "เลือกวันที่",
+    "selectTime": "เลือกเวลา",
+    "anyDate": "วันใดก็ได้",
+    "today": "วันนี้",
+    "tomorrow": "พรุ่งนี้",
+    "orChooseDate": "หรือเลือกวันที่:",
+    "morning": "ช่วงเช้า",
+    "afternoon": "ช่วงบ่าย",
+    "evening": "ช่วงเย็น",
+    "done": "เสร็จสิ้น",
+    "back": "ย้อนกลับ",
+    "selected": "เลือกแล้ว:",
+    "timeRange": {
+      "morning": "06:00 - 12:00",
+      "afternoon": "12:00 - 18:00",
+      "evening": "18:00 - 24:00"
+    }
+  },
+  "search": {
+    "selectDateTime": "เลือกวันที่และเวลา",
+    "location": "สถานที่",
+    "treatment": "การรักษา",
+    "search": "ค้นหา"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "dateTimePicker": {
+    "placeholder": "Datum und Uhrzeit wählen",
+    "selectDate": "Datum auswählen",
+    "selectTime": "Uhrzeit auswählen",
+    "anyDate": "Beliebiges Datum",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "orChooseDate": "Oder wählen Sie ein Datum:",
+    "morning": "Morgen",
+    "afternoon": "Nachmittag",
+    "evening": "Abend",
+    "done": "Fertig",
+    "back": "Zurück",
+    "selected": "Ausgewählt:",
+    "timeRange": {
+      "morning": "06:00 - 12:00",
+      "afternoon": "12:00 - 18:00",
+      "evening": "18:00 - 24:00"
+    }
+  },
+  "search": {
+    "selectDateTime": "Datum und Uhrzeit wählen",
+    "location": "Standort",
+    "treatment": "Behandlung",
+    "search": "Suchen"
+  }
+}
