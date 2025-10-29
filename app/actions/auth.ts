@@ -219,20 +219,34 @@ export async function signIn(
       };
     }
 
-    // 3. Determine redirect URL based on account type preference and actual role
+    // 3. Validate account type matches user's actual role
     const actualRole = user?.primaryRole || 'CUSTOMER';
+
+    // Prevent role mismatch: Studio owners cannot log in as customers and vice versa
+    if (accountType === 'studio' && actualRole !== 'STUDIO_OWNER') {
+      return {
+        success: false,
+        error: 'This account is registered as a customer. Please select "Customer" to log in.',
+      };
+    }
+
+    if (accountType === 'customer' && actualRole === 'STUDIO_OWNER') {
+      return {
+        success: false,
+        error: 'This account is registered as a studio owner. Please select "Studio Owner" to log in.',
+      };
+    }
+
+    // 4. Determine redirect URL based on validated account type
     let redirectUrl = '/dashboard';
 
-    // If user selected studio but is actually a customer, go to dashboard (with upgrade prompt)
-    // If user selected customer, always go to landing page (search-focused experience)
-    // If user selected studio and IS studio owner, go to dashboard (studio view)
-    if (accountType === 'studio' && actualRole === 'STUDIO_OWNER') {
+    if (accountType === 'studio') {
       redirectUrl = '/dashboard'; // Studio dashboard view
     } else if (accountType === 'customer') {
       redirectUrl = '/'; // Landing page with search widget
     }
 
-    // 4. Now sign in via NextAuth (we know credentials are valid)
+    // 5. Now sign in via NextAuth (we know credentials are valid)
     try {
       await nextAuthSignIn('credentials', {
         email,
@@ -249,7 +263,7 @@ export async function signIn(
       };
     }
 
-    // 5. Login successful - return redirect URL
+    // 6. Login successful - return redirect URL
     // Note: Session may not be immediately available in Server Action
     // but will be available after client-side navigation
     return {
