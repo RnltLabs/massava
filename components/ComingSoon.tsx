@@ -69,10 +69,10 @@ export default function ComingSoon() {
         {/* Description */}
         <div className="wellness-shadow rounded-3xl bg-card p-8 sm:p-12 mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-foreground">
-            Die Revolution für spontane Wellness-Buchungen
+            Spontane Massage-Buchungen – einfach gemacht
           </h2>
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Wir entwickeln die Plattform, die Massagen und Wellness-Treatments
+            Wir entwickeln die Plattform, die Massagen
             so einfach buchbar macht wie Tisch-Reservierungen.
             <span className="block mt-4 font-medium text-foreground">
               Ohne Provisionen. Transparent. Unkompliziert.
@@ -126,15 +126,6 @@ export default function ComingSoon() {
               className="hover:text-primary transition-colors"
             >
               Impressum
-            </a>
-            {' · '}
-            <a
-              href="https://rnltlabs.de/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-primary transition-colors"
-            >
-              Datenschutz
             </a>
           </p>
         </div>
