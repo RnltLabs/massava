@@ -357,7 +357,6 @@ model StudioOwnership {
   studioId  String
 
   // Ownership details
-  isPrimary Boolean  @default(false) // Primary owner has special privileges
   canTransfer Boolean @default(false) // Can transfer ownership
 
   // Team invitation (future)

@@ -35,6 +35,29 @@ jobs:
         cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/massava:staging
         cache-to: type=inline
 
+    - name: Run Database Migrations
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "🔄 Running database migrations..."
+          docker pull ${{ secrets.DOCKER_USERNAME }}/massava:staging
+
+          # Run migrations in a temporary container
+          docker run --rm \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL_STAGING }}" \
+            ${{ secrets.DOCKER_USERNAME }}/massava:staging \
+            sh -c "npx prisma migrate deploy"
+
+          if [ $? -eq 0 ]; then
+            echo "✅ Database migrations completed successfully"
+          else
+            echo "❌ Database migrations failed"
+            exit 1
+          fi
+
     - name: Deploy to Staging Server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -42,7 +65,7 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/massava:staging
+          echo "🚀 Deploying application..."
           docker stop massava-staging || true
           docker rm massava-staging || true
           docker run -d \
@@ -62,6 +85,7 @@ jobs:
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
           docker image prune -f
+          echo "✅ Application deployed successfully"
 
     - name: Verify deployment
       uses: appleboy/ssh-action@v1.0.3

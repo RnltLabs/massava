@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
     const studios = ownerships.map((ownership) => ({
       ...ownership.studio,
       ownership: {
-        isPrimary: ownership.isPrimary,
         canTransfer: ownership.canTransfer,
         acceptedAt: ownership.acceptedAt,
       },
