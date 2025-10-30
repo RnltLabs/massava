@@ -13,9 +13,10 @@ import { auth } from '@/auth-unified';
 import { UserRole } from '@/app/generated/prisma';
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import { Building2, Sparkles, Clock, Plus, Eye, ArrowRight } from 'lucide-react';
+import { Building2, Sparkles, Clock, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { StudioRegistrationTrigger } from '@/app/(main)/dashboard/_components/StudioRegistrationTrigger';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -76,13 +77,16 @@ export default async function DashboardPage({ params }: Props) {
               </p>
             </div>
 
-            <Link
-              href={`/${locale}/studios/register`}
-              className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all wellness-shadow"
-            >
-              <Plus className="h-5 w-5" />
-              Weiteres Studio registrieren
-            </Link>
+            {/* MVP: Multi-studio registration hidden for simplicity
+                Backend supports multiple studios, but UI is hidden to reduce complexity
+                for primary target audience (60%+ Thai studios, low tech-affinity)
+                Can be re-enabled via feature flag for power users/enterprise
+            */}
+            {/* <StudioRegistrationTrigger
+              buttonText="Weiteres Studio registrieren"
+              buttonIcon={<Plus className="h-5 w-5 mr-2" />}
+              variant="default"
+            /> */}
           </div>
 
           {/* Studios */}
@@ -180,13 +184,17 @@ export default async function DashboardPage({ params }: Props) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
-                  <Button asChild size="lg" className="text-lg px-8 py-6">
-                    <Link href={`/${locale}/studios/register`} className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Studio jetzt einrichten
-                      <ArrowRight className="h-5 w-5" />
-                    </Link>
-                  </Button>
+                  <StudioRegistrationTrigger
+                    buttonText="Studio jetzt einrichten"
+                    buttonIcon={
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                    }
+                    variant="default"
+                    size="lg"
+                    className="text-lg px-8 py-6"
+                  />
                 </div>
 
                 {/* Benefits */}

@@ -61,6 +61,7 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <SentryDebug />
         <SessionProvider>
