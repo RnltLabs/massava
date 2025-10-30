@@ -100,6 +100,8 @@ export function AddressStep(): React.JSX.Element {
 
   // Handle continue
   const handleContinue = (): void => {
+    console.log('AddressStep: handleContinue called', { street, city, postalCode, country });
+
     // Mark all as touched
     setTouched({
       street: true,
@@ -108,20 +110,21 @@ export function AddressStep(): React.JSX.Element {
       country: true,
     });
 
-    // Validate all fields (Bundesland removed from validation)
+    // Validate all fields
     try {
       const validated = addressSchema.parse({
         street,
         line2,
         city,
-        state: '', // Not needed anymore
         postalCode,
         country,
       });
+      console.log('AddressStep: Validation successful', validated);
       updateAddress(validated);
       setErrors({});
       goToNextStep();
     } catch (error: unknown) {
+      console.error('AddressStep: Validation failed', error);
       if (error && typeof error === 'object' && 'errors' in error) {
         const zodError = error as {
           errors: Array<{ path: string[]; message: string }>;
@@ -132,6 +135,7 @@ export function AddressStep(): React.JSX.Element {
             errors[err.path[0]] = err.message;
           }
         });
+        console.log('AddressStep: Validation errors', errors);
         setLocalErrors(errors);
         setErrors(errors);
       }
@@ -145,7 +149,6 @@ export function AddressStep(): React.JSX.Element {
         street,
         line2,
         city,
-        state: '', // Not needed anymore
         postalCode,
         country,
       });

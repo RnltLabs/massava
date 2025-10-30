@@ -5,14 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-interface AddressSuggestion {
-  street: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  displayText: string;
-}
+import {
+  createDebouncedSearch,
+  type AddressSuggestion,
+  GeocodingError,
+} from '@/lib/services/geocoding';
+import { logger } from '@/lib/logger';
 
 interface AddressAutocompleteProps {
   value: string;
@@ -47,70 +45,53 @@ export function AddressAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Mock address database (in production, this would be an API like Google Places)
-  // Realistic German addresses for demonstration
-  const addressDatabase: AddressSuggestion[] = [
-    // Karlsruhe
-    { street: 'Karlstraße 12', city: 'Karlsruhe', postalCode: '76133', country: 'Deutschland', displayText: 'Karlstraße 12, 76133 Karlsruhe' },
-    { street: 'Kaiserstraße 156', city: 'Karlsruhe', postalCode: '76133', country: 'Deutschland', displayText: 'Kaiserstraße 156, 76133 Karlsruhe' },
-    { street: 'Waldstraße 63', city: 'Karlsruhe', postalCode: '76131', country: 'Deutschland', displayText: 'Waldstraße 63, 76131 Karlsruhe' },
-    { street: 'Sophienstraße 120', city: 'Karlsruhe', postalCode: '76135', country: 'Deutschland', displayText: 'Sophienstraße 120, 76135 Karlsruhe' },
+  // Create debounced search function (initialized once)
+  const debouncedSearch = useRef(createDebouncedSearch(300)).current;
 
-    // München
-    { street: 'Karlstraße 45', city: 'München', postalCode: '80333', country: 'Deutschland', displayText: 'Karlstraße 45, 80333 München' },
-    { street: 'Maximilianstraße 12', city: 'München', postalCode: '80539', country: 'Deutschland', displayText: 'Maximilianstraße 12, 80539 München' },
-    { street: 'Leopoldstraße 15', city: 'München', postalCode: '80802', country: 'Deutschland', displayText: 'Leopoldstraße 15, 80802 München' },
-
-    // Berlin
-    { street: 'Karlstraße 78', city: 'Berlin', postalCode: '10117', country: 'Deutschland', displayText: 'Karlstraße 78, 10117 Berlin' },
-    { street: 'Unter den Linden 1', city: 'Berlin', postalCode: '10117', country: 'Deutschland', displayText: 'Unter den Linden 1, 10117 Berlin' },
-    { street: 'Friedrichstraße 95', city: 'Berlin', postalCode: '10117', country: 'Deutschland', displayText: 'Friedrichstraße 95, 10117 Berlin' },
-
-    // Stuttgart
-    { street: 'Hauptstraße 123', city: 'Stuttgart', postalCode: '70173', country: 'Deutschland', displayText: 'Hauptstraße 123, 70173 Stuttgart' },
-    { street: 'Königstraße 28', city: 'Stuttgart', postalCode: '70173', country: 'Deutschland', displayText: 'Königstraße 28, 70173 Stuttgart' },
-
-    // Hamburg
-    { street: 'Reeperbahn 154', city: 'Hamburg', postalCode: '20359', country: 'Deutschland', displayText: 'Reeperbahn 154, 20359 Hamburg' },
-    { street: 'Jungfernstieg 16', city: 'Hamburg', postalCode: '20354', country: 'Deutschland', displayText: 'Jungfernstieg 16, 20354 Hamburg' },
-
-    // Köln
-    { street: 'Hohe Straße 41', city: 'Köln', postalCode: '50667', country: 'Deutschland', displayText: 'Hohe Straße 41, 50667 Köln' },
-
-    // Frankfurt
-    { street: 'Zeil 106', city: 'Frankfurt am Main', postalCode: '60313', country: 'Deutschland', displayText: 'Zeil 106, 60313 Frankfurt am Main' },
-  ];
-
-  // Search for address suggestions
-  const searchAddresses = (query: string): void => {
+  // Search for address suggestions using Photon API
+  const performAddressSearch = async (query: string): Promise<void> => {
     if (!query || query.length < 3) {
       setSuggestions([]);
       setIsOpen(false);
+      setHasError(false);
       return;
     }
 
     setIsLoading(true);
+    setHasError(false);
 
-    // Simulate API delay
-    setTimeout(() => {
-      const filtered = addressDatabase.filter((addr) =>
-        addr.displayText.toLowerCase().includes(query.toLowerCase())
-      );
-      setSuggestions(filtered);
-      setIsOpen(filtered.length > 0);
+    try {
+      const results = await debouncedSearch(query);
+      setSuggestions(results);
+      setIsOpen(results.length > 0);
       setSelectedIndex(-1);
+      setHasError(false);
+    } catch (error) {
+      // Graceful error handling - don't break the UI
+      logger.error('Address autocomplete search failed', {
+        query,
+        error: error instanceof Error ? error.message : String(error),
+        correlationId: error instanceof GeocodingError ? error.correlationId : undefined,
+        action: 'studio_registration_address_search',
+        component: 'AddressAutocomplete',
+      });
+      setSuggestions([]);
+      setIsOpen(false);
+      setHasError(true);
+    } finally {
       setIsLoading(false);
-    }, 200);
+    }
   };
 
   // Handle input change
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const newValue = e.target.value;
     onChange(newValue);
-    searchAddresses(newValue);
+    performAddressSearch(newValue);
   };
 
   // Handle suggestion selection
@@ -231,7 +212,7 @@ export function AddressAutocomplete({
         >
           {suggestions.map((suggestion, index) => (
             <button
-              key={`${suggestion.street}-${suggestion.city}`}
+              key={`${suggestion.street}-${suggestion.postalCode}-${suggestion.city}-${index}`}
               type="button"
               role="option"
               aria-selected={selectedIndex === index}
@@ -264,8 +245,15 @@ export function AddressAutocomplete({
         </p>
       )}
 
+      {/* API error message */}
+      {!error && hasError && (
+        <p className="text-sm text-amber-600" role="alert">
+          Adresssuche vorübergehend nicht verfügbar. Bitte Adresse manuell eingeben.
+        </p>
+      )}
+
       {/* Hint */}
-      {!error && (
+      {!error && !hasError && (
         <p id="street-hint" className="text-sm text-gray-500">
           Beginne zu tippen für Vorschläge
         </p>

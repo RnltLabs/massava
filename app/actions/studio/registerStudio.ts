@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma';
 
 /**
  * Registration schema (server-side validation)
+ * Note: No state/Bundesland field - postal code is sufficient for DACH region
  */
 const registerStudioSchema = z.object({
   name: z.string().min(3).max(100),
@@ -18,7 +19,6 @@ const registerStudioSchema = z.object({
     street: z.string().min(5),
     line2: z.string().optional(),
     city: z.string().min(2),
-    state: z.string().min(2),
     postalCode: z.string().min(3),
     country: z.string().min(2),
   }),
