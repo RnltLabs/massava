@@ -67,6 +67,7 @@ jobs:
 
           # Run migrations in a temporary container
           docker run --rm \
+            --network host \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_PRODUCTION }}" \
             ${{ secrets.DOCKER_USERNAME }}/massava:latest \
             sh -c "npx prisma migrate deploy"
