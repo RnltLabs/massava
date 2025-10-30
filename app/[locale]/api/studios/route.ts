@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
         data: {
           userId: session.user.id,
           studioId: studio.id,
-          isPrimary: true,
           canTransfer: true,
         },
       });
