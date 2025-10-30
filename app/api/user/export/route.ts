@@ -211,7 +211,6 @@ export async function GET(request: NextRequest) {
             services: ownership.studio.services,
             bookingsCount: ownership.studio.bookings.length,
             createdAt: ownership.studio.createdAt,
-            isPrimaryOwner: ownership.isPrimary,
           }))
         : [],
     };

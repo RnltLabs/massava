@@ -67,21 +67,7 @@ export async function registerStudio(
 
     const { name, description, address, contact } = validated.data;
 
-    // 3. Check if user already owns a studio (optional - remove if multiple studios allowed)
-    const existingOwnership = await prisma.studioOwnership.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-    });
-
-    if (existingOwnership) {
-      return {
-        success: false,
-        error: 'You already have a registered studio.',
-      };
-    }
-
-    // 4. Create studio with ownership
+    // 3. Create studio with ownership
     const studio = await prisma.studio.create({
       data: {
         name,
@@ -97,7 +83,6 @@ export async function registerStudio(
         ownerships: {
           create: {
             userId: session.user.id,
-            isPrimary: true,
             canTransfer: true,
           },
         },

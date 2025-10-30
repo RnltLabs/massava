@@ -172,7 +172,6 @@ async function main() {
     data: {
       userId: owner.id,
       studioId: studio1.id,
-      isPrimary: true,
       canTransfer: true,
     },
   });
@@ -181,7 +180,6 @@ async function main() {
     data: {
       userId: owner.id,
       studioId: studio2.id,
-      isPrimary: true,
       canTransfer: true,
     },
   });
@@ -190,7 +188,6 @@ async function main() {
     data: {
       userId: owner.id,
       studioId: studio3.id,
-      isPrimary: true,
       canTransfer: true,
     },
   });

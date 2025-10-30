@@ -93,7 +93,6 @@ async function migrateToUnifiedUser(): Promise<MigrationStats> {
                 data: {
                   userId: user.id,
                   studioId: studio.id,
-                  isPrimary: true,
                   canTransfer: true,
                   invitedBy: 'SYSTEM_MIGRATION',
                   acceptedAt: new Date(),
