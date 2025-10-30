@@ -94,17 +94,6 @@ export default function ComingSoon() {
         {/* Footer Info */}
         <div className="text-sm text-muted-foreground space-y-2">
           <p>
-            Ein Projekt von{' '}
-            <a
-              href="https://rnltlabs.de"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
-              RNLT Labs
-            </a>
-          </p>
-          <p>
             <a
               href="https://rnltlabs.de/imprint"
               target="_blank"
