@@ -13,6 +13,7 @@ import Header from '@/components/Header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
 import CookieBanner from '@/components/CookieBanner';
+import { Toaster } from '@/components/ui/toaster';
 import "../globals.css";
 
 const geistSans = Geist({
@@ -71,6 +72,7 @@ export default async function LocaleLayout({
               {children}
             </main>
             <CookieBanner />
+            <Toaster />
           </NextIntlClientProvider>
         </SessionProvider>
       </body>

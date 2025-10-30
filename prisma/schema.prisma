@@ -155,6 +155,7 @@ model Studio {
   bookings      Booking[]
   favoritedBy   Customer[]   @relation("CustomerFavorites")
   timeSlots     TimeSlot[]   // Available appointment slots
+  blockedTimes  BlockedTime[] // Time blocks when studio is unavailable
 
   // New unified relations (Phase 3)
   newFavoritedBy  User[]   @relation("UserFavorites")
@@ -490,5 +491,28 @@ model TimeSlot {
   @@index([isAvailable, isBooked])
   @@index([studioId, startTime, isAvailable])
   @@map("time_slots")
+}
+
+// Blocked Time Model
+// Represents time blocks when the studio is unavailable (breaks, holidays, private time)
+model BlockedTime {
+  id        String   @id @default(cuid())
+  studioId  String
+  startTime DateTime
+  endTime   DateTime
+  reason    String?  // Optional reason: "Mittagspause", "Pause", "Privat"
+  isAllDay  Boolean  @default(false) // Full day block
+
+  // Relations
+  studio Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studioId])
+  @@index([startTime])
+  @@index([studioId, startTime])
+  @@map("blocked_times")
 }
 

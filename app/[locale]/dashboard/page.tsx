@@ -61,8 +61,13 @@ export default async function DashboardPage({ params }: Props) {
   // Extract studios from ownerships
   const studios = ownerships.map(ownership => ownership.studio);
 
-  // If user has studios, show studio owner dashboard
+  // If user has studios, redirect to new owner dashboard
   if (studios.length > 0) {
+    redirect(`/${locale}/dashboard/owner`);
+  }
+
+  // LEGACY: Old multi-studio view (kept for reference, but redirects now)
+  if (false && studios.length > 0) {
     return (
       <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
