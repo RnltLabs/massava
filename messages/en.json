@@ -1,0 +1,18 @@
+{
+  "navigation": {
+    "openMenu": "Open menu",
+    "welcome": "Welcome to Massava",
+    "welcomeBack": "Welcome back, {name}",
+    "getStarted": "Book your perfect massage experience",
+    "manageAccount": "Manage your account and bookings",
+    "register": "Register",
+    "signIn": "Sign In",
+    "registerBenefit": "Create an account to manage bookings and get exclusive offers",
+    "myProfile": "My Profile",
+    "myBookings": "My Bookings",
+    "helpSupport": "Help & Support",
+    "signOut": "Sign Out",
+    "language": "Language",
+    "appVersion": "Version {version}"
+  }
+}
