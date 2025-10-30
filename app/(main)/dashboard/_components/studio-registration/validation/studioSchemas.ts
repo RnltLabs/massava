@@ -18,6 +18,7 @@ export const basicInfoSchema = z.object({
 
 /**
  * Validation schema for studio address
+ * Note: No state/Bundesland field - postal code is sufficient for DACH region addresses
  */
 export const addressSchema = z.object({
   street: z
@@ -28,10 +29,6 @@ export const addressSchema = z.object({
   city: z
     .string()
     .min(2, 'City must be at least 2 characters')
-    .trim(),
-  state: z
-    .string()
-    .min(2, 'State/Province must be at least 2 characters')
     .trim(),
   postalCode: z
     .string()

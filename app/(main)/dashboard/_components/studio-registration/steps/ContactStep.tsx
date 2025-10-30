@@ -101,7 +101,6 @@ export function ContactStep(): React.JSX.Element {
         street: state.formData.address.street || '',
         line2: state.formData.address.line2,
         city: state.formData.address.city || '',
-        state: state.formData.address.state || '',
         postalCode: state.formData.address.postalCode || '',
         country: state.formData.address.country || '',
       },
