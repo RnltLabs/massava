@@ -66,20 +66,6 @@ export default function ComingSoon() {
           </div>
         </div>
 
-        {/* Description */}
-        <div className="wellness-shadow rounded-3xl bg-card p-8 sm:p-12 mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6 text-foreground">
-            Spontane Massage-Buchungen – einfach gemacht
-          </h2>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Wir entwickeln die Plattform, die Massagen
-            so einfach buchbar macht wie Tisch-Reservierungen.
-            <span className="block mt-4 font-medium text-foreground">
-              Ohne Provisionen. Transparent. Unkompliziert.
-            </span>
-          </p>
-        </div>
-
         {/* Features Preview */}
         <div className="grid sm:grid-cols-3 gap-4 mb-12">
           <div className="wellness-shadow rounded-2xl bg-card p-6">
