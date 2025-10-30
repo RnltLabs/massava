@@ -102,6 +102,7 @@ jobs:
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
             -e RESEND_FROM_EMAIL="noreply@massava.app" \
             -e NEXT_PUBLIC_VERCEL_ENV=production \
+            -e NEXT_PUBLIC_SHOW_COMING_SOON="${{ secrets.NEXT_PUBLIC_SHOW_COMING_SOON }}" \
             --name massava \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:latest
