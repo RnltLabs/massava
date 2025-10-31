@@ -16,6 +16,7 @@ import { CalendarClient } from './_components/CalendarClient';
 import { CalendarSkeleton } from './_components/CalendarSkeleton';
 import { FloatingActionButton } from './_components/FloatingActionButton';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, addDays } from 'date-fns';
+import { generateClosedTimeBlocks, type OpeningHours } from '@/lib/opening-hours-utils';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -127,6 +128,27 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
     orderBy: { startTime: 'asc' },
   });
 
+  // Generate virtual blocked times for hours outside opening hours
+  let virtualBlockedTimes;
+  if (view === 'week') {
+    // Generate for all 7 days of the week
+    const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
+    virtualBlockedTimes = Array.from({ length: 7 }, (_, i) => {
+      const day = addDays(weekStart, i);
+      return generateClosedTimeBlocks(day, studio.openingHours as OpeningHours | null, studio.id);
+    }).flat();
+  } else {
+    // Day view - generate for selected date only
+    virtualBlockedTimes = generateClosedTimeBlocks(
+      selectedDate,
+      studio.openingHours as OpeningHours | null,
+      studio.id
+    );
+  }
+
+  // Combine real and virtual blocked times
+  const allBlockedTimes = [...blockedTimes, ...virtualBlockedTimes];
+
   // Calculate badge counts for bottom nav
   const today = format(new Date(), 'yyyy-MM-dd');
   const [pendingCount, todayCount] = await Promise.all([
@@ -161,7 +183,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
           <CalendarClient
             studioId={studio.id}
             initialBookings={bookings}
-            initialBlockedTimes={blockedTimes}
+            initialBlockedTimes={allBlockedTimes}
             initialDate={selectedDate}
             initialView={view}
           />

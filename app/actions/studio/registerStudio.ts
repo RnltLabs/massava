@@ -9,6 +9,14 @@ import { auth } from '@/auth-unified';
 import { prisma } from '@/lib/prisma';
 
 /**
+ * Hours range schema
+ */
+const hoursSchema = z.object({
+  open: z.string(),
+  close: z.string(),
+});
+
+/**
  * Registration schema (server-side validation)
  * Note: No state/Bundesland field - postal code is sufficient for DACH region
  */
@@ -27,6 +35,13 @@ const registerStudioSchema = z.object({
     email: z.string().email(),
     website: z.string().url().optional(),
   }),
+  openingHours: z
+    .object({
+      mode: z.enum(['same', 'different']),
+      sameHours: hoursSchema.optional(),
+      differentHours: z.record(z.string(), hoursSchema.nullable()).optional(),
+    })
+    .optional(),
 });
 
 type RegisterStudioInput = z.infer<typeof registerStudioSchema>;
@@ -65,7 +80,19 @@ export async function registerStudio(
       };
     }
 
-    const { name, description, address, contact } = validated.data;
+    const { name, description, address, contact, openingHours } = validated.data;
+
+    // Transform opening hours to database format
+    let openingHoursJson: any = null;
+    if (openingHours) {
+      if (openingHours.mode === 'same' && openingHours.sameHours) {
+        openingHoursJson = {
+          everyday: openingHours.sameHours,
+        };
+      } else if (openingHours.mode === 'different' && openingHours.differentHours) {
+        openingHoursJson = openingHours.differentHours;
+      }
+    }
 
     // 3. Create studio with ownership
     const studio = await prisma.studio.create({
@@ -79,6 +106,8 @@ export async function registerStudio(
         // Contact fields
         phone: contact.phone,
         email: contact.email,
+        // Opening hours (stored as JSON)
+        openingHours: openingHoursJson,
         // Create ownership relation
         ownerships: {
           create: {

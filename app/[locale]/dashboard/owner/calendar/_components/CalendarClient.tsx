@@ -19,6 +19,7 @@ import { addDays, subDays, addWeeks, subWeeks, format, startOfDay, startOfWeek }
 import { de } from 'date-fns/locale';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { NewBooking, Service, BlockedTime } from '@/app/generated/prisma';
+import type { VirtualBlockedTime } from '@/lib/opening-hours-utils';
 
 type BookingWithService = NewBooking & {
   service: Service | null;
@@ -32,7 +33,7 @@ type BookingWithService = NewBooking & {
 interface CalendarClientProps {
   studioId: string;
   initialBookings: BookingWithService[];
-  initialBlockedTimes: BlockedTime[];
+  initialBlockedTimes: (BlockedTime | VirtualBlockedTime)[];
   initialDate: Date;
   initialView?: 'day' | 'week';
 }
@@ -131,8 +132,12 @@ export function CalendarClient({
   };
 
   // Handle blocked time click
-  const handleBlockedTimeClick = (blocked: BlockedTime) => {
-    setSelectedBlocked(blocked);
+  const handleBlockedTimeClick = (blocked: BlockedTime | VirtualBlockedTime) => {
+    // Don't allow editing/deleting virtual blocks (closed hours)
+    if ('isVirtual' in blocked && blocked.isVirtual) {
+      return;
+    }
+    setSelectedBlocked(blocked as BlockedTime);
     setUnblockDialogOpen(true);
   };
 

@@ -63,8 +63,8 @@ export default function Header() {
     await signOut({ callbackUrl: getAuthCallbackUrl(`/${locale}`) });
   };
 
-  // Fetch user's studios when logged in
-  useEffect(() => {
+  // Fetch user's studios
+  const fetchStudios = () => {
     if (session?.user) {
       apiFetch(`/${locale}/api/user/studios`)
         .then((res) => res.json())
@@ -77,6 +77,26 @@ export default function Header() {
     } else {
       setStudios([]);
     }
+  };
+
+  // Fetch user's studios when logged in
+  useEffect(() => {
+    fetchStudios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, locale]);
+
+  // Listen for studio registration events
+  useEffect(() => {
+    const handleStudioRegistered = () => {
+      console.log('Studio registered event received, refreshing studios...');
+      fetchStudios();
+    };
+
+    window.addEventListener('studio-registered', handleStudioRegistered);
+    return () => {
+      window.removeEventListener('studio-registered', handleStudioRegistered);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, locale]);
 
   // Determine display name

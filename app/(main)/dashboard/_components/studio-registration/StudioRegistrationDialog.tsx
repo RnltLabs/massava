@@ -16,6 +16,7 @@ import { WelcomeStep } from './steps/WelcomeStep';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { AddressStep } from './steps/AddressStep';
 import { ContactStep } from './steps/ContactStep';
+import { OpeningHoursStep } from './steps/OpeningHoursStep';
 import { SuccessStep } from './steps/SuccessStep';
 
 interface StudioRegistrationDialogProps {
@@ -39,7 +40,7 @@ function StudioRegistrationContent({
 
   // Handle success
   useEffect(() => {
-    if (currentStep === 4 && studioId) {
+    if (currentStep === 5 && studioId) {
       onSuccess?.(studioId);
     }
   }, [currentStep, studioId, onSuccess]);
@@ -49,14 +50,15 @@ function StudioRegistrationContent({
     { component: BasicInfoStep, title: 'Basic Information' },
     { component: AddressStep, title: 'Location' },
     { component: ContactStep, title: 'Contact' },
+    { component: OpeningHoursStep, title: 'Opening Hours' },
     { component: SuccessStep, title: 'Success' },
   ];
 
   const CurrentStepComponent = steps[currentStep]?.component;
   const stepTitle = steps[currentStep]?.title;
 
-  // Show progress indicator for steps 1-3
-  const showProgress = currentStep >= 1 && currentStep <= 3;
+  // Show progress indicator for steps 1-4
+  const showProgress = currentStep >= 1 && currentStep <= 4;
 
   const handleClose = (): void => {
     if (!isSubmitting) {
@@ -87,7 +89,7 @@ function StudioRegistrationContent({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         {/* Back Button */}
-        {currentStep > 0 && currentStep < 4 && (
+        {currentStep > 0 && currentStep < 5 && (
           <button
             onClick={handleBack}
             disabled={isSubmitting}
@@ -99,7 +101,7 @@ function StudioRegistrationContent({
         )}
 
         {/* Spacer when no back button */}
-        {(currentStep === 0 || currentStep === 4) && <div className="w-9" />}
+        {(currentStep === 0 || currentStep === 5) && <div className="w-9" />}
 
         {/* Title (hidden visually, for screen readers) */}
         <h2 className="sr-only">{stepTitle}</h2>
@@ -121,7 +123,7 @@ function StudioRegistrationContent({
       {/* Progress Indicator */}
       {showProgress && (
         <div className="mb-4">
-          <ProgressIndicator currentStep={currentStep} totalSteps={3} />
+          <ProgressIndicator currentStep={currentStep} totalSteps={4} />
         </div>
       )}
 
@@ -134,7 +136,7 @@ function StudioRegistrationContent({
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
-          {currentStep === 4 ? (
+          {currentStep === 5 ? (
             <SuccessStep
               onAddService={handleAddService}
               onGoToDashboard={handleGoToDashboard}
