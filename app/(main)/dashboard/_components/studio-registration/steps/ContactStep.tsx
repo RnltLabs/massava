@@ -10,12 +10,11 @@ import { Label } from '@/components/ui/label';
 import { PhoneInput } from '../components/PhoneInput';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { contactSchema } from '../validation/studioSchemas';
-import { registerStudio } from '@/app/actions/studio/registerStudio';
 import { cn } from '@/lib/utils';
 
 /**
  * Contact Step - Step 3
- * Collects contact information and submits registration
+ * Collects contact information
  */
 export function ContactStep(): React.JSX.Element {
   const {
@@ -23,8 +22,6 @@ export function ContactStep(): React.JSX.Element {
     updateContact,
     goToNextStep,
     setErrors,
-    setSubmitting,
-    setStudioId,
   } = useStudioRegistration();
 
   const [phone, setPhone] = useState(state.formData.contact.phone || '');
@@ -65,8 +62,8 @@ export function ContactStep(): React.JSX.Element {
     validateField(field, values[field]);
   };
 
-  // Handle complete registration
-  const handleCompleteRegistration = async (): Promise<void> => {
+  // Handle continue to next step
+  const handleContinue = (): void => {
     // Mark all as touched
     setTouched({ phone: true, email: true, website: true });
 
@@ -78,6 +75,8 @@ export function ContactStep(): React.JSX.Element {
         website: website || undefined,
       });
       updateContact(validatedContact);
+      setErrors({});
+      goToNextStep();
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'errors' in error) {
         const zodError = error as { errors: Array<{ path: string[]; message: string }> };
@@ -91,42 +90,6 @@ export function ContactStep(): React.JSX.Element {
         setErrors(errors);
         return;
       }
-    }
-
-    // Prepare complete data
-    const completeData = {
-      name: state.formData.basicInfo.name || '',
-      description: state.formData.basicInfo.description || '',
-      address: {
-        street: state.formData.address.street || '',
-        line2: state.formData.address.line2,
-        city: state.formData.address.city || '',
-        postalCode: state.formData.address.postalCode || '',
-        country: state.formData.address.country || '',
-      },
-      contact: {
-        phone,
-        email,
-        website: website || undefined,
-      },
-    };
-
-    // Submit to server
-    setSubmitting(true);
-    try {
-      const result = await registerStudio(completeData);
-
-      if (result.success && result.studioId) {
-        setStudioId(result.studioId);
-        goToNextStep();
-      } else {
-        setErrors({ submit: result.error || 'Registration failed' });
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'An unexpected error occurred' });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -237,21 +200,14 @@ export function ContactStep(): React.JSX.Element {
         </div>
       )}
 
-      {/* Complete Button */}
+      {/* Continue Button */}
       <Button
-        onClick={handleCompleteRegistration}
-        disabled={!isValid || state.isSubmitting}
-        style={isValid && !state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
+        onClick={handleContinue}
+        disabled={!isValid}
+        style={isValid ? { backgroundColor: '#B56550' } : undefined}
         className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        {state.isSubmitting ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Registrierung läuft...
-          </>
-        ) : (
-          'Registrierung abschließen'
-        )}
+        Weiter
       </Button>
     </motion.div>
   );

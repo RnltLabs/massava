@@ -7,6 +7,7 @@ import type {
   AddressFormData,
   ContactFormData,
 } from './validation/studioSchemas';
+import type { OpeningHoursFormData } from './validation/openingHoursSchema';
 
 /**
  * Studio Registration State
@@ -17,6 +18,7 @@ export interface StudioRegistrationState {
     basicInfo: Partial<BasicInfoFormData>;
     address: Partial<AddressFormData>;
     contact: Partial<ContactFormData>;
+    openingHours?: Partial<OpeningHoursFormData>;
   };
   errors: Record<string, string>;
   isSubmitting: boolean;
@@ -31,6 +33,7 @@ type StudioRegistrationAction =
   | { type: 'UPDATE_BASIC_INFO'; payload: Partial<BasicInfoFormData> }
   | { type: 'UPDATE_ADDRESS'; payload: Partial<AddressFormData> }
   | { type: 'UPDATE_CONTACT'; payload: Partial<ContactFormData> }
+  | { type: 'UPDATE_OPENING_HOURS'; payload: Partial<OpeningHoursFormData> }
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_STUDIO_ID'; payload: string }
@@ -48,6 +51,7 @@ interface StudioRegistrationContextValue {
   updateBasicInfo: (data: Partial<BasicInfoFormData>) => void;
   updateAddress: (data: Partial<AddressFormData>) => void;
   updateContact: (data: Partial<ContactFormData>) => void;
+  updateOpeningHours: (data: Partial<OpeningHoursFormData>) => void;
   setErrors: (errors: Record<string, string>) => void;
   setSubmitting: (isSubmitting: boolean) => void;
   setStudioId: (studioId: string) => void;
@@ -119,6 +123,18 @@ function studioRegistrationReducer(
         },
       };
 
+    case 'UPDATE_OPENING_HOURS':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          openingHours: {
+            ...state.formData.openingHours,
+            ...action.payload,
+          },
+        },
+      };
+
     case 'SET_ERRORS':
       return {
         ...state,
@@ -184,6 +200,9 @@ export function StudioRegistrationProvider({
     },
     updateContact: (data: Partial<ContactFormData>) => {
       dispatch({ type: 'UPDATE_CONTACT', payload: data });
+    },
+    updateOpeningHours: (data: Partial<OpeningHoursFormData>) => {
+      dispatch({ type: 'UPDATE_OPENING_HOURS', payload: data });
     },
     setErrors: (errors: Record<string, string>) => {
       dispatch({ type: 'SET_ERRORS', payload: errors });
