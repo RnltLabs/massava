@@ -30,6 +30,12 @@ export function StudioRegistrationTrigger({
 
   const handleSuccess = (studioId: string): void => {
     console.log('Studio registered successfully:', studioId);
+
+    // Dispatch custom event to notify Header component
+    window.dispatchEvent(new CustomEvent('studio-registered', {
+      detail: { studioId }
+    }));
+
     // Refresh the page to show the new studio
     router.refresh();
   };

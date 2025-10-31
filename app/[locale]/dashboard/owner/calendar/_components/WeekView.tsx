@@ -13,6 +13,7 @@ import { de } from 'date-fns/locale';
 import { getBusinessHours, calculateBlockPosition, createDateTime } from '@/lib/calendar-utils';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
 import type { NewBooking, Service, BlockedTime } from '@/app/generated/prisma';
+import type { VirtualBlockedTime } from '@/lib/opening-hours-utils';
 
 type BookingWithService = NewBooking & {
   service: Service | null;
@@ -26,9 +27,9 @@ type BookingWithService = NewBooking & {
 interface WeekViewProps {
   weekStart: Date;
   bookings: BookingWithService[];
-  blockedTimes: BlockedTime[];
+  blockedTimes: (BlockedTime | VirtualBlockedTime)[];
   onBookingClick: (booking: BookingWithService) => void;
-  onBlockedTimeClick: (blocked: BlockedTime) => void;
+  onBlockedTimeClick: (blocked: BlockedTime | VirtualBlockedTime) => void;
 }
 
 const SLOT_HEIGHT = 60; // 60px per hour
