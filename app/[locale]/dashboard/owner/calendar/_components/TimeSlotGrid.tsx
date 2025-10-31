@@ -14,6 +14,7 @@ import { BookingBlock } from './BookingBlock';
 import { BlockedTimeBlock } from './BlockedTimeBlock';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
 import type { NewBooking, Service, BlockedTime } from '@/app/generated/prisma';
+import type { VirtualBlockedTime } from '@/lib/opening-hours-utils';
 
 type BookingWithService = NewBooking & {
   service: Service | null;
@@ -26,10 +27,10 @@ type BookingWithService = NewBooking & {
 
 interface TimeSlotGridProps {
   bookings: BookingWithService[];
-  blockedTimes: BlockedTime[];
+  blockedTimes: (BlockedTime | VirtualBlockedTime)[];
   onSlotPress: (time: string) => void;
   onBookingClick: (booking: BookingWithService) => void;
-  onBlockedTimeClick: (blocked: BlockedTime) => void;
+  onBlockedTimeClick: (blocked: BlockedTime | VirtualBlockedTime) => void;
 }
 
 const SLOT_HEIGHT = 60; // 60px per hour
