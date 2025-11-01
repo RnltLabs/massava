@@ -182,6 +182,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
         <Suspense fallback={<CalendarSkeleton />}>
           <CalendarClient
             studioId={studio.id}
+            studioCapacity={studio.capacity}
             initialBookings={bookings}
             initialBlockedTimes={allBlockedTimes}
             initialDate={selectedDate}

@@ -244,6 +244,7 @@ const createManualBookingSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), // YYYY-MM-DD
   time: z.string().regex(/^\d{2}:\d{2}$/), // HH:mm
   notes: z.string().optional(),
+  overrideCapacity: z.boolean().optional(), // Allow overbooking when capacity is full
 });
 
 type CreateManualBookingInput = z.infer<typeof createManualBookingSchema>;
@@ -251,11 +252,17 @@ type CreateManualBookingInput = z.infer<typeof createManualBookingSchema>;
 /**
  * Create a manual booking (for walk-ins, phone calls)
  * Auto-confirms the booking
+ * Includes capacity checking for parallel bookings
  */
 export async function createManualBooking(input: CreateManualBookingInput): Promise<{
   success: boolean;
   error?: string;
   data?: { id: string };
+  capacityWarning?: {
+    current: number;
+    max: number;
+    bookings: Array<{ id: string; customerName: string; serviceName: string }>;
+  };
 }> {
   try {
     // Authenticate user
@@ -274,19 +281,28 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
       };
     }
 
-    const { studioId, customerName, customerPhone, serviceId, date, time, notes } = validated.data;
+    const { studioId, customerName, customerPhone, serviceId, date, time, notes, overrideCapacity } = validated.data;
 
-    // Verify studio ownership
+    // Verify studio ownership and get capacity
     const ownership = await db.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
+      },
+      include: {
+        studio: {
+          select: {
+            capacity: true,
+          },
+        },
       },
     });
 
     if (!ownership) {
       return { success: false, error: 'Nicht autorisiert für dieses Studio' };
     }
+
+    const studioCapacity = ownership.studio.capacity;
 
     // Get service to determine duration
     const service = await db.service.findUnique({
@@ -297,20 +313,40 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
       return { success: false, error: 'Service nicht gefunden' };
     }
 
-    // Check for overlapping bookings at same time
-    const overlap = await db.newBooking.findFirst({
+    // Check capacity: Count existing confirmed bookings at this time
+    const existingBookings = await db.newBooking.findMany({
       where: {
         studioId: studioId,
         preferredDate: date,
         preferredTime: time,
-        status: {
-          in: ['CONFIRMED', 'PENDING'],
+        status: 'CONFIRMED',
+      },
+      include: {
+        service: {
+          select: {
+            name: true,
+          },
         },
       },
     });
 
-    if (overlap) {
-      return { success: false, error: 'Diese Zeit ist bereits belegt' };
+    const currentCount = existingBookings.length;
+
+    // If capacity is full and override is not allowed, return warning
+    if (currentCount >= studioCapacity && !overrideCapacity) {
+      return {
+        success: false,
+        error: 'capacity_full', // Special error code for UI
+        capacityWarning: {
+          current: currentCount,
+          max: studioCapacity,
+          bookings: existingBookings.map((b) => ({
+            id: b.id,
+            customerName: b.customerName,
+            serviceName: b.service?.name || 'Service gelöscht',
+          })),
+        },
+      };
     }
 
     // Create or find user for this booking

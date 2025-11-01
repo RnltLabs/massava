@@ -12,6 +12,7 @@ import { format, addDays, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { getBusinessHours, calculateBlockPosition, createDateTime } from '@/lib/calendar-utils';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
+import { CapacityBadge } from './CapacityBadge';
 import type { NewBooking, Service, BlockedTime } from '@/app/generated/prisma';
 import type { VirtualBlockedTime } from '@/lib/opening-hours-utils';
 
@@ -28,6 +29,7 @@ interface WeekViewProps {
   weekStart: Date;
   bookings: BookingWithService[];
   blockedTimes: (BlockedTime | VirtualBlockedTime)[];
+  studioCapacity: number;
   onBookingClick: (booking: BookingWithService) => void;
   onBlockedTimeClick: (blocked: BlockedTime | VirtualBlockedTime) => void;
 }
@@ -40,6 +42,7 @@ export function WeekView({
   weekStart,
   bookings,
   blockedTimes,
+  studioCapacity,
   onBookingClick,
   onBlockedTimeClick,
 }: WeekViewProps): React.JSX.Element {
@@ -57,6 +60,15 @@ export function WeekView({
   // Filter blocked times by day
   const getBlockedTimesForDay = (day: Date): BlockedTime[] => {
     return blockedTimes.filter((b) => isSameDay(b.startTime, day));
+  };
+
+  // Count bookings for a specific day and time
+  const getBookingCountForDayAndTime = (day: Date, hour: number): number => {
+    const dayStr = format(day, 'yyyy-MM-dd');
+    const timeSlot = format(new Date().setHours(hour, 0, 0, 0), 'HH:mm');
+    return bookings.filter(
+      (b) => b.preferredDate === dayStr && b.preferredTime === timeSlot && b.status === 'CONFIRMED'
+    ).length;
   };
 
   // Get customer/service initials
@@ -127,6 +139,7 @@ export function WeekView({
                 {/* Day Columns */}
                 {weekDays.map((day) => {
                   const today = isToday(day);
+                  const bookingCount = getBookingCountForDayAndTime(day, hour);
                   return (
                     <div
                       key={`${day.toISOString()}-${hour}`}
@@ -134,7 +147,14 @@ export function WeekView({
                         today ? 'bg-primary/5' : ''
                       }`}
                       style={{ minWidth: `${DAY_COLUMN_MIN_WIDTH}px` }}
-                    />
+                    >
+                      {/* Capacity Badge (top right) */}
+                      {bookingCount > 0 && (
+                        <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 z-10 pointer-events-none">
+                          <CapacityBadge current={bookingCount} max={studioCapacity} />
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
