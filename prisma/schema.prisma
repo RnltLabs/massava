@@ -155,6 +155,10 @@ model Studio {
   // Allows multiple massages to happen simultaneously
   capacity    Int      @default(1)
 
+  // Images
+  logoUrl       String?  @db.Text  // Studio logo URL (S3/Cloudinary)
+  galleryImages Json?               // Array of gallery image objects [{url: string, coverPhoto: boolean, order: number}]
+
   // Relations
   services      Service[]
   bookings      Booking[]

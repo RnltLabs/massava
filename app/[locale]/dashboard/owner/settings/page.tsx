@@ -11,6 +11,7 @@ import { auth } from '@/auth-unified';
 import { db } from '@/lib/db';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { CapacitySettings } from './_components/CapacitySettings';
+import { ImagesSettings } from './_components/ImagesSettings';
 import { BookingStatus } from '@/app/generated/prisma';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
@@ -41,6 +42,8 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
           name: true,
           capacity: true,
           services: true,
+          logoUrl: true,
+          galleryImages: true,
         },
       },
     },
@@ -55,6 +58,13 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
   }
 
   const studio = ownership.studio;
+
+  // Parse gallery images from JSON
+  const galleryImages = studio.galleryImages
+    ? (Array.isArray(studio.galleryImages)
+        ? studio.galleryImages
+        : JSON.parse(studio.galleryImages as string))
+    : [];
 
   // Calculate badge counts for bottom nav
   const pendingCount = await db.newBooking.count({
@@ -95,8 +105,16 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
           </p>
         </div>
 
-        {/* Capacity Settings */}
+        {/* Settings Sections */}
         <div className="space-y-6">
+          {/* Images Settings */}
+          <ImagesSettings
+            studioId={studio.id}
+            initialLogoUrl={studio.logoUrl}
+            initialGalleryImages={galleryImages}
+          />
+
+          {/* Capacity Settings */}
           <CapacitySettings
             studioId={studio.id}
             initialCapacity={studio.capacity}

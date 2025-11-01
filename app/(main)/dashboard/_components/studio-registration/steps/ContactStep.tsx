@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { PhoneInput } from '../components/PhoneInput';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { contactSchema } from '../validation/studioSchemas';
+import { updateStudio } from '@/app/actions/studio/updateStudio';
+import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 
 /**
@@ -17,12 +19,8 @@ import { cn } from '@/lib/utils';
  * Collects contact information
  */
 export function ContactStep(): React.JSX.Element {
-  const {
-    state,
-    updateContact,
-    goToNextStep,
-    setErrors,
-  } = useStudioRegistration();
+  const { state, updateContact, goToNextStep, setErrors, setSubmitting } = useStudioRegistration();
+  const { toast } = useToast();
 
   const [phone, setPhone] = useState(state.formData.contact.phone || '');
   const [email, setEmail] = useState(state.formData.contact.email || '');
@@ -62,8 +60,8 @@ export function ContactStep(): React.JSX.Element {
     validateField(field, values[field]);
   };
 
-  // Handle continue to next step
-  const handleContinue = (): void => {
+  // Handle continue to next step - Update studio contact info
+  const handleContinue = async (): Promise<void> => {
     // Mark all as touched
     setTouched({ phone: true, email: true, website: true });
 
@@ -76,6 +74,41 @@ export function ContactStep(): React.JSX.Element {
       });
       updateContact(validatedContact);
       setErrors({});
+
+      // Update studio with contact info if studio exists
+      if (state.studioId) {
+        setSubmitting(true);
+
+        try {
+          const result = await updateStudio(state.studioId, {
+            contact: validatedContact,
+          });
+
+          if (!result.success) {
+            setErrors({ submit: result.error || 'Failed to update contact info' });
+            toast({
+              title: 'Error',
+              description: result.error || 'Failed to update contact info',
+              variant: 'destructive',
+            });
+            setSubmitting(false);
+            return;
+          }
+        } catch (error) {
+          console.error('ContactStep: Update error', error);
+          setErrors({ submit: 'An unexpected error occurred' });
+          toast({
+            title: 'Error',
+            description: 'An unexpected error occurred',
+            variant: 'destructive',
+          });
+          setSubmitting(false);
+          return;
+        } finally {
+          setSubmitting(false);
+        }
+      }
+
       goToNextStep();
     } catch (error: unknown) {
       if (error && typeof error === 'object' && 'errors' in error) {
@@ -203,11 +236,18 @@ export function ContactStep(): React.JSX.Element {
       {/* Continue Button */}
       <Button
         onClick={handleContinue}
-        disabled={!isValid}
-        style={isValid ? { backgroundColor: '#B56550' } : undefined}
+        disabled={!isValid || state.isSubmitting}
+        style={isValid && !state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
         className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        Weiter
+        {state.isSubmitting ? (
+          <>
+            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+            Updating...
+          </>
+        ) : (
+          'Weiter'
+        )}
       </Button>
     </motion.div>
   );

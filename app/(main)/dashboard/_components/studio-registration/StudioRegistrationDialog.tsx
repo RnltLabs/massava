@@ -15,6 +15,7 @@ import { ProgressIndicator } from './components/ProgressIndicator';
 import { WelcomeStep } from './steps/WelcomeStep';
 import { BasicInfoStep } from './steps/BasicInfoStep';
 import { AddressStep } from './steps/AddressStep';
+import { ImagesStep } from './steps/ImagesStep';
 import { ContactStep } from './steps/ContactStep';
 import { OpeningHoursStep } from './steps/OpeningHoursStep';
 import { CapacityStep } from './steps/CapacityStep';
@@ -42,7 +43,7 @@ function StudioRegistrationContent({
 
   // Handle success
   useEffect(() => {
-    if (currentStep === 7 && studioId) {
+    if (currentStep === 8 && studioId) {
       onSuccess?.(studioId);
     }
   }, [currentStep, studioId, onSuccess]);
@@ -51,6 +52,7 @@ function StudioRegistrationContent({
     { component: WelcomeStep, title: 'Welcome' },
     { component: BasicInfoStep, title: 'Basic Information' },
     { component: AddressStep, title: 'Location' },
+    { component: ImagesStep, title: 'Images' },
     { component: ContactStep, title: 'Contact' },
     { component: OpeningHoursStep, title: 'Opening Hours' },
     { component: CapacityStep, title: 'Capacity' },
@@ -61,8 +63,8 @@ function StudioRegistrationContent({
   const CurrentStepComponent = steps[currentStep]?.component;
   const stepTitle = steps[currentStep]?.title;
 
-  // Show progress indicator for steps 1-6
-  const showProgress = currentStep >= 1 && currentStep <= 6;
+  // Show progress indicator for steps 1-7
+  const showProgress = currentStep >= 1 && currentStep <= 7;
 
   const handleClose = (): void => {
     if (!isSubmitting) {
@@ -93,7 +95,7 @@ function StudioRegistrationContent({
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         {/* Back Button */}
-        {currentStep > 0 && currentStep < 7 && (
+        {currentStep > 0 && currentStep < 8 && (
           <button
             onClick={handleBack}
             disabled={isSubmitting}
@@ -105,7 +107,7 @@ function StudioRegistrationContent({
         )}
 
         {/* Spacer when no back button */}
-        {(currentStep === 0 || currentStep === 7) && <div className="w-9" />}
+        {(currentStep === 0 || currentStep === 8) && <div className="w-9" />}
 
         {/* Title (hidden visually, for screen readers) */}
         <h2 className="sr-only">{stepTitle}</h2>
@@ -127,7 +129,7 @@ function StudioRegistrationContent({
       {/* Progress Indicator */}
       {showProgress && (
         <div className="mb-4">
-          <ProgressIndicator currentStep={currentStep} totalSteps={6} />
+          <ProgressIndicator currentStep={currentStep} totalSteps={7} />
         </div>
       )}
 
@@ -140,7 +142,7 @@ function StudioRegistrationContent({
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
-          {currentStep === 7 ? (
+          {currentStep === 8 ? (
             <SuccessStep
               onAddService={handleAddService}
               onGoToDashboard={handleGoToDashboard}
