@@ -53,7 +53,11 @@ export function CapacityStep(): React.JSX.Element {
         email: state.formData.contact.email || '',
         website: state.formData.contact.website || undefined,
       },
-      openingHours: state.formData.openingHours,
+      openingHours: state.formData.openingHours as {
+        mode: 'same' | 'different';
+        sameHours?: { open: string; close: string };
+        differentHours?: Record<string, { open: string; close: string } | null>;
+      } | undefined,
       capacity: capacity,
     };
 
