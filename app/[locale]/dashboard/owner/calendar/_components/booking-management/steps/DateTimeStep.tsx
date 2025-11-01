@@ -51,15 +51,19 @@ export function DateTimeStep({ studioId, services, initialDate }: DateTimeStepPr
   const [selectedDate, setSelectedDate] = useState(state.formData.date || todayString);
   const [selectedTime, setSelectedTime] = useState(state.formData.time || defaultTime);
 
+  // Auto-save date and time to context when they change
+  // Remove setDate/setTime from dependencies to prevent infinite loop
   useEffect(() => {
-    // Auto-save date and time to context
     if (selectedDate) {
       setDate(selectedDate);
     }
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
     if (selectedTime) {
       setTime(selectedTime);
     }
-  }, [selectedDate, selectedTime, setDate, setTime]);
+  }, [selectedTime]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setSelectedDate(e.target.value);

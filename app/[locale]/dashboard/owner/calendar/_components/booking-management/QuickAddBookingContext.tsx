@@ -253,7 +253,9 @@ export function QuickAddBookingProvider({
     dispatch({ type: 'RESET' });
   }, []);
 
-  // Memoize the entire context value to prevent re-renders when callbacks don't change
+  // Memoize the entire context value
+  // IMPORTANT: Only state is in dependencies - all callbacks are stable (useCallback with [])
+  // This prevents infinite loops from callbacks being recreated on every render
   const contextValue = useMemo<QuickAddBookingContextValue>(
     () => ({
       state,
@@ -271,21 +273,7 @@ export function QuickAddBookingProvider({
       setBookingId,
       reset,
     }),
-    [
-      state,
-      goToStep,
-      goToNextStep,
-      goToPreviousStep,
-      setContactInfo,
-      setService,
-      setDate,
-      setTime,
-      setNotes,
-      setErrors,
-      setSubmitting,
-      setBookingId,
-      reset,
-    ]
+    [state] // Only state changes should recreate the context value
   );
 
   return (
