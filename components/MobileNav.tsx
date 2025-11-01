@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Menu, User, Calendar, HelpCircle, LogOut } from 'lucide-react'
+import { Menu, User, Calendar, HelpCircle, LogOut, Briefcase } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,6 +24,7 @@ interface MobileNavProps {
   onSignupClick?: () => void
   onLogoutClick?: () => void
   displayName?: string
+  hasStudio?: boolean
 }
 
 export function MobileNav({
@@ -33,6 +34,7 @@ export function MobileNav({
   onSignupClick,
   onLogoutClick,
   displayName,
+  hasStudio = false,
 }: MobileNavProps) {
   const t = useTranslations('navigation')
   const [open, setOpen] = useState(false)
@@ -52,40 +54,40 @@ export function MobileNav({
 
       <SheetContent
         side="right"
-        className="w-[280px] sm:w-[320px] flex flex-col"
+        className="w-[280px] sm:w-[320px] flex flex-col h-full"
       >
         {/* Language Switcher - Top Priority */}
-        <div className="flex flex-col gap-2 pt-6 pb-4 px-3">
-          <span className="text-base font-medium text-center">
+        <div className="flex flex-col gap-1 pt-3 pb-2 px-3">
+          <span className="text-xs font-medium text-center">
             {t('selectLanguage')}
           </span>
-          <LanguageSwitcher />
+          <LanguageSwitcher compact />
         </div>
 
         <Separator />
 
         {/* Header Section */}
-        <SheetHeader className="text-center space-y-3 pt-4">
-          <SheetTitle className="text-3xl font-semibold">
+        <SheetHeader className="text-center space-y-1 py-0 pt-1 pb-2">
+          <SheetTitle className="text-xl font-semibold leading-tight">
             {isAuthenticated && displayName
               ? t('welcomeBack', { name: displayName })
               : t('welcome')}
           </SheetTitle>
-          <SheetDescription className="text-base">
+          <SheetDescription className="text-xs leading-tight">
             {isAuthenticated ? t('manageAccount') : t('getStarted')}
           </SheetDescription>
         </SheetHeader>
 
-        <Separator className="my-4" />
+        <Separator className="mb-2" />
 
         {/* Main Navigation Content */}
         <nav className="flex-1 flex flex-col">
           {/* Authentication Section */}
           {!isAuthenticated ? (
-            <div className="flex flex-col gap-3 px-3">
+            <div className="flex flex-col gap-2 px-3 pt-2 pb-3">
               {/* Primary CTA */}
               <Button
-                className="w-full h-11 text-base font-medium"
+                className="w-full h-8 text-xs font-medium"
                 onClick={() => {
                   setOpen(false)
                   onSignupClick?.()
@@ -97,7 +99,7 @@ export function MobileNav({
               {/* Secondary CTA */}
               <Button
                 variant="outline"
-                className="w-full h-11 text-base font-medium"
+                className="w-full h-8 text-xs font-medium"
                 onClick={() => {
                   setOpen(false)
                   onLoginClick?.()
@@ -107,15 +109,15 @@ export function MobileNav({
               </Button>
 
               {/* Value Proposition */}
-              <p className="text-xs text-muted-foreground text-center pt-1">
+              <p className="text-[10px] text-muted-foreground text-center leading-tight">
                 {t('registerBenefit')}
               </p>
             </div>
           ) : (
-            <div className="space-y-2 px-3">
+            <div className="space-y-1 px-3 pt-2 pb-3">
               {/* Display Name */}
               {displayName && (
-                <div className="px-3 py-2 text-sm font-medium text-muted-foreground truncate">
+                <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground truncate">
                   {displayName}
                 </div>
               )}
@@ -127,12 +129,42 @@ export function MobileNav({
               >
                 <Button
                   variant="ghost"
-                  className="h-11 justify-start text-base font-medium"
+                  className="w-full h-8 justify-start text-xs font-medium"
                 >
-                  <User className="mr-3 h-5 w-5" />
+                  <User className="mr-2 h-4 w-4" />
                   {t('myProfile')}
                 </Button>
               </Link>
+
+              {hasStudio && (
+                <>
+                  <Link
+                    href={`/${locale}/dashboard/owner/calendar`}
+                    onClick={() => setOpen(false)}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full h-8 justify-start text-xs font-medium"
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Kalender
+                    </Button>
+                  </Link>
+
+                  <Link
+                    href={`/${locale}/dashboard/owner/services`}
+                    onClick={() => setOpen(false)}
+                  >
+                    <Button
+                      variant="ghost"
+                      className="w-full h-8 justify-start text-xs font-medium"
+                    >
+                      <Briefcase className="mr-2 h-4 w-4" />
+                      Leistungen
+                    </Button>
+                  </Link>
+                </>
+              )}
 
               <Link
                 href={`/${locale}/customer/dashboard`}
@@ -140,26 +172,26 @@ export function MobileNav({
               >
                 <Button
                   variant="ghost"
-                  className="h-11 justify-start text-base font-medium"
+                  className="w-full h-8 justify-start text-xs font-medium"
                 >
-                  <Calendar className="mr-3 h-5 w-5" />
+                  <Calendar className="mr-2 h-4 w-4" />
                   {t('myBookings')}
                 </Button>
               </Link>
             </div>
           )}
 
-          <Separator className="my-8" />
+          <Separator />
 
           {/* Studio Registration Card - Centered between sections */}
           {!isAuthenticated && (
-            <div className="px-3 mb-8">
-              <div className="rounded-xl border-2 border-accent/50 bg-accent/5 p-4 space-y-3">
+            <div className="px-3 flex-1 flex items-center">
+              <div className="w-full rounded-xl border-2 border-accent/50 bg-accent/5 p-3 space-y-2">
                 <div className="space-y-1">
-                  <h3 className="font-semibold text-base">
+                  <h3 className="font-semibold text-sm">
                     {t('studioOwnerTitle')}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground leading-snug">
                     {t('studioOwnerDescription')}
                   </p>
                 </div>
@@ -170,7 +202,7 @@ export function MobileNav({
                 >
                   <Button
                     variant="outline"
-                    className="w-full h-11 text-base font-medium border-2 border-accent hover:bg-accent/10"
+                    className="w-full h-9 text-xs font-medium border-2 border-accent hover:bg-accent/10"
                   >
                     {t('registerStudioCta')}
                   </Button>
@@ -179,33 +211,30 @@ export function MobileNav({
             </div>
           )}
 
-          {/* Spacer to push content to bottom */}
-          <div className="flex-1" />
-
           {/* Secondary Navigation - Above Footer */}
-          <div className="flex flex-col gap-3 px-3 mb-6">
+          <div className="flex flex-col gap-1.5 px-3 mb-2 mt-3">
             <Button
               variant="outline"
-              className="w-full h-11 justify-center text-base font-medium"
+              className="w-full h-8 justify-center text-xs font-medium"
               onClick={() => {
                 setOpen(false)
                 // Navigate to help page
               }}
             >
-              <HelpCircle className="mr-2 h-5 w-5" />
+              <HelpCircle className="mr-2 h-4 w-4" />
               {t('helpSupport')}
             </Button>
 
             {isAuthenticated && (
               <Button
                 variant="ghost"
-                className="w-full h-11 justify-start text-base font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                className="w-full h-8 justify-start text-xs font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
                 onClick={() => {
                   setOpen(false)
                   onLogoutClick?.()
                 }}
               >
-                <LogOut className="mr-3 h-5 w-5" />
+                <LogOut className="mr-2 h-4 w-4" />
                 {t('signOut')}
               </Button>
             )}
@@ -213,9 +242,9 @@ export function MobileNav({
         </nav>
 
         {/* Footer Section */}
-        <SheetFooter className="flex-col sm:flex-col gap-2 pt-4 border-t mt-auto">
+        <SheetFooter className="flex-col sm:flex-col gap-1 pt-2 border-t">
           {/* App Version */}
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-[9px] text-muted-foreground text-center">
             {t('appVersion', { version: '1.0.0' })}
           </p>
         </SheetFooter>

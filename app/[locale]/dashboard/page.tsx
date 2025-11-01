@@ -10,13 +10,13 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth-unified';
-import { PrismaClient, UserRole } from '@/app/generated/prisma';
+import { UserRole } from '@/app/generated/prisma';
+import { db } from '@/lib/db';
 import Link from 'next/link';
-import { Building2, Sparkles, Clock, Plus, Eye, ArrowRight } from 'lucide-react';
+import { Building2, Sparkles, Clock, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const prisma = new PrismaClient();
+import { StudioRegistrationTrigger } from '@/app/(main)/dashboard/_components/StudioRegistrationTrigger';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -36,26 +36,38 @@ export default async function DashboardPage({ params }: Props) {
   const userRole = (user as any).primaryRole as UserRole;
   const isStudioOwner = userRole === UserRole.STUDIO_OWNER;
 
-  // Check if user owns any studios
-  const studios = await prisma.studio.findMany({
+  // Check if user owns any studios (via StudioOwnership junction table)
+  const ownerships = await db.studioOwnership.findMany({
     where: {
-      ownerId: user.id,
+      userId: user.id,
     },
     include: {
-      services: true,
-      _count: {
-        select: {
-          bookings: true,
+      studio: {
+        include: {
+          services: true,
+          _count: {
+            select: {
+              bookings: true,
+            },
+          },
         },
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      invitedAt: 'desc',
     },
   });
 
-  // If user has studios, show studio owner dashboard
+  // Extract studios from ownerships
+  const studios = ownerships.map(ownership => ownership.studio);
+
+  // If user has studios, redirect to new owner dashboard
   if (studios.length > 0) {
+    redirect(`/${locale}/dashboard/owner`);
+  }
+
+  // LEGACY: Old multi-studio view (kept for reference, but redirects now)
+  if (false && studios.length > 0) {
     return (
       <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -70,13 +82,16 @@ export default async function DashboardPage({ params }: Props) {
               </p>
             </div>
 
-            <Link
-              href={`/${locale}/studios/register`}
-              className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-2xl transition-all wellness-shadow"
-            >
-              <Plus className="h-5 w-5" />
-              Weiteres Studio registrieren
-            </Link>
+            {/* MVP: Multi-studio registration hidden for simplicity
+                Backend supports multiple studios, but UI is hidden to reduce complexity
+                for primary target audience (60%+ Thai studios, low tech-affinity)
+                Can be re-enabled via feature flag for power users/enterprise
+            */}
+            {/* <StudioRegistrationTrigger
+              buttonText="Weiteres Studio registrieren"
+              buttonIcon={<Plus className="h-5 w-5 mr-2" />}
+              variant="default"
+            /> */}
           </div>
 
           {/* Studios */}
@@ -124,7 +139,7 @@ export default async function DashboardPage({ params }: Props) {
 
   // New user: Show welcome dashboard with action cards
   // Check if user has any bookings
-  const bookings = await prisma.newBooking.findMany({
+  const bookings = await db.newBooking.findMany({
     where: { customerId: user.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
@@ -174,13 +189,17 @@ export default async function DashboardPage({ params }: Props) {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
-                  <Button asChild size="lg" className="text-lg px-8 py-6">
-                    <Link href={`/${locale}/studios/register`} className="flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Studio jetzt einrichten
-                      <ArrowRight className="h-5 w-5" />
-                    </Link>
-                  </Button>
+                  <StudioRegistrationTrigger
+                    buttonText="Studio jetzt einrichten"
+                    buttonIcon={
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                      </div>
+                    }
+                    variant="default"
+                    size="lg"
+                    className="text-lg px-8 py-6"
+                  />
                 </div>
 
                 {/* Benefits */}

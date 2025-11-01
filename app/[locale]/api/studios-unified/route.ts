@@ -93,7 +93,6 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         studioId: studio.id,
-        isPrimary: true,
         canTransfer: true,
         invitedBy: 'SELF_CREATED',
         acceptedAt: new Date(),

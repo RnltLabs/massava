@@ -11,13 +11,15 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create a test studio owner
+  // Create a test studio owner in unified User model
   const hashedPassword = await bcrypt.hash('test123', 10);
-  const owner = await prisma.studioOwner.create({
+  const owner = await prisma.user.create({
     data: {
       email: 'owner@example.com',
       name: 'Test Studio Owner',
       password: hashedPassword,
+      primaryRole: 'STUDIO_OWNER',
+      emailVerified: new Date(),
     },
   });
 
@@ -26,7 +28,6 @@ async function main() {
   // Create test studios in Karlsruhe
   const studio1 = await prisma.studio.create({
     data: {
-      ownerId: owner.id,
       name: 'Thai Wellness Oase',
       description: 'Traditionelle Thai-Massage in Karlsruhe. Entspannung pur mit erfahrenen Therapeuten.',
       address: 'Kaiserstraße 123',
@@ -70,7 +71,6 @@ async function main() {
 
   const studio2 = await prisma.studio.create({
     data: {
-      ownerId: owner.id,
       name: 'Sabai Massage Studio',
       description: 'Authentische Thai-Massage im Herzen von Karlsruhe. Sabai bedeutet "wohlfühlen" auf Thai.',
       address: 'Waldstraße 45',
@@ -120,7 +120,6 @@ async function main() {
 
   const studio3 = await prisma.studio.create({
     data: {
-      ownerId: owner.id,
       name: 'Lotus Spa & Wellness',
       description: 'Modernes Wellness-Studio mit Thai- und klassischen Massagen. Premium-Ambiente und professionelle Therapeuten.',
       address: 'Erzbergerstraße 89',
@@ -168,6 +167,32 @@ async function main() {
     studio3: studio3.name,
   });
 
+  // Create StudioOwnership records for the new unified model
+  await prisma.studioOwnership.create({
+    data: {
+      userId: owner.id,
+      studioId: studio1.id,
+      canTransfer: true,
+    },
+  });
+
+  await prisma.studioOwnership.create({
+    data: {
+      userId: owner.id,
+      studioId: studio2.id,
+      canTransfer: true,
+    },
+  });
+
+  await prisma.studioOwnership.create({
+    data: {
+      userId: owner.id,
+      studioId: studio3.id,
+      canTransfer: true,
+    },
+  });
+
+  console.log('✅ Created studio ownerships');
   console.log('🎉 Seeding completed!');
 }
 

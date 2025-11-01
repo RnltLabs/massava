@@ -13,7 +13,7 @@ import Header from '@/components/Header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
 import CookieBanner from '@/components/CookieBanner';
-import ComingSoon from '@/components/ComingSoon';
+import { Toaster } from '@/components/ui/toaster';
 import "../globals.css";
 
 const geistSans = Geist({
@@ -58,28 +58,23 @@ export default async function LocaleLayout({
   // side is the easiest way to get started
   const messages = await getMessages({ locale });
 
-  // Check if Coming Soon mode is enabled
-  const showComingSoon = process.env.NEXT_PUBLIC_SHOW_COMING_SOON === 'true';
-
   return (
     <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <SentryDebug />
-        {showComingSoon ? (
-          <ComingSoon />
-        ) : (
-          <SessionProvider>
-            <NextIntlClientProvider messages={messages} locale={locale}>
-              <Header />
-              <main className="pt-16">
-                {children}
-              </main>
-              <CookieBanner />
-            </NextIntlClientProvider>
-          </SessionProvider>
-        )}
+        <SessionProvider>
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <Header />
+            <main className="pt-16">
+              {children}
+            </main>
+            <CookieBanner />
+            <Toaster />
+          </NextIntlClientProvider>
+        </SessionProvider>
       </body>
     </html>
   );
