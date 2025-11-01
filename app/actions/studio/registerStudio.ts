@@ -42,6 +42,7 @@ const registerStudioSchema = z.object({
       differentHours: z.record(z.string(), hoursSchema.nullable()).optional(),
     })
     .optional(),
+  capacity: z.number().int().min(1).max(10).optional().default(2), // Treatment beds/rooms
 });
 
 type RegisterStudioInput = z.infer<typeof registerStudioSchema>;
@@ -80,7 +81,7 @@ export async function registerStudio(
       };
     }
 
-    const { name, description, address, contact, openingHours } = validated.data;
+    const { name, description, address, contact, openingHours, capacity } = validated.data;
 
     // Transform opening hours to database format
     let openingHoursJson: any = null;
@@ -108,6 +109,8 @@ export async function registerStudio(
         email: contact.email,
         // Opening hours (stored as JSON)
         openingHours: openingHoursJson,
+        // Capacity (treatment beds/rooms)
+        capacity: capacity || 2, // Default: 2
         // Create ownership relation
         ownerships: {
           create: {

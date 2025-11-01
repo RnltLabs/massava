@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { format, parse } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { User, Sparkles, Calendar, Clock, FileText } from 'lucide-react';
+import { CapacityWarningSheet } from '../../CapacityWarningSheet';
 
 interface Service {
   id: string;
@@ -32,9 +33,17 @@ interface ReviewStepProps {
 }
 
 export function ReviewStep({ studioId, services }: ReviewStepProps): React.JSX.Element {
-  const { state, setNotes, setSubmitting, setBookingId, goToNextStep } = useQuickAddBooking();
+  const { state, setNotes, setSubmitting, setBookingId, goToNextStep, goToStep } = useQuickAddBooking();
   const { toast } = useToast();
   const [notes, setNotesLocal] = useState(state.formData.notes || '');
+
+  // Capacity warning state
+  const [showCapacityWarning, setShowCapacityWarning] = useState(false);
+  const [capacityWarningData, setCapacityWarningData] = useState<{
+    current: number;
+    max: number;
+    bookings: Array<{ id: string; customerName: string; serviceName: string }>;
+  } | null>(null);
 
   const selectedService = services.find((s) => s.id === state.formData.serviceId);
 
@@ -43,7 +52,7 @@ export function ReviewStep({ studioId, services }: ReviewStepProps): React.JSX.E
     setNotes(value);
   };
 
-  const handleSubmit = async (): Promise<void> => {
+  const handleSubmit = async (overrideCapacity = false): Promise<void> => {
     setSubmitting(true);
 
     try {
@@ -55,7 +64,16 @@ export function ReviewStep({ studioId, services }: ReviewStepProps): React.JSX.E
         date: state.formData.date!,
         time: state.formData.time!,
         notes: notes || undefined,
+        overrideCapacity, // Pass override flag
       });
+
+      // Handle capacity warning
+      if (result.error === 'capacity_full' && result.capacityWarning) {
+        setCapacityWarningData(result.capacityWarning);
+        setShowCapacityWarning(true);
+        setSubmitting(false);
+        return;
+      }
 
       if (result.success && result.data) {
         setBookingId(result.data.id);
@@ -80,6 +98,17 @@ export function ReviewStep({ studioId, services }: ReviewStepProps): React.JSX.E
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleBookAnyway = (): void => {
+    setShowCapacityWarning(false);
+    handleSubmit(true); // Override capacity
+  };
+
+  const handleChooseDifferentTime = (): void => {
+    setShowCapacityWarning(false);
+    // Go back to DateTime step (Step 3)
+    goToStep(2);
   };
 
   const formatDate = (dateString: string): string => {
@@ -202,13 +231,27 @@ export function ReviewStep({ studioId, services }: ReviewStepProps): React.JSX.E
 
       {/* Submit Button */}
       <Button
-        onClick={handleSubmit}
+        onClick={() => handleSubmit()}
         disabled={state.isSubmitting}
         style={{ backgroundColor: '#B56550' }}
         className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
         {state.isSubmitting ? 'Wird gebucht...' : 'Jetzt buchen'}
       </Button>
+
+      {/* Capacity Warning Sheet */}
+      {capacityWarningData && (
+        <CapacityWarningSheet
+          isOpen={showCapacityWarning}
+          onClose={() => setShowCapacityWarning(false)}
+          timeSlot={state.formData.time}
+          current={capacityWarningData.current}
+          max={capacityWarningData.max}
+          bookings={capacityWarningData.bookings}
+          onChooseDifferentTime={handleChooseDifferentTime}
+          onBookAnyway={handleBookAnyway}
+        />
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Settings, LogOut, HelpCircle, Bell } from 'lucide-react';
 import { BookingStatus } from '@/app/generated/prisma';
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -86,21 +87,23 @@ export default async function MorePage({ params }: Props): Promise<React.JSX.Ele
 
         {/* Options */}
         <div className="space-y-3">
-          <Card className="hover:shadow-md transition-shadow cursor-not-allowed opacity-60">
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Settings className="h-5 w-5 text-primary" />
+          <Link href={`/${locale}/dashboard/owner/settings`}>
+            <Card className="hover:shadow-md transition-shadow cursor-pointer hover:border-primary/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Settings className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Einstellungen</CardTitle>
+                    <CardDescription className="text-xs">
+                      Studio-Einstellungen verwalten
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-base">Einstellungen</CardTitle>
-                  <CardDescription className="text-xs">
-                    Studio-Einstellungen verwalten (Demnächst)
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
+              </CardHeader>
+            </Card>
+          </Link>
 
           <Card className="hover:shadow-md transition-shadow cursor-not-allowed opacity-60">
             <CardHeader className="pb-3">
