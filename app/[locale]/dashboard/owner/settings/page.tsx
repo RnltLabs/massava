@@ -12,6 +12,7 @@ import { db } from '@/lib/db';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { CapacitySettings } from './_components/CapacitySettings';
 import { ImagesSettings } from './_components/ImagesSettings';
+import { DangerZone } from './_components/DangerZone';
 import { BookingStatus } from '@/app/generated/prisma';
 import { format } from 'date-fns';
 import { ArrowLeft } from 'lucide-react';
@@ -119,6 +120,13 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
           <CapacitySettings
             studioId={studio.id}
             initialCapacity={studio.capacity}
+          />
+
+          {/* Danger Zone - Studio Deletion */}
+          <DangerZone
+            studioId={studio.id}
+            studioName={studio.name}
+            locale={locale}
           />
         </div>
       </div>
