@@ -115,21 +115,21 @@ export function CapacityStep(): React.JSX.Element {
           Anzahl der Liegen/Räume
         </Label>
 
-        <div className="flex items-center justify-center gap-6 py-6">
+        <div className="flex items-center justify-center gap-4 sm:gap-6 py-6">
           <Button
             type="button"
             variant="outline"
             size="icon"
-            className="h-16 w-16 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all"
+            className="h-14 w-14 sm:h-16 sm:w-16 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all active:scale-95"
             onClick={handleDecrement}
             disabled={capacity <= 1}
             aria-label="Verringern"
           >
-            <Minus className="h-6 w-6" />
+            <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
 
           <div
-            className="flex items-center justify-center h-24 w-24 text-5xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all"
+            className="flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 text-5xl sm:text-6xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all"
             aria-live="polite"
             aria-label={`Kapazität: ${capacity}`}
           >
@@ -140,12 +140,12 @@ export function CapacityStep(): React.JSX.Element {
             type="button"
             variant="outline"
             size="icon"
-            className="h-16 w-16 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all"
+            className="h-14 w-14 sm:h-16 sm:w-16 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all active:scale-95"
             onClick={handleIncrement}
             disabled={capacity >= 10}
             aria-label="Erhöhen"
           >
-            <Plus className="h-6 w-6" />
+            <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
 

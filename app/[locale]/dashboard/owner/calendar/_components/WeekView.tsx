@@ -150,7 +150,7 @@ export function WeekView({
                     >
                       {/* Capacity Badge (top right) */}
                       {bookingCount > 0 && (
-                        <div className="absolute top-0.5 right-0.5 z-10">
+                        <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 z-10 pointer-events-none">
                           <CapacityBadge current={bookingCount} max={studioCapacity} />
                         </div>
                       )}

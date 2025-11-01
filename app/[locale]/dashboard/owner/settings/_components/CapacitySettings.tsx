@@ -104,18 +104,23 @@ export function CapacitySettings({ studioId, initialCapacity }: CapacitySettings
             Anzahl der Liegen/Räume
           </Label>
 
-          <div className="flex items-center justify-center gap-6 py-4">
+          <div className="flex items-center justify-center gap-4 sm:gap-6 py-4">
             <Button
               variant="outline"
               size="icon"
               onClick={handleDecrement}
               disabled={capacity <= 1 || isSaving}
-              className="h-14 w-14 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all disabled:opacity-50"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all disabled:opacity-50 active:scale-95"
+              aria-label="Verringern"
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
 
-            <div className="flex items-center justify-center h-20 w-20 text-4xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all">
+            <div
+              className="flex items-center justify-center h-20 w-20 sm:h-24 sm:w-24 text-4xl sm:text-5xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all"
+              aria-live="polite"
+              aria-label={`Kapazität: ${capacity}`}
+            >
               {capacity}
             </div>
 
@@ -124,9 +129,10 @@ export function CapacitySettings({ studioId, initialCapacity }: CapacitySettings
               size="icon"
               onClick={handleIncrement}
               disabled={capacity >= 10 || isSaving}
-              className="h-14 w-14 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all disabled:opacity-50"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border-2 hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all disabled:opacity-50 active:scale-95"
+              aria-label="Erhöhen"
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
             </Button>
           </div>
 

@@ -29,10 +29,11 @@ export function CapacityBadge({ current, max, className = '' }: CapacityBadgePro
   return (
     <div
       className={cn(
-        'inline-flex items-center justify-center px-2 py-0.5 rounded-md text-xs font-semibold border',
+        'inline-flex items-center justify-center px-1.5 py-0.5 sm:px-2 rounded-md text-[10px] sm:text-xs font-semibold border shadow-sm',
         colorClass,
         className
       )}
+      aria-label={`Kapazität: ${current} von ${max}`}
     >
       {formatCapacity(current, max)}
     </div>
