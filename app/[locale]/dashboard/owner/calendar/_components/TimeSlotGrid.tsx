@@ -13,6 +13,7 @@ import { getBusinessHours, formatTimeSlot } from '@/lib/calendar-utils';
 import { BookingBlock } from './BookingBlock';
 import { BlockedTimeBlock } from './BlockedTimeBlock';
 import { CurrentTimeIndicator } from './CurrentTimeIndicator';
+import { CapacityBadge } from './CapacityBadge';
 import type { NewBooking, Service, BlockedTime } from '@/app/generated/prisma';
 import type { VirtualBlockedTime } from '@/lib/opening-hours-utils';
 
@@ -28,6 +29,7 @@ type BookingWithService = NewBooking & {
 interface TimeSlotGridProps {
   bookings: BookingWithService[];
   blockedTimes: (BlockedTime | VirtualBlockedTime)[];
+  studioCapacity: number;
   onSlotPress: (time: string) => void;
   onBookingClick: (booking: BookingWithService) => void;
   onBlockedTimeClick: (blocked: BlockedTime | VirtualBlockedTime) => void;
@@ -39,6 +41,7 @@ const TIME_LABEL_WIDTH = 64; // 64px for time labels
 export function TimeSlotGrid({
   bookings,
   blockedTimes,
+  studioCapacity,
   onSlotPress,
   onBookingClick,
   onBlockedTimeClick,
@@ -48,6 +51,11 @@ export function TimeSlotGrid({
   const gridRef = useRef<HTMLDivElement>(null);
 
   const hours = getBusinessHours();
+
+  // Count bookings per timeslot
+  const getBookingCountForTime = (timeSlot: string): number => {
+    return bookings.filter((b) => b.preferredTime === timeSlot && b.status === 'CONFIRMED').length;
+  };
 
   // Handle long press start
   const handleTouchStart = (timeSlot: string) => {
@@ -88,6 +96,7 @@ export function TimeSlotGrid({
         {hours.map((hour) => {
           const timeSlot = formatTimeSlot(hour);
           const isPressed = pressedSlot === timeSlot;
+          const bookingCount = getBookingCountForTime(timeSlot);
 
           return (
             <div
@@ -114,6 +123,12 @@ export function TimeSlotGrid({
                 onMouseUp={handleTouchEnd}
                 onMouseLeave={handleTouchEnd}
               >
+                {/* Capacity Badge (top right) */}
+                {bookingCount > 0 && (
+                  <div className="absolute top-1 right-2 z-10">
+                    <CapacityBadge current={bookingCount} max={studioCapacity} />
+                  </div>
+                )}
                 {/* Grid line */}
                 <div className="absolute inset-0 pointer-events-none" />
               </div>
