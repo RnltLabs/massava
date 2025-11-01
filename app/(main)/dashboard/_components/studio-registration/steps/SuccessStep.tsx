@@ -21,19 +21,29 @@ export function SuccessStep({
 }: SuccessStepProps): React.JSX.Element {
   const { state } = useStudioRegistration();
   const studioName = state.formData.basicInfo.name || 'Your Studio';
+  const hasServices = (state.formData.services?.length || 0) > 0;
 
-  const nextSteps = [
-    {
-      icon: Calendar,
-      title: 'Services hinzufügen',
-      description: 'Erstelle deine Service-Angebote und Preise',
-    },
-    {
-      icon: LayoutDashboard,
-      title: 'Profil anpassen',
-      description: 'Füge Fotos hinzu und vervollständige dein Studio-Profil',
-    },
-  ];
+  // Conditionally show "Add services" step only if no services were added
+  const nextSteps = hasServices
+    ? [
+        {
+          icon: LayoutDashboard,
+          title: 'Profil anpassen',
+          description: 'Füge Fotos hinzu und vervollständige dein Studio-Profil',
+        },
+      ]
+    : [
+        {
+          icon: Calendar,
+          title: 'Services hinzufügen',
+          description: 'Erstelle deine Service-Angebote und Preise',
+        },
+        {
+          icon: LayoutDashboard,
+          title: 'Profil anpassen',
+          description: 'Füge Fotos hinzu und vervollständige dein Studio-Profil',
+        },
+      ];
 
   return (
     <motion.div
@@ -79,11 +89,11 @@ export function SuccessStep({
         className="text-center space-y-3"
       >
         <h2 className="text-3xl font-bold text-gray-900">
-          Willkommen bei Massava!
+          {hasServices ? 'Dein Studio ist jetzt live!' : 'Willkommen bei Massava!'}
         </h2>
         <p className="text-base text-gray-600">
-          <span className="font-semibold text-terracotta-600">{studioName}</span> wurde
-          erfolgreich registriert
+          <span className="font-semibold text-terracotta-600">{studioName}</span>{' '}
+          {hasServices ? 'ist jetzt sichtbar für Buchungen' : 'wurde erfolgreich registriert'}
         </p>
       </motion.div>
 
@@ -130,13 +140,15 @@ export function SuccessStep({
         transition={{ delay: 1.2 }}
         className="space-y-3"
       >
-        <Button
-          onClick={onAddService}
-          style={{ backgroundColor: '#B56550' }}
-          className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
-        >
-          Ersten Service hinzufügen
-        </Button>
+        {!hasServices && (
+          <Button
+            onClick={onAddService}
+            style={{ backgroundColor: '#B56550' }}
+            className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
+          >
+            Ersten Service hinzufügen
+          </Button>
+        )}
 
         <Button
           onClick={onGoToDashboard}
