@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Loader2 } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { TimePickerSheet } from '../components/TimePickerSheet';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
-import { registerStudio } from '@/app/actions/studio/registerStudio';
 import { cn } from '@/lib/utils';
 import type { OpeningHoursFormData } from '../validation/openingHoursSchema';
 
@@ -26,15 +25,14 @@ const DAYS: { key: DayKey; label: string }[] = [
 
 /**
  * Opening Hours Step - Step 4
- * Collects studio opening hours and submits registration
+ * Collects studio opening hours
  */
 export function OpeningHoursStep(): React.JSX.Element {
   const {
     state,
     goToNextStep,
     setErrors,
-    setSubmitting,
-    setStudioId,
+    updateOpeningHours,
   } = useStudioRegistration();
 
   const [mode, setMode] = useState<'same' | 'different'>(
@@ -103,12 +101,7 @@ export function OpeningHoursStep(): React.JSX.Element {
     }
   };
 
-  const handleSkip = async (): Promise<void> => {
-    // Submit without opening hours
-    await submitRegistration(undefined);
-  };
-
-  const handleCompleteRegistration = async (): Promise<void> => {
+  const handleContinue = (): void => {
     // Validate and prepare opening hours data
     let openingHoursData: OpeningHoursFormData | undefined;
 
@@ -135,48 +128,10 @@ export function OpeningHoursStep(): React.JSX.Element {
       };
     }
 
-    await submitRegistration(openingHoursData);
-  };
-
-  const submitRegistration = async (
-    openingHoursData: OpeningHoursFormData | undefined
-  ): Promise<void> => {
-    // Prepare complete data
-    const completeData = {
-      name: state.formData.basicInfo.name || '',
-      description: state.formData.basicInfo.description || '',
-      address: {
-        street: state.formData.address.street || '',
-        line2: state.formData.address.line2,
-        city: state.formData.address.city || '',
-        postalCode: state.formData.address.postalCode || '',
-        country: state.formData.address.country || '',
-      },
-      contact: {
-        phone: state.formData.contact.phone || '',
-        email: state.formData.contact.email || '',
-        website: state.formData.contact.website || undefined,
-      },
-      openingHours: openingHoursData,
-    };
-
-    // Submit to server
-    setSubmitting(true);
-    try {
-      const result = await registerStudio(completeData);
-
-      if (result.success && result.studioId) {
-        setStudioId(result.studioId);
-        goToNextStep();
-      } else {
-        setErrors({ submit: result.error || 'Registration failed' });
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'An unexpected error occurred' });
-    } finally {
-      setSubmitting(false);
-    }
+    // Save to context and move to next step
+    updateOpeningHours(openingHoursData);
+    setErrors({});
+    goToNextStep();
   };
 
   const formatTimeRange = (hours: { open: string; close: string }): string => {
@@ -350,30 +305,21 @@ export function OpeningHoursStep(): React.JSX.Element {
         </div>
       )}
 
-      {/* Complete Button */}
+      {/* Continue Button */}
       <Button
-        onClick={handleCompleteRegistration}
-        disabled={state.isSubmitting}
-        style={!state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
-        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
+        onClick={handleContinue}
+        style={{ backgroundColor: '#B56550' }}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
       >
-        {state.isSubmitting ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Registrierung läuft...
-          </>
-        ) : (
-          'Registrierung abschließen'
-        )}
+        Weiter
       </Button>
 
       {/* Skip Button */}
       <div className="text-center space-y-2">
         <button
           type="button"
-          onClick={handleSkip}
-          disabled={state.isSubmitting}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed underline"
+          onClick={goToNextStep}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors underline"
         >
           Jetzt überspringen
         </button>

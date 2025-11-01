@@ -150,6 +150,11 @@ model Studio {
   // Example: {"monday": "09:00-18:00", "tuesday": "09:00-18:00", ...}
   openingHours Json?
 
+  // Capacity Setting for Parallel Bookings
+  // How many treatment beds/rooms? (1-10, default: 1)
+  // Allows multiple massages to happen simultaneously
+  capacity    Int      @default(1)
+
   // Relations
   services      Service[]
   bookings      Booking[]

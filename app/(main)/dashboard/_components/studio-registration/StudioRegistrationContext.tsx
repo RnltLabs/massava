@@ -19,6 +19,7 @@ export interface StudioRegistrationState {
     address: Partial<AddressFormData>;
     contact: Partial<ContactFormData>;
     openingHours?: Partial<OpeningHoursFormData>;
+    capacity?: number; // Treatment beds/rooms (1-10)
   };
   errors: Record<string, string>;
   isSubmitting: boolean;
@@ -34,6 +35,7 @@ type StudioRegistrationAction =
   | { type: 'UPDATE_ADDRESS'; payload: Partial<AddressFormData> }
   | { type: 'UPDATE_CONTACT'; payload: Partial<ContactFormData> }
   | { type: 'UPDATE_OPENING_HOURS'; payload: Partial<OpeningHoursFormData> }
+  | { type: 'UPDATE_CAPACITY'; payload: number }
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_STUDIO_ID'; payload: string }
@@ -52,6 +54,7 @@ interface StudioRegistrationContextValue {
   updateAddress: (data: Partial<AddressFormData>) => void;
   updateContact: (data: Partial<ContactFormData>) => void;
   updateOpeningHours: (data: Partial<OpeningHoursFormData>) => void;
+  updateCapacity: (capacity: number) => void;
   setErrors: (errors: Record<string, string>) => void;
   setSubmitting: (isSubmitting: boolean) => void;
   setStudioId: (studioId: string) => void;
@@ -135,6 +138,15 @@ function studioRegistrationReducer(
         },
       };
 
+    case 'UPDATE_CAPACITY':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          capacity: action.payload,
+        },
+      };
+
     case 'SET_ERRORS':
       return {
         ...state,
@@ -203,6 +215,9 @@ export function StudioRegistrationProvider({
     },
     updateOpeningHours: (data: Partial<OpeningHoursFormData>) => {
       dispatch({ type: 'UPDATE_OPENING_HOURS', payload: data });
+    },
+    updateCapacity: (capacity: number) => {
+      dispatch({ type: 'UPDATE_CAPACITY', payload: capacity });
     },
     setErrors: (errors: Record<string, string>) => {
       dispatch({ type: 'SET_ERRORS', payload: errors });
