@@ -1,19 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Camera, Upload, Trash2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ImageUploadButton } from './ImageUploadButton';
+import { StudioAvatar } from '@/components/ui/studio-avatar';
 
 interface LogoUploadProps {
   currentUrl: string | null;
   onUpload: (file: File) => Promise<void>;
   onDelete: () => void;
   isUploading: boolean;
+  studioName: string;
+  studioId?: string;
   className?: string;
 }
 
@@ -25,6 +27,8 @@ export function LogoUpload({
   onUpload,
   onDelete,
   isUploading,
+  studioName,
+  studioId,
   className,
 }: LogoUploadProps): React.JSX.Element {
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -97,35 +101,7 @@ export function LogoUpload({
         onDragLeave={handleDragLeave}
       >
         <div className="p-8 flex flex-col items-center justify-center gap-4">
-          {currentUrl ? (
-            // Preview State
-            <>
-              <Avatar className="h-32 w-32">
-                <AvatarImage src={currentUrl} alt="Studio logo" />
-                <AvatarFallback className="bg-gray-100 text-gray-400">Logo</AvatarFallback>
-              </Avatar>
-
-              <div className="flex gap-2">
-                <ImageUploadButton
-                  onFileSelect={handleFileSelect}
-                  disabled={isUploading}
-                  variant="upload"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Replace
-                </ImageUploadButton>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onDelete}
-                  disabled={isUploading}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Remove
-                </Button>
-              </div>
-            </>
-          ) : isUploading ? (
+          {isUploading ? (
             // Uploading State
             <>
               <div className="w-full max-w-xs space-y-2">
@@ -136,34 +112,73 @@ export function LogoUpload({
               </div>
             </>
           ) : (
-            // Empty State
             <>
-              <div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center">
-                <Camera className="h-12 w-12 text-gray-400" />
-              </div>
+              {/* Avatar Preview (uploaded logo or generative avatar) */}
+              <StudioAvatar
+                logoUrl={currentUrl}
+                studioName={studioName}
+                studioId={studioId}
+                size={128}
+                variant="bauhaus"
+              />
 
+              {/* Help Text */}
               <div className="text-center space-y-2">
-                <p className="font-medium text-gray-900">Tap to add logo</p>
-                <p className="text-sm text-gray-600">Take a photo or choose from gallery</p>
+                {currentUrl ? (
+                  <>
+                    <p className="font-medium text-gray-900">Logo uploaded</p>
+                    <p className="text-sm text-gray-600">Replace or remove your logo</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-gray-900">Add your logo</p>
+                    <p className="text-sm text-gray-600">Take a photo or choose from gallery</p>
+                  </>
+                )}
               </div>
 
+              {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
-                <ImageUploadButton
-                  onFileSelect={handleFileSelect}
-                  disabled={isUploading}
-                  variant="camera"
-                >
-                  <Camera className="h-4 w-4 mr-2" />
-                  Take Photo
-                </ImageUploadButton>
-                <ImageUploadButton
-                  onFileSelect={handleFileSelect}
-                  disabled={isUploading}
-                  variant="upload"
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Choose Image
-                </ImageUploadButton>
+                {currentUrl ? (
+                  <>
+                    <ImageUploadButton
+                      onFileSelect={handleFileSelect}
+                      disabled={isUploading}
+                      variant="upload"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Replace
+                    </ImageUploadButton>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onDelete}
+                      disabled={isUploading}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remove
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <ImageUploadButton
+                      onFileSelect={handleFileSelect}
+                      disabled={isUploading}
+                      variant="camera"
+                    >
+                      <Camera className="h-4 w-4 mr-2" />
+                      Take Photo
+                    </ImageUploadButton>
+                    <ImageUploadButton
+                      onFileSelect={handleFileSelect}
+                      disabled={isUploading}
+                      variant="upload"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Choose Image
+                    </ImageUploadButton>
+                  </>
+                )}
               </div>
             </>
           )}

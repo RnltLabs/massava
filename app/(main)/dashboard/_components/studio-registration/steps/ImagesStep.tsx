@@ -226,6 +226,8 @@ export function ImagesStep(): React.JSX.Element {
             onUpload={handleLogoUpload}
             onDelete={handleLogoDelete}
             isUploading={isUploading}
+            studioName={state.formData.basicInfo.name || 'Studio'}
+            studioId={state.studioId}
           />
         </CardContent>
       </Card>

@@ -25,12 +25,14 @@ interface GalleryImage {
 
 interface ImagesSettingsProps {
   studioId: string;
+  studioName: string;
   initialLogoUrl?: string | null;
   initialGalleryImages?: GalleryImage[];
 }
 
 export function ImagesSettings({
   studioId,
+  studioName,
   initialLogoUrl,
   initialGalleryImages = []
 }: ImagesSettingsProps): React.JSX.Element {
@@ -250,6 +252,8 @@ export function ImagesSettings({
             onUpload={handleLogoUpload}
             onDelete={handleLogoDelete}
             isUploading={isUploadingLogo}
+            studioName={studioName}
+            studioId={studioId}
           />
         </div>
 

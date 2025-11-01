@@ -110,6 +110,7 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
           {/* Images Settings */}
           <ImagesSettings
             studioId={studio.id}
+            studioName={studio.name}
             initialLogoUrl={studio.logoUrl}
             initialGalleryImages={galleryImages}
           />
