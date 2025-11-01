@@ -134,6 +134,7 @@ export function DateTimeStep({ studioId, services, initialDate }: DateTimeStepPr
           minDate={minDate}
           placeholder="Datum und Uhrzeit wählen..."
           className="h-14 text-base"
+          showAnyDate={false}
         />
         {state.errors.date && (
           <p className="text-xs text-destructive" role="alert">

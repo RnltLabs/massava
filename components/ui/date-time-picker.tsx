@@ -20,6 +20,7 @@ interface DateTimePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  showAnyDate?: boolean // Show "Any Date" option (default: true for backwards compatibility)
 }
 
 type DateTimeStep = 'date' | 'time' | 'custom-time'
@@ -33,6 +34,7 @@ export function DateTimePicker({
   placeholder,
   disabled = false,
   className,
+  showAnyDate = true,
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<DateTimeStep>('date')
@@ -240,18 +242,20 @@ export function DateTimePicker({
     <div className="space-y-4">
       {/* Quick Date Options */}
       <div className="grid gap-2">
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('any')}
-        >
-          <div className="flex items-center gap-3">
-            <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
-            <div className="text-left">
-              <div className="font-semibold">{t('anyDate')}</div>
+        {showAnyDate && (
+          <Button
+            variant="outline"
+            className="justify-start h-auto py-4 hover:bg-accent"
+            onClick={() => handleQuickDate('any')}
+          >
+            <div className="flex items-center gap-3">
+              <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
+              <div className="text-left">
+                <div className="font-semibold">{t('anyDate')}</div>
+              </div>
             </div>
-          </div>
-        </Button>
+          </Button>
+        )}
 
         <Button
           variant="outline"
@@ -286,7 +290,7 @@ export function DateTimePicker({
         </Button>
       </div>
 
-      <Separator />
+      {showAnyDate && <Separator />}
 
       {/* Calendar */}
       <div className="space-y-3">
