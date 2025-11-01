@@ -14,5 +14,27 @@
     "signOut": "Abmelden",
     "language": "Sprache",
     "appVersion": "Version {version}"
+  },
+  "dateTimePicker": {
+    "placeholder": "Datum und Uhrzeit wählen",
+    "selectDate": "Datum wählen",
+    "selectTime": "Uhrzeit wählen",
+    "anyDate": "Jedes Datum",
+    "today": "Heute",
+    "tomorrow": "Morgen",
+    "orChooseDate": "Oder wähle ein bestimmtes Datum",
+    "selected": "Ausgewählt",
+    "morning": "Morgen",
+    "afternoon": "Nachmittag",
+    "evening": "Abend",
+    "customTime": "Genaue Uhrzeit",
+    "selectSpecificTime": "Wähle eine spezifische Uhrzeit",
+    "done": "Fertig",
+    "back": "Zurück",
+    "timeRange": {
+      "morning": "08:00 - 12:00",
+      "afternoon": "12:00 - 17:00",
+      "evening": "17:00 - 22:00"
+    }
   }
 }
