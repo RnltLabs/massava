@@ -20,6 +20,8 @@ interface DateTimePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  showAnyDate?: boolean // Show "Any Date" option (default: true for backwards compatibility)
+  showQuickDates?: boolean // Show "Today" and "Tomorrow" quick options (default: true)
 }
 
 type DateTimeStep = 'date' | 'time' | 'custom-time'
@@ -33,6 +35,8 @@ export function DateTimePicker({
   placeholder,
   disabled = false,
   className,
+  showAnyDate = true,
+  showQuickDates = true,
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<DateTimeStep>('date')
@@ -236,63 +240,78 @@ export function DateTimePicker({
   )
 
   // Render date selection step
-  const renderDateSelection = () => (
-    <div className="space-y-4">
-      {/* Quick Date Options */}
-      <div className="grid gap-2">
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('any')}
-        >
-          <div className="flex items-center gap-3">
-            <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
-            <div className="text-left">
-              <div className="font-semibold">{t('anyDate')}</div>
+  const renderDateSelection = () => {
+    const hasQuickOptions = showAnyDate || showQuickDates
+
+    return (
+      <div className="space-y-4">
+        {/* Quick Date Options */}
+        {hasQuickOptions && (
+          <>
+            <div className="grid gap-2">
+              {showAnyDate && (
+                <Button
+                  variant="outline"
+                  className="justify-start h-auto py-4 hover:bg-accent"
+                  onClick={() => handleQuickDate('any')}
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
+                    <div className="text-left">
+                      <div className="font-semibold">{t('anyDate')}</div>
+                    </div>
+                  </div>
+                </Button>
+              )}
+
+              {showQuickDates && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto py-4 hover:bg-accent"
+                    onClick={() => handleQuickDate('today')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Sun className="h-5 w-5 text-amber-500" />
+                      <div className="text-left">
+                        <div className="font-semibold">{t('today')}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatQuickDate(new Date())}
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto py-4 hover:bg-accent"
+                    onClick={() => handleQuickDate('tomorrow')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Sunrise className="h-5 w-5 text-orange-500" />
+                      <div className="text-left">
+                        <div className="font-semibold">{t('tomorrow')}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {formatQuickDate(addDays(new Date(), 1))}
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                </>
+              )}
             </div>
-          </div>
-        </Button>
 
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('today')}
-        >
-          <div className="flex items-center gap-3">
-            <Sun className="h-5 w-5 text-amber-500" />
-            <div className="text-left">
-              <div className="font-semibold">{t('today')}</div>
-              <div className="text-sm text-muted-foreground">
-                {formatQuickDate(new Date())}
-              </div>
+            <Separator />
+          </>
+        )}
+
+        {/* Calendar */}
+        <div className="space-y-3">
+          {hasQuickOptions && (
+            <div className="text-sm font-medium text-muted-foreground">
+              {t('orChooseDate')}
             </div>
-          </div>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('tomorrow')}
-        >
-          <div className="flex items-center gap-3">
-            <Sunrise className="h-5 w-5 text-orange-500" />
-            <div className="text-left">
-              <div className="font-semibold">{t('tomorrow')}</div>
-              <div className="text-sm text-muted-foreground">
-                {formatQuickDate(addDays(new Date(), 1))}
-              </div>
-            </div>
-          </div>
-        </Button>
-      </div>
-
-      <Separator />
-
-      {/* Calendar */}
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-muted-foreground">
-          {t('orChooseDate')}
-        </div>
+          )}
         <div className="flex justify-center">
           <Calendar
             mode="single"
@@ -335,7 +354,8 @@ export function DateTimePicker({
         </div>
       </div>
     </div>
-  )
+    )
+  }
 
   // Render time selection step
   const renderTimeSelection = () => (
