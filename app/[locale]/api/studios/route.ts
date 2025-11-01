@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
+import { auth } from '@/auth-unified';
 
 const prisma = new PrismaClient();
 
@@ -22,6 +23,21 @@ export async function POST(request: NextRequest) {
   const userAgent = getUserAgent(request);
 
   try {
+    // Check authentication
+    const session = await auth();
+    if (!session?.user?.id) {
+      logger.warn('Unauthorized studio creation attempt', {
+        correlationId,
+        ipAddress,
+        action: 'CREATE_STUDIO',
+        resource: 'studio',
+      });
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
 
     const { name, description, address, city, postalCode, phone, email, services } = body;
@@ -31,6 +47,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Studio creation validation failed', {
         correlationId,
         ipAddress,
+        userId: session.user.id,
         action: 'CREATE_STUDIO',
         resource: 'studio',
         missingFields: { name: !name, address: !address, city: !city, phone: !phone, email: !email },
@@ -41,42 +58,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create studio with services
-    const studio = await prisma.studio.create({
-      data: {
-        name,
-        description: description || null,
-        address,
-        city,
-        postalCode: postalCode || null,
-        phone,
-        email,
-        services: {
-          create: services.map((service: ServiceInput) => ({
-            name: service.name,
-            description: service.description || null,
-            price: parseFloat(service.price.toString()),
-            duration: parseInt(service.duration.toString()),
-          })),
+    // Create studio with services and ownership in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the studio
+      const studio = await tx.studio.create({
+        data: {
+          name,
+          description: description || null,
+          address,
+          city,
+          postalCode: postalCode || null,
+          phone,
+          email,
+          services: {
+            create: services.map((service: ServiceInput) => ({
+              name: service.name,
+              description: service.description || null,
+              price: parseFloat(service.price.toString()),
+              duration: parseInt(service.duration.toString()),
+            })),
+          },
         },
-      },
-      include: {
-        services: true,
-      },
+        include: {
+          services: true,
+        },
+      });
+
+      // Create studio ownership record
+      await tx.studioOwnership.create({
+        data: {
+          userId: session.user.id,
+          studioId: studio.id,
+          canTransfer: true,
+        },
+      });
+
+      return studio;
     });
 
     logger.info('Studio created successfully', {
       correlationId,
       ipAddress,
       userAgent,
+      userId: session.user.id,
       action: 'CREATE_STUDIO',
       resource: 'studio',
-      resourceId: studio.id,
+      resourceId: result.id,
       studioName: name,
       city,
     });
 
-    return NextResponse.json({ success: true, studio }, { status: 201 });
+    return NextResponse.json({ success: true, studio: result }, { status: 201 });
   } catch (error) {
     logger.error('Studio creation failed', {
       correlationId,

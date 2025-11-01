@@ -46,14 +46,19 @@ export async function DELETE(request: NextRequest) {
 
     const studioOwner = await prisma.studioOwner.findUnique({
       where: { email },
+    });
+
+    // Also check new unified User model
+    const unifiedUser = await prisma.user.findUnique({
+      where: { email },
       include: {
-        studios: {
-          select: { id: true },
+        ownedStudios: {
+          select: { id: true, studioId: true },
         },
       },
     });
 
-    if (!customer && !studioOwner) {
+    if (!customer && !studioOwner && !unifiedUser) {
       logger.warn('Account deletion failed: User not found', {
         correlationId,
         ipAddress,
@@ -88,27 +93,71 @@ export async function DELETE(request: NextRequest) {
         resourceId: customer.id,
         bookingsDeleted: customer.bookings.length,
       });
-    } else if (studioOwner) {
+    } else if (unifiedUser) {
       // Studio owners cannot delete account if they have studios
-      if (studioOwner.studios.length > 0) {
+      if (unifiedUser.ownedStudios.length > 0) {
         logger.warn('Studio owner deletion blocked: Studios exist', {
           correlationId,
           ipAddress,
           email,
-          userId: studioOwner.id,
+          userId: unifiedUser.id,
           action: 'DELETE_USER_ACCOUNT',
-          resource: 'studio_owner',
-          studiosCount: studioOwner.studios.length,
+          resource: 'user',
+          studiosCount: unifiedUser.ownedStudios.length,
         });
         return NextResponse.json(
           {
             error:
               'Kontolöschung nicht möglich. Bitte löschen Sie zuerst alle Ihre Studios.',
-            studiosCount: studioOwner.studios.length,
+            studiosCount: unifiedUser.ownedStudios.length,
           },
           { status: 400 }
         );
       }
+
+      await prisma.$transaction([
+        // Delete OAuth accounts
+        prisma.newAccount.deleteMany({
+          where: { userId: unifiedUser.id },
+        }),
+        // Delete sessions
+        prisma.newSession.deleteMany({
+          where: { userId: unifiedUser.id },
+        }),
+        // Delete studio ownerships
+        prisma.studioOwnership.deleteMany({
+          where: { userId: unifiedUser.id },
+        }),
+        // Delete role assignments
+        prisma.userRoleAssignment.deleteMany({
+          where: { userId: unifiedUser.id },
+        }),
+        // Delete bookings
+        prisma.newBooking.deleteMany({
+          where: { customerId: unifiedUser.id },
+        }),
+        // Delete audit logs
+        prisma.auditLog.deleteMany({
+          where: { userId: unifiedUser.id },
+        }),
+        // Delete user
+        prisma.user.delete({
+          where: { email },
+        }),
+      ]);
+
+      logger.info('User account deleted successfully', {
+        correlationId,
+        ipAddress,
+        userAgent,
+        email,
+        userId: unifiedUser.id,
+        action: 'DELETE_USER_ACCOUNT',
+        resource: 'user',
+        resourceId: unifiedUser.id,
+      });
+    } else if (studioOwner) {
+      // Legacy StudioOwner deletion (kept for backward compatibility)
 
       await prisma.$transaction([
         // Delete OAuth accounts

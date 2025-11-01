@@ -90,21 +90,21 @@ export default async function Home({ params }: Props) {
       />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-4 sm:pt-12 pb-8 sm:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-accent/20 text-accent px-4 py-2 rounded-full mb-6 wellness-shadow">
+          <div className="text-center mb-6 sm:mb-12">
+            <div className="hidden sm:inline-flex items-center gap-2 bg-accent/20 text-accent px-4 py-2 rounded-full mb-6 wellness-shadow">
               <Clock className="h-4 w-4" />
               <span className="text-sm font-medium">{t('badge')}</span>
             </div>
 
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
-              {t('hero_title')}
-              <br />
-              <span className="text-primary">{t('hero_subtitle')}</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-3 sm:mb-4 leading-tight">
+              <span className="block text-foreground">{t('hero_title')}</span>
+              <span className="block sm:inline text-primary">{t('hero_subtitle').split(' ')[0]} </span>
+              <span className="block sm:inline text-primary">{t('hero_subtitle').split(' ').slice(1).join(' ')}</span>
             </h1>
 
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-12">
+            <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-6 sm:mb-12">
               {t('hero_description')}
             </p>
 

@@ -97,7 +97,20 @@ const config: Config = {
           sage: '#9fbb9f',
           light: '#f5f3ed',
           dark: '#2a2419',
-        }
+        },
+        terracotta: {
+          50: '#fef3f1',
+          100: '#fce5e1',
+          200: '#f9cbc3',
+          300: '#f4a59a',
+          400: '#c77965',
+          500: '#B56550',  // PRIMARY
+          600: '#a25847',
+          700: '#8a4a3c',
+          800: '#713d33',
+          900: '#5d332b',
+          950: '#321a16',
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
