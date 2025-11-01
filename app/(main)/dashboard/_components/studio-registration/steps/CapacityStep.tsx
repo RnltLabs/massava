@@ -94,28 +94,24 @@ export function CapacityStep(): React.JSX.Element {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-3 sm:space-y-4"
     >
       {/* Header */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-4xl mb-1">
+      <div className="space-y-1 text-center">
+        <div className="text-3xl sm:text-4xl">
           <span>🛏️</span>
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
-          Wie viele Behandlungsräume hast du?
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Wie viele Behandlungsräume?
         </h2>
-        <p className="text-gray-600 text-base md:text-lg">
-          Gib an, wie viele Massagen gleichzeitig stattfinden können.
+        <p className="text-gray-600 text-sm sm:text-base">
+          Anzahl gleichzeitiger Massagen
         </p>
       </div>
 
       {/* Capacity Selector */}
-      <div className="space-y-4">
-        <Label htmlFor="capacity" className="text-base font-medium">
-          Anzahl der Liegen/Räume
-        </Label>
-
-        <div className="flex items-center justify-center gap-4 sm:gap-6 py-6">
+      <div className="py-2 sm:py-4">
+        <div className="flex items-center justify-center gap-3 sm:gap-6">
           <Button
             type="button"
             variant="outline"
@@ -129,7 +125,7 @@ export function CapacityStep(): React.JSX.Element {
           </Button>
 
           <div
-            className="flex items-center justify-center h-24 w-24 sm:h-28 sm:w-28 text-5xl sm:text-6xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all"
+            className="flex items-center justify-center h-20 w-20 sm:h-28 sm:w-28 text-4xl sm:text-6xl font-bold border-4 border-[#B56550] rounded-2xl bg-[#B56550]/5 transition-all"
             aria-live="polite"
             aria-label={`Kapazität: ${capacity}`}
           >
@@ -148,20 +144,14 @@ export function CapacityStep(): React.JSX.Element {
             <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
           </Button>
         </div>
-
-        <p className="text-sm text-gray-500 text-center">
-          Wähle zwischen 1 und 10 Räumen
-        </p>
       </div>
 
-      {/* Info Alert */}
-      <Alert className="border-blue-200 bg-blue-50">
+      {/* Info Alert - Hidden on mobile to save space */}
+      <Alert className="hidden sm:block border-blue-200 bg-blue-50">
         <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-gray-700">
-          <strong>Beispiel:</strong> Mit {capacity} {capacity === 1 ? 'Raum' : 'Räumen'} kannst
-          du bis zu {capacity} {capacity === 1 ? 'Behandlung' : 'Behandlungen'} zur gleichen Zeit
-          durchführen.
-          {capacity > 1 && ' Du wirst gewarnt, wenn ein Zeitslot voll ist.'}
+        <AlertDescription className="text-gray-700 text-sm">
+          Mit {capacity} {capacity === 1 ? 'Raum' : 'Räumen'} kannst du {capacity}{' '}
+          {capacity === 1 ? 'Behandlung' : 'Behandlungen'} parallel durchführen.
         </AlertDescription>
       </Alert>
 
@@ -173,7 +163,7 @@ export function CapacityStep(): React.JSX.Element {
       )}
 
       {/* Continue Button */}
-      <div className="pt-4">
+      <div className="pt-2 sm:pt-4">
         <Button
           onClick={handleContinue}
           disabled={state.isSubmitting}

@@ -144,22 +144,22 @@ export function OpeningHoursStep(): React.JSX.Element {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-3 sm:space-y-4"
     >
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
-        <p className="text-sm text-gray-600">Wann hat Ihr Studio geöffnet?</p>
+      <div className="text-center space-y-1">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
+        <p className="text-xs sm:text-sm text-gray-600">Wann hat Ihr Studio geöffnet?</p>
       </div>
 
       {/* Mode Selection */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* Same Hours Every Day */}
         <button
           type="button"
           onClick={() => setMode('same')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             mode === 'same'
               ? 'border-[#B56550] bg-[#B56550]/5'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -167,8 +167,8 @@ export function OpeningHoursStep(): React.JSX.Element {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-gray-900">Gleiche Zeiten jeden Tag</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm sm:text-base font-semibold text-gray-900">Gleiche Zeiten jeden Tag</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 hidden sm:block">
                 Ihr Studio hat immer die gleichen Öffnungszeiten
               </p>
             </div>
@@ -190,7 +190,7 @@ export function OpeningHoursStep(): React.JSX.Element {
           type="button"
           onClick={() => setMode('different')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             mode === 'different'
               ? 'border-[#B56550] bg-[#B56550]/5'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -198,8 +198,8 @@ export function OpeningHoursStep(): React.JSX.Element {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-gray-900">Unterschiedliche Zeiten</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm sm:text-base font-semibold text-gray-900">Unterschiedliche Zeiten</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 hidden sm:block">
                 Verschiedene Öffnungszeiten für jeden Tag
               </p>
             </div>
@@ -224,44 +224,44 @@ export function OpeningHoursStep(): React.JSX.Element {
           type="button"
           onClick={() => openTimePicker('same')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             'border-gray-200 hover:border-[#B56550] hover:bg-gray-50'
           )}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-gray-500" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
               <div>
-                <p className="font-medium text-gray-900">Jeden Tag</p>
+                <p className="text-sm sm:text-base font-medium text-gray-900">Jeden Tag</p>
                 {sameHours && (
-                  <p className="text-sm text-gray-600 mt-0.5">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
                     {formatTimeRange(sameHours)}
                   </p>
                 )}
               </div>
             </div>
             {!sameHours && (
-              <p className="text-sm text-gray-500">Antippen um festzulegen</p>
+              <p className="text-xs sm:text-sm text-gray-500">Antippen</p>
             )}
           </div>
         </button>
       ) : (
         /* Different Hours - Day Cards */
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {DAYS.map((day) => (
             <div
               key={day.key}
               className={cn(
-                'p-4 rounded-xl border-2 transition-all',
+                'p-2.5 sm:p-3 rounded-lg border-2 transition-all',
                 dayEnabled[day.key]
                   ? 'border-gray-200 bg-white'
                   : 'border-gray-100 bg-gray-50'
               )}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <Label
                   htmlFor={`day-${day.key}`}
-                  className="font-medium text-gray-900 cursor-pointer"
+                  className="text-sm font-medium text-gray-900 cursor-pointer"
                 >
                   {day.label}
                 </Label>
@@ -276,14 +276,14 @@ export function OpeningHoursStep(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => openTimePicker(day.key)}
-                  className="w-full mt-2 p-3 rounded-lg border border-gray-200 hover:border-[#B56550] hover:bg-gray-50 transition-all text-left"
+                  className="w-full mt-1 p-2 sm:p-2.5 rounded-lg border border-gray-200 hover:border-[#B56550] hover:bg-gray-50 transition-all text-left"
                 >
                   {differentHours[day.key] ? (
-                    <p className="text-sm text-gray-700">
+                    <p className="text-xs sm:text-sm text-gray-700">
                       {formatTimeRange(differentHours[day.key]!)}
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-500">Zeiten festlegen</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Zeiten festlegen</p>
                   )}
                 </button>
               )}
