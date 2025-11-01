@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -87,12 +87,18 @@ function QuickAddBookingContent({
 
   console.log('📋 [QuickAddBookingContent] Current Step:', currentStep, 'isSubmitting:', isSubmitting);
 
+  // Use ref to avoid re-renders when onSuccess changes
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
   // Handle success callback
   useEffect(() => {
     if (currentStep === 4 && state.bookingId) {
-      onSuccess?.();
+      onSuccessRef.current?.();
     }
-  }, [currentStep, state.bookingId, onSuccess]);
+  }, [currentStep, state.bookingId]);
 
   const steps = [
     {

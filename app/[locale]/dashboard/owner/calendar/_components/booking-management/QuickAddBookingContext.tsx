@@ -33,6 +33,8 @@ export interface QuickAddBookingState {
  */
 type QuickAddBookingAction =
   | { type: 'SET_STEP'; payload: number }
+  | { type: 'NEXT_STEP' }
+  | { type: 'PREVIOUS_STEP' }
   | { type: 'SET_CONTACT_INFO'; payload: { name: string; phone: string } }
   | { type: 'SET_SERVICE'; payload: string }
   | { type: 'SET_DATE'; payload: string }
@@ -86,6 +88,20 @@ function quickAddBookingReducer(
         ...state,
         currentStep: action.payload,
         errors: {}, // Clear errors when changing steps
+      };
+
+    case 'NEXT_STEP':
+      return {
+        ...state,
+        currentStep: state.currentStep + 1,
+        errors: {},
+      };
+
+    case 'PREVIOUS_STEP':
+      return {
+        ...state,
+        currentStep: Math.max(0, state.currentStep - 1),
+        errors: {},
       };
 
     case 'SET_CONTACT_INFO':
@@ -193,12 +209,12 @@ export function QuickAddBookingProvider({
   }, []);
 
   const goToNextStep = useCallback(() => {
-    dispatch({ type: 'SET_STEP', payload: state.currentStep + 1 });
-  }, [state.currentStep]);
+    dispatch({ type: 'NEXT_STEP' });
+  }, []);
 
   const goToPreviousStep = useCallback(() => {
-    dispatch({ type: 'SET_STEP', payload: Math.max(0, state.currentStep - 1) });
-  }, [state.currentStep]);
+    dispatch({ type: 'PREVIOUS_STEP' });
+  }, []);
 
   const setContactInfo = useCallback((name: string, phone: string) => {
     dispatch({ type: 'SET_CONTACT_INFO', payload: { name, phone } });
