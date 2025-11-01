@@ -8,6 +8,7 @@ import type {
   ContactFormData,
 } from './validation/studioSchemas';
 import type { OpeningHoursFormData } from './validation/openingHoursSchema';
+import type { ServiceFormData } from './validation/servicesSchema';
 
 /**
  * Studio Registration State
@@ -20,6 +21,7 @@ export interface StudioRegistrationState {
     contact: Partial<ContactFormData>;
     openingHours?: Partial<OpeningHoursFormData>;
     capacity?: number; // Treatment beds/rooms (1-10)
+    services?: ServiceFormData[]; // Services to create (max 3)
   };
   errors: Record<string, string>;
   isSubmitting: boolean;
@@ -36,6 +38,7 @@ type StudioRegistrationAction =
   | { type: 'UPDATE_CONTACT'; payload: Partial<ContactFormData> }
   | { type: 'UPDATE_OPENING_HOURS'; payload: Partial<OpeningHoursFormData> }
   | { type: 'UPDATE_CAPACITY'; payload: number }
+  | { type: 'UPDATE_SERVICES'; payload: ServiceFormData[] }
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_STUDIO_ID'; payload: string }
@@ -55,6 +58,7 @@ interface StudioRegistrationContextValue {
   updateContact: (data: Partial<ContactFormData>) => void;
   updateOpeningHours: (data: Partial<OpeningHoursFormData>) => void;
   updateCapacity: (capacity: number) => void;
+  updateServices: (services: ServiceFormData[]) => void;
   setErrors: (errors: Record<string, string>) => void;
   setSubmitting: (isSubmitting: boolean) => void;
   setStudioId: (studioId: string) => void;
@@ -147,6 +151,15 @@ function studioRegistrationReducer(
         },
       };
 
+    case 'UPDATE_SERVICES':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          services: action.payload,
+        },
+      };
+
     case 'SET_ERRORS':
       return {
         ...state,
@@ -218,6 +231,9 @@ export function StudioRegistrationProvider({
     },
     updateCapacity: (capacity: number) => {
       dispatch({ type: 'UPDATE_CAPACITY', payload: capacity });
+    },
+    updateServices: (services: ServiceFormData[]) => {
+      dispatch({ type: 'UPDATE_SERVICES', payload: services });
     },
     setErrors: (errors: Record<string, string>) => {
       dispatch({ type: 'SET_ERRORS', payload: errors });

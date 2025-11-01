@@ -7,15 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
-import { registerStudio } from '@/app/actions/studio/registerStudio';
-import { Info, Minus, Plus, Loader2 } from 'lucide-react';
+import { Info, Minus, Plus } from 'lucide-react';
 
 /**
  * Capacity Step - Step 5
  * Collects studio capacity (number of treatment beds/rooms) and submits registration
  */
 export function CapacityStep(): React.JSX.Element {
-  const { state, updateCapacity, goToNextStep, setSubmitting, setStudioId, setErrors } = useStudioRegistration();
+  const { state, updateCapacity, goToNextStep } = useStudioRegistration();
 
   const [capacity, setCapacity] = useState(state.formData.capacity || 2); // Default: 2
 
@@ -33,51 +32,10 @@ export function CapacityStep(): React.JSX.Element {
     }
   };
 
-  // Handle continue and submit registration
-  const handleContinue = async (): Promise<void> => {
+  // Handle continue
+  const handleContinue = (): void => {
     updateCapacity(capacity);
-
-    // Prepare complete data for registration
-    const completeData = {
-      name: state.formData.basicInfo.name || '',
-      description: state.formData.basicInfo.description || '',
-      address: {
-        street: state.formData.address.street || '',
-        line2: state.formData.address.line2,
-        city: state.formData.address.city || '',
-        postalCode: state.formData.address.postalCode || '',
-        country: state.formData.address.country || '',
-      },
-      contact: {
-        phone: state.formData.contact.phone || '',
-        email: state.formData.contact.email || '',
-        website: state.formData.contact.website || undefined,
-      },
-      openingHours: state.formData.openingHours as {
-        mode: 'same' | 'different';
-        sameHours?: { open: string; close: string };
-        differentHours?: Record<string, { open: string; close: string } | null>;
-      } | undefined,
-      capacity: capacity,
-    };
-
-    // Submit to server
-    setSubmitting(true);
-    try {
-      const result = await registerStudio(completeData);
-
-      if (result.success && result.studioId) {
-        setStudioId(result.studioId);
-        goToNextStep();
-      } else {
-        setErrors({ submit: result.error || 'Registration failed' });
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'Ein unerwarteter Fehler ist aufgetreten' });
-    } finally {
-      setSubmitting(false);
-    }
+    goToNextStep();
   };
 
   // Update context on unmount
@@ -161,41 +119,15 @@ export function CapacityStep(): React.JSX.Element {
         </AlertDescription>
       </Alert>
 
-      {/* Submit Error */}
-      {state.errors.submit && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertDescription className="text-red-700">{state.errors.submit}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Continue Button */}
       <div className="pt-2 sm:pt-4">
         <Button
           onClick={handleContinue}
-          disabled={state.isSubmitting}
-          style={!state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
-          className="w-full text-white py-6 text-lg font-semibold rounded-2xl shadow-lg hover:opacity-90 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+          style={{ backgroundColor: '#B56550' }}
+          className="w-full text-white py-6 text-lg font-semibold rounded-2xl shadow-lg hover:opacity-90 transition-all"
         >
-          {state.isSubmitting ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              Studio wird erstellt...
-            </>
-          ) : (
-            'Studio erstellen'
-          )}
+          Weiter
         </Button>
-      </div>
-
-      {/* Skip Option */}
-      <div className="text-center">
-        <button
-          onClick={handleContinue}
-          disabled={state.isSubmitting}
-          className="text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Mit Standard-Einstellung fortfahren
-        </button>
       </div>
     </motion.div>
   );
