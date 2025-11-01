@@ -146,20 +146,20 @@ export function CapacityStep(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Info - Compact on mobile, detailed on desktop */}
-      <div className="text-center">
-        <p className="text-xs sm:text-sm text-gray-600 sm:hidden">
-          {capacity} {capacity === 1 ? 'Massage' : 'Massagen'} zur gleichen Zeit
-        </p>
-        <Alert className="hidden sm:block border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-gray-700 text-sm">
-            Mit {capacity} {capacity === 1 ? 'Raum' : 'Räumen'} kannst du {capacity}{' '}
-            {capacity === 1 ? 'Behandlung' : 'Behandlungen'} parallel durchführen.
-            {capacity > 1 && ' Du wirst gewarnt, wenn ein Zeitslot voll ist.'}
-          </AlertDescription>
-        </Alert>
-      </div>
+      {/* Info Banner - Explains booking availability */}
+      <Alert className="border-blue-200 bg-blue-50">
+        <Info className="h-4 w-4 text-blue-600" />
+        <AlertDescription className="text-gray-700">
+          <p className="text-xs sm:text-sm font-medium mb-1">
+            {capacity} {capacity === 1 ? 'Kunde kann' : 'Kunden können'} zur selben Zeit buchen
+          </p>
+          <p className="text-xs text-gray-600">
+            {capacity === 1
+              ? 'Pro Zeitslot ist nur 1 Termin verfügbar.'
+              : `Beispiel: ${capacity} Kunden können um 14:00 Uhr gleichzeitig buchen.`}
+          </p>
+        </AlertDescription>
+      </Alert>
 
       {/* Submit Error */}
       {state.errors.submit && (
