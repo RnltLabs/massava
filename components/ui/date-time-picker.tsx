@@ -126,6 +126,14 @@ export function DateTimePicker({
     setSelectedTimeSlot(slot)
     if (slot === 'custom') {
       setStep('custom-time')
+    } else {
+      // Auto-submit for morning/afternoon/evening
+      if (selectedDate) {
+        const finalDate = getTimeForSlot(selectedDate, slot)
+        onChange(finalDate)
+        setOpen(false)
+        setStep('date')
+      }
     }
   }
 
