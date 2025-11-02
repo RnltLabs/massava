@@ -150,6 +150,7 @@ export function SearchWidget({
           onChange={setDateTime}
           minDate={new Date()}
           placeholder="Datum und Uhrzeit wählen"
+          showAnyDate={false}
         />
 
         {/* Search button */}

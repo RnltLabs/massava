@@ -72,6 +72,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const { lat, lng, radius, datetime, serviceType, minPrice, maxPrice } = validationResult.data;
 
+    // Validate that datetime is in the future (if provided)
+    if (datetime) {
+      const requestedDateTime = new Date(datetime);
+      const now = new Date();
+
+      if (requestedDateTime < now) {
+        return NextResponse.json(
+          {
+            error: 'Invalid datetime',
+            message: 'Cannot search for appointments in the past. Please select a future date and time.',
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Fetch all studios with their time slots
     const studios = await db.studio.findMany({
       where: {
