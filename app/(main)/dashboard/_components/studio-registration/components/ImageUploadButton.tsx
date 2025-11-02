@@ -68,8 +68,15 @@ export function ImageUploadButton({
         size="sm"
         className={cn('gap-2', className)}
       >
-        <Icon className="h-4 w-4" />
-        {children || (variant === 'camera' ? 'Take Photo' : 'Choose Image')}
+        {/* Only show icon if no children provided */}
+        {children ? (
+          children
+        ) : (
+          <>
+            <Icon className="h-4 w-4" />
+            {variant === 'camera' ? 'Take Photo' : 'Choose Image'}
+          </>
+        )}
       </Button>
     </>
   );

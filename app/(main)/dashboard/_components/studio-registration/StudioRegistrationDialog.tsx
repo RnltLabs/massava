@@ -4,8 +4,8 @@ import React from 'react';
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 
@@ -183,6 +183,9 @@ export function StudioRegistrationDialog({
           showCloseButton={false}
         >
           <SheetTitle className="sr-only">Studio Registration</SheetTitle>
+          <SheetDescription className="sr-only">
+            Complete the registration process to create your studio profile
+          </SheetDescription>
           <div className="overflow-y-auto h-full px-6 pt-4 pb-8">
             {content}
           </div>
@@ -199,6 +202,9 @@ export function StudioRegistrationDialog({
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Studio Registration</DialogTitle>
+        <DialogDescription className="sr-only">
+          Complete the registration process to create your studio profile
+        </DialogDescription>
         <div className="px-6 pt-4 pb-6 max-h-[90vh] overflow-y-auto">
           {content}
         </div>

@@ -1,9 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,33 +33,123 @@ import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { cn } from '@/lib/utils';
 import { ImageUploadButton } from './ImageUploadButton';
 import Image from 'next/image';
+import type { GalleryImagePreview } from '../validation/imagesSchema';
 
-interface GalleryImage {
+/**
+ * Gallery image type for upload mode
+ */
+interface GalleryImageUrl {
   url: string;
   coverPhoto: boolean;
   order: number;
 }
 
-interface GalleryUploadProps {
-  images: GalleryImage[];
-  onUpload: (files: File[]) => Promise<void>;
+/**
+ * Preview mode props (for registration flow - client-side preview only)
+ */
+interface GalleryUploadPreviewProps {
+  mode: 'preview';
+  galleryFiles: GalleryImagePreview[];
+  onSelect: (files: File[]) => void;
   onDelete: (index: number) => void;
-  onReorder: (newOrder: GalleryImage[]) => void;
-  isUploading: boolean;
+  onReorder: (newOrder: GalleryImagePreview[]) => void;
   maxImages: number;
   className?: string;
 }
 
 /**
- * Sortable gallery image component
+ * Upload mode props (for settings page - immediate upload)
  */
-function SortableGalleryImage({
+interface GalleryUploadUploadProps {
+  mode: 'upload';
+  images: GalleryImageUrl[];
+  onUpload: (files: File[]) => Promise<void>;
+  onDelete: (index: number) => void;
+  onReorder: (newOrder: GalleryImageUrl[]) => void;
+  isUploading: boolean;
+  maxImages: number;
+  className?: string;
+}
+
+type GalleryUploadProps = GalleryUploadPreviewProps | GalleryUploadUploadProps;
+
+/**
+ * Sortable gallery image component - Preview mode
+ */
+function SortableGalleryImagePreview({
+  image,
+  index,
+  onDelete,
+}: {
+  image: GalleryImagePreview;
+  index: number;
+  onDelete: () => void;
+}): React.JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: image.previewUrl,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'relative group aspect-square rounded-lg overflow-hidden border border-gray-200',
+        isDragging && 'opacity-50 z-50'
+      )}
+    >
+      <AspectRatio ratio={1}>
+        <Image
+          src={image.previewUrl}
+          alt={`Gallery image ${index + 1}`}
+          fill
+          className="object-cover"
+        />
+      </AspectRatio>
+
+      {image.coverPhoto && (
+        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-terracotta-600 text-white text-[10px] rounded flex items-center gap-0.5">
+          <Star className="h-2.5 w-2.5 fill-white" />
+          <span>Cover</span>
+        </div>
+      )}
+
+      <div
+        {...attributes}
+        {...listeners}
+        className="absolute top-1 right-1 p-0.5 bg-white/90 rounded cursor-move hover:bg-white transition-colors"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="h-3 w-3 text-gray-600" />
+      </div>
+
+      <button
+        type="button"
+        onClick={onDelete}
+        className="absolute bottom-1 right-1 p-0.5 bg-red-600/90 hover:bg-red-700 text-white rounded-full transition-colors opacity-0 group-hover:opacity-100"
+        aria-label="Delete image"
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Sortable gallery image component - Upload mode
+ */
+function SortableGalleryImageUrl({
   image,
   index,
   onDelete,
   disabled,
 }: {
-  image: GalleryImage;
+  image: GalleryImageUrl;
   index: number;
   onDelete: () => void;
   disabled: boolean;
@@ -82,11 +169,10 @@ function SortableGalleryImage({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'relative group aspect-square rounded-lg overflow-hidden border-2 border-gray-200',
+        'relative group aspect-square rounded-lg overflow-hidden border border-gray-200',
         isDragging && 'opacity-50 z-50'
       )}
     >
-      {/* Image */}
       <AspectRatio ratio={1}>
         <Image
           src={image.url}
@@ -96,52 +182,43 @@ function SortableGalleryImage({
         />
       </AspectRatio>
 
-      {/* Cover Photo Badge */}
       {image.coverPhoto && (
-        <Badge className="absolute top-2 left-2 bg-terracotta-600 text-white gap-1">
-          <Star className="h-3 w-3 fill-white" />
-          Cover
-        </Badge>
+        <div className="absolute top-1 left-1 px-1.5 py-0.5 bg-terracotta-600 text-white text-[10px] rounded flex items-center gap-0.5">
+          <Star className="h-2.5 w-2.5 fill-white" />
+          <span>Cover</span>
+        </div>
       )}
 
-      {/* Drag Handle */}
       {!disabled && (
         <div
           {...attributes}
           {...listeners}
-          className="absolute top-2 right-2 p-1 bg-white/90 rounded cursor-move hover:bg-white transition-colors"
+          className="absolute top-1 right-1 p-0.5 bg-white/90 rounded cursor-move hover:bg-white transition-colors"
           aria-label="Drag to reorder"
         >
-          <GripVertical className="h-4 w-4 text-gray-600" />
+          <GripVertical className="h-3 w-3 text-gray-600" />
         </div>
       )}
 
-      {/* Delete Button */}
       <button
         type="button"
         onClick={onDelete}
         disabled={disabled}
-        className="absolute bottom-2 right-2 p-1 bg-red-600/90 hover:bg-red-700 text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="absolute bottom-1 right-1 p-0.5 bg-red-600/90 hover:bg-red-700 text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Delete image"
       >
-        <X className="h-4 w-4" />
+        <X className="h-3 w-3" />
       </button>
     </div>
   );
 }
 
 /**
- * Gallery upload component with drag-and-drop reordering
+ * Gallery upload component with drag-and-drop reordering and dual mode support:
+ * - Preview mode: Client-side preview for registration flow
+ * - Upload mode: Immediate upload for settings page
  */
-export function GalleryUpload({
-  images,
-  onUpload,
-  onDelete,
-  onReorder,
-  isUploading,
-  maxImages,
-  className,
-}: GalleryUploadProps): React.JSX.Element {
+export function GalleryUpload(props: GalleryUploadProps): React.JSX.Element {
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -152,59 +229,41 @@ export function GalleryUpload({
     })
   );
 
+  const { maxImages, className, onDelete } = props;
+
+  // Get images array and metadata based on mode
+  const images = props.mode === 'preview' ? props.galleryFiles : props.images;
+  const isUploading = props.mode === 'upload' ? props.isUploading : false;
+
   const handleFileSelect = async (file: File): Promise<void> => {
     setError(null);
 
     // Validate count
     if (images.length >= maxImages) {
-      setError(`Maximum ${maxImages} images allowed`);
+      setError(`Maximal ${maxImages} Bilder erlaubt`);
       return;
     }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Please select image files only');
+      setError('Bitte nur Bilddateien auswählen');
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('Each image must be smaller than 5MB');
+      setError('Jedes Bild muss kleiner als 5MB sein');
       return;
     }
 
-    try {
-      await onUpload([file]);
-    } catch (err) {
-      setError('Failed to upload image');
-    }
-  };
-
-  const handleMultipleFiles = async (files: File[]): Promise<void> => {
-    setError(null);
-
-    // Validate count
-    if (images.length + files.length > maxImages) {
-      setError(`You can only upload ${maxImages} images total`);
-      return;
-    }
-
-    // Validate files
-    const validFiles = files.filter((file) => {
-      if (!file.type.startsWith('image/')) return false;
-      if (file.size > 5 * 1024 * 1024) return false;
-      return true;
-    });
-
-    if (validFiles.length !== files.length) {
-      setError('Some files skipped: Only images under 5MB are allowed');
-    }
-
-    if (validFiles.length > 0) {
+    // Handle based on mode
+    if (props.mode === 'preview') {
+      props.onSelect([file]);
+    } else {
       try {
-        await onUpload(validFiles);
+        await props.onUpload([file]);
       } catch (err) {
-        setError('Failed to upload images');
+        setError('Bild-Upload fehlgeschlagen');
       }
     }
   };
@@ -213,18 +272,32 @@ export function GalleryUpload({
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = images.findIndex((img) => img.url === active.id);
-      const newIndex = images.findIndex((img) => img.url === over.id);
+      if (props.mode === 'preview') {
+        const oldIndex = props.galleryFiles.findIndex((img) => img.previewUrl === active.id);
+        const newIndex = props.galleryFiles.findIndex((img) => img.previewUrl === over.id);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newOrder = arrayMove(images, oldIndex, newIndex);
-        // Update order and cover photo
-        const updatedOrder = newOrder.map((img, index) => ({
-          ...img,
-          order: index,
-          coverPhoto: index === 0,
-        }));
-        onReorder(updatedOrder);
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newOrder = arrayMove(props.galleryFiles, oldIndex, newIndex);
+          const updatedOrder = newOrder.map((img, index) => ({
+            ...img,
+            order: index,
+            coverPhoto: index === 0,
+          }));
+          props.onReorder(updatedOrder);
+        }
+      } else {
+        const oldIndex = props.images.findIndex((img) => img.url === active.id);
+        const newIndex = props.images.findIndex((img) => img.url === over.id);
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newOrder = arrayMove(props.images, oldIndex, newIndex);
+          const updatedOrder = newOrder.map((img, index) => ({
+            ...img,
+            order: index,
+            coverPhoto: index === 0,
+          }));
+          props.onReorder(updatedOrder);
+        }
       }
     }
   };
@@ -242,114 +315,96 @@ export function GalleryUpload({
 
   const canAddMore = images.length < maxImages;
 
+  // Get sortable items based on mode
+  const sortableItems =
+    props.mode === 'preview'
+      ? props.galleryFiles.map((img) => img.previewUrl)
+      : props.images.map((img) => img.url);
+
   return (
-    <div className={cn('space-y-4', className)}>
-      {/* Gallery Grid */}
+    <div className={cn('space-y-2', className)}>
       {images.length > 0 ? (
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={images.map((img) => img.url)} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-3 gap-3">
-              {images.map((image, index) => (
-                <SortableGalleryImage
-                  key={image.url}
-                  image={image}
-                  index={index}
-                  onDelete={() => handleDeleteClick(index)}
-                  disabled={isUploading}
-                />
-              ))}
+          <SortableContext items={sortableItems} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-4 gap-2">
+              {props.mode === 'preview'
+                ? props.galleryFiles.map((image, index) => (
+                    <SortableGalleryImagePreview
+                      key={image.previewUrl}
+                      image={image}
+                      index={index}
+                      onDelete={() => handleDeleteClick(index)}
+                    />
+                  ))
+                : props.images.map((image, index) => (
+                    <SortableGalleryImageUrl
+                      key={image.url}
+                      image={image}
+                      index={index}
+                      onDelete={() => handleDeleteClick(index)}
+                      disabled={isUploading}
+                    />
+                  ))}
 
-              {/* Add More Button */}
               {canAddMore && (
-                <Card className="border-2 border-dashed border-gray-300 cursor-pointer hover:border-terracotta-600 hover:bg-terracotta-50 transition-all">
-                  <AspectRatio ratio={1}>
-                    <div className="flex flex-col items-center justify-center h-full gap-2 p-2">
-                      <ImageUploadButton
-                        onFileSelect={handleFileSelect}
-                        multiple={false}
-                        disabled={isUploading}
-                        variant="upload"
-                        className="border-0 shadow-none"
-                      >
-                        <Plus className="h-5 w-5" />
-                      </ImageUploadButton>
-                      <span className="text-xs text-gray-600 text-center">
-                        {images.length}/{maxImages}
-                      </span>
-                    </div>
-                  </AspectRatio>
-                </Card>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg aspect-square flex items-center justify-center hover:border-terracotta-600 hover:bg-terracotta-50 transition-all">
+                  <ImageUploadButton
+                    onFileSelect={handleFileSelect}
+                    multiple={false}
+                    disabled={isUploading}
+                    variant="upload"
+                    className="border-0 shadow-none h-auto p-0"
+                  >
+                    <Plus className="h-5 w-5 text-gray-500" />
+                  </ImageUploadButton>
+                </div>
               )}
             </div>
           </SortableContext>
         </DndContext>
       ) : (
-        // Empty State
-        <Card className="border-2 border-dashed border-gray-300">
-          <div className="p-8 flex flex-col items-center justify-center gap-4">
-            <div className="h-20 w-20 rounded-lg bg-gray-100 flex items-center justify-center">
-              <Plus className="h-10 w-10 text-gray-400" />
+        <div className="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center">
+          <ImageUploadButton
+            onFileSelect={handleFileSelect}
+            multiple={false}
+            disabled={isUploading}
+            variant="upload"
+            className="w-full"
+          >
+            <div className="flex items-center justify-center gap-1.5">
+              <Plus className="h-4 w-4" />
+              <span className="text-xs">Bilder hinzufügen</span>
             </div>
-
-            <div className="text-center space-y-2">
-              <p className="font-medium text-gray-900">Add gallery photos</p>
-              <p className="text-sm text-gray-600">
-                Tap to add up to {maxImages} photos
-              </p>
-            </div>
-
-            <ImageUploadButton
-              onFileSelect={handleFileSelect}
-              multiple={false}
-              disabled={isUploading}
-              variant="upload"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Photos
-            </ImageUploadButton>
-          </div>
-        </Card>
-      )}
-
-      {/* Tips */}
-      {images.length > 0 && (
-        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <Star className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-          <p>
-            <strong>Tip:</strong> The first photo will appear in search results. Drag to reorder.
-          </p>
+          </ImageUploadButton>
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">
-          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+        <div className="flex items-center gap-1.5 text-xs text-red-600">
+          <AlertCircle className="h-3.5 w-3.5" />
           {error}
         </div>
       )}
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteIndex !== null} onOpenChange={() => setDeleteIndex(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete image?</AlertDialogTitle>
+            <AlertDialogTitle>Bild löschen?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the image from your
-              gallery.
+              Das Bild wird dauerhaft aus deiner Galerie entfernt.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              Löschen
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

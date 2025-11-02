@@ -37,3 +37,24 @@ export const imagesStepSchema = z.object({
 export type ImageFileData = z.infer<typeof imageFileSchema>;
 export type GalleryImageData = z.infer<typeof galleryImageSchema>;
 export type ImagesStepData = z.infer<typeof imagesStepSchema>;
+
+/**
+ * Client-side types for file preview (before upload)
+ * These are not validated by Zod since File objects are not serializable
+ */
+export interface ImageFilePreview {
+  file: File;
+  previewUrl: string; // URL.createObjectURL result
+}
+
+export interface GalleryImagePreview {
+  file: File;
+  previewUrl: string;
+  coverPhoto: boolean;
+  order: number;
+}
+
+export interface ImagesStepPreview {
+  logoFile: ImageFilePreview | null;
+  galleryFiles: GalleryImagePreview[];
+}

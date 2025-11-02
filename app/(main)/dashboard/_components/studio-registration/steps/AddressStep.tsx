@@ -5,23 +5,18 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { addressSchema } from '../validation/studioSchemas';
 import { cn } from '@/lib/utils';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
 import { CountrySelect } from '../components/CountrySelect';
-import { registerStudio } from '@/app/actions/studio/registerStudio';
-import { useToast } from '@/components/ui/use-toast';
 
 /**
  * Address Step - Step 2
  * Collects studio address with smart autocomplete
  */
 export function AddressStep(): React.JSX.Element {
-  const { state, updateAddress, goToNextStep, setErrors, setSubmitting, setStudioId } =
-    useStudioRegistration();
-  const { toast } = useToast();
+  const { state, updateAddress, goToNextStep, setErrors } = useStudioRegistration();
 
   const [street, setStreet] = useState(state.formData.address.street || '');
   const [line2, setLine2] = useState(state.formData.address.line2 || '');
@@ -103,8 +98,8 @@ export function AddressStep(): React.JSX.Element {
   // Note: City auto-fill is now handled by AddressAutocomplete component
   // which fills all fields when user selects an address suggestion
 
-  // Handle continue - Create studio with basic info and address
-  const handleContinue = async (): Promise<void> => {
+  // Handle continue
+  const handleContinue = (): void => {
     console.log('AddressStep: handleContinue called', { street, city, postalCode, country });
 
     // Mark all as touched
@@ -127,62 +122,6 @@ export function AddressStep(): React.JSX.Element {
       console.log('AddressStep: Validation successful', validated);
       updateAddress(validated);
       setErrors({});
-
-      // If studio doesn't exist yet, create it now with basic info and address
-      if (!state.studioId) {
-        setSubmitting(true);
-
-        const completeData = {
-          name: state.formData.basicInfo.name || '',
-          description: state.formData.basicInfo.description || '',
-          address: {
-            street: validated.street,
-            line2: validated.line2,
-            city: validated.city,
-            postalCode: validated.postalCode,
-            country: validated.country,
-          },
-          // Default contact (will be updated in ContactStep)
-          contact: {
-            phone: '+49',
-            email: 'temp@example.com',
-          },
-          // Default values for required fields
-          capacity: 1,
-        };
-
-        try {
-          const result = await registerStudio(completeData);
-
-          if (!result.success || !result.studioId) {
-            setErrors({ submit: result.error || 'Studio creation failed' });
-            toast({
-              title: 'Error',
-              description: result.error || 'Failed to create studio',
-              variant: 'destructive',
-            });
-            setSubmitting(false);
-            return;
-          }
-
-          // Save studio ID
-          setStudioId(result.studioId);
-          console.log('AddressStep: Studio created with ID', result.studioId);
-        } catch (error) {
-          console.error('AddressStep: Studio creation error', error);
-          setErrors({ submit: 'An unexpected error occurred' });
-          toast({
-            title: 'Error',
-            description: 'An unexpected error occurred',
-            variant: 'destructive',
-          });
-          setSubmitting(false);
-          return;
-        } finally {
-          setSubmitting(false);
-        }
-      }
-
       goToNextStep();
     } catch (error: unknown) {
       console.error('AddressStep: Validation failed', error);
@@ -354,18 +293,11 @@ export function AddressStep(): React.JSX.Element {
       {/* Continue Button */}
       <Button
         onClick={handleContinue}
-        disabled={!isValid || state.isSubmitting}
-        style={isValid && !state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
+        disabled={!isValid}
+        style={isValid ? { backgroundColor: '#B56550' } : undefined}
         className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
       >
-        {state.isSubmitting ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Creating studio...
-          </>
-        ) : (
-          'Weiter'
-        )}
+        Weiter
       </Button>
     </motion.div>
   );

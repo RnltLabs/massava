@@ -1,163 +1,134 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { Info, ArrowRight, Camera, Image as ImageIcon } from 'lucide-react';
+import { Camera, Image as ImageIcon } from 'lucide-react';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { LogoUpload } from '../components/LogoUpload';
 import { GalleryUpload } from '../components/GalleryUpload';
-import { uploadStudioLogo, uploadGalleryImage } from '@/app/actions/studio/imageActions';
 import { useToast } from '@/components/ui/use-toast';
-import type { GalleryImage } from '@/app/actions/studio/imageActions';
+import type { ImageFilePreview, GalleryImagePreview } from '../validation/imagesSchema';
 
 /**
  * Images Step - Step 3
- * Optional logo and gallery images upload
+ * Client-side preview only (files uploaded after studio creation)
  */
 export function ImagesStep(): React.JSX.Element {
   const { state, updateImages, goToNextStep, setErrors } = useStudioRegistration();
   const { toast } = useToast();
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(
-    state.formData.images?.logoUrl || null
+  const [logoFile, setLogoFile] = useState<ImageFilePreview | null>(
+    state.formData.images?.logoFile || null
   );
-  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>(
-    (state.formData.images?.galleryImages as GalleryImage[]) || []
+  const [galleryFiles, setGalleryFiles] = useState<GalleryImagePreview[]>(
+    state.formData.images?.galleryFiles || []
   );
 
   /**
-   * Handle logo upload
+   * Cleanup preview URLs on unmount
    */
-  const handleLogoUpload = async (file: File): Promise<void> => {
-    if (!state.studioId) {
-      toast({
-        title: 'Studio not created yet',
-        description: 'Please complete previous steps first',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('logo', file);
-
-      const result = await uploadStudioLogo(formData, state.studioId);
-
-      if (result.success && result.url) {
-        setLogoUrl(result.url);
-        updateImages({ logoUrl: result.url, galleryImages });
-
-        toast({
-          title: 'Logo uploaded',
-          description: 'Your studio logo has been added successfully.',
-        });
-      } else {
-        toast({
-          title: 'Upload failed',
-          description: result.error || 'Failed to upload logo',
-          variant: 'destructive',
-        });
+  useEffect(() => {
+    return () => {
+      if (logoFile?.previewUrl) {
+        URL.revokeObjectURL(logoFile.previewUrl);
       }
-    } catch (error) {
-      console.error('Logo upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
+      galleryFiles.forEach((file) => {
+        if (file.previewUrl) {
+          URL.revokeObjectURL(file.previewUrl);
+        }
       });
-    } finally {
-      setIsUploading(false);
+    };
+  }, []);
+
+  /**
+   * Handle logo selection
+   */
+  const handleLogoSelect = (file: File): void => {
+    // Clean up old preview URL
+    if (logoFile?.previewUrl) {
+      URL.revokeObjectURL(logoFile.previewUrl);
     }
+
+    // Create new preview URL
+    const previewUrl = URL.createObjectURL(file);
+    const newLogoFile: ImageFilePreview = {
+      file,
+      previewUrl,
+    };
+
+    setLogoFile(newLogoFile);
+    updateImages({ logoFile: newLogoFile, galleryFiles });
+
+    toast({
+      title: 'Logo ausgewählt',
+      description: 'Dein Studio-Logo wurde ausgewählt.',
+    });
   };
 
   /**
    * Handle logo delete
    */
   const handleLogoDelete = (): void => {
-    setLogoUrl(null);
-    updateImages({ logoUrl: null, galleryImages });
+    // Clean up preview URL
+    if (logoFile?.previewUrl) {
+      URL.revokeObjectURL(logoFile.previewUrl);
+    }
+
+    setLogoFile(null);
+    updateImages({ logoFile: null, galleryFiles });
 
     toast({
-      title: 'Logo removed',
-      description: 'Your studio logo has been removed',
+      title: 'Logo entfernt',
+      description: 'Dein Studio-Logo wurde entfernt',
     });
   };
 
   /**
-   * Handle gallery image upload
+   * Handle gallery image selection
    */
-  const handleGalleryUpload = async (files: File[]): Promise<void> => {
-    if (!state.studioId) {
+  const handleGallerySelect = (files: File[]): void => {
+    // Validate max images
+    if (galleryFiles.length + files.length > 10) {
       toast({
-        title: 'Studio not created yet',
-        description: 'Please complete previous steps first',
+        title: 'Zu viele Bilder',
+        description: 'Maximal 10 Galerie-Bilder erlaubt',
         variant: 'destructive',
       });
       return;
     }
 
-    setIsUploading(true);
-    const uploadedUrls: string[] = [];
+    // Create preview URLs for new files
+    const newGalleryFiles: GalleryImagePreview[] = files.map((file, index) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      coverPhoto: galleryFiles.length === 0 && index === 0,
+      order: galleryFiles.length + index,
+    }));
 
-    try {
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append('image', file);
+    const updatedGallery = [...galleryFiles, ...newGalleryFiles];
+    setGalleryFiles(updatedGallery);
+    updateImages({ logoFile, galleryFiles: updatedGallery });
 
-        const result = await uploadGalleryImage(formData, state.studioId);
-
-        if (result.success && result.url) {
-          uploadedUrls.push(result.url);
-        } else {
-          toast({
-            title: 'Upload failed',
-            description: result.error || 'Failed to upload image',
-            variant: 'destructive',
-          });
-        }
-      }
-
-      if (uploadedUrls.length > 0) {
-        // Add new images to gallery
-        const newImages: GalleryImage[] = uploadedUrls.map((url, index) => ({
-          url,
-          coverPhoto: galleryImages.length === 0 && index === 0,
-          order: galleryImages.length + index,
-        }));
-
-        const updatedGallery = [...galleryImages, ...newImages];
-        setGalleryImages(updatedGallery);
-        updateImages({ logoUrl, galleryImages: updatedGallery });
-
-        toast({
-          title: `${uploadedUrls.length} photo${uploadedUrls.length > 1 ? 's' : ''} added`,
-          description: 'Gallery updated successfully',
-        });
-      }
-    } catch (error) {
-      console.error('Gallery upload error:', error);
-      toast({
-        title: 'Upload failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsUploading(false);
-    }
+    toast({
+      title: `${files.length} Bild${files.length > 1 ? 'er' : ''} ausgewählt`,
+      description: 'Galerie aktualisiert',
+    });
   };
 
   /**
    * Handle gallery image delete
    */
   const handleGalleryDelete = (index: number): void => {
-    const updatedGallery = galleryImages.filter((_, i) => i !== index);
+    const fileToDelete = galleryFiles[index];
+
+    // Clean up preview URL
+    if (fileToDelete?.previewUrl) {
+      URL.revokeObjectURL(fileToDelete.previewUrl);
+    }
+
+    const updatedGallery = galleryFiles.filter((_, i) => i !== index);
+
     // Reorder and reset cover photo
     const reorderedGallery = updatedGallery.map((img, i) => ({
       ...img,
@@ -165,21 +136,21 @@ export function ImagesStep(): React.JSX.Element {
       coverPhoto: i === 0,
     }));
 
-    setGalleryImages(reorderedGallery);
-    updateImages({ logoUrl, galleryImages: reorderedGallery });
+    setGalleryFiles(reorderedGallery);
+    updateImages({ logoFile, galleryFiles: reorderedGallery });
 
     toast({
-      title: 'Image deleted',
-      description: 'Image removed from gallery',
+      title: 'Bild gelöscht',
+      description: 'Bild aus Galerie entfernt',
     });
   };
 
   /**
    * Handle gallery reorder
    */
-  const handleGalleryReorder = (newOrder: GalleryImage[]): void => {
-    setGalleryImages(newOrder);
-    updateImages({ logoUrl, galleryImages: newOrder });
+  const handleGalleryReorder = (newOrder: GalleryImagePreview[]): void => {
+    setGalleryFiles(newOrder);
+    updateImages({ logoFile, galleryFiles: newOrder });
   };
 
   /**
@@ -197,98 +168,84 @@ export function ImagesStep(): React.JSX.Element {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-4"
     >
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="text-4xl">
-          <span>📷</span>
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900">Add Your Studio Photos</h2>
-        <p className="text-sm text-gray-600">
-          Help customers see your space (Optional - you can add later)
-        </p>
+      {/* Header - Compact */}
+      <div className="text-center space-y-1">
+        <h2 className="text-2xl font-bold text-gray-900">Studio-Bilder</h2>
+        <p className="text-sm text-gray-600">Optional - kann später hinzugefügt werden</p>
       </div>
 
-      {/* Logo Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Camera className="h-5 w-5 text-terracotta-600" />
-            Studio Logo
-            <span className="text-sm font-normal text-gray-500">(Optional)</span>
-          </CardTitle>
-          <CardDescription>A square logo helps customers recognize your studio</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* Compact Logo + Gallery in one card */}
+      <div className="space-y-3">
+        {/* Logo Section - Compact */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Camera className="h-4 w-4 text-terracotta-600" />
+              <span className="text-sm font-medium">Logo</span>
+              <span className="text-xs text-gray-500">(Optional)</span>
+            </div>
+            {logoFile && (
+              <span className="text-xs text-green-600">✓ Ausgewählt</span>
+            )}
+          </div>
           <LogoUpload
-            currentUrl={logoUrl}
-            onUpload={handleLogoUpload}
+            mode="preview"
+            logoFile={logoFile}
+            onSelect={handleLogoSelect}
             onDelete={handleLogoDelete}
-            isUploading={isUploading}
             studioName={state.formData.basicInfo.name || 'Studio'}
             studioId={state.studioId}
           />
-        </CardContent>
-      </Card>
+        </div>
 
-      <Separator />
-
-      {/* Gallery Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <ImageIcon className="h-5 w-5 text-terracotta-600" />
-            Gallery Photos
-            <span className="text-sm font-normal text-gray-500">(Optional - up to 10)</span>
-          </CardTitle>
-          <CardDescription>
-            Show your massage rooms, waiting area, and atmosphere
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+        {/* Gallery Section - Compact */}
+        <div className="border border-gray-200 rounded-lg p-3 bg-white">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <ImageIcon className="h-4 w-4 text-terracotta-600" />
+              <span className="text-sm font-medium">Galerie</span>
+              <span className="text-xs text-gray-500">(max. 10)</span>
+            </div>
+            {galleryFiles.length > 0 && (
+              <span className="text-xs text-green-600">
+                {galleryFiles.length} Bild{galleryFiles.length > 1 ? 'er' : ''}
+              </span>
+            )}
+          </div>
           <GalleryUpload
-            images={galleryImages}
-            onUpload={handleGalleryUpload}
+            mode="preview"
+            galleryFiles={galleryFiles}
+            onSelect={handleGallerySelect}
             onDelete={handleGalleryDelete}
             onReorder={handleGalleryReorder}
-            isUploading={isUploading}
             maxImages={10}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Guidelines */}
-      <Alert className="border-blue-200 bg-blue-50">
-        <Info className="h-4 w-4 text-blue-600" />
-        <AlertDescription>
-          <div className="text-sm space-y-1">
-            <p className="font-semibold text-gray-900">Image Guidelines:</p>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
-              <li>Logo: Square format, minimum 200x200 pixels</li>
-              <li>Gallery: Any size, horizontal recommended</li>
-              <li>Max 5MB per image</li>
-              <li>Formats: JPG, PNG, WebP</li>
-            </ul>
-          </div>
-        </AlertDescription>
-      </Alert>
+      {/* Compact tip */}
+      <div className="text-xs text-center text-gray-500 px-2">
+        JPG, PNG oder WebP • Max. 5MB pro Bild
+      </div>
 
       {/* Actions */}
-      <div className="flex flex-col gap-3 pt-2">
+      <div className="flex flex-col gap-2 pt-2">
         <Button
           onClick={handleContinue}
-          disabled={isUploading}
-          size="lg"
           style={{ backgroundColor: '#B56550' }}
-          className="w-full text-white hover:opacity-90 transition-all"
+          className="w-full h-12 text-white font-semibold rounded-xl hover:opacity-90 transition-all"
         >
-          Continue
-          <ArrowRight className="ml-2 h-4 w-4" />
+          Weiter
         </Button>
 
-        <Button variant="ghost" onClick={handleContinue} className="w-full text-gray-600">
-          Skip - Add Images Later
+        <Button
+          variant="ghost"
+          onClick={handleContinue}
+          className="w-full text-sm text-gray-600"
+        >
+          Überspringen
         </Button>
       </div>
     </motion.div>

@@ -248,6 +248,7 @@ export function ImagesSettings({
           </div>
 
           <LogoUpload
+            mode="upload"
             currentUrl={logoUrl || null}
             onUpload={handleLogoUpload}
             onDelete={handleLogoDelete}
@@ -267,6 +268,7 @@ export function ImagesSettings({
           </div>
 
           <GalleryUpload
+            mode="upload"
             images={galleryImages}
             onUpload={handleGalleryUpload}
             onDelete={handleGalleryDelete}

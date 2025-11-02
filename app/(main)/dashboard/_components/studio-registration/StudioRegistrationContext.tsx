@@ -9,7 +9,7 @@ import type {
 } from './validation/studioSchemas';
 import type { OpeningHoursFormData } from './validation/openingHoursSchema';
 import type { ServiceFormData } from './validation/servicesSchema';
-import type { ImagesStepData } from './validation/imagesSchema';
+import type { ImagesStepPreview } from './validation/imagesSchema';
 
 /**
  * Studio Registration State
@@ -19,7 +19,7 @@ export interface StudioRegistrationState {
   formData: {
     basicInfo: Partial<BasicInfoFormData>;
     address: Partial<AddressFormData>;
-    images?: Partial<ImagesStepData>; // Logo and gallery images
+    images?: Partial<ImagesStepPreview>; // Logo and gallery image files (preview only)
     contact: Partial<ContactFormData>;
     openingHours?: Partial<OpeningHoursFormData>;
     capacity?: number; // Treatment beds/rooms (1-10)
@@ -37,7 +37,7 @@ type StudioRegistrationAction =
   | { type: 'SET_STEP'; payload: number }
   | { type: 'UPDATE_BASIC_INFO'; payload: Partial<BasicInfoFormData> }
   | { type: 'UPDATE_ADDRESS'; payload: Partial<AddressFormData> }
-  | { type: 'UPDATE_IMAGES'; payload: Partial<ImagesStepData> }
+  | { type: 'UPDATE_IMAGES'; payload: Partial<ImagesStepPreview> }
   | { type: 'UPDATE_CONTACT'; payload: Partial<ContactFormData> }
   | { type: 'UPDATE_OPENING_HOURS'; payload: Partial<OpeningHoursFormData> }
   | { type: 'UPDATE_CAPACITY'; payload: number }
@@ -58,7 +58,7 @@ interface StudioRegistrationContextValue {
   goToPreviousStep: () => void;
   updateBasicInfo: (data: Partial<BasicInfoFormData>) => void;
   updateAddress: (data: Partial<AddressFormData>) => void;
-  updateImages: (data: Partial<ImagesStepData>) => void;
+  updateImages: (data: Partial<ImagesStepPreview>) => void;
   updateContact: (data: Partial<ContactFormData>) => void;
   updateOpeningHours: (data: Partial<OpeningHoursFormData>) => void;
   updateCapacity: (capacity: number) => void;
@@ -239,7 +239,7 @@ export function StudioRegistrationProvider({
     updateAddress: (data: Partial<AddressFormData>) => {
       dispatch({ type: 'UPDATE_ADDRESS', payload: data });
     },
-    updateImages: (data: Partial<ImagesStepData>) => {
+    updateImages: (data: Partial<ImagesStepPreview>) => {
       dispatch({ type: 'UPDATE_IMAGES', payload: data });
     },
     updateContact: (data: Partial<ContactFormData>) => {
