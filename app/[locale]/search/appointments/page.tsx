@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { SearchResults } from '@/components/search/SearchResults';
+import { SearchFilters } from '@/components/search/SearchFilters';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -15,6 +16,9 @@ type Props = {
     lng?: string;
     radius?: string;
     datetime?: string;
+    serviceType?: string;
+    minPrice?: string;
+    maxPrice?: string;
   }>;
 };
 
@@ -36,10 +40,29 @@ export default async function AppointmentSearchPage({ params, searchParams }: Pr
           </p>
         </div>
 
-        {/* Results */}
-        <Suspense fallback={<SearchResultsSkeleton />}>
-          <SearchResults searchParams={search} />
-        </Suspense>
+        {/* Desktop Layout: Sidebar + Results */}
+        <div className="lg:grid lg:grid-cols-[300px_1fr] lg:gap-8">
+          {/* Desktop Sidebar Filters (hidden on mobile) */}
+          <aside className="hidden lg:block">
+            <SearchFilters />
+          </aside>
+
+          {/* Main Content */}
+          <div className="space-y-6">
+            {/* Mobile Filter Button (hidden on desktop) */}
+            <div className="lg:hidden flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                Ergebnisse werden geladen...
+              </p>
+              <SearchFilters />
+            </div>
+
+            {/* Results */}
+            <Suspense fallback={<SearchResultsSkeleton />}>
+              <SearchResults searchParams={search} />
+            </Suspense>
+          </div>
+        </div>
       </div>
     </div>
   );

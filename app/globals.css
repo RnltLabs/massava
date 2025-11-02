@@ -218,3 +218,32 @@
   right: -80px;
   animation-delay: -14s;
 }
+
+/* Wellness-themed slider styling */
+.wellness-slider [role="slider"] {
+  background-color: oklch(0.55 0.12 35); /* Terracotta */
+  border: 2px solid hsl(var(--background));
+  box-shadow: 0 2px 8px oklch(0.55 0.12 35 / 0.2);
+  transition: all 0.2s ease;
+}
+
+.wellness-slider [role="slider"]:hover {
+  background-color: oklch(0.50 0.14 35);
+  box-shadow: 0 4px 12px oklch(0.55 0.12 35 / 0.3);
+  transform: scale(1.1);
+}
+
+.wellness-slider [role="slider"]:focus-visible {
+  outline: none;
+  ring: 2px solid oklch(0.55 0.12 35);
+  ring-offset: 2px;
+}
+
+.wellness-slider [data-orientation="horizontal"] {
+  background-color: hsl(var(--muted));
+  height: 6px;
+}
+
+.wellness-slider [data-orientation="horizontal"] > span {
+  background-color: oklch(0.55 0.12 35);
+}

@@ -6,44 +6,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MapPin, Clock, Phone, Mail, Calendar } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-interface TimeSlot {
-  id: string;
-  startTime: string;
-  endTime: string;
-  service: {
-    id: string;
-    name: string;
-    price: number;
-    duration: number;
-  } | null;
-}
-
-interface StudioResult {
-  id: string;
-  name: string;
-  description: string | null;
-  address: string;
-  city: string;
-  postalCode: string | null;
-  phone: string;
-  email: string;
-  distance: number;
-  services: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    price: number;
-    duration: number;
-  }>;
-  availableSlots: TimeSlot[];
-}
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { StudioAvatar } from '@/components/ui/studio-avatar';
+import { formatPriceLabel } from '@/lib/utils/priceAggregation';
+import type { SearchResultStudio } from '@/types/booking';
 
 interface SearchResultsResponse {
   success: boolean;
-  results: StudioResult[];
+  results: SearchResultStudio[];
   meta: {
     total: number;
     radius: number;
@@ -58,16 +34,59 @@ interface SearchResultsProps {
     lng?: string;
     radius?: string;
     datetime?: string;
+    serviceType?: string;
+    minPrice?: string;
+    maxPrice?: string;
   };
 }
 
+/**
+ * Helper function to format time from datetime string or Date object
+ */
+const formatTime = (datetime: string | Date): string => {
+  const date = typeof datetime === 'string' ? new Date(datetime) : datetime;
+  return format(date, 'HH:mm', { locale: de });
+};
+
+/**
+ * Skeleton Card Component for Loading State
+ */
+function SkeletonCard(): React.JSX.Element {
+  return (
+    <Card className="wellness-shadow p-6 animate-pulse">
+      <div className="flex items-start gap-4">
+        {/* Avatar skeleton */}
+        <div className="size-16 rounded-full bg-muted shrink-0" />
+
+        {/* Content skeleton */}
+        <div className="flex-1 space-y-2">
+          <div className="h-6 bg-muted rounded w-2/3" />
+          <div className="h-4 bg-muted rounded w-1/3" />
+          <div className="h-5 bg-muted rounded w-1/4" />
+        </div>
+      </div>
+
+      {/* Services skeleton */}
+      <div className="mt-4 h-4 bg-muted rounded w-full" />
+
+      {/* TimeSlots skeleton */}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-10 bg-muted rounded" />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 export function SearchResults({ searchParams }: SearchResultsProps) {
-  const [results, setResults] = useState<StudioResult[]>([]);
+  const router = useRouter();
+  const [results, setResults] = useState<SearchResultStudio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchResults = async () => {
+    const fetchResults = async (): Promise<void> => {
       try {
         setIsLoading(true);
         setError(null);
@@ -79,6 +98,9 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
         if (searchParams.lng) params.set('lng', searchParams.lng);
         if (searchParams.radius) params.set('radius', searchParams.radius);
         if (searchParams.datetime) params.set('datetime', searchParams.datetime);
+        if (searchParams.serviceType) params.set('serviceType', searchParams.serviceType);
+        if (searchParams.minPrice) params.set('minPrice', searchParams.minPrice);
+        if (searchParams.maxPrice) params.set('maxPrice', searchParams.maxPrice);
 
         const response = await fetch(`/api/search/appointments?${params.toString()}`);
 
@@ -95,156 +117,148 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
       }
     };
 
-    fetchResults();
+    void fetchResults();
   }, [searchParams]);
 
+  /**
+   * Handle booking slot click - navigate to booking page
+   */
+  const handleBookSlot = (studioId: string, slotId: string): void => {
+    router.push(`/booking/${studioId}/${slotId}`);
+  };
+
+  /**
+   * Navigate back to search form
+   */
+  const handleBackToSearch = (): void => {
+    router.back();
+  };
+
+  // Loading State
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div
-            key={i}
-            className="wellness-shadow rounded-3xl bg-card p-6 animate-pulse"
-          >
-            <div className="h-6 bg-muted rounded w-1/3 mb-4" />
-            <div className="h-4 bg-muted rounded w-2/3 mb-2" />
-            <div className="h-4 bg-muted rounded w-1/2" />
-          </div>
+          <SkeletonCard key={i} />
         ))}
       </div>
     );
   }
 
+  // Error State
   if (error) {
     return (
-      <div className="wellness-shadow rounded-3xl bg-card p-8 text-center">
-        <p className="text-destructive font-medium mb-2">Fehler beim Laden der Ergebnisse</p>
-        <p className="text-muted-foreground">{error}</p>
-      </div>
+      <Card className="wellness-shadow p-8 text-center">
+        <p className="text-destructive font-semibold mb-2">
+          Fehler beim Laden der Ergebnisse
+        </p>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <Button variant="outline" onClick={handleBackToSearch}>
+          Zurück zur Suche
+        </Button>
+      </Card>
     );
   }
 
+  // Empty State
   if (results.length === 0) {
     return (
-      <div className="wellness-shadow rounded-3xl bg-card p-8 text-center">
-        <MapPin className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-xl font-bold mb-2">Keine Studios gefunden</h3>
-        <p className="text-muted-foreground">
-          Leider konnten wir keine verfügbaren Termine in Ihrer Nähe finden.
-          Versuchen Sie es mit einem größeren Suchradius oder einem anderen Datum.
-        </p>
-      </div>
+      <Card className="wellness-shadow p-12 text-center">
+        <div className="max-w-md mx-auto">
+          <h3 className="text-xl font-bold mb-2">Keine verfügbaren Termine gefunden</h3>
+          <p className="text-muted-foreground mb-6">
+            Leider konnten wir keine Studios mit verfügbaren Terminen in Ihrer Nähe finden.
+            Versuchen Sie es mit einem größeren Suchradius oder einem anderen Zeitpunkt.
+          </p>
+          <Button variant="outline" onClick={handleBackToSearch}>
+            Suche anpassen
+          </Button>
+        </div>
+      </Card>
     );
   }
 
+  // Results Grid (Responsive: 1/2/3 columns)
   return (
-    <div className="space-y-6">
-      {results.map((studio) => (
-        <div
-          key={studio.id}
-          className="wellness-shadow rounded-3xl bg-card p-6 hover:shadow-lg transition-shadow"
-        >
-          {/* Studio Info */}
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2">{studio.name}</h2>
-              {studio.description && (
-                <p className="text-muted-foreground mb-3">{studio.description}</p>
-              )}
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {results.map((result) => {
+        const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
+        const logoUrl = result.logoUrl || null;
 
-              {/* Address */}
-              <div className="flex items-start gap-2 text-sm text-muted-foreground mb-2">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                <div>
-                  {studio.address}
-                  <br />
-                  {studio.postalCode} {studio.city}
-                </div>
-              </div>
+        return (
+          <Card
+            key={id}
+            className="wellness-shadow p-6 hover:shadow-lg transition-shadow flex flex-col"
+          >
+            {/* Header: Avatar + Studio Info */}
+            <div className="flex items-start gap-4 mb-4">
+              {/* Studio Avatar */}
+              <StudioAvatar
+                logoUrl={logoUrl}
+                studioName={name}
+                studioId={id}
+                size={64}
+                className="shrink-0"
+              />
 
-              {/* Contact */}
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4" />
-                  {studio.phone}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  {studio.email}
-                </div>
+              {/* Studio Name + Distance Badge */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg mb-2 line-clamp-2">{name}</h3>
+                <Badge variant="secondary" className="mb-2">
+                  {distance.toFixed(1)} km entfernt
+                </Badge>
+
+                {/* Price Label */}
+                <p className="text-lg font-semibold text-primary">
+                  {formatPriceLabel(minPrice)}
+                </p>
               </div>
             </div>
 
-            {/* Distance Badge */}
-            <div className="bg-primary/10 text-primary px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap ml-4">
-              {studio.distance} km
-            </div>
-          </div>
-
-          {/* Services */}
-          {studio.services.length > 0 && (
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Angebotene Services:</h3>
-              <div className="flex flex-wrap gap-2">
-                {studio.services.map((service) => (
-                  <div
-                    key={service.id}
-                    className="bg-muted px-3 py-1 rounded-full text-sm"
-                  >
-                    {service.name} - {service.price}€ ({service.duration} Min.)
-                  </div>
-                ))}
+            {/* Matched Services */}
+            {matchedServices.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {matchedServices.map((service) => service.name).join(' • ')}
+                </p>
               </div>
-            </div>
-          )}
-
-          {/* Available Time Slots */}
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              Verfügbare Termine ({studio.availableSlots.length})
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {studio.availableSlots.slice(0, 8).map((slot) => {
-                const startDate = new Date(slot.startTime);
-                const dateStr = startDate.toLocaleDateString('de-DE', {
-                  weekday: 'short',
-                  day: '2-digit',
-                  month: '2-digit',
-                });
-                const timeStr = startDate.toLocaleTimeString('de-DE', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                });
-
-                return (
-                  <Button
-                    key={slot.id}
-                    variant="outline"
-                    className="flex flex-col items-start gap-1 h-auto py-3 px-4 hover:bg-primary/10 hover:border-primary transition-colors"
-                  >
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {dateStr}
-                    </div>
-                    <div className="font-semibold">{timeStr}</div>
-                    {slot.service && (
-                      <div className="text-xs text-muted-foreground truncate w-full">
-                        {slot.service.name}
-                      </div>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-            {studio.availableSlots.length > 8 && (
-              <p className="text-sm text-muted-foreground mt-3">
-                + {studio.availableSlots.length - 8} weitere Termine verfügbar
-              </p>
             )}
-          </div>
-        </div>
-      ))}
+
+            {/* Available TimeSlots (Klickbar!) */}
+            {availableSlots.length > 0 && (
+              <div className="mt-auto">
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {availableSlots.slice(0, 6).map((slot) => (
+                    <Button
+                      key={slot.id}
+                      variant="outline"
+                      size="sm"
+                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors min-h-[48px]"
+                      onClick={() => handleBookSlot(id, slot.id)}
+                      aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
+                    >
+                      {formatTime(slot.startTime)}
+                    </Button>
+                  ))}
+                </div>
+
+                {/* View More Link */}
+                {availableSlots.length > 6 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="w-full justify-center gap-2 text-primary hover:text-primary/80"
+                    onClick={() => router.push(`/studios/${id}`)}
+                  >
+                    Alle Termine anzeigen
+                    <ArrowRight className="size-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+          </Card>
+        );
+      })}
     </div>
   );
 }
