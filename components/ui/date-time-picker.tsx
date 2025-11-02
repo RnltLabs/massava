@@ -307,14 +307,14 @@ export function DateTimePicker({
                 <div className="grid grid-cols-2 gap-2">
                   <Button
                     variant="outline"
-                    className="justify-start h-auto py-4 hover:bg-accent"
+                    className="justify-start h-auto py-4 hover:bg-accent overflow-hidden"
                     onClick={() => handleQuickDate('today')}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2 w-full min-w-0">
                       <Sun className="h-5 w-5 text-amber-500 shrink-0" />
-                      <div className="text-left min-w-0 flex-1">
-                        <div className="font-semibold">{t('today')}</div>
-                        <div className="text-sm text-muted-foreground break-words">
+                      <div className="text-left overflow-hidden flex-1">
+                        <div className="font-semibold truncate">{t('today')}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">
                           {formatQuickDate(new Date())}
                         </div>
                       </div>
@@ -323,14 +323,14 @@ export function DateTimePicker({
 
                   <Button
                     variant="outline"
-                    className="justify-start h-auto py-4 hover:bg-accent"
+                    className="justify-start h-auto py-4 hover:bg-accent overflow-hidden"
                     onClick={() => handleQuickDate('tomorrow')}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-2 w-full min-w-0">
                       <Sunrise className="h-5 w-5 text-orange-500 shrink-0" />
-                      <div className="text-left min-w-0 flex-1">
-                        <div className="font-semibold">{t('tomorrow')}</div>
-                        <div className="text-sm text-muted-foreground break-words">
+                      <div className="text-left overflow-hidden flex-1">
+                        <div className="font-semibold truncate">{t('tomorrow')}</div>
+                        <div className="text-xs text-muted-foreground line-clamp-1">
                           {formatQuickDate(addDays(new Date(), 1))}
                         </div>
                       </div>
