@@ -213,11 +213,11 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                 <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden">{name}</h3>
 
                 {/* Distance and Price in one row */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="secondary" className="max-w-full shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <Badge variant="secondary" className="shrink-0">
                     {distance.toFixed(1)} km entfernt
                   </Badge>
-                  <span className="text-base sm:text-lg font-semibold text-primary">
+                  <span className="text-lg sm:text-xl font-bold text-primary shrink-0">
                     {formatPriceLabel(minPrice)}
                   </span>
                 </div>
