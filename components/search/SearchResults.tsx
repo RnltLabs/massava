@@ -53,7 +53,7 @@ const formatTime = (datetime: string | Date): string => {
  */
 function SkeletonCard(): React.JSX.Element {
   return (
-    <Card className="wellness-shadow p-6 animate-pulse">
+    <Card className="wellness-shadow p-4 sm:p-6 animate-pulse overflow-hidden">
       <div className="flex items-start gap-4">
         {/* Avatar skeleton */}
         <div className="size-16 rounded-full bg-muted shrink-0" />
@@ -70,9 +70,9 @@ function SkeletonCard(): React.JSX.Element {
       <div className="mt-4 h-4 bg-muted rounded w-full" />
 
       {/* TimeSlots skeleton */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-10 bg-muted rounded" />
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-12 bg-muted rounded" />
         ))}
       </div>
     </Card>
@@ -137,7 +137,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
   // Loading State
   if (isLoading) {
     return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
         {[1, 2, 3].map((i) => (
           <SkeletonCard key={i} />
         ))}
@@ -180,7 +180,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
   // Results Grid (Responsive: 1/2/3 columns)
   return (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
       {results.map((result) => {
         const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
         const logoUrl = result.logoUrl || null;
@@ -188,7 +188,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
         return (
           <Card
             key={id}
-            className="wellness-shadow p-6 hover:shadow-lg transition-shadow flex flex-col"
+            className="wellness-shadow p-4 sm:p-6 hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
           >
             {/* Header: Avatar + Studio Info */}
             <div className="flex items-start gap-4 mb-4">
@@ -203,13 +203,13 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
               {/* Studio Name + Distance Badge */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-lg mb-2 line-clamp-2">{name}</h3>
-                <Badge variant="secondary" className="mb-2">
+                <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden">{name}</h3>
+                <Badge variant="secondary" className="mb-2 max-w-full">
                   {distance.toFixed(1)} km entfernt
                 </Badge>
 
                 {/* Price Label */}
-                <p className="text-lg font-semibold text-primary">
+                <p className="text-base sm:text-lg font-semibold text-primary">
                   {formatPriceLabel(minPrice)}
                 </p>
               </div>
@@ -218,7 +218,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
             {/* Matched Services */}
             {matchedServices.length > 0 && (
               <div className="mb-4">
-                <p className="text-sm text-muted-foreground line-clamp-2">
+                <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
                   {matchedServices.map((service) => service.name).join(' • ')}
                 </p>
               </div>
@@ -227,13 +227,13 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
             {/* Available TimeSlots (Klickbar!) */}
             {availableSlots.length > 0 && (
               <div className="mt-auto">
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {availableSlots.slice(0, 6).map((slot) => (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                  {availableSlots.slice(0, 3).map((slot) => (
                     <Button
                       key={slot.id}
                       variant="outline"
                       size="sm"
-                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors min-h-[48px]"
+                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-12 w-full text-sm font-medium"
                       onClick={() => handleBookSlot(id, slot.id)}
                       aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
                     >
@@ -243,7 +243,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                 </div>
 
                 {/* View More Link */}
-                {availableSlots.length > 6 && (
+                {availableSlots.length > 3 && (
                   <Button
                     variant="link"
                     size="sm"

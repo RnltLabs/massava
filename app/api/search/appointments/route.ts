@@ -96,6 +96,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
               ? {
                   startTime: {
                     gte: new Date(datetime),
+                    // Filter: Only slots on the same day
+                    lte: new Date(new Date(datetime).setHours(23, 59, 59, 999)),
                   },
                 }
               : {
