@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { Studio, Service, TimeSlot } from "@/app/generated/prisma"
+import type { Studio, Service, TimeSlot, BookingStatus } from "@/app/generated/prisma"
 import {
   bookingFormSchema,
   type BookingFormData,
@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
-import { StepReview } from "./StepReview"
+
 import { StepService } from "./StepService"
 import { StepConfirm } from "./StepConfirm"
 import { SuccessState } from "./SuccessState"
@@ -41,7 +41,7 @@ interface BookingSheetProps {
   onClose: () => void
 }
 
-type BookingStep = "review" | "service" | "confirm" | "success"
+type BookingStep = "service" | "confirm" | "success"
 
 /**
  * Booking Sheet Component - Mobile-First Optimized
@@ -89,12 +89,13 @@ export function BookingSheet({
   const { toast } = useToast()
   const isMobile = useMediaQuery("(max-width: 768px)")
 
-  const [currentStep, setCurrentStep] = useState<BookingStep>("review")
+  const [currentStep, setCurrentStep] = useState<BookingStep>("service")
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
     services[0]?.id || null
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingNumber, setBookingNumber] = useState<string>("")
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus | null>(null)
 
   // Form setup with react-hook-form + Zod validation
   const form = useForm<BookingFormData>({
@@ -113,15 +114,11 @@ export function BookingSheet({
 
   // Get current step number for progress indicator
   const getStepNumber = (step: BookingStep): number => {
-    const steps = { review: 1, service: 2, confirm: 3, success: 4 }
+    const steps = { service: 1, confirm: 2, success: 3 }
     return steps[step]
   }
 
   // Handle step navigation
-  const handleContinueFromReview = () => {
-    setCurrentStep("service")
-  }
-
   const handleServiceSelect = (serviceId: string) => {
     setSelectedServiceId(serviceId)
     form.setValue("serviceId", serviceId)
@@ -139,10 +136,6 @@ export function BookingSheet({
     setCurrentStep("confirm")
   }
 
-  const handleBackToReview = () => {
-    setCurrentStep("review")
-  }
-
   const handleBackToService = () => {
     setCurrentStep("service")
   }
@@ -158,11 +151,14 @@ export function BookingSheet({
         // Generate booking number for display
         const displayNumber = `MB-${result.bookingId.slice(0, 8).toUpperCase()}`
         setBookingNumber(displayNumber)
+        setBookingStatus((result.status as BookingStatus) || null)
         setCurrentStep("success")
 
         toast({
           title: "Buchung erfolgreich",
-          description: "Ihre Buchung wurde bestätigt",
+          description: result.status === "PENDING"
+            ? "Ihre Buchungsanfrage wurde gesendet"
+            : "Ihre Buchung wurde bestätigt",
         })
       } else {
         toast({
@@ -210,15 +206,7 @@ export function BookingSheet({
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
-      case "review":
-        return (
-          <StepReview
-            studio={studio}
-            timeSlot={timeSlot}
-            onContinue={handleContinueFromReview}
-            onCancel={handleCancel}
-          />
-        )
+      
 
       case "service":
         return (
@@ -227,7 +215,9 @@ export function BookingSheet({
             selectedServiceId={selectedServiceId}
             onServiceSelect={handleServiceSelect}
             onContinue={handleContinueFromService}
-            onBack={handleBackToReview}
+            onCancel={handleCancel}
+            timeSlot={timeSlot}
+            studio={studio}
           />
         )
 
@@ -256,6 +246,8 @@ export function BookingSheet({
             customerEmail={form.getValues("customerEmail")}
             onViewBooking={handleViewBooking}
             onNewSearch={handleNewSearch}
+            bookingStatus={bookingStatus}
+            isGuest={!form.getValues("customerId")}
           />
         )
 

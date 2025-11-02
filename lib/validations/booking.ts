@@ -39,6 +39,7 @@ export const bookingFormSchema = z.object({
       message:
         "Sie müssen der Verarbeitung von gesundheitsbezogenen Daten zustimmen (DSGVO Art. 9)",
     }),
+  customerId: z.string().cuid().nullable().optional(),
 })
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>

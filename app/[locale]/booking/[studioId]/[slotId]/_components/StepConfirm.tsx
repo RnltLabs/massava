@@ -2,7 +2,7 @@
 
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, Calendar, Clock, Info, Loader2 } from "lucide-react"
+import { ArrowLeft, Calendar, Clock, Info, Loader2, User } from "lucide-react"
 import type { Studio, Service, TimeSlot } from "@/app/generated/prisma"
 import { UseFormReturn } from "react-hook-form"
 import type { BookingFormData } from "@/lib/validations/booking"
@@ -22,7 +22,9 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useState } from "react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
 
 interface StepConfirmProps {
@@ -71,6 +73,19 @@ export function StepConfirm({
 }: StepConfirmProps) {
   const [isPolicyExpanded, setIsPolicyExpanded] = useState(false)
   const startTime = new Date(timeSlot.startTime)
+  
+  // Check authentication status
+  const { data: session, status } = useSession()
+  const isAuthenticated = status === 'authenticated'
+  
+  // Pre-fill form if logged in
+  useEffect(() => {
+    if (session?.user) {
+      form.setValue('customerName', session.user.name || '')
+      form.setValue('customerEmail', session.user.email || '')
+      // Phone would need to be in session.user if available
+    }
+  }, [session, form])
 
   return (
     <div className="flex flex-col h-full">
@@ -87,6 +102,29 @@ export function StepConfirm({
         </Button>
         <h3 className="text-xl font-semibold">Buchung bestätigen</h3>
       </div>
+
+      {/* Auth Status Alert */}
+      {isAuthenticated && session?.user && (
+        <Alert className="mb-4">
+          <User className="h-4 w-4" />
+          <AlertTitle>Angemeldet als</AlertTitle>
+          <AlertDescription>
+            {session.user.name} ({session.user.email})
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isAuthenticated && (
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertTitle>Tipp</AlertTitle>
+          <AlertDescription>
+            <a href="/auth/signin" className="underline font-medium">
+              Jetzt anmelden
+            </a> für schnellere zukünftige Buchungen
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Booking Summary */}
       <Card className="mb-6 wellness-shadow">
@@ -135,7 +173,7 @@ export function StepConfirm({
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold">Gesamt</span>
             <span className="text-2xl font-bold text-primary">
-              CHF {selectedService.price.toFixed(2)}
+              €{selectedService.price.toFixed(2)}
             </span>
           </div>
         </CardContent>
@@ -186,8 +224,8 @@ export function StepConfirm({
                   <Input
                     placeholder="Max Mustermann"
                     {...field}
-                    disabled={isSubmitting}
-                    className="h-12"
+                    disabled={isSubmitting || isAuthenticated}
+                    className={isAuthenticated ? "h-12 bg-muted" : "h-12"}
                   />
                 </FormControl>
                 <FormMessage />
@@ -207,8 +245,8 @@ export function StepConfirm({
                     type="email"
                     placeholder="max@beispiel.ch"
                     {...field}
-                    disabled={isSubmitting}
-                    className="h-12"
+                    disabled={isSubmitting || isAuthenticated}
+                    className={isAuthenticated ? "h-12 bg-muted" : "h-12"}
                   />
                 </FormControl>
                 <FormMessage />
