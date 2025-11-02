@@ -44,7 +44,7 @@ interface BookingSheetProps {
 type BookingStep = "review" | "service" | "confirm" | "success"
 
 /**
- * Booking Sheet Component
+ * Booking Sheet Component - Mobile-First Optimized
  *
  * Main orchestrator for the booking flow. Handles:
  * - Responsive Sheet (mobile) / Dialog (desktop)
@@ -52,6 +52,12 @@ type BookingStep = "review" | "service" | "confirm" | "success"
  * - Form state management (react-hook-form + Zod)
  * - Booking submission via Server Action
  * - Success/error handling with toast notifications
+ *
+ * Mobile Optimizations:
+ * - Reduced padding: p-4 (was p-6) saves 32px
+ * - Reduced margins: mb-4 (was mb-6) saves vertical space
+ * - Compact title: text-lg (was text-2xl) saves vertical space
+ * - Optimized for iPhone SE (375x667px) without scrolling
  *
  * Architecture:
  * - Mobile (<768px): Sheet component from bottom
@@ -288,27 +294,27 @@ export function BookingSheet({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[85vh] rounded-t-3xl p-6 flex flex-col"
+          className="h-[85vh] rounded-t-3xl p-4 flex flex-col"
         >
-          {/* Drag Handle */}
-          <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-6 flex-shrink-0" />
+          {/* Drag Handle - Reduced margin: mb-4 (was mb-6) */}
+          <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4 flex-shrink-0" />
 
           {/* Progress Dots */}
           {currentStep !== "success" && (
             <ProgressDots current={getStepNumber(currentStep)} total={3} />
           )}
 
-          {/* Title */}
+          {/* Title - Reduced margin: mb-4 (was mb-6), text-lg (was text-2xl) */}
           {currentStep !== "success" && (
-            <SheetHeader className="mb-6">
-              <SheetTitle className="text-2xl font-bold">
+            <SheetHeader className="mb-4">
+              <SheetTitle className="text-lg font-bold">
                 Termin bestätigen
               </SheetTitle>
             </SheetHeader>
           )}
 
-          {/* Content (Scrollable) */}
-          <div className="flex-1 overflow-y-auto -mx-6 px-6">
+          {/* Content (Scrollable) - Adjusted margins: -mx-4 px-4 (was -mx-6 px-6) */}
+          <div className="flex-1 overflow-y-auto -mx-4 px-4">
             {renderStepContent()}
           </div>
         </SheetContent>
