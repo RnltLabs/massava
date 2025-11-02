@@ -198,7 +198,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
             className="wellness-shadow p-3 sm:p-6 hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
           >
             {/* Header: Avatar + Studio Info */}
-            <div className="flex items-start gap-4 mb-1.5 sm:mb-4">
+            <div className="flex items-start gap-4 mb-0.5 sm:mb-4">
               {/* Studio Avatar */}
               <StudioAvatar
                 logoUrl={logoUrl}
@@ -226,7 +226,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
             {/* Matched Services */}
             {matchedServices.length > 0 && (
-              <div className="mb-2 sm:mb-3">
+              <div className="mb-1.5 sm:mb-3">
                 <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
                   {matchedServices.map((service) => service.name).join(' • ')}
                 </p>
