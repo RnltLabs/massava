@@ -120,13 +120,22 @@ export default async function StudioProfilePage({ params }: Props) {
                 <h2 className="text-2xl font-bold mb-6">{t('opening_hours')}</h2>
 
                 <div className="space-y-2">
-                  {Object.entries(studio.openingHours as Record<string, string>).map(
-                    ([day, hours]) => (
-                      <div key={day} className="flex justify-between py-2 border-b border-muted/20 last:border-0">
-                        <span className="font-medium capitalize">{t(`day_${day}`)}</span>
-                        <span className="text-muted-foreground">{hours}</span>
-                      </div>
-                    )
+                  {Object.entries(studio.openingHours as Record<string, { open: string; close: string } | string>).map(
+                    ([day, hours]) => {
+                      // Format hours: handle both object {open, close} and string formats
+                      const formattedHours = typeof hours === 'object' && hours !== null && 'open' in hours && 'close' in hours
+                        ? `${hours.open} - ${hours.close}`
+                        : typeof hours === 'string'
+                        ? hours
+                        : 'Geschlossen';
+
+                      return (
+                        <div key={day} className="flex justify-between py-2 border-b border-muted/20 last:border-0">
+                          <span className="font-medium capitalize">{t(`day_${day}`)}</span>
+                          <span className="text-muted-foreground">{formattedHours}</span>
+                        </div>
+                      );
+                    }
                   )}
                 </div>
               </div>
