@@ -10,8 +10,10 @@ import { Plus, X, Loader2, Sparkles } from 'lucide-react';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { registerStudio } from '@/app/actions/studio/registerStudio';
 import { createService } from '@/app/actions/studio/serviceActions';
+import { uploadStudioLogo, uploadGalleryImage } from '@/app/actions/studio/imageActions';
 import { serviceSchema, type ServiceFormData } from '../validation/servicesSchema';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/components/ui/use-toast';
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
 
@@ -22,6 +24,7 @@ const DURATION_OPTIONS = [15, 30, 45, 60, 75, 90, 105, 120, 150, 180, 210, 240];
 export function ServicesStep(): React.JSX.Element {
   const { state, updateServices, goToNextStep, setSubmitting, setStudioId, setErrors } =
     useStudioRegistration();
+  const { toast } = useToast();
 
   // Service form state (start with 1 empty service)
   const [services, setServices] = useState<ServiceFormData[]>(
@@ -153,16 +156,58 @@ export function ServicesStep(): React.JSX.Element {
     setErrors({});
 
     try {
-      const result = await registerStudio(completeData);
+      let studioId = state.studioId;
 
-      if (!result.success || !result.studioId) {
-        setErrors({ submit: result.error || 'Registration failed' });
-        setSubmitting(false);
-        return;
+      // Only create studio if it doesn't exist yet
+      if (!studioId) {
+        const result = await registerStudio(completeData);
+
+        if (!result.success || !result.studioId) {
+          setErrors({ submit: result.error || 'Registration failed' });
+          setSubmitting(false);
+          return;
+        }
+
+        // Save studio ID
+        studioId = result.studioId;
+        setStudioId(studioId);
       }
 
-      // Save studio ID
-      setStudioId(result.studioId);
+      // Upload images if they exist
+      const images = state.formData.images;
+      if (images && studioId) {
+        // Upload logo
+        if (images.logoFile) {
+          const logoFormData = new FormData();
+          logoFormData.append('logo', images.logoFile.file);
+
+          const logoResult = await uploadStudioLogo(logoFormData, studioId);
+          if (!logoResult.success) {
+            toast({
+              title: 'Logo upload fehlgeschlagen',
+              description: logoResult.error || 'Logo konnte nicht hochgeladen werden',
+              variant: 'destructive',
+            });
+          }
+        }
+
+        // Upload gallery images
+        if (images.galleryFiles && images.galleryFiles.length > 0) {
+          for (const galleryFile of images.galleryFiles) {
+            const galleryFormData = new FormData();
+            galleryFormData.append('image', galleryFile.file);
+
+            const galleryResult = await uploadGalleryImage(galleryFormData, studioId);
+            if (!galleryResult.success) {
+              toast({
+                title: 'Galerie-Upload fehlgeschlagen',
+                description: galleryResult.error || 'Bild konnte nicht hochgeladen werden',
+                variant: 'destructive',
+              });
+            }
+          }
+        }
+      }
 
       // If skipping services, go to success step
       if (skipServices) {
@@ -179,7 +224,7 @@ export function ServicesStep(): React.JSX.Element {
       );
 
       for (const service of validServices) {
-        const serviceResult = await createService(result.studioId, {
+        const serviceResult = await createService(studioId, {
           name: service.name,
           duration: service.duration,
           price: service.price,

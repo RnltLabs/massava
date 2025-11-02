@@ -3,17 +3,52 @@
  * All rights reserved.
  *
  * Massava - Rate Limiting Utilities
- * In-memory rate limiting for authentication endpoints
+ * Distributed rate limiting with Upstash Redis (with in-memory fallback)
  */
+
+import { Redis } from '@upstash/redis';
 
 interface RateLimitEntry {
   count: number;
   resetTime: number;
 }
 
-// In-memory store for rate limiting
-// Note: For production with multiple servers, use Redis (Upstash)
+// In-memory store for rate limiting (fallback for development)
 const rateLimitStore = new Map<string, RateLimitEntry>();
+
+// In-memory store for deletion rate limiting (fallback)
+const deletionAttempts = new Map<string, { count: number; resetAt: number }>();
+
+// Initialize Redis client (lazy initialization)
+let redis: Redis | null = null;
+
+/**
+ * Get Redis client instance (singleton pattern)
+ */
+function getRedisClient(): Redis | null {
+  if (redis) {
+    return redis;
+  }
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[rate-limit] UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN not set in production. Using in-memory fallback (NOT recommended).'
+      );
+    }
+    return null;
+  }
+
+  redis = new Redis({
+    url,
+    token,
+  });
+
+  return redis;
+}
 
 // Cleanup old entries every 5 minutes
 setInterval(() => {
@@ -21,6 +56,12 @@ setInterval(() => {
   for (const [key, entry] of rateLimitStore.entries()) {
     if (entry.resetTime < now) {
       rateLimitStore.delete(key);
+    }
+  }
+  // Also clean up deletion attempts
+  for (const [key, entry] of deletionAttempts.entries()) {
+    if (entry.resetAt < now) {
+      deletionAttempts.delete(key);
     }
   }
 }, 5 * 60 * 1000);
@@ -149,4 +190,123 @@ export function rateLimitErrorResponse(result: RateLimitResult) {
     limit: result.limit,
     remaining: result.remaining,
   };
+}
+
+/**
+ * In-memory deletion rate limiting (fallback for development)
+ */
+function checkInMemoryDeletionRateLimit(
+  userId: string,
+  maxAttempts: number,
+  windowSeconds: number
+): { allowed: boolean; error?: string; attemptsLeft?: number } {
+  const now = Date.now();
+  const userAttempts = deletionAttempts.get(userId);
+
+  if (!userAttempts || now > userAttempts.resetAt) {
+    // Reset or initialize
+    deletionAttempts.set(userId, {
+      count: 1,
+      resetAt: now + windowSeconds * 1000,
+    });
+    return { allowed: true, attemptsLeft: maxAttempts - 1 };
+  }
+
+  userAttempts.count += 1;
+
+  if (userAttempts.count > maxAttempts) {
+    const secondsLeft = Math.ceil((userAttempts.resetAt - now) / 1000);
+    const minutes = Math.ceil(secondsLeft / 60);
+    return {
+      allowed: false,
+      error: `Zu viele Löschversuche. Bitte versuchen Sie es in ${minutes} Minute${minutes === 1 ? '' : 'n'} erneut.`,
+    };
+  }
+
+  return { allowed: true, attemptsLeft: maxAttempts - userAttempts.count };
+}
+
+/**
+ * Check deletion rate limit for a user (production-ready with Upstash Redis)
+ *
+ * @param userId - User ID to check
+ * @returns Object with allowed status, error message if denied, and attempts left
+ *
+ * @example
+ * ```typescript
+ * const result = await checkDeletionRateLimit(userId);
+ * if (!result.allowed) {
+ *   return { success: false, error: result.error };
+ * }
+ * ```
+ */
+export async function checkDeletionRateLimit(userId: string): Promise<{
+  allowed: boolean;
+  error?: string;
+  attemptsLeft?: number;
+}> {
+  const MAX_ATTEMPTS = 3;
+  const WINDOW_SECONDS = 60 * 60; // 1 hour
+
+  const redisClient = getRedisClient();
+
+  // Fallback to in-memory if Redis not configured
+  if (!redisClient) {
+    return checkInMemoryDeletionRateLimit(userId, MAX_ATTEMPTS, WINDOW_SECONDS);
+  }
+
+  try {
+    const key = `studio:deletion:${userId}`;
+
+    // Increment counter
+    const count = await redisClient.incr(key);
+
+    // Set expiry on first attempt
+    if (count === 1) {
+      await redisClient.expire(key, WINDOW_SECONDS);
+    }
+
+    // Check if limit exceeded
+    if (count > MAX_ATTEMPTS) {
+      const ttl = await redisClient.ttl(key);
+      const minutes = Math.ceil(ttl / 60);
+      return {
+        allowed: false,
+        error: `Zu viele Löschversuche. Bitte versuchen Sie es in ${minutes} Minute${minutes === 1 ? '' : 'n'} erneut.`,
+      };
+    }
+
+    return {
+      allowed: true,
+      attemptsLeft: MAX_ATTEMPTS - count,
+    };
+  } catch (error) {
+    console.error('[rate-limit] Redis error, falling back to in-memory:', error);
+    // Fallback to in-memory on Redis errors
+    return checkInMemoryDeletionRateLimit(userId, MAX_ATTEMPTS, WINDOW_SECONDS);
+  }
+}
+
+/**
+ * Reset deletion rate limit for a user
+ * Useful for testing or manual admin actions
+ *
+ * @param userId - User ID to reset
+ */
+export async function resetDeletionRateLimit(userId: string): Promise<void> {
+  const redisClient = getRedisClient();
+
+  if (!redisClient) {
+    deletionAttempts.delete(userId);
+    return;
+  }
+
+  try {
+    const key = `studio:deletion:${userId}`;
+    await redisClient.del(key);
+  } catch (error) {
+    console.error('[rate-limit] Error resetting rate limit:', error);
+    // Also clear in-memory fallback
+    deletionAttempts.delete(userId);
+  }
 }
