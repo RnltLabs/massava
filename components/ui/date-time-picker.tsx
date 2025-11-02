@@ -532,16 +532,16 @@ export function DateTimePicker({
           <SheetContent
             side="bottom"
             className={cn(
-              "h-[85vh] rounded-t-2xl p-0",
+              "h-auto max-h-[90vh] rounded-t-3xl",
               "flex flex-col"
             )}
           >
-            <SheetHeader className="px-6 py-4 border-b">
-              <SheetTitle>
+            <SheetHeader className="px-6 pt-6 pb-4">
+              <SheetTitle className="text-xl font-bold">
                 {step === 'date' ? t('selectDate') : t('selectTime')}
               </SheetTitle>
             </SheetHeader>
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
               {step === 'date' && renderDateSelection()}
               {step === 'time' && renderTimeSelection()}
               {step === 'custom-time' && renderCustomTimeSelection()}
