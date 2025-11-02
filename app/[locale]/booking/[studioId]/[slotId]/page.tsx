@@ -1,11 +1,10 @@
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, AlertCircle } from "lucide-react"
 import { prisma } from "@/lib/prisma"
-import { StudioInfoCard } from "@/components/booking/StudioInfoCard"
-import { BookingForm } from "@/components/booking/BookingForm"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { BookingPageClient } from "./_components/BookingPageClient"
 
 interface BookingPageProps {
   params: Promise<{
@@ -13,28 +12,40 @@ interface BookingPageProps {
     studioId: string
     slotId: string
   }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
 /**
- * Booking Page
+ * Booking Page (Mobile-First Redesign)
  *
- * Main booking page where customers complete their booking.
- * Shows studio information and booking form side-by-side on desktop.
+ * Server component that fetches booking data and renders a mobile-first
+ * booking experience using Sheet (mobile) / Dialog (desktop).
+ *
+ * Architecture:
+ * - Server Component: Data fetching + validation
+ * - Client Component: Interactive booking flow (BookingPageClient)
  *
  * Flow:
  * 1. Fetch studio + services
  * 2. Fetch time slot
  * 3. Validate availability
- * 4. Show booking form
- * 5. On submit → createBooking action → redirect to confirmation
+ * 4. Open booking sheet automatically
+ * 5. 3-step progressive flow (review → service → confirm → success)
+ *
+ * Mobile-First Design:
+ * - Sheet component slides from bottom (mobile)
+ * - Dialog centered modal (desktop)
+ * - Touch-optimized (56px buttons)
+ * - Wellness aesthetic with terracotta colors
  *
  * Error Cases:
  * - Studio not found → 404
  * - Time slot not found → 404
- * - Time slot unavailable/booked → Show error message
+ * - Time slot unavailable/booked → Show error message + redirect
  */
-export default async function BookingPage({ params }: BookingPageProps) {
+export default async function BookingPage({ params, searchParams }: BookingPageProps) {
   const { locale, studioId, slotId } = await params
+  const search = await searchParams
 
   // Fetch Studio with Services
   const studio = await prisma.studio.findUnique({
@@ -59,7 +70,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
   // Error Handling: TimeSlot Unavailable
   if (!timeSlot.isAvailable || timeSlot.isBooked) {
     return (
-      <div className="container mx-auto py-12 max-w-2xl">
+      <div className="container mx-auto py-12 max-w-2xl px-4">
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Zeitslot nicht verfügbar</AlertTitle>
@@ -82,7 +93,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
   // Error Handling: No Services Available
   if (studio.services.length === 0) {
     return (
-      <div className="container mx-auto py-12 max-w-2xl">
+      <div className="container mx-auto py-12 max-w-2xl px-4">
         <Alert variant="default" className="mb-6">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Keine Leistungen verfügbar</AlertTitle>
@@ -103,59 +114,15 @@ export default async function BookingPage({ params }: BookingPageProps) {
     )
   }
 
+  // Render Mobile-First Booking Sheet
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Back Button */}
-      <div className="mb-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/search/appointments">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Zurück zur Terminsuche
-          </Link>
-        </Button>
-      </div>
-
-      {/* Page Title */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Termin buchen</h1>
-        <p className="text-muted-foreground mt-2">
-          Bitte bestätigen Sie Ihre Buchung bei {studio.name}
-        </p>
-      </div>
-
-      {/* Two-Column Layout (responsive) */}
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Left: Studio Info (sticky on desktop) */}
-        <div>
-          <StudioInfoCard studio={studio} timeSlot={timeSlot} />
-        </div>
-
-        {/* Right: Booking Form */}
-        <div>
-          <BookingForm
-            studioId={studioId}
-            slotId={slotId}
-            services={studio.services}
-            preselectedTime={new Date(timeSlot.startTime)}
-          />
-        </div>
-      </div>
-
-      {/* Legal Disclaimer */}
-      <div className="mt-8 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
-        <p>
-          Durch die Buchung akzeptieren Sie unsere{" "}
-          <Link href="/terms" className="underline hover:text-primary">
-            Allgemeinen Geschäftsbedingungen
-          </Link>{" "}
-          und{" "}
-          <Link href="/privacy" className="underline hover:text-primary">
-            Datenschutzerklärung
-          </Link>
-          . Ihre Daten werden gemäß DSGVO verarbeitet.
-        </p>
-      </div>
-    </div>
+    <BookingPageClient
+      studio={studio}
+      services={studio.services}
+      timeSlot={timeSlot}
+      studioId={studioId}
+      slotId={slotId}
+    />
   )
 }
 
