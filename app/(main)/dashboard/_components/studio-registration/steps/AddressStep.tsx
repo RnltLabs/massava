@@ -7,9 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
 import { addressSchema } from '../validation/studioSchemas';
-import { cn } from '@/lib/utils';
 import { AddressAutocomplete } from '../components/AddressAutocomplete';
-import { CountrySelect } from '../components/CountrySelect';
 
 /**
  * Address Step - Step 2
@@ -178,19 +176,29 @@ export function AddressStep(): React.JSX.Element {
 
       {/* Form */}
       <div className="space-y-4">
-        {/* Smart Address Autocomplete */}
-        <AddressAutocomplete
-          value={street}
-          onChange={setStreet}
-          onAddressSelect={handleAddressSelect}
-          onBlur={() => handleBlur('street')}
-          error={touched.street ? localErrors.street : undefined}
-          required
-        />
-
-        {/* Address Line 2 */}
+        {/* Smart Address Autocomplete - fills all fields automatically */}
         <div className="space-y-2">
-          <Label htmlFor="line2">Adresszusatz (Optional)</Label>
+          <Label className="text-sm font-semibold text-gray-700">
+            Studio-Adresse <span className="text-red-500">*</span>
+          </Label>
+          <AddressAutocomplete
+            value={street}
+            onChange={setStreet}
+            onAddressSelect={handleAddressSelect}
+            onBlur={() => handleBlur('street')}
+            error={touched.street ? localErrors.street : undefined}
+            required
+          />
+          <p className="text-xs text-gray-500">
+            Beginne zu tippen und wähle deine Adresse aus den Vorschlägen
+          </p>
+        </div>
+
+        {/* Address Line 2 - Optional */}
+        <div className="space-y-2">
+          <Label htmlFor="line2" className="text-sm font-semibold text-gray-700">
+            Adresszusatz (Optional)
+          </Label>
           <Input
             id="line2"
             name="line2"
@@ -199,95 +207,21 @@ export function AddressStep(): React.JSX.Element {
             value={line2}
             onChange={(e) => setLine2(e.target.value)}
             className="focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100"
-            placeholder="Stockwerk, Gebäude, etc."
+            placeholder="z.B. 2. OG, Hinterhaus, etc."
           />
         </div>
 
-        {/* City and Postal Code - Two Column Layout */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* City */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="city"
-              className="after:content-['*'] after:ml-0.5 after:text-red-500"
-            >
-              Stadt
-            </Label>
-            <Input
-              id="city"
-              name="city"
-              type="text"
-              autoComplete="address-level2"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              onBlur={() => handleBlur('city')}
-              required
-              className={cn(
-                'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-                touched.city &&
-                  localErrors.city &&
-                  'border-red-500 focus:border-red-500 focus:ring-red-100'
-              )}
-              placeholder="Karlsruhe"
-              aria-invalid={touched.city && !!localErrors.city}
-              aria-describedby={
-                touched.city && localErrors.city ? 'city-error' : undefined
-              }
-            />
-            {touched.city && localErrors.city && (
-              <p id="city-error" className="text-sm text-red-600" role="alert">
-                {localErrors.city}
-              </p>
-            )}
+        {/* Hidden/Read-only fields - auto-filled by autocomplete */}
+        {(city || postalCode || country !== 'Deutschland') && (
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+            <p className="text-xs font-semibold text-gray-600 mb-2">Automatisch erkannt:</p>
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+              {city && <div><span className="font-medium">Stadt:</span> {city}</div>}
+              {postalCode && <div><span className="font-medium">PLZ:</span> {postalCode}</div>}
+              {country !== 'Deutschland' && <div className="col-span-2"><span className="font-medium">Land:</span> {country}</div>}
+            </div>
           </div>
-
-          {/* Postal Code */}
-          <div className="space-y-2">
-            <Label
-              htmlFor="postalCode"
-              className="after:content-['*'] after:ml-0.5 after:text-red-500"
-            >
-              Postleitzahl
-            </Label>
-            <Input
-              id="postalCode"
-              name="postalCode"
-              type="text"
-              autoComplete="postal-code"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              onBlur={() => handleBlur('postalCode')}
-              required
-              className={cn(
-                'focus:border-terracotta-600 focus:ring-2 focus:ring-terracotta-100',
-                touched.postalCode &&
-                  localErrors.postalCode &&
-                  'border-red-500 focus:border-red-500 focus:ring-red-100'
-              )}
-              placeholder="76133"
-              aria-invalid={touched.postalCode && !!localErrors.postalCode}
-              aria-describedby={
-                touched.postalCode && localErrors.postalCode
-                  ? 'postalCode-error'
-                  : undefined
-              }
-            />
-            {touched.postalCode && localErrors.postalCode && (
-              <p id="postalCode-error" className="text-sm text-red-600" role="alert">
-                {localErrors.postalCode}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Country Dropdown */}
-        <CountrySelect
-          value={country}
-          onChange={setCountry}
-          onBlur={() => handleBlur('country')}
-          error={touched.country ? localErrors.country : undefined}
-          required
-        />
+        )}
       </div>
 
       {/* Continue Button */}

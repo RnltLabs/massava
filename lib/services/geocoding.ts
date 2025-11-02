@@ -24,6 +24,8 @@ export interface AddressSuggestion {
   postalCode: string;
   country: string;
   displayText: string;
+  lat: number;
+  lng: number;
 }
 
 /**
@@ -93,7 +95,7 @@ const PHOTON_CONFIG = {
  * @returns Transformed address suggestion or null if invalid
  */
 function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | null {
-  const { properties } = feature;
+  const { properties, geometry } = feature;
 
   // Extract street information (prefer 'street' field, fallback to 'name')
   const streetName = properties.street || properties.name || '';
@@ -114,9 +116,20 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
   // Extract country
   const country = properties.country || 'Deutschland';
 
+  // Extract coordinates (Photon returns [longitude, latitude])
+  const [lng, lat] = geometry.coordinates;
+
   // Validate required fields
   if (!street || !city) {
     logger.debug('Invalid Photon feature: missing required fields', {
+      properties,
+    });
+    return null;
+  }
+
+  // Validate coordinates
+  if (typeof lat !== 'number' || typeof lng !== 'number') {
+    logger.debug('Invalid Photon feature: missing coordinates', {
       properties,
     });
     return null;
@@ -133,6 +146,8 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
     postalCode: postalCode.trim(),
     country: country.trim(),
     displayText,
+    lat,
+    lng,
   };
 }
 

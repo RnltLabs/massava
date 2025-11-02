@@ -6,6 +6,7 @@
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { SearchResults } from '@/components/search/SearchResults';
+import { SearchFilters } from '@/components/search/SearchFilters';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -15,6 +16,9 @@ type Props = {
     lng?: string;
     radius?: string;
     datetime?: string;
+    serviceType?: string;
+    minPrice?: string;
+    maxPrice?: string;
   }>;
 };
 
@@ -24,22 +28,26 @@ export default async function AppointmentSearchPage({ params, searchParams }: Pr
   const t = await getTranslations({ locale, namespace: 'search' });
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            {t('title', { location: search.location || 'Ihrer Nähe' })}
-          </h1>
-          <p className="text-muted-foreground">
-            {t('subtitle', { radius: search.radius || '20' })}
-          </p>
-        </div>
+    <div className="min-h-screen">
+      {/* Desktop Layout: Sidebar + Results */}
+      <div className="max-w-7xl mx-auto lg:grid lg:grid-cols-[300px_1fr] lg:gap-8 lg:px-8">
+        {/* Desktop Sidebar Filters (hidden on mobile) */}
+        <aside className="hidden lg:block lg:py-8">
+          <SearchFilters />
+        </aside>
 
-        {/* Results */}
-        <Suspense fallback={<SearchResultsSkeleton />}>
-          <SearchResults searchParams={search} />
-        </Suspense>
+        {/* Main Content */}
+        <div className="px-4 py-6 sm:px-6 lg:px-0 lg:py-8">
+          {/* Mobile Filter Button (visible on mobile only) */}
+          <div className="lg:hidden mb-4">
+            <SearchFilters />
+          </div>
+
+          {/* Results */}
+          <Suspense fallback={<SearchResultsSkeleton />}>
+            <SearchResults searchParams={search} />
+          </Suspense>
+        </div>
       </div>
     </div>
   );
