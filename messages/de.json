@@ -1,4 +1,9 @@
 {
+  "search": {
+    "title": "Verfügbare Termine in {location}",
+    "subtitle": "Im Umkreis von {radius} km",
+    "resultsCount": "{count, plural, =0 {Keine Ergebnisse} one {1 Ergebnis} other {# Ergebnisse}}"
+  },
   "navigation": {
     "openMenu": "Menü öffnen",
     "welcome": "Willkommen bei Massava",
