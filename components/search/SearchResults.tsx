@@ -208,17 +208,19 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                 className="shrink-0"
               />
 
-              {/* Studio Name + Distance Badge */}
+              {/* Studio Name + Distance & Price */}
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden">{name}</h3>
-                <Badge variant="secondary" className="mb-2 max-w-full">
-                  {distance.toFixed(1)} km entfernt
-                </Badge>
 
-                {/* Price Label */}
-                <p className="text-base sm:text-lg font-semibold text-primary">
-                  {formatPriceLabel(minPrice)}
-                </p>
+                {/* Distance and Price in one row */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary" className="max-w-full shrink-0">
+                    {distance.toFixed(1)} km entfernt
+                  </Badge>
+                  <span className="text-base sm:text-lg font-semibold text-primary">
+                    {formatPriceLabel(minPrice)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -234,13 +236,13 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
             {/* Available TimeSlots (Klickbar!) */}
             {futureSlots.length > 0 && (
               <div className="mt-auto">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 mb-3">
                   {futureSlots.slice(0, 3).map((slot) => (
                     <Button
                       key={slot.id}
                       variant="outline"
                       size="sm"
-                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-12 w-full text-sm font-medium"
+                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-10 sm:h-12 w-full text-sm font-medium"
                       onClick={() => handleBookSlot(id, slot.id)}
                       aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
                     >
