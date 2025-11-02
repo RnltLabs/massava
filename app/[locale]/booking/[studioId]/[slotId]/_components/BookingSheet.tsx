@@ -304,9 +304,9 @@ export function BookingSheet({
             <ProgressDots current={getStepNumber(currentStep)} total={3} />
           )}
 
-          {/* Title - Reduced margin: mb-4 (was mb-6), text-lg (was text-2xl) */}
+          {/* Title - No bottom margin, text-lg (was text-2xl) for space efficiency */}
           {currentStep !== "success" && (
-            <SheetHeader className="mb-4">
+            <SheetHeader className="mb-2">
               <SheetTitle className="text-lg font-bold">
                 Termin bestätigen
               </SheetTitle>

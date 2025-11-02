@@ -48,8 +48,8 @@ export function StepReview({
 
   return (
     <div className="flex flex-col h-full">
-      {/* Content - Reduced spacing: space-y-4 (was space-y-6), py-4 (was py-6) */}
-      <div className="flex-1 space-y-4 py-4">
+      {/* Content - Minimal spacing: space-y-3 (was space-y-6), py-2 (was py-6) for maximum space efficiency */}
+      <div className="flex-1 space-y-3 py-2">
         {/* Unified Card - Combined Studio Info + Date/Time */}
         <Card className="bg-primary/5 border-primary/20 wellness-shadow">
           <CardContent className="p-3 space-y-3">
