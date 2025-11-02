@@ -118,15 +118,28 @@ export function LocationSearchAutocomplete({
   /**
    * Handle location selection
    *
-   * Extracts the location name (city) and coordinates from the suggestion.
+   * Extracts the full address and coordinates from the suggestion.
    */
   const handleSelectSuggestion = (suggestion: AddressSuggestion): void => {
-    const locationName = suggestion.city || suggestion.street;
-    onChange(locationName);
+    // Build full address: "Lachnerstraße 12, 76131 Karlsruhe"
+    const addressParts: string[] = [];
+
+    if (suggestion.street) {
+      addressParts.push(suggestion.street);
+    }
+
+    if (suggestion.postalCode && suggestion.city) {
+      addressParts.push(`${suggestion.postalCode} ${suggestion.city}`);
+    } else if (suggestion.city) {
+      addressParts.push(suggestion.city);
+    }
+
+    const fullAddress = addressParts.join(', ');
+    onChange(fullAddress);
 
     // Use coordinates from the suggestion (already fetched by geocoding service)
     onLocationSelect({
-      location: locationName,
+      location: fullAddress,
       lat: suggestion.lat,
       lng: suggestion.lng,
     });
@@ -239,9 +252,11 @@ export function LocationSearchAutocomplete({
           className="absolute z-50 w-full mt-2 bg-card border-2 border-muted rounded-xl shadow-lg max-h-60 overflow-y-auto"
         >
           {suggestions.map((suggestion, index) => {
-            const displayLocation = suggestion.city || suggestion.street;
-            const displaySubtext = suggestion.postalCode
-              ? `${suggestion.postalCode}${suggestion.city && suggestion.street ? `, ${suggestion.city}` : ''}`
+            // Show full street name in main line
+            const displayLocation = suggestion.street || suggestion.city;
+            // Show postal code + city in subtext
+            const displaySubtext = suggestion.postalCode && suggestion.city
+              ? `${suggestion.postalCode}, ${suggestion.city}`
               : suggestion.city;
 
             return (

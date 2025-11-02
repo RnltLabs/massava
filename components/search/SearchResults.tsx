@@ -185,6 +185,13 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
         const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
         const logoUrl = result.logoUrl || null;
 
+        // Filter out past slots (client-side safety check)
+        const now = new Date();
+        const futureSlots = availableSlots.filter((slot) => {
+          const slotTime = new Date(slot.startTime);
+          return slotTime > now;
+        });
+
         return (
           <Card
             key={id}
@@ -225,10 +232,10 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
             )}
 
             {/* Available TimeSlots (Klickbar!) */}
-            {availableSlots.length > 0 && (
+            {futureSlots.length > 0 && (
               <div className="mt-auto">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
-                  {availableSlots.slice(0, 3).map((slot) => (
+                  {futureSlots.slice(0, 3).map((slot) => (
                     <Button
                       key={slot.id}
                       variant="outline"
@@ -243,7 +250,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                 </div>
 
                 {/* View More Link */}
-                {availableSlots.length > 3 && (
+                {futureSlots.length > 3 && (
                   <Button
                     variant="link"
                     size="sm"
