@@ -310,11 +310,11 @@ export function DateTimePicker({
                     className="justify-start h-auto py-4 hover:bg-accent"
                     onClick={() => handleQuickDate('today')}
                   >
-                    <div className="flex items-center gap-3">
-                      <Sun className="h-5 w-5 text-amber-500" />
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Sun className="h-5 w-5 text-amber-500 shrink-0" />
+                      <div className="text-left min-w-0 flex-1">
                         <div className="font-semibold">{t('today')}</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground break-words">
                           {formatQuickDate(new Date())}
                         </div>
                       </div>
@@ -326,11 +326,11 @@ export function DateTimePicker({
                     className="justify-start h-auto py-4 hover:bg-accent"
                     onClick={() => handleQuickDate('tomorrow')}
                   >
-                    <div className="flex items-center gap-3">
-                      <Sunrise className="h-5 w-5 text-orange-500" />
-                      <div className="text-left">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Sunrise className="h-5 w-5 text-orange-500 shrink-0" />
+                      <div className="text-left min-w-0 flex-1">
                         <div className="font-semibold">{t('tomorrow')}</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-muted-foreground break-words">
                           {formatQuickDate(addDays(new Date(), 1))}
                         </div>
                       </div>
