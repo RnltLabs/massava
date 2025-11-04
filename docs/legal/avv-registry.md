@@ -19,7 +19,7 @@ These agreements are mandatory under GDPR Art. 28 when engaging third-party proc
 
 | Processor | Type | Signed Date | Contract Number | File Path | Review Date | Status | Notes |
 |-----------|------|-------------|-----------------|-----------|-------------|--------|-------|
-| Hetzner Online GmbH | AVV | _[TO BE FILLED]_ | _[TO BE FILLED]_ | `docs/legal/avv-contracts/hetzner-avv-signed.pdf` | _[TO BE FILLED]_ | Pending | Hosting & Infrastructure |
+| Hetzner Online GmbH | AVV | 2025-11-04 | HET-AVV-2025-11-04 | `docs/legal/avv-contracts/hetzner-avv-signed.pdf` | 2026-11-04 | Active | Hosting & Infrastructure, includes health data (Art. 9) |
 | Stripe, Inc. | DPA | _[TO BE FILLED]_ | N/A | `docs/legal/avv-contracts/stripe-dpa-signed.pdf` | _[TO BE FILLED]_ | Pending | Payment Processing |
 
 ### Legend
