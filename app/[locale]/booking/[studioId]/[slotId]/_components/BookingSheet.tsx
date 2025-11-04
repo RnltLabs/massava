@@ -147,16 +147,25 @@ export function BookingSheet({
 
   // Handle booking submission - WITH AUTH CHECK
   const handleSubmit = async (data: BookingFormData) => {
+    console.log("🔍 handleSubmit called", { session, data })
+
     // If not logged in, show auth modal instead of booking immediately
     if (!session?.user) {
+      console.log("❌ No session, showing auth modal")
       setShowAuthModal(true)
       return
     }
 
+    console.log("✅ User is logged in, creating booking", session.user)
+
+    // Check if user is a customer (userType === 'customer')
+    // If they're a studio owner, treat as guest (no customerId linking)
+    const isCustomer = session.user.userType === 'customer'
+
     // If logged in, proceed with booking directly
     await createBookingNow({
       ...data,
-      customerId: session.user.id,
+      customerId: isCustomer ? session.user.id : null, // Only link if actual customer
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",
