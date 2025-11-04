@@ -4,10 +4,10 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
-import { Clock, MapPin, TrendingUp, Store } from 'lucide-react';
+import { Clock, MapPin, TrendingUp } from 'lucide-react';
 import { auth } from '@/auth';
 import { SearchWidget } from '@/components/SearchWidget';
+import { Footer } from '@/components/Footer';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -16,7 +16,6 @@ type Props = {
 export default async function Home({ params }: Props) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'home' });
-  const tNav = await getTranslations({ locale, namespace: 'navigation' });
   const session = await auth();
 
   return (
@@ -199,67 +198,8 @@ export default async function Home({ params }: Props) {
         </div>
       </section>
 
-      {/* Studio Registration CTA Section */}
-      <section className="relative py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto wellness-shadow rounded-3xl bg-card p-12">
-          <div className="text-center mb-8">
-            <div className="bg-accent/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <Store className="h-10 w-10 text-accent" />
-            </div>
-            <h2 className="text-3xl font-bold mb-4">{tNav('studioOwnerTitle')}</h2>
-            <p className="text-lg text-muted-foreground mb-8">{tNav('studioOwnerDescription')}</p>
-          </div>
-          <div className="text-center">
-            <Link
-              href={`/${locale}/studios/register`}
-              className="bg-accent hover:bg-accent/90 text-primary-foreground font-semibold py-4 px-8 rounded-2xl inline-flex items-center gap-2 transition-all wellness-shadow hover:shadow-lg"
-            >
-              {tNav('registerStudioCta')}
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Footer */}
-      <footer className="relative py-12 px-4 sm:px-6 lg:px-8 border-t border-muted/20">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Massava</h3>
-              <p className="text-sm text-muted-foreground">{t('footer_tagline')}</p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">{t('footer_for_guests')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_how_it_works')}</a></li>
-                <li><Link href={`/${locale}/studios`} className="hover:text-primary transition-colors">{t('footer_find_studios')}</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">{t('footer_for_studios')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href={`/${locale}/studios/register`} className="hover:text-primary transition-colors">{t('footer_register_studio')}</Link></li>
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_pricing')}</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">{t('footer_legal')}</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="https://rnltlabs.de/imprint" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">{t('footer_imprint')}</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_privacy')}</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">{t('footer_terms')}</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="text-center text-sm text-muted-foreground pt-8 border-t border-muted/20">
-            {t('footer_copyright')}
-          </div>
-        </div>
-      </footer>
+      <Footer locale={locale} />
     </div>
   );
 }

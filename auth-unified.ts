@@ -279,6 +279,71 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
 
+    async redirect({ url, baseUrl }) {
+      // Handle role-based redirects after sign-in
+      // This callback runs after successful authentication
+      try {
+        const urlObj = new URL(url, baseUrl);
+        const callbackUrl = urlObj.searchParams.get('callbackUrl');
+
+        // Check if we have an accountType hint in the URL (set by sign-in forms)
+        const accountType = urlObj.searchParams.get('accountType');
+
+        // Check if this is an auth callback URL (should not be used as final destination)
+        const isAuthCallback = url.includes('/api/auth/callback/') || url.includes('/api/auth/signin');
+
+        // Determine redirect based on accountType hint or callback URL patterns
+        const isBusinessUser = accountType === 'studio' ||
+                               callbackUrl?.includes('/dashboard/owner') ||
+                               callbackUrl?.includes('/business');
+
+        // Redirect business users to business portal (studio owner dashboard)
+        if (isBusinessUser) {
+          // If callback URL is provided and is a business route, use it
+          if (callbackUrl && (callbackUrl.includes('/dashboard/owner') || callbackUrl.includes('/business'))) {
+            // Ensure the callback URL is safe (same origin)
+            if (callbackUrl.startsWith(baseUrl)) {
+              return callbackUrl;
+            }
+            // Only allow absolute paths starting with single slash (not protocol-relative //)
+            if (callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
+              return `${baseUrl}${callbackUrl}`;
+            }
+          }
+          // Otherwise redirect to business dashboard
+          return `${baseUrl}/dashboard/owner`;
+        }
+
+        // Redirect customers to homepage or callback URL
+        if (callbackUrl) {
+          // Ensure the callback URL is safe (same origin)
+          if (callbackUrl.startsWith(baseUrl)) {
+            return callbackUrl;
+          }
+          // Only allow absolute paths starting with single slash (not protocol-relative //)
+          if (callbackUrl.startsWith('/') && !callbackUrl.startsWith('//')) {
+            return `${baseUrl}${callbackUrl}`;
+          }
+        }
+
+        // If this is an auth callback URL without a callbackUrl param, redirect to homepage
+        if (isAuthCallback) {
+          return baseUrl;
+        }
+
+        // Default: if URL is safe and not an auth callback, use it
+        if (url.startsWith(baseUrl) && !isAuthCallback) return url;
+        if (url.startsWith('/') && !isAuthCallback) return `${baseUrl}${url}`;
+
+        // Otherwise, redirect to homepage (customer landing page)
+        return baseUrl;
+      } catch (error) {
+        console.error('[NextAuth] Redirect error:', error);
+        // Safe fallback to homepage
+        return baseUrl;
+      }
+    },
+
     async signIn({ user, account }) {
       // Allow all sign-ins by default
       // Suspended account check is done in authorize()

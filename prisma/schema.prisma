@@ -288,6 +288,10 @@ model User {
   isActive    Boolean @default(true)
   isSuspended Boolean @default(false)
 
+  // GDPR Data Retention (Art. 17 - Right to Erasure)
+  deletedAt           DateTime? // Soft delete timestamp
+  deletionScheduledAt DateTime? // When deletion warning was sent
+
   // Relations
   newAccounts  NewAccount[] // OAuth accounts
   newSessions  NewSession[] // Active sessions
@@ -302,6 +306,8 @@ model User {
 
   @@index([email])
   @@index([primaryRole])
+  @@index([deletedAt])
+  @@index([deletionScheduledAt])
   @@map("users")
 }
 
