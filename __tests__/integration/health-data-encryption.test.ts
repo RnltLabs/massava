@@ -9,10 +9,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { PrismaClient } from '@/app/generated/prisma';
+import { prisma } from '@/lib/prisma'; // Use shared Prisma instance with middleware
 import { encrypt, decrypt } from '@/lib/encryption/health-data';
-
-const prisma = new PrismaClient();
 
 describe('Health Data Encryption (GDPR Art. 9)', () => {
   let testUserId: string;
