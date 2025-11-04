@@ -18,12 +18,14 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
@@ -349,6 +351,9 @@ export function BookingSheet({
                 <SheetTitle className="text-lg font-bold">
                   Termin bestätigen
                 </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Buchungsformular für {studio.name}
+                </SheetDescription>
               </SheetHeader>
             )}
 
@@ -380,6 +385,12 @@ export function BookingSheet({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 flex flex-col">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Termin bestätigen</DialogTitle>
+            <DialogDescription>
+              Buchungsformular für {studio.name}
+            </DialogDescription>
+          </DialogHeader>
           <ScrollArea className="flex-1 pr-6 -mr-6">
             {content}
           </ScrollArea>
