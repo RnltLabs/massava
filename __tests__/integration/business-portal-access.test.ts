@@ -9,9 +9,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { PrismaClient, UserRole } from '@/app/generated/prisma';
-
-const prisma = new PrismaClient();
+import { UserRole } from '@/app/generated/prisma';
+import { prisma } from '@/lib/prisma'; // Use shared Prisma instance
 
 describe('Business Portal Access Control (RBAC)', () => {
   let studioOwnerId: string;

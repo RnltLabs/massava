@@ -10,10 +10,8 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from '@jest/globals';
-import { PrismaClient } from '@/app/generated/prisma';
+import { prisma } from '@/lib/prisma'; // Use shared Prisma instance
 import { addDays, subYears, subMonths } from 'date-fns';
-
-const prisma = new PrismaClient();
 
 describe('GDPR Data Retention Policy', () => {
   afterAll(async () => {
