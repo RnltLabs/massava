@@ -10,6 +10,7 @@ import {
 interface BookingResult {
   success: boolean
   bookingId?: string
+  status?: string
   error?: string
 }
 
@@ -90,17 +91,18 @@ export async function createBooking(
         data: {
           studioId: validated.studioId,
           serviceId: validated.serviceId,
-          customerName: validated.customerName,
-          customerEmail: validated.customerEmail,
-          customerPhone: validated.customerPhone,
+          customerId: validated.customerId || null,
+          customerName: validated.customerName || "",
+          customerEmail: validated.customerEmail || "",
+          customerPhone: validated.customerPhone || "",
           preferredDate,
           preferredTime,
           message: validated.message || null,
-          explicitHealthConsent: validated.explicitHealthConsent,
+          explicitHealthConsent: validated.explicitHealthConsent || false,
           healthConsentGivenAt: new Date(),
           healthConsentText:
             "User consented to health data processing via booking form checkbox (GDPR Art. 9)",
-          status: "CONFIRMED", // Auto-confirm for MVP
+          status: validated.customerId ? "PENDING" : "CONFIRMED",
         },
         include: {
           studio: true,
@@ -130,6 +132,7 @@ export async function createBooking(
     return {
       success: true,
       bookingId: booking.id,
+      status: booking.status,
     }
   } catch (error) {
     console.error("Booking creation failed:", error)

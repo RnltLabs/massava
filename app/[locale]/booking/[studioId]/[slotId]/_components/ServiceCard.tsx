@@ -72,7 +72,7 @@ export function ServiceCard({ service, isSelected }: ServiceCardProps) {
               {/* Price */}
               <div className="text-right flex-shrink-0">
                 <p className="text-lg font-bold text-primary">
-                  CHF {service.price.toFixed(0)}
+                  €{service.price.toFixed(0)}
                 </p>
               </div>
             </div>
