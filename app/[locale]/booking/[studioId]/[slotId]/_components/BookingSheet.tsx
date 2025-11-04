@@ -4,7 +4,8 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import type { Studio, Service, TimeSlot } from "@/app/generated/prisma"
+import { useSession } from "next-auth/react"
+import type { Studio, Service, TimeSlot, BookingStatus } from "@/app/generated/prisma"
 import {
   bookingFormSchema,
   type BookingFormData,
@@ -17,16 +18,19 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
+  SheetDescription,
 } from "@/components/ui/sheet"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
-import { StepReview } from "./StepReview"
+import { AuthNudgeModal, type GuestFormData } from "./AuthNudgeModal"
+
 import { StepService } from "./StepService"
 import { StepConfirm } from "./StepConfirm"
 import { SuccessState } from "./SuccessState"
@@ -41,28 +45,35 @@ interface BookingSheetProps {
   onClose: () => void
 }
 
-type BookingStep = "review" | "service" | "confirm" | "success"
+type BookingStep = "service" | "confirm" | "success"
 
 /**
- * Booking Sheet Component
+ * Booking Sheet Component - With Stealth Auth Gate
  *
- * Main orchestrator for the booking flow. Handles:
+ * Main orchestrator for the frictionless booking flow. Handles:
  * - Responsive Sheet (mobile) / Dialog (desktop)
- * - Step navigation (review → service → confirm → success)
+ * - Step navigation (service → confirm → auth gate → success)
  * - Form state management (react-hook-form + Zod)
+ * - Stealth authentication nudge AFTER commitment
  * - Booking submission via Server Action
  * - Success/error handling with toast notifications
  *
- * Architecture:
- * - Mobile (<768px): Sheet component from bottom
- * - Desktop (≥768px): Centered Dialog modal
- * - Same content, different container
- *
- * Step Flow:
- * 1. Review: Show studio info + selected date/time
- * 2. Service: Select service from list
- * 3. Confirm: Contact form + booking summary
+ * New Flow:
+ * 1. Service: Select service from list
+ * 2. Confirm: See summary + click "Book Now" (NO contact form)
+ * 3. Auth Gate: Modal appears with social login / guest option
  * 4. Success: Confirmation with booking number
+ *
+ * Auth Strategy:
+ * - If logged in: Skip auth gate, book immediately
+ * - If not logged in: Show AuthNudgeModal after "Book Now"
+ * - Guest option available but de-emphasized
+ *
+ * Mobile Optimizations:
+ * - Reduced padding: p-4 saves 32px vertical space
+ * - Reduced margins: mb-4 saves vertical space
+ * - Compact title: text-lg saves vertical space
+ * - Optimized for iPhone SE (375x667px)
  *
  * Accessibility:
  * - Focus trap within modal
@@ -82,13 +93,16 @@ export function BookingSheet({
   const router = useRouter()
   const { toast } = useToast()
   const isMobile = useMediaQuery("(max-width: 768px)")
+  const { data: session } = useSession()
 
-  const [currentStep, setCurrentStep] = useState<BookingStep>("review")
+  const [currentStep, setCurrentStep] = useState<BookingStep>("service")
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
     services[0]?.id || null
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [bookingNumber, setBookingNumber] = useState<string>("")
+  const [bookingStatus, setBookingStatus] = useState<BookingStatus | null>(null)
+  const [showAuthModal, setShowAuthModal] = useState(false)
 
   // Form setup with react-hook-form + Zod validation
   const form = useForm<BookingFormData>({
@@ -107,15 +121,11 @@ export function BookingSheet({
 
   // Get current step number for progress indicator
   const getStepNumber = (step: BookingStep): number => {
-    const steps = { review: 1, service: 2, confirm: 3, success: 4 }
+    const steps = { service: 1, confirm: 2, success: 3 }
     return steps[step]
   }
 
   // Handle step navigation
-  const handleContinueFromReview = () => {
-    setCurrentStep("service")
-  }
-
   const handleServiceSelect = (serviceId: string) => {
     setSelectedServiceId(serviceId)
     form.setValue("serviceId", serviceId)
@@ -133,30 +143,75 @@ export function BookingSheet({
     setCurrentStep("confirm")
   }
 
-  const handleBackToReview = () => {
-    setCurrentStep("review")
-  }
-
   const handleBackToService = () => {
     setCurrentStep("service")
   }
 
-  // Handle booking submission
+  // Handle booking submission - WITH AUTH CHECK
   const handleSubmit = async (data: BookingFormData) => {
+    console.log("🔍 handleSubmit called", { session, data })
+
+    // If not logged in, show auth modal instead of booking immediately
+    if (!session?.user) {
+      console.log("❌ No session, showing auth modal")
+      setShowAuthModal(true)
+      return
+    }
+
+    console.log("✅ User is logged in, creating booking", session.user)
+
+    // For logged-in users, always use their ID as customerId
+    // NewBooking model requires customerId (references User)
+    await createBookingNow({
+      ...data,
+      customerId: session.user.id, // Required for NewBooking model
+      customerName: session.user.name || "",
+      customerEmail: session.user.email || "",
+      customerPhone: data.customerPhone || "",
+      explicitHealthConsent: true, // Assumed for logged-in users
+    })
+  }
+
+  // Handle guest checkout submission
+  const handleGuestSubmit = async (guestData: GuestFormData) => {
+    const bookingData: BookingFormData = {
+      ...form.getValues(),
+      customerName: guestData.customerName,
+      customerEmail: guestData.customerEmail,
+      customerPhone: guestData.customerPhone,
+      explicitHealthConsent: guestData.explicitHealthConsent,
+      customerId: null,
+    }
+
+    await createBookingNow(bookingData)
+    setShowAuthModal(false)
+  }
+
+  // Extract actual booking logic
+  const createBookingNow = async (data: BookingFormData) => {
+    console.log("🔵 createBookingNow called with data:", data)
     setIsSubmitting(true)
 
     try {
+      console.log("🔵 Calling createBooking server action...")
       const result = await createBooking(data)
+      console.log("🔵 createBooking result:", result)
 
       if (result.success && result.bookingId) {
         // Generate booking number for display
         const displayNumber = `MB-${result.bookingId.slice(0, 8).toUpperCase()}`
         setBookingNumber(displayNumber)
+        setBookingStatus((result.status as BookingStatus) || null)
+
+        // Show success screen (client state - no page reload)
         setCurrentStep("success")
 
+        // Show success toast
         toast({
           title: "Buchung erfolgreich",
-          description: "Ihre Buchung wurde bestätigt",
+          description: result.status === "PENDING"
+            ? "Ihre Buchungsanfrage wurde gesendet"
+            : "Ihre Buchung wurde bestätigt",
         })
       } else {
         toast({
@@ -190,11 +245,13 @@ export function BookingSheet({
   }
 
   // Handle success actions
-  const handleViewBooking = () => {
+  const handleViewBooking = (): void => {
     router.push(`/booking/confirmation/${bookingNumber}`)
   }
 
-  const handleNewSearch = () => {
+  const handleNewSearch = (): void => {
+    // Refresh router cache to show updated availability in search
+    router.refresh()
     router.push("/search/appointments")
   }
 
@@ -204,16 +261,6 @@ export function BookingSheet({
   // Render step content
   const renderStepContent = () => {
     switch (currentStep) {
-      case "review":
-        return (
-          <StepReview
-            studio={studio}
-            timeSlot={timeSlot}
-            onContinue={handleContinueFromReview}
-            onCancel={handleCancel}
-          />
-        )
-
       case "service":
         return (
           <StepService
@@ -221,7 +268,9 @@ export function BookingSheet({
             selectedServiceId={selectedServiceId}
             onServiceSelect={handleServiceSelect}
             onContinue={handleContinueFromService}
-            onBack={handleBackToReview}
+            onCancel={handleCancel}
+            timeSlot={timeSlot}
+            studio={studio}
           />
         )
 
@@ -247,9 +296,11 @@ export function BookingSheet({
         return (
           <SuccessState
             bookingNumber={bookingNumber}
-            customerEmail={form.getValues("customerEmail")}
+            customerEmail={form.getValues("customerEmail") || ""}
             onViewBooking={handleViewBooking}
             onNewSearch={handleNewSearch}
+            bookingStatus={bookingStatus}
+            isGuest={!form.getValues("customerId")}
           />
         )
 
@@ -285,45 +336,84 @@ export function BookingSheet({
   // Render mobile (Sheet) or desktop (Dialog)
   if (isMobile) {
     return (
-      <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent
-          side="bottom"
-          className="h-[85vh] rounded-t-3xl p-6 flex flex-col"
-        >
-          {/* Drag Handle */}
-          <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-6 flex-shrink-0" />
+      <>
+        <Sheet open={isOpen} onOpenChange={onClose}>
+          <SheetContent
+            side="bottom"
+            className="h-[85vh] rounded-t-3xl p-4 flex flex-col"
+          >
+            {/* Drag Handle - Reduced margin: mb-4 (was mb-6) */}
+            <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4 flex-shrink-0" />
 
-          {/* Progress Dots */}
-          {currentStep !== "success" && (
-            <ProgressDots current={getStepNumber(currentStep)} total={3} />
-          )}
+            {/* Progress Dots */}
+            {currentStep !== "success" && (
+              <ProgressDots current={getStepNumber(currentStep)} total={3} />
+            )}
 
-          {/* Title */}
-          {currentStep !== "success" && (
-            <SheetHeader className="mb-6">
-              <SheetTitle className="text-2xl font-bold">
-                Termin bestätigen
-              </SheetTitle>
-            </SheetHeader>
-          )}
+            {/* Title - No bottom margin, text-lg (was text-2xl) for space efficiency */}
+            {currentStep !== "success" && (
+              <SheetHeader className="mb-2">
+                <SheetTitle className="text-lg font-bold">
+                  Termin bestätigen
+                </SheetTitle>
+                <SheetDescription className="sr-only">
+                  Buchungsformular für {studio.name}
+                </SheetDescription>
+              </SheetHeader>
+            )}
 
-          {/* Content (Scrollable) */}
-          <div className="flex-1 overflow-y-auto -mx-6 px-6">
-            {renderStepContent()}
-          </div>
-        </SheetContent>
-      </Sheet>
+            {/* Content (Scrollable) - Adjusted margins: -mx-4 px-4 (was -mx-6 px-6) */}
+            <div className="flex-1 overflow-y-auto -mx-4 px-4">
+              {renderStepContent()}
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Auth Nudge Modal (Mobile) */}
+        {showAuthModal && !session && selectedService && (
+          <AuthNudgeModal
+            isOpen={showAuthModal}
+            onClose={() => setShowAuthModal(false)}
+            studio={studio}
+            selectedService={selectedService}
+            timeSlot={timeSlot}
+            onGuestSubmit={handleGuestSubmit}
+            message={form.getValues("message")}
+          />
+        )}
+      </>
     )
   }
 
   // Desktop: Dialog
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 flex flex-col">
-        <ScrollArea className="flex-1 pr-6 -mr-6">
-          {content}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 flex flex-col">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Termin bestätigen</DialogTitle>
+            <DialogDescription>
+              Buchungsformular für {studio.name}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 pr-6 -mr-6">
+            {content}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Auth Nudge Modal (Desktop) */}
+      {showAuthModal && !session && selectedService && (
+        <AuthNudgeModal
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          studio={studio}
+          selectedService={selectedService}
+          timeSlot={timeSlot}
+          onGuestSubmit={handleGuestSubmit}
+          message={form.getValues("message")}
+        />
+      )}
+    </>
   )
 }
