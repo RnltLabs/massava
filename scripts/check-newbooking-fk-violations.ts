@@ -71,7 +71,7 @@ async function checkFKViolations(): Promise<void> {
     }
 
     // Check for invalid customerId references
-    const customerIds = [...new Set(bookings.map(b => b.customerId))];
+    const customerIds = [...new Set(bookings.map(b => b.customerId).filter((id): id is string => id !== null))];
     const users = await prisma.user.findMany({
       where: { id: { in: customerIds } },
       select: { id: true },

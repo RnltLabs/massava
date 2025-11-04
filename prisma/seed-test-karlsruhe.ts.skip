@@ -15,7 +15,8 @@
  * WARNING: This will DELETE all existing data!
  */
 
-import { PrismaClient, UserType, BookingStatus } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
+import type { BookingStatus } from '@/app/generated/prisma'
 import bcrypt from 'bcrypt'
 import { addDays, addMinutes, setHours, setMinutes } from 'date-fns'
 
