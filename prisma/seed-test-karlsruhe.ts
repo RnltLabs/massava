@@ -15,8 +15,8 @@
  * WARNING: This will DELETE all existing data!
  */
 
-import { PrismaClient, UserType, BookingStatus } from '@prisma/client'
-import bcrypt from 'bcrypt'
+import { PrismaClient, UserRole, BookingStatus } from '../app/generated/prisma'
+import bcrypt from 'bcryptjs'
 import { addDays, addMinutes, setHours, setMinutes } from 'date-fns'
 
 const prisma = new PrismaClient()
@@ -282,6 +282,7 @@ async function main() {
     // ========================================================================
     console.log('🗑️  Clearing existing data...')
 
+    await prisma.newBooking.deleteMany()
     await prisma.booking.deleteMany()
     await prisma.timeSlot.deleteMany()
     await prisma.service.deleteMany()
@@ -302,7 +303,7 @@ async function main() {
       email: studio.owner.email,
       password: hashedPassword,
       phone: studio.owner.phone,
-      userType: UserType.STUDIO_OWNER,
+      primaryRole: UserRole.STUDIO_OWNER,
       emailVerified: new Date(), // Auto-verify test accounts
     }))
 
@@ -326,7 +327,7 @@ async function main() {
       email: customer.email,
       password: hashedPassword,
       phone: customer.phone,
-      userType: UserType.CUSTOMER,
+      primaryRole: UserRole.CUSTOMER,
       emailVerified: new Date(),
     }))
 
@@ -360,19 +361,15 @@ async function main() {
           postalCode: studioData.postalCode,
           phone: studioData.phone,
           email: studioData.email,
-          website: studioData.website,
-          lat: studioData.lat,
-          lng: studioData.lng,
-          openingHours: JSON.stringify(studioData.openingHours),
-          userId: owner.id,
-          verified: true, // Auto-verify test studios
+          latitude: studioData.lat,
+          longitude: studioData.lng,
+          openingHours: studioData.openingHours,
           services: {
             create: studioData.services.map(service => ({
               name: service.name,
               description: service.description,
               duration: service.duration,
               price: service.price,
-              category: service.category,
             })),
           },
         },
@@ -391,6 +388,27 @@ async function main() {
       })
       console.log()
     }
+
+    // ========================================================================
+    // STEP 4.5: Create studio ownership records
+    // ========================================================================
+    console.log('🔑 Creating studio ownership records...')
+
+    for (let i = 0; i < createdStudios.length; i++) {
+      const studio = createdStudios[i]
+      const owner = createdOwners[i]
+
+      await prisma.studioOwnership.create({
+        data: {
+          userId: owner.id,
+          studioId: studio.id,
+          canTransfer: true,
+          acceptedAt: new Date(),
+        },
+      })
+    }
+
+    console.log(`✅ Created ${createdStudios.length} studio ownership records\n`)
 
     // ========================================================================
     // STEP 5: Create time slots (next 30 days)
@@ -413,7 +431,8 @@ async function main() {
               studioId: studio.id,
               startTime,
               endTime,
-              available: true,
+              isAvailable: true,
+              isBooked: false,
             },
           })
         })
@@ -455,7 +474,8 @@ async function main() {
       const availableSlots = await prisma.timeSlot.findMany({
         where: {
           studioId: studio.id,
-          available: true,
+          isAvailable: true,
+          isBooked: false,
           startTime: {
             gte: new Date(), // Future slots only
           },
@@ -471,26 +491,32 @@ async function main() {
       const includeHealthData = shouldIncludeHealthData()
       const message = includeHealthData ? getRandomElement(HEALTH_DATA_SAMPLES) : undefined
 
-      const booking = await prisma.booking.create({
+      const booking = await prisma.newBooking.create({
         data: {
           studioId: studio.id,
           serviceId: service.id,
-          slotId: timeSlot.id,
           customerId: customer.id,
           customerName: customer.name,
           customerEmail: customer.email,
-          customerPhone: customer.phone,
+          customerPhone: customer.phone || '+49 151 00000000',
+          preferredDate: timeSlot.startTime.toISOString().split('T')[0], // YYYY-MM-DD
+          preferredTime: timeSlot.startTime.toTimeString().slice(0, 5), // HH:MM
           message,
           explicitHealthConsent: includeHealthData,
+          healthConsentGivenAt: includeHealthData ? new Date() : undefined,
           status,
         },
       })
 
-      // Mark slot as unavailable if booking is confirmed
+      // Mark slot as booked if booking is confirmed
       if (status === 'CONFIRMED') {
         await prisma.timeSlot.update({
           where: { id: timeSlot.id },
-          data: { available: false },
+          data: {
+            isAvailable: false,
+            isBooked: true,
+            bookingId: booking.id,
+          },
         })
       }
 
