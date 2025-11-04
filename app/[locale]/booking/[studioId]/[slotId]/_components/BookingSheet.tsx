@@ -160,14 +160,11 @@ export function BookingSheet({
 
     console.log("✅ User is logged in, creating booking", session.user)
 
-    // Check if user is a customer (userType === 'customer')
-    // If they're a studio owner, treat as guest (no customerId linking)
-    const isCustomer = session.user.userType === 'customer'
-
-    // If logged in, proceed with booking directly
+    // For logged-in users, always use their ID as customerId
+    // NewBooking model requires customerId (references User)
     await createBookingNow({
       ...data,
-      customerId: isCustomer ? session.user.id : null, // Only link if actual customer
+      customerId: session.user.id, // Required for NewBooking model
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",
@@ -192,18 +189,24 @@ export function BookingSheet({
 
   // Extract actual booking logic
   const createBookingNow = async (data: BookingFormData) => {
+    console.log("🔵 createBookingNow called with data:", data)
     setIsSubmitting(true)
 
     try {
+      console.log("🔵 Calling createBooking server action...")
       const result = await createBooking(data)
+      console.log("🔵 createBooking result:", result)
 
       if (result.success && result.bookingId) {
         // Generate booking number for display
         const displayNumber = `MB-${result.bookingId.slice(0, 8).toUpperCase()}`
         setBookingNumber(displayNumber)
         setBookingStatus((result.status as BookingStatus) || null)
+
+        // Show success screen (client state - no page reload)
         setCurrentStep("success")
 
+        // Show success toast
         toast({
           title: "Buchung erfolgreich",
           description: result.status === "PENDING"
@@ -242,11 +245,13 @@ export function BookingSheet({
   }
 
   // Handle success actions
-  const handleViewBooking = () => {
+  const handleViewBooking = (): void => {
     router.push(`/booking/confirmation/${bookingNumber}`)
   }
 
-  const handleNewSearch = () => {
+  const handleNewSearch = (): void => {
+    // Refresh router cache to show updated availability in search
+    router.refresh()
     router.push("/search/appointments")
   }
 
