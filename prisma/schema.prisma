@@ -404,7 +404,7 @@ model NewBooking {
   id         String  @id @default(cuid())
   studioId   String
   serviceId  String?
-  customerId String // References User now
+  customerId String? // Optional - null for guest bookings
 
   // Customer info (denormalized for studio convenience)
   customerName  String
@@ -434,7 +434,7 @@ model NewBooking {
   // Relations with proper cascade deletion
   studio   Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
   service  Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  customer User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer User?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
