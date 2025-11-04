@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { CheckCircle2, Calendar, MapPin, Search } from "lucide-react"
+import { CheckCircle2, Calendar, MapPin, Search, Check, Info } from "lucide-react"
+import type { BookingStatus } from "@/app/generated/prisma"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { cn } from "@/lib/utils"
 
 interface SuccessStateProps {
@@ -11,25 +13,30 @@ interface SuccessStateProps {
   customerEmail: string
   onViewBooking: () => void
   onNewSearch: () => void
+  bookingStatus: BookingStatus | null
+  isGuest: boolean
 }
 
 /**
  * Success State Component
  *
  * Displays success animation and booking confirmation after successful booking.
- * Provides next steps and action buttons.
+ * Shows different messaging based on booking status (CONFIRMED vs PENDING).
+ * Offers guest users to create an account for better experience.
  *
  * Features:
  * - Animated checkmark (scale + fade in)
+ * - Status-based messaging (CONFIRMED vs PENDING)
  * - Booking confirmation number (prominent, monospace)
  * - Email confirmation message
+ * - Guest account creation offer (for non-authenticated users)
  * - Action buttons (calendar, directions, view booking)
  * - Return to search option
  *
  * Animation:
  * - Checkmark scales from 0 to 1 with bounce
  * - Fades in over 400ms
- * - Green accent color for positive feedback
+ * - Green for CONFIRMED, Amber for PENDING
  *
  * Accessibility:
  * - Success message announced to screen readers
@@ -41,6 +48,8 @@ export function SuccessState({
   customerEmail,
   onViewBooking,
   onNewSearch,
+  bookingStatus,
+  isGuest,
 }: SuccessStateProps) {
   const [isAnimating, setIsAnimating] = useState(true)
 
@@ -49,6 +58,8 @@ export function SuccessState({
     const timer = setTimeout(() => setIsAnimating(false), 400)
     return () => clearTimeout(timer)
   }, [])
+
+  const isPending = bookingStatus === 'PENDING'
 
   // Generate calendar link (generic ICS format)
   const handleAddToCalendar = () => {
@@ -67,25 +78,51 @@ export function SuccessState({
       {/* Animated Success Checkmark */}
       <div
         className={cn(
-          "mb-6 transition-all duration-400",
-          isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100"
+          "w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-all duration-400",
+          isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100",
+          isPending ? "bg-amber-100" : "bg-green-100"
         )}
         role="img"
-        aria-label="Buchung erfolgreich"
+        aria-label={isPending ? "Buchungsanfrage erhalten" : "Buchung erfolgreich"}
       >
-        <CheckCircle2
-          className="h-24 w-24 text-green-500"
-          strokeWidth={1.5}
+        <Check
+          className={cn(
+            "w-10 h-10",
+            isPending ? "text-amber-600" : "text-green-600"
+          )}
+          strokeWidth={2}
         />
       </div>
 
-      {/* Success Message */}
-      <h2 className="text-3xl font-bold mb-2">
-        Buchung erfolgreich!
-      </h2>
-      <p className="text-muted-foreground mb-8">
-        Ihre Massage-Behandlung wurde bestätigt
-      </p>
+      {/* Status-Based Success Message */}
+      {isPending ? (
+        <>
+          <h2 className="text-2xl font-bold mb-2">
+            Buchungsanfrage erhalten!
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Das Studio wird Ihre Buchung prüfen und sich bei Ihnen melden.
+            Sie erhalten eine E-Mail, sobald Ihre Buchung bestätigt wurde.
+          </p>
+          <Alert className="mb-6 max-w-md">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Wartet auf Bestätigung</AlertTitle>
+            <AlertDescription>
+              Ihr Termin ist reserviert und für andere gesperrt.
+            </AlertDescription>
+          </Alert>
+        </>
+      ) : (
+        <>
+          <h2 className="text-2xl font-bold mb-2">
+            Buchung bestätigt!
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Ihre Buchung wurde erfolgreich bestätigt.
+            Sie erhalten eine Bestätigungs-E-Mail an {customerEmail}.
+          </p>
+        </>
+      )}
 
       {/* Booking Confirmation Card */}
       <Card className="w-full max-w-md mb-8 wellness-shadow">
@@ -110,6 +147,37 @@ export function SuccessState({
           </div>
         </CardContent>
       </Card>
+
+      {/* Guest Account Creation Offer */}
+      {isGuest && (
+        <Card className="w-full max-w-md mb-6 bg-accent/10">
+          <CardHeader>
+            <CardTitle className="text-lg">Konto erstellen?</CardTitle>
+            <CardDescription>
+              Verwalten Sie Ihre Buchungen und erhalten Sie automatische Erinnerungen
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Alle Termine an einem Ort</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Automatische Erinnerungen</span>
+            </div>
+            <div className="flex items-start gap-2 text-sm">
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <span>Schnellere zukünftige Buchungen</span>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" variant="outline">
+              Jetzt kostenloses Konto erstellen
+            </Button>
+          </CardFooter>
+        </Card>
+      )}
 
       {/* Action Buttons */}
       <div className="w-full max-w-md space-y-3">
