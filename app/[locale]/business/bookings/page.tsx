@@ -1,0 +1,77 @@
+/**
+ * Copyright (c) 2025 Roman Reinelt / RNLT Labs
+ * All rights reserved.
+ */
+
+import { Suspense } from 'react';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { redirect } from 'next/navigation';
+import { BookingsList } from '@/components/business/BookingsList';
+import { BookingFilters } from '@/components/business/BookingFilters';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+
+interface BookingsPageProps {
+  params: {
+    locale: string;
+  };
+  searchParams: {
+    status?: string;
+    search?: string;
+  };
+}
+
+function BookingsListSkeleton(): JSX.Element {
+  return (
+    <div className="space-y-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Card key={i}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+              <Skeleton className="h-6 w-20" />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export default async function BookingsPage({
+  params,
+  searchParams,
+}: BookingsPageProps): Promise<JSX.Element> {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/bookings`);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Bookings</h1>
+        <p className="text-muted-foreground mt-1">Manage all your booking requests</p>
+      </div>
+
+      {/* Filters */}
+      <BookingFilters />
+
+      {/* Bookings List */}
+      <Suspense fallback={<BookingsListSkeleton />}>
+        <BookingsList
+          userEmail={session.user?.email ?? ''}
+          statusFilter={searchParams.status}
+          searchQuery={searchParams.search}
+        />
+      </Suspense>
+    </div>
+  );
+}

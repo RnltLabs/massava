@@ -41,6 +41,9 @@
     "footer_copyright": "© 2025 Massava โดย RNLT Labs สงวนลิขสิทธิ์"
   },
   "auth": {
+    "my_account": "บัญชีของฉัน",
+    "my_bookings": "การจองของฉัน",
+    "logout": "ออกจากระบบ",
     "account_type_selector": {
       "customer": {
         "title": "ฉันต้องการจองนวด",
@@ -99,15 +102,29 @@
     "register": "ลงทะเบียน",
     "signIn": "เข้าสู่ระบบ",
     "registerBenefit": "สร้างบัญชีเพื่อจัดการการจองและรับข้อเสนอพิเศษ",
-    "studioOwnerTitle": "คุณเป็นเจ้าของสตูดิโอหรือไม่?",
-    "studioOwnerDescription": "เข้าถึงลูกค้ามากขึ้นและเพิ่มการใช้งาน",
-    "registerStudioCta": "ลงทะเบียนสตูดิโอตอนนี้",
     "myProfile": "โปรไฟล์ของฉัน",
     "myBookings": "การจองของฉัน",
     "helpSupport": "ความช่วยเหลือและสนับสนุน",
     "signOut": "ออกจากระบบ",
     "language": "ภาษา",
     "selectLanguage": "เลือกภาษา",
-    "appVersion": "เวอร์ชัน {version}"
+    "appVersion": "เวอร์ชัน {version}",
+    "forStudios": "สำหรับสตูดิโอ",
+    "partnerWithUs": "เป็นพาร์ทเนอร์กับเรา"
+  },
+  "footer": {
+    "tagline": "แพลตฟอร์มสำหรับการจองนวดฉับพลันในเมืองของคุณ",
+    "forGuests": "สำหรับผู้เข้าพัก",
+    "howItWorks": "วิธีการทำงาน",
+    "findStudios": "ค้นหาสตูดิโอ",
+    "forStudios": "สำหรับสตูดิโอ",
+    "registerStudio": "ลงทะเบียนสตูดิโอของคุณ",
+    "businessPortal": "พอร์ทัลธุรกิจ",
+    "pricing": "ราคา",
+    "legal": "ข้อกฎหมาย",
+    "imprint": "ข้อมูลบริษัท",
+    "privacy": "นโยบายความเป็นส่วนตัว",
+    "terms": "ข้อกำหนดการให้บริการ",
+    "copyright": "© 2025 Massava โดย RNLT Labs สงวนลิขสิทธิ์"
   }
 }

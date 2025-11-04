@@ -7,7 +7,17 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "seed:karlsruhe": "tsx prisma/seed-karlsruhe.ts"
+    "seed:karlsruhe": "tsx prisma/seed-karlsruhe.ts",
+    "orchestrate:implement": "tsx scripts/orchestrate.ts",
+    "db:seed:test": "tsx prisma/seed-test-karlsruhe.ts",
+    "db:backup": "echo 'Database backup not implemented yet - please backup manually'",
+    "db:restore": "echo 'Database restore not implemented yet'",
+    "db:ping": "npx prisma db execute --stdin <<< 'SELECT 1'",
+    "db:studio": "npx prisma studio",
+    "data-retention:dry-run": "tsx lib/cron/data-retention-job.ts --dry-run",
+    "data-retention:execute": "tsx lib/cron/data-retention-job.ts",
+    "test:retention": "tsx --test lib/data-retention/retention-policy.test.ts",
+    "generate:cron-secret": "tsx scripts/generate-cron-secret.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",
