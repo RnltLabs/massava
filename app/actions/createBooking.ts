@@ -11,6 +11,7 @@ import { logger, generateCorrelationId } from "@/lib/logger"
 interface BookingResult {
   success: boolean
   bookingId?: string
+  status?: string
   error?: string
 }
 

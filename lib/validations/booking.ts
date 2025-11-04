@@ -33,12 +33,11 @@ export const bookingFormSchema = z.object({
     .max(1000, "Nachricht darf maximal 1000 Zeichen haben")
     .optional()
     .or(z.literal("")),
-  explicitHealthConsent: z
-    .boolean()
-    .refine((val) => val === true, {
-      message:
-        "Sie müssen der Verarbeitung von gesundheitsbezogenen Daten zustimmen (DSGVO Art. 9)",
-    }),
+
+  // Optional now - filled via guest form
+  explicitHealthConsent: z.boolean().optional(),
+
+  customerId: z.string().cuid().nullable().optional(),
 })
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>

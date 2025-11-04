@@ -18,14 +18,12 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet"
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
@@ -160,11 +158,10 @@ export function BookingSheet({
 
     console.log("✅ User is logged in, creating booking", session.user)
 
-    // For logged-in users, always use their ID as customerId
-    // NewBooking model requires customerId (references User)
+    // If logged in, proceed with booking directly
     await createBookingNow({
       ...data,
-      customerId: session.user.id, // Required for NewBooking model
+      customerId: session.user.id, // Use logged-in user ID
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",
@@ -189,24 +186,18 @@ export function BookingSheet({
 
   // Extract actual booking logic
   const createBookingNow = async (data: BookingFormData) => {
-    console.log("🔵 createBookingNow called with data:", data)
     setIsSubmitting(true)
 
     try {
-      console.log("🔵 Calling createBooking server action...")
       const result = await createBooking(data)
-      console.log("🔵 createBooking result:", result)
 
       if (result.success && result.bookingId) {
         // Generate booking number for display
         const displayNumber = `MB-${result.bookingId.slice(0, 8).toUpperCase()}`
         setBookingNumber(displayNumber)
         setBookingStatus((result.status as BookingStatus) || null)
-
-        // Show success screen (client state - no page reload)
         setCurrentStep("success")
 
-        // Show success toast
         toast({
           title: "Buchung erfolgreich",
           description: result.status === "PENDING"
@@ -245,13 +236,11 @@ export function BookingSheet({
   }
 
   // Handle success actions
-  const handleViewBooking = (): void => {
+  const handleViewBooking = () => {
     router.push(`/booking/confirmation/${bookingNumber}`)
   }
 
-  const handleNewSearch = (): void => {
-    // Refresh router cache to show updated availability in search
-    router.refresh()
+  const handleNewSearch = () => {
     router.push("/search/appointments")
   }
 
@@ -356,9 +345,6 @@ export function BookingSheet({
                 <SheetTitle className="text-lg font-bold">
                   Termin bestätigen
                 </SheetTitle>
-                <SheetDescription className="sr-only">
-                  Buchungsformular für {studio.name}
-                </SheetDescription>
               </SheetHeader>
             )}
 
@@ -390,12 +376,6 @@ export function BookingSheet({
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 flex flex-col">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Termin bestätigen</DialogTitle>
-            <DialogDescription>
-              Buchungsformular für {studio.name}
-            </DialogDescription>
-          </DialogHeader>
           <ScrollArea className="flex-1 pr-6 -mr-6">
             {content}
           </ScrollArea>
