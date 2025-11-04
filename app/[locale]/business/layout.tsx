@@ -11,6 +11,22 @@ import { BusinessSidebar } from '@/components/business/BusinessSidebar';
 import { BusinessNav } from '@/components/business/BusinessNav';
 import { MobileBusinessNav } from '@/components/business/MobileBusinessNav';
 
+/**
+ * Runtime Configuration: Node.js
+ *
+ * The business portal requires Node.js runtime for:
+ * 1. Prisma Client (binary engine, not WASM)
+ * 2. GDPR encryption middleware (crypto APIs for health data)
+ * 3. NextAuth session management
+ * 4. Direct database queries in Server Components
+ *
+ * This declaration applies to all child routes automatically.
+ * Do not override with 'edge' in child routes unless migrating to API abstraction.
+ *
+ * @see https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config#runtime
+ */
+export const runtime = 'nodejs';
+
 interface BusinessLayoutProps {
   children: ReactNode;
   params: {
