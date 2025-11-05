@@ -27,6 +27,7 @@ import { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
 import AzureADProvider from "next-auth/providers/azure-ad";
+import type { UserRole } from "@/app/generated/prisma";
 import {
   getSessionFromCache,
   setSessionInCache,
@@ -206,7 +207,7 @@ export const authOptions: Record<string, unknown> = {
             userId: token.sub!,
             email: token.email!,
             name: token.name as string | null,
-            role: "USER",
+            role: "USER" as UserRole,
             image: token.picture as string | null,
             createdAt: new Date().toISOString(),
             lastAccessedAt: new Date().toISOString(),

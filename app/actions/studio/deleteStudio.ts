@@ -9,7 +9,7 @@
 'use server';
 
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
@@ -80,7 +80,7 @@ export async function deleteStudio(input: DeleteStudioInput): Promise<{
     const { studioId, password } = validated.data;
 
     // 4. Get user with password hash
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -108,7 +108,7 @@ export async function deleteStudio(input: DeleteStudioInput): Promise<{
     }
 
     // 6. Verify studio ownership
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: userId,
         studioId: studioId,
@@ -138,7 +138,7 @@ export async function deleteStudio(input: DeleteStudioInput): Promise<{
 
     // 8. Delete all related data in a transaction
     // Order matters: child records first, then parent
-    await db.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx) => {
       // Delete services
       const deletedServices = await tx.service.deleteMany({
         where: { studioId },
@@ -209,7 +209,7 @@ export async function verifyUserPassword(password: string): Promise<{
       return { success: false, error: 'Nicht authentifiziert' };
     }
 
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { password: true },
     });

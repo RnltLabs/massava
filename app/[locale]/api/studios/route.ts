@@ -3,12 +3,11 @@
  * All rights reserved.
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { auth } from '@/auth';
 
-const prisma = new PrismaClient();
 
 type ServiceInput = {
   name: string;

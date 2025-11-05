@@ -7,14 +7,13 @@
  * MASTER_ORCHESTRATION_PLAN.md Task 1.4: Data Retention & Deletion
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { createAuditLog, exportUserAuditLogs } from '@/lib/audit';
 import { z } from 'zod';
 import { auth } from '@/auth';
 
-const prisma = new PrismaClient();
 
 // Request validation schema
 const ExportRequestSchema = z.object({

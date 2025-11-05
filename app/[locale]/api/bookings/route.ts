@@ -3,13 +3,12 @@
  * All rights reserved.
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/app/generated/prisma';
 import { bookingSchema } from '@/lib/validation';
 import { bookingRateLimit, getClientIp, rateLimitErrorResponse } from '@/lib/rate-limit';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 
-const prisma = new PrismaClient();
 
 // Art. 9 GDPR - Health consent text
 const HEALTH_CONSENT_TEXT = `Ich willige ausdrücklich ein, dass meine im Nachrichtenfeld angegebenen Informationen (die möglicherweise Gesundheitsdaten enthalten) zum Zweck der Massage-Behandlung an das Studio weitergegeben und verarbeitet werden. Diese Einwilligung kann ich jederzeit per E-Mail an datenschutz@massava.com widerrufen.`;

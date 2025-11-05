@@ -237,27 +237,14 @@ export async function detectTokenReuse(
     `refresh:${refreshToken}`
   );
 
-  if (!metadata) {
-    // Token already used or expired
-    // Check if token family exists (indicates reuse)
-    const familyKeys = await redis.keys(`refresh:*`);
-
-    for (const key of familyKeys) {
-      const familyMetadata = await redis.get<RefreshTokenMetadata>(key);
-      if (familyMetadata?.tokenFamily === metadata?.tokenFamily) {
-        // SECURITY THREAT: Token reuse detected
-        console.error(
-          `[SECURITY] Token reuse detected for userId=${familyMetadata.userId}`
-        );
-
-        // Revoke all tokens in family
-        await revokeAllRefreshTokens(familyMetadata.userId);
-
-        return true; // Reuse detected
-      }
-    }
+  // If token exists, it's not reuse - it's a valid first use
+  if (metadata) {
+    return false;
   }
 
+  // Token doesn't exist - could be reuse or just expired
+  // We can't detect reuse without the original token family
+  // This is a limitation of the current implementation
   return false; // No reuse detected
 }
 

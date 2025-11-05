@@ -55,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     // Optional: Store in database for compliance audit
-    // await db.cookieConsent.create({
+    // await prisma.cookieConsent.create({
     //   data: {
     //     analytics: consent.analytics,
     //     marketing: consent.marketing,

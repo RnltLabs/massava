@@ -11,7 +11,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { UserRole } from '@/app/generated/prisma';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 import { Building2, Sparkles, Clock, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,7 +37,7 @@ export default async function DashboardPage({ params }: Props) {
   const isStudioOwner = userRole === UserRole.STUDIO_OWNER;
 
   // Check if user owns any studios (via StudioOwnership junction table)
-  const ownerships = await db.studioOwnership.findMany({
+  const ownerships = await prisma.studioOwnership.findMany({
     where: {
       userId: user.id,
     },
@@ -139,7 +139,7 @@ export default async function DashboardPage({ params }: Props) {
 
   // New user: Show welcome dashboard with action cards
   // Check if user has any bookings
-  const bookings = await db.newBooking.findMany({
+  const bookings = await prisma.newBooking.findMany({
     where: { customerId: user.id },
     orderBy: { createdAt: 'desc' },
     take: 5,

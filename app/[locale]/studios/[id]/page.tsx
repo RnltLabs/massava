@@ -3,17 +3,16 @@
  * All rights reserved.
  */
 
+import { prisma } from '@/lib/prisma';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { BookingForm } from '@/components/BookingForm';
-import { PrismaClient } from '@/app/generated/prisma';
 
 type Props = {
   params: Promise<{ locale: string; id: string }>;
 };
 
-const prisma = new PrismaClient();
 
 export default async function StudioProfilePage({ params }: Props) {
   const { locale, id } = await params;

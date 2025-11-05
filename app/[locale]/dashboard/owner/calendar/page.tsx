@@ -9,7 +9,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { CalendarClient } from './_components/CalendarClient';
@@ -35,7 +35,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   }
 
   // Get user's studio
-  const ownership = await db.studioOwnership.findFirst({
+  const ownership = await prisma.studioOwnership.findFirst({
     where: {
       userId: session.user.id,
     },
@@ -83,7 +83,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   }
 
   // Get bookings for the date range
-  const rawBookings = await db.newBooking.findMany({
+  const rawBookings = await prisma.newBooking.findMany({
     where: {
       studioId: studio.id,
       preferredDate: Array.isArray(bookingDateFilter)
@@ -117,7 +117,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   }));
 
   // Get blocked times for the date range
-  const blockedTimes = await db.blockedTime.findMany({
+  const blockedTimes = await prisma.blockedTime.findMany({
     where: {
       studioId: studio.id,
       startTime: {
@@ -152,13 +152,13 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   // Calculate badge counts for bottom nav
   const today = format(new Date(), 'yyyy-MM-dd');
   const [pendingCount, todayCount] = await Promise.all([
-    db.newBooking.count({
+    prisma.newBooking.count({
       where: {
         studioId: studio.id,
         status: BookingStatus.PENDING,
       },
     }),
-    db.newBooking.count({
+    prisma.newBooking.count({
       where: {
         studioId: studio.id,
         status: BookingStatus.CONFIRMED,

@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { filterStudiosByRadius } from '@/lib/geolocation';
 import { filterServicesByType } from '@/lib/utils/serviceMatching';
 import { getMinPrice, filterServicesByPrice } from '@/lib/utils/priceAggregation';
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Fetch all studios with their time slots
-    const studios = await db.studio.findMany({
+    const studios = await prisma.studio.findMany({
       where: {
         latitude: { not: null },
         longitude: { not: null },

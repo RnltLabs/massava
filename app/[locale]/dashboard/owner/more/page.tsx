@@ -8,7 +8,7 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Settings, LogOut, HelpCircle, Bell } from 'lucide-react';
@@ -30,7 +30,7 @@ export default async function MorePage({ params }: Props): Promise<React.JSX.Ele
   }
 
   // Get user's studio
-  const ownership = await db.studioOwnership.findFirst({
+  const ownership = await prisma.studioOwnership.findFirst({
     where: {
       userId: session.user.id,
     },
@@ -54,7 +54,7 @@ export default async function MorePage({ params }: Props): Promise<React.JSX.Ele
   const studio = ownership.studio;
 
   // Calculate badge counts for bottom nav
-  const pendingCount = await db.newBooking.count({
+  const pendingCount = await prisma.newBooking.count({
     where: {
       studioId: studio.id,
       status: BookingStatus.PENDING,
@@ -62,7 +62,7 @@ export default async function MorePage({ params }: Props): Promise<React.JSX.Ele
   });
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayCount = await db.newBooking.count({
+  const todayCount = await prisma.newBooking.count({
     where: {
       studioId: studio.id,
       status: BookingStatus.CONFIRMED,

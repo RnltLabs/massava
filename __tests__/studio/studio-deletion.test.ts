@@ -54,7 +54,7 @@ vi.mock('fs/promises', () => ({
 }));
 
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 

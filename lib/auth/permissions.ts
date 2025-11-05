@@ -6,12 +6,12 @@
  * Runtime permission checks for API routes and server actions
  */
 
+import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import { hasPermission, Permission } from './rbac';
 import { NextRequest, NextResponse } from 'next/server';
 
-const prisma = new PrismaClient();
 
 export interface AuthUser {
   id: string;

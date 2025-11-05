@@ -9,7 +9,7 @@
 'use server';
 
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { revalidatePath } from 'next/cache';
 
@@ -33,7 +33,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
     }
 
     // Get booking with studio
-    const booking = await db.newBooking.findUnique({
+    const booking = await prisma.newBooking.findUnique({
       where: { id: bookingId },
       include: {
         studio: {
@@ -72,7 +72,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
     }
 
     // Update booking status
-    await db.newBooking.update({
+    await prisma.newBooking.update({
       where: { id: bookingId },
       data: {
         status: BookingStatus.CONFIRMED,
@@ -115,7 +115,7 @@ export async function declineBooking(
     }
 
     // Get booking with studio
-    const booking = await db.newBooking.findUnique({
+    const booking = await prisma.newBooking.findUnique({
       where: { id: bookingId },
       include: {
         studio: {
@@ -154,7 +154,7 @@ export async function declineBooking(
     }
 
     // Update booking status
-    await db.newBooking.update({
+    await prisma.newBooking.update({
       where: { id: bookingId },
       data: {
         status: BookingStatus.CANCELLED,
