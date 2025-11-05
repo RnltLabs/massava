@@ -101,20 +101,12 @@ export async function generateEmailVerificationURL(email: string, locale: string
  */
 
 /**
- * Mark email as verified in database
+ * Mark email as verified in database (Unified User Model)
  * @param email - Email address to mark as verified
- * @param userType - 'customer' or 'studio-owner'
  */
-export async function markEmailAsVerified(email: string, userType: 'customer' | 'studio-owner'): Promise<void> {
-  if (userType === 'customer') {
-    await prisma.customer.update({
-      where: { email },
-      data: { emailVerified: new Date() }
-    });
-  } else {
-    await prisma.studioOwner.update({
-      where: { email },
-      data: { emailVerified: new Date() }
-    });
-  }
+export async function markEmailAsVerified(email: string): Promise<void> {
+  await prisma.user.update({
+    where: { email },
+    data: { emailVerified: new Date() }
+  });
 }

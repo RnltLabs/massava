@@ -128,30 +128,10 @@ async function VerifyEmailContent({
   }
 
   // Update unified User model with email verification
-  const user = await prisma.user.findUnique({ where: { email } });
-
-  if (user) {
-    await prisma.user.update({
-      where: { email },
-      data: { emailVerified: new Date() },
-    });
-  } else {
-    // Fallback: Check legacy models (for users who haven't been migrated yet)
-    const customer = await prisma.customer.findUnique({ where: { email } });
-    const studioOwner = await prisma.studioOwner.findUnique({ where: { email } });
-
-    if (customer) {
-      await prisma.customer.update({
-        where: { email },
-        data: { emailVerified: new Date() },
-      });
-    } else if (studioOwner) {
-      await prisma.studioOwner.update({
-        where: { email },
-        data: { emailVerified: new Date() },
-      });
-    }
-  }
+  await prisma.user.update({
+    where: { email },
+    data: { emailVerified: new Date() },
+  });
 
   // Success - Use client component for auto-redirect to login
   return <VerifyEmailSuccess email={email} locale={locale} />;

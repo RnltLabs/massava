@@ -70,23 +70,7 @@ export async function signUp(
       };
     }
 
-    // 4. Check legacy models (for backward compatibility)
-    const legacyCustomer = await prisma.customer.findUnique({
-      where: { email },
-    });
-
-    const legacyStudioOwner = await prisma.studioOwner.findUnique({
-      where: { email },
-    });
-
-    if (legacyCustomer || legacyStudioOwner) {
-      return {
-        success: false,
-        error: 'An account with this email already exists',
-      };
-    }
-
-    // 5. Hash password with bcrypt (cost factor 12)
+    // 4. Hash password with bcrypt (cost factor 12)
     const hashedPassword = await bcrypt.hash(password, BCRYPT_COST_FACTOR);
 
     // 6. Create User record in database with selected role
@@ -169,25 +153,7 @@ export async function signIn(
       },
     });
 
-    // Check legacy models if not found in unified User model
-    let legacyUser = null;
     if (!user) {
-      const customer = await prisma.customer.findUnique({
-        where: { email },
-        select: { id: true, email: true, password: true, emailVerified: true },
-      });
-
-      const studioOwner = await prisma.studioOwner.findUnique({
-        where: { email },
-        select: { id: true, email: true, password: true, emailVerified: true },
-      });
-
-      legacyUser = customer || studioOwner;
-    }
-
-    const foundUser = user || legacyUser;
-
-    if (!foundUser) {
       return {
         success: false,
         error: 'Invalid email or password',
@@ -195,7 +161,7 @@ export async function signIn(
     }
 
     // Verify password
-    const passwordMatch = await bcrypt.compare(password, foundUser.password || '');
+    const passwordMatch = await bcrypt.compare(password, user.password || '');
     if (!passwordMatch) {
       return {
         success: false,
@@ -204,7 +170,7 @@ export async function signIn(
     }
 
     // Check email verification
-    if (!foundUser.emailVerified) {
+    if (!user.emailVerified) {
       return {
         success: false,
         error: 'Please verify your email address before logging in',
