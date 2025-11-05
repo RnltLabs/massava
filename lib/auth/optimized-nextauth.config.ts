@@ -75,11 +75,13 @@ export const authOptions: Record<string, unknown> = {
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
     }),
-    AzureADProvider({
-      clientId: process.env.AZURE_AD_CLIENT_ID!,
-      clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
-      tenantId: process.env.AZURE_AD_TENANT_ID!,
-    }),
+    // AzureADProvider - Commented out due to NextAuth v5 API changes
+    // TODO: Update Azure AD configuration for NextAuth v5
+    // AzureADProvider({
+    //   clientId: process.env.AZURE_AD_CLIENT_ID!,
+    //   clientSecret: process.env.AZURE_AD_CLIENT_SECRET!,
+    //   tenantId: process.env.AZURE_AD_TENANT_ID!,
+    // }),
   ],
 
   callbacks: {
