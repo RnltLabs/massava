@@ -92,9 +92,17 @@ export async function updateStudioProfile(
     }
 
     // 4. Update studio
+    // Convert null to undefined for Prisma
+    const updateData = Object.fromEntries(
+      Object.entries(validated.data).map(([key, value]) => [
+        key,
+        value === null ? undefined : value,
+      ])
+    );
+
     const updatedStudio = await prisma.studio.update({
       where: { id: studio.id },
-      data: validated.data,
+      data: updateData,
     });
 
     // 5. Revalidate pages

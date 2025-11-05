@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ async function getBookings(
   searchQuery?: string
 ): Promise<Array<Booking & { service: { name: string } | null }>> {
   // Get user's studio via User->StudioOwnership->Studio path
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -59,7 +59,7 @@ async function getBookings(
   }
 
   // Get bookings
-  const bookings = await db.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where,
     include: {
       service: {
@@ -80,7 +80,7 @@ export async function BookingsList({
   userEmail,
   statusFilter,
   searchQuery,
-}: BookingsListProps): Promise<JSX.Element> {
+}: BookingsListProps): Promise<React.JSX.Element> {
   const bookings = await getBookings(userEmail, statusFilter, searchQuery);
 
   if (bookings.length === 0) {

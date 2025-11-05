@@ -3,10 +3,10 @@
  * All rights reserved.
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { ServicesPageClient } from '../_components/ServicesPageClient';
 
 interface ServicesSettingsPageProps {
@@ -16,7 +16,7 @@ interface ServicesSettingsPageProps {
 }
 
 async function getStudioServices(userEmail: string) {
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -36,9 +36,9 @@ async function getStudioServices(userEmail: string) {
 
 export default async function ServicesSettingsPage({
   params,
-}: ServicesSettingsPageProps): Promise<JSX.Element> {
+}: ServicesSettingsPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(

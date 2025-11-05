@@ -410,7 +410,7 @@ export async function executeBookingsRetention(
       deletedCount = result.count;
 
       await createAuditLog({
-        action: 'BOOKING_DELETED',
+        action: 'BOOKING_UPDATED',
         resource: 'booking',
         resourceId: 'bulk',
         metadata: {

@@ -3,9 +3,9 @@
  * All rights reserved.
  */
 
-import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import React, { Suspense } from 'react';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
 import { DashboardStats } from '@/components/business/DashboardStats';
 import { RecentBookings } from '@/components/business/RecentBookings';
@@ -19,7 +19,7 @@ interface BusinessDashboardPageProps {
   }>;
 }
 
-function DashboardSkeleton(): JSX.Element {
+function DashboardSkeleton(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -58,9 +58,9 @@ function DashboardSkeleton(): JSX.Element {
 
 export default async function BusinessDashboardPage({
   params,
-}: BusinessDashboardPageProps): Promise<JSX.Element> {
+}: BusinessDashboardPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business`);

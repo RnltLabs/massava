@@ -3,12 +3,14 @@
  * All rights reserved.
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import React from 'react';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { ProfileEditForm } from '../_components/ProfileEditForm';
 import { LocationEditForm } from '../_components/LocationEditForm';
 
@@ -19,7 +21,7 @@ interface ProfileSettingsPageProps {
 }
 
 async function getStudioProfile(userEmail: string) {
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -35,9 +37,9 @@ async function getStudioProfile(userEmail: string) {
 
 export default async function ProfileSettingsPage({
   params,
-}: ProfileSettingsPageProps): Promise<JSX.Element> {
+}: ProfileSettingsPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(

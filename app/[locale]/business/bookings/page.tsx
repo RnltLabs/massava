@@ -3,9 +3,9 @@
  * All rights reserved.
  */
 
-import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import React, { Suspense } from 'react';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
 import { BookingsList } from '@/components/business/BookingsList';
 import { BookingFilters } from '@/components/business/BookingFilters';
@@ -22,7 +22,7 @@ interface BookingsPageProps {
   }>;
 }
 
-function BookingsListSkeleton(): JSX.Element {
+function BookingsListSkeleton(): React.JSX.Element {
   return (
     <div className="space-y-4">
       {[1, 2, 3, 4, 5].map((i) => (
@@ -46,10 +46,10 @@ function BookingsListSkeleton(): JSX.Element {
 export default async function BookingsPage({
   params,
   searchParams,
-}: BookingsPageProps): Promise<JSX.Element> {
+}: BookingsPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
   const search = await searchParams;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/bookings`);

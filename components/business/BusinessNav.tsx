@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { Session } from 'next-auth';
 import { signOut } from 'next-auth/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,7 +27,7 @@ interface BusinessNavProps {
   locale: string;
 }
 
-export function BusinessNav({ session, locale }: BusinessNavProps): JSX.Element {
+export function BusinessNav({ session, locale }: BusinessNavProps): React.JSX.Element {
   const router = useRouter();
 
   const getInitials = (name?: string | null): string => {

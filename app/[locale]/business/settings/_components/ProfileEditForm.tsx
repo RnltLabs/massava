@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -30,7 +32,7 @@ interface ProfileEditFormProps {
   };
 }
 
-export function ProfileEditForm({ studio }: ProfileEditFormProps): JSX.Element {
+export function ProfileEditForm({ studio }: ProfileEditFormProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();

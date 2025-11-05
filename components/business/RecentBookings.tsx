@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,7 @@ async function getRecentBookings(
   userEmail: string
 ): Promise<Array<Booking & { service: { name: string } | null }>> {
   // Get user's studio via User->StudioOwnership->Studio path
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -37,7 +37,7 @@ async function getRecentBookings(
   const studioId = user.ownedStudios[0].studioId;
 
   // Get recent bookings
-  const bookings = await db.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: {
       studioId,
     },
@@ -57,7 +57,7 @@ async function getRecentBookings(
   return bookings;
 }
 
-export async function RecentBookings({ userEmail }: RecentBookingsProps): Promise<JSX.Element> {
+export async function RecentBookings({ userEmail }: RecentBookingsProps): Promise<React.JSX.Element> {
   const bookings = await getRecentBookings(userEmail);
 
   return (

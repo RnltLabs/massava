@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -34,7 +36,7 @@ export function ServiceDeleteDialog({
   isOpen,
   onClose,
   service,
-}: ServiceDeleteDialogProps): JSX.Element {
+}: ServiceDeleteDialogProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();

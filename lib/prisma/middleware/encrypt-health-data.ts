@@ -31,7 +31,7 @@ import { logHealthDataAccess } from '../../audit/health-data-access-logger';
  * 
  * Only encrypts if message field is present and not already encrypted.
  */
-export function encryptHealthDataMiddleware(): Prisma.Middleware {
+export function encryptHealthDataMiddleware(): (params: any, next: any) => Promise<any> {
   return async (params, next) => {
     // Only process Booking model
     if (params.model !== 'Booking') {
@@ -66,7 +66,7 @@ export function encryptHealthDataMiddleware(): Prisma.Middleware {
 /**
  * Encrypt message field in create/update/upsert operations
  */
-async function encryptMessageField(params: Prisma.MiddlewareParams): Promise<void> {
+async function encryptMessageField(params: any): Promise<void> {
   let messageToEncrypt: string | undefined;
   let userId: string | undefined;
 
@@ -121,7 +121,7 @@ async function encryptMessageField(params: Prisma.MiddlewareParams): Promise<voi
  */
 async function decryptMessageField(
   result: any,
-  params: Prisma.MiddlewareParams
+  params: any
 ): Promise<void> {
   if (!result) return;
 

@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -29,7 +31,7 @@ interface LocationEditFormProps {
   };
 }
 
-export function LocationEditForm({ studio }: LocationEditFormProps): JSX.Element {
+export function LocationEditForm({ studio }: LocationEditFormProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();

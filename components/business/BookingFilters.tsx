@@ -5,6 +5,7 @@
 
 'use client';
 
+import React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +19,7 @@ import {
 import { SearchIcon, FilterIcon } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-export function BookingFilters(): JSX.Element {
+export function BookingFilters(): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

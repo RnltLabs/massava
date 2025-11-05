@@ -58,14 +58,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!validation.success) {
       logger.warn('Invalid export data request', {
         correlationId,
-        errors: validation.error.errors,
+        errors: validation.error.issues,
         action: 'GDPR_EXPORT_DATA',
       });
 
       return NextResponse.json(
         {
           error: 'Invalid request',
-          details: validation.error.errors,
+          details: validation.error.issues,
         },
         { status: 400 }
       );

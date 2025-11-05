@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +22,7 @@ interface RedirectPageProps {
  * Redirect page from old studio registration URL
  * Automatically redirects to new business onboarding page
  */
-export default function StudioRegisterRedirect({ params }: RedirectPageProps): JSX.Element {
+export default function StudioRegisterRedirect({ params }: RedirectPageProps): React.JSX.Element {
   const { locale } = use(params);
   const router = useRouter();
 
