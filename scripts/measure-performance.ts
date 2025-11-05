@@ -126,9 +126,8 @@ async function measureCoreWebVitals(url: string): Promise<{
       }).observe({ type: "paint", buffered: true });
 
       // TTFB
-      const navTiming = performance.getEntriesByType(
-        "navigation"
-      )[0] as PerformanceNavigationTiming;
+      const navEntries = performance.getEntriesByType("navigation") as PerformanceNavigationTiming[];
+      const navTiming = navEntries[0];
       ttfb = navTiming.responseStart - navTiming.requestStart;
 
       setTimeout(() => {
