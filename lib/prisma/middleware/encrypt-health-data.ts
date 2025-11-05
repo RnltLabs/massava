@@ -14,7 +14,45 @@ import {
   decryptFromString,
   isEncrypted,
 } from '../../encryption/health-data';
-import { logHealthDataAccess } from '../../audit/health-data-access-logger';
+import {
+  logHealthDataAccess,
+  logHealthDataAccessBatch,
+  type HealthDataAccessLog,
+} from '../../audit/health-data-access-logger';
+
+/**
+ * Parameters for encryption operations
+ * Flexible type to accept Prisma's generated types
+ */
+interface EncryptParams {
+  action: 'create' | 'update' | 'upsert';
+  args: Record<string, unknown>;
+  model: string;
+}
+
+/**
+ * Parameters for decryption operations
+ */
+interface DecryptParams {
+  action: 'findUnique' | 'findFirst' | 'findMany' | 'create' | 'update' | 'upsert';
+  model: string;
+}
+
+/**
+ * Booking result type (single or array)
+ * Flexible type to accept any booking-like object
+ */
+type BookingResult = {
+  id?: string | null;
+  customerId?: string | null;
+  message?: string | null;
+} | null;
+
+type BookingArrayResult = Array<{
+  id?: string | null;
+  customerId?: string | null;
+  message?: string | null;
+}> | null;
 
 /**
  * Prisma Client Extension to automatically encrypt/decrypt health data in Booking.message field
@@ -75,23 +113,46 @@ export function createHealthDataEncryptionExtension() {
 }
 
 /**
+ * Type guard to check if value is an object with string properties
+ */
+function isRecordWithStringProp(value: unknown, prop: string): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && prop in value;
+}
+
+/**
+ * Safely extract string property from unknown object
+ */
+function extractStringProp(obj: unknown, prop: string): string | undefined {
+  if (isRecordWithStringProp(obj, prop)) {
+    const value = (obj as Record<string, unknown>)[prop];
+    return typeof value === 'string' ? value : undefined;
+  }
+  return undefined;
+}
+
+/**
  * Encrypt message field in create/update/upsert operations
  */
-async function encryptMessageField(params: any): Promise<void> {
+async function encryptMessageField(params: EncryptParams): Promise<void> {
   let messageToEncrypt: string | undefined;
   let userId: string | undefined;
 
   // Extract message and userId from different operation types
   if (params.action === 'create') {
-    messageToEncrypt = params.args.data?.message;
-    userId = params.args.data?.customerId;
+    const data = params.args.data as Record<string, unknown> | undefined;
+    messageToEncrypt = extractStringProp(data, 'message');
+    userId = extractStringProp(data, 'customerId');
   } else if (params.action === 'update') {
-    messageToEncrypt = params.args.data?.message;
-    userId = params.args.where?.customerId;
+    const data = params.args.data as Record<string, unknown> | undefined;
+    const where = params.args.where as Record<string, unknown> | undefined;
+    messageToEncrypt = extractStringProp(data, 'message');
+    userId = extractStringProp(where, 'customerId');
   } else if (params.action === 'upsert') {
     // For upsert, check both create and update data
-    messageToEncrypt = params.args.create?.message || params.args.update?.message;
-    userId = params.args.create?.customerId || params.args.update?.customerId;
+    const createData = params.args.create as Record<string, unknown> | undefined;
+    const updateData = params.args.update as Record<string, unknown> | undefined;
+    messageToEncrypt = extractStringProp(createData, 'message') || extractStringProp(updateData, 'message');
+    userId = extractStringProp(createData, 'customerId') || extractStringProp(updateData, 'customerId');
   }
 
   // Only encrypt if message exists and is not already encrypted
@@ -101,42 +162,54 @@ async function encryptMessageField(params: any): Promise<void> {
 
       // Update the params with encrypted message
       if (params.action === 'create') {
-        params.args.data.message = encrypted;
-      } else if (params.action === 'update') {
-        params.args.data.message = encrypted;
-      } else if (params.action === 'upsert') {
-        if (params.args.create?.message) {
-          params.args.create.message = encrypted;
+        const data = params.args.data as Record<string, unknown> | undefined;
+        if (data) {
+          data.message = encrypted;
         }
-        if (params.args.update?.message) {
-          params.args.update.message = encrypted;
+      } else if (params.action === 'update') {
+        const data = params.args.data as Record<string, unknown> | undefined;
+        if (data) {
+          data.message = encrypted;
+        }
+      } else if (params.action === 'upsert') {
+        const createData = params.args.create as Record<string, unknown> | undefined;
+        const updateData = params.args.update as Record<string, unknown> | undefined;
+        if (createData && 'message' in createData) {
+          createData.message = encrypted;
+        }
+        if (updateData && 'message' in updateData) {
+          updateData.message = encrypted;
         }
       }
 
       // Audit log: Health data encrypted (write operation)
+      const where = params.args.where as Record<string, unknown> | undefined;
+      const bookingId = extractStringProp(where, 'id') || 'new';
+
       await logHealthDataAccess({
         action: 'ENCRYPT',
         userId: userId || 'unknown',
-        bookingId: params.args.where?.id || 'new',
+        bookingId,
         timestamp: new Date(),
       });
     } catch (error) {
-      console.error('Failed to encrypt health data:', error);
-      throw new Error('Failed to encrypt health data. Please check HEALTH_DATA_ENCRYPTION_KEY configuration.');
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to encrypt health data: ${errorMessage}. Please check HEALTH_DATA_ENCRYPTION_KEY configuration.`);
     }
   }
 }
 
 /**
  * Decrypt message field in read operations
+ * Uses batch logging for findMany to improve performance
  */
 async function decryptMessageField(
-  result: any,
-  params: any
+  result: BookingResult | BookingArrayResult,
+  params: DecryptParams
 ): Promise<void> {
   if (!result) return;
 
-  // Handle single result (findUnique, findFirst)
+  // Handle single result (findUnique, findFirst, create, update)
   if (result && typeof result === 'object' && !Array.isArray(result)) {
     if (result.message && isEncrypted(result.message)) {
       try {
@@ -150,33 +223,38 @@ async function decryptMessageField(
           timestamp: new Date(),
         });
       } catch (error) {
-        console.error('Failed to decrypt health data:', error);
         // Leave encrypted data as-is rather than throwing
         // This allows system to continue functioning even if decryption fails
-        result.message = '[ENCRYPTED - Decryption failed]';
+        result.message = '[Content temporarily unavailable]';
       }
     }
   }
 
-  // Handle array results (findMany)
+  // Handle array results (findMany) - Use BATCH logging for performance
   if (Array.isArray(result)) {
+    const auditLogs: HealthDataAccessLog[] = [];
+
     for (const booking of result) {
       if (booking.message && isEncrypted(booking.message)) {
         try {
           booking.message = decryptFromString(booking.message);
 
-          // Audit log: Health data accessed (read operation)
-          await logHealthDataAccess({
+          // Collect audit logs for batch insert
+          auditLogs.push({
             action: 'DECRYPT',
             userId: booking.customerId || 'unknown',
             bookingId: booking.id || 'unknown',
             timestamp: new Date(),
           });
         } catch (error) {
-          console.error('Failed to decrypt health data:', error);
-          booking.message = '[ENCRYPTED - Decryption failed]';
+          booking.message = '[Content temporarily unavailable]';
         }
       }
+    }
+
+    // Batch insert all audit logs at once (performance optimization)
+    if (auditLogs.length > 0) {
+      await logHealthDataAccessBatch(auditLogs);
     }
   }
 }
