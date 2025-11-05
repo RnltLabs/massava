@@ -87,7 +87,7 @@ export async function GET(request: Request) {
 
     // 5. Fetch bookings with related data
     const [bookings, total] = await Promise.all([
-      prisma.booking.findMany({
+      prisma.newBooking.findMany({
         where,
         include: {
           service: {
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
         take: query.limit,
         skip: query.offset,
       }),
-      prisma.booking.count({ where }),
+      prisma.newBooking.count({ where }),
     ])
 
     // 6. Return response with pagination metadata

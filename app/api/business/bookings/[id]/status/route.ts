@@ -69,7 +69,7 @@ export async function PATCH(
     }
 
     // 4. Fetch booking and verify ownership
-    const booking = await prisma.booking.findUnique({
+    const booking = await prisma.newBooking.findUnique({
       where: { id: bookingId },
       include: {
         service: {
@@ -96,7 +96,7 @@ export async function PATCH(
     }
 
     // 5. Update booking status
-    const updatedBooking = await prisma.booking.update({
+    const updatedBooking = await prisma.newBooking.update({
       where: { id: bookingId },
       data: {
         status,

@@ -39,7 +39,7 @@ async function getUpcomingAppointments(
   today.setHours(0, 0, 0, 0);
 
   // Get confirmed bookings for today and upcoming
-  const bookings = await prisma.booking.findMany({
+  const bookings = await prisma.newBooking.findMany({
     where: {
       studioId,
       status: BookingStatus.CONFIRMED,

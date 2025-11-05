@@ -37,7 +37,7 @@ async function getRecentBookings(
   const studioId = user.ownedStudios[0].studioId;
 
   // Get recent bookings
-  const bookings = await prisma.booking.findMany({
+  const bookings = await prisma.newBooking.findMany({
     where: {
       studioId,
     },

@@ -59,7 +59,7 @@ async function getBookings(
   }
 
   // Get bookings
-  const bookings = await prisma.booking.findMany({
+  const bookings = await prisma.newBooking.findMany({
     where,
     include: {
       service: {
