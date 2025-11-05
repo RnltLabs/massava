@@ -14,7 +14,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
 import { auth } from './auth-unified';
-import { UserRole } from '@/lib/types/user-role';
 
 // Create i18n middleware
 const intlMiddleware = createIntlMiddleware({
@@ -39,8 +38,9 @@ function isBusinessPortalRoute(pathname: string): boolean {
 
 /**
  * Check if user has business portal access
+ * Uses string comparison to avoid type mismatch between Prisma and edge-compatible UserRole enums
  */
-function hasBusinessAccess(session: { user?: { primaryRole?: UserRole; roles?: UserRole[] } } | null): boolean {
+function hasBusinessAccess(session: { user?: { primaryRole?: string; roles?: string[] } } | null): boolean {
   if (!session?.user?.primaryRole) {
     return false;
   }
@@ -48,12 +48,12 @@ function hasBusinessAccess(session: { user?: { primaryRole?: UserRole; roles?: U
   const primaryRole = session.user.primaryRole;
   const roles = session.user.roles || [];
 
-  // Check if user has STUDIO_OWNER or SUPER_ADMIN role
+  // Check if user has STUDIO_OWNER or SUPER_ADMIN role (string comparison)
   return (
-    primaryRole === UserRole.STUDIO_OWNER ||
-    primaryRole === UserRole.SUPER_ADMIN ||
-    roles.includes(UserRole.STUDIO_OWNER) ||
-    roles.includes(UserRole.SUPER_ADMIN)
+    primaryRole === 'STUDIO_OWNER' ||
+    primaryRole === 'SUPER_ADMIN' ||
+    roles.includes('STUDIO_OWNER') ||
+    roles.includes('SUPER_ADMIN')
   );
 }
 
