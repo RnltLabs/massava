@@ -20,14 +20,14 @@ import { z } from 'zod'
  */
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Authenticate and authorize
     const session = await auth()
     requireBusinessAccess(session?.user)
 
-    const serviceId = params.id
+    const { id: serviceId } = await params
 
     // Validate service ID format
     if (!serviceId || serviceId.length < 20) {
@@ -141,14 +141,14 @@ export async function PATCH(
  */
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Authenticate and authorize
     const session = await auth()
     requireBusinessAccess(session?.user)
 
-    const serviceId = params.id
+    const { id: serviceId } = await params
 
     // Validate service ID format
     if (!serviceId || serviceId.length < 20) {

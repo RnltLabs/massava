@@ -5,15 +5,15 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { use, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight } from 'lucide-react';
 
 interface RedirectPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 /**
@@ -21,19 +21,20 @@ interface RedirectPageProps {
  * Automatically redirects to new business settings services page
  */
 export default function StudioServicesRedirect({ params }: RedirectPageProps): JSX.Element {
+  const { locale } = use(params);
   const router = useRouter();
 
   useEffect(() => {
     // Auto-redirect after 3 seconds
     const timer = setTimeout(() => {
-      router.push(`/${params.locale}/business/settings/services`);
+      router.push(`/${locale}/business/settings/services`);
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [params.locale, router]);
+  }, [locale, router]);
 
   const handleImmediateRedirect = (): void => {
-    router.push(`/${params.locale}/business/settings/services`);
+    router.push(`/${locale}/business/settings/services`);
   };
 
   return (

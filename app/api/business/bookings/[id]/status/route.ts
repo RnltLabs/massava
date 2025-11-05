@@ -17,14 +17,14 @@ import { z } from 'zod'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Authenticate and authorize
     const session = await auth()
     requireBusinessAccess(session?.user)
 
-    const bookingId = params.id
+    const { id: bookingId } = await params
 
     // Validate booking ID format
     if (!bookingId || bookingId.length < 20) {
