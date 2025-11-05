@@ -93,18 +93,18 @@ export const authOptions: Record<string, unknown> = {
      *
      * PERFORMANCE: -145ms (-97%)
      */
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account, profile }: { user: User; account: unknown; profile?: unknown }) {
       const startTime = performance.now();
 
       try {
         // FAST PATH: Enqueue user sync job (non-blocking)
         await enqueueUserSync({
-          userId: user.id || user.email, // Use email as fallback ID
-          provider: account!.provider as "google" | "github" | "azure-ad",
-          providerAccountId: account!.providerAccountId,
+          userId: (user.id || user.email) as string, // Use email as fallback ID
+          provider: (account as { provider: string }).provider as "google" | "github" | "azure-ad",
+          providerAccountId: (account as { providerAccountId: string }).providerAccountId,
           email: user.email!,
-          name: user.name,
-          image: user.image,
+          name: user.name || null,
+          image: user.image || null,
           timestamp: new Date().toISOString(),
         });
 
@@ -136,12 +136,12 @@ export const authOptions: Record<string, unknown> = {
      * - Faster JWT signing/verification
      * - Lower bandwidth usage
      */
-    async jwt({ token, user, account, trigger }): Promise<JWT> {
+    async jwt({ token, user, account, trigger }: { token: JWT; user?: User; account?: unknown; trigger?: string }): Promise<JWT> {
       const startTime = performance.now();
 
       // Initial sign-in: Set userId from OAuth user
       if (user) {
-        token.sub = user.id || user.email; // userId
+        token.sub = (user.id || user.email) as string; // userId
         token.role = "USER"; // Default role (updated by worker)
       }
 
@@ -175,7 +175,7 @@ export const authOptions: Record<string, unknown> = {
      * - Miss: Fallback to JWT data (10ms)
      * - Background: Worker keeps cache warm
      */
-    async session({ session, token }): Promise<Session> {
+    async session({ session, token }: { session: Session; token: JWT }): Promise<Session> {
       const startTime = performance.now();
 
       try {
@@ -189,7 +189,7 @@ export const authOptions: Record<string, unknown> = {
             email: cachedSession.email,
             name: cachedSession.name,
             image: cachedSession.image,
-            role: cachedSession.role,
+            primaryRole: cachedSession.role as unknown as import("@/app/generated/prisma").UserRole,
           };
         } else {
           // Cache miss: Use JWT data (fallback)
@@ -198,7 +198,7 @@ export const authOptions: Record<string, unknown> = {
             email: token.email!,
             name: token.name as string | null,
             image: token.picture as string | null,
-            role: (token.role as any) || "USER",
+            primaryRole: "USER" as import("@/app/generated/prisma").UserRole,
           };
 
           // Warm cache (fire-and-forget)
@@ -206,7 +206,7 @@ export const authOptions: Record<string, unknown> = {
             userId: token.sub!,
             email: token.email!,
             name: token.name as string | null,
-            role: (token.role as any) || "USER",
+            primaryRole: "USER" as import("@/app/generated/prisma").UserRole,
             image: token.picture as string | null,
             createdAt: new Date().toISOString(),
             lastAccessedAt: new Date().toISOString(),
@@ -231,7 +231,7 @@ export const authOptions: Record<string, unknown> = {
           email: token.email!,
           name: token.name as string | null,
           image: token.picture as string | null,
-          role: (token.role as any) || "USER",
+          primaryRole: "USER" as import("@/app/generated/prisma").UserRole,
         };
 
         return session;
@@ -266,7 +266,7 @@ export const authOptions: Record<string, unknown> = {
    * Track auth performance in production
    */
   events: {
-    async signIn({ user, account, isNewUser }) {
+    async signIn({ user, account, isNewUser }: { user: User; account?: unknown; isNewUser?: boolean }) {
       console.log(
         `[INFO] Sign-in: userId=${user.id}, provider=${account?.provider}, isNewUser=${isNewUser}`
       );
@@ -274,7 +274,7 @@ export const authOptions: Record<string, unknown> = {
       // Send to monitoring system (Umami/GlitchTip)
       // await trackEvent('user_sign_in', { userId: user.id, provider: account?.provider })
     },
-    async signOut({ token }) {
+    async signOut({ token }: { token?: JWT }) {
       console.log(`[INFO] Sign-out: userId=${token?.sub}`);
 
       // Invalidate cache

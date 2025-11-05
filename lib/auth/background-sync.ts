@@ -19,6 +19,7 @@
 
 import amqp from "amqplib";
 import type { UserRole } from "@/app/generated/prisma";
+import { logger } from "@/lib/logger";
 
 type AMQPConnection = Awaited<ReturnType<typeof amqp.connect>>;
 type AMQPChannel = Awaited<ReturnType<AMQPConnection['createChannel']>>;
@@ -57,24 +58,24 @@ async function connect(): Promise<unknown> {
       durable: true,
     });
 
-    console.log(`[INFO] Connected to RabbitMQ: ${QUEUE_NAME}`);
+    logger.info(`Connected to RabbitMQ: ${QUEUE_NAME}`, { queue: QUEUE_NAME });
 
     // Handle connection errors
     (connection as AMQPConnection).on("error", (err) => {
-      console.error(`[ERROR] RabbitMQ connection error:`, err);
+      logger.error(`RabbitMQ connection error`, { queue: QUEUE_NAME, error: err });
       connection = null;
       channel = null;
     });
 
     (connection as AMQPConnection).on("close", () => {
-      console.warn(`[WARN] RabbitMQ connection closed`);
+      logger.warn(`RabbitMQ connection closed`, { queue: QUEUE_NAME });
       connection = null;
       channel = null;
     });
 
     return channel;
   } catch (error) {
-    console.error(`[ERROR] Failed to connect to RabbitMQ:`, error);
+    logger.error(`Failed to connect to RabbitMQ`, { queue: QUEUE_NAME, error: error as Error });
     throw error;
   }
 }
@@ -137,14 +138,15 @@ export async function enqueueUserSync(job: UserSyncJob): Promise<void> {
     const duration = performance.now() - startTime;
 
     if (duration > 10) {
-      console.warn(`[PERF] Job enqueue slow: ${duration}ms`);
+      logger.warn(`Job enqueue slow: ${duration}ms`, { duration, action: "enqueue_user_sync" });
     }
 
-    console.log(
-      `[INFO] Enqueued user sync job: userId=${job.userId} in ${duration}ms`
+    logger.info(
+      `Enqueued user sync job: userId=${job.userId} in ${duration}ms`,
+      { userId: job.userId, duration, action: 'enqueue_user_sync' }
     );
   } catch (error) {
-    console.error(`[ERROR] Failed to enqueue user sync job:`, error);
+    logger.error(`Failed to enqueue user sync job`, { error: error as Error });
     // Don't throw - job failure shouldn't break auth
   }
 }
@@ -208,8 +210,9 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
 
     const duration = performance.now() - startTime;
 
-    console.log(
-      `[INFO] Processed user sync job: userId=${job.userId} in ${duration}ms`
+    logger.info(
+      `Processed user sync job: userId=${job.userId} in ${duration}ms`,
+      { userId: job.userId, duration, action: 'process_user_sync' }
     );
 
     // Warm cache (set session in Redis)
@@ -226,7 +229,7 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
 
     await prisma.$disconnect();
   } catch (error) {
-    console.error(`[ERROR] Failed to process user sync job:`, error);
+    logger.error(`Failed to process user sync job`, { error: error as Error });
     throw error; // Retry via RabbitMQ
   }
 }
@@ -247,8 +250,9 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
 export async function startWorker(): Promise<void> {
   const ch = await connect();
 
-  console.log(
-    `[INFO] Worker started, waiting for jobs in queue: ${QUEUE_NAME}`
+  logger.info(
+    `Worker started, waiting for jobs in queue: ${QUEUE_NAME}`,
+    { queue: QUEUE_NAME, action: 'worker_start' }
   );
 
   // Set prefetch (process N jobs concurrently)
@@ -264,7 +268,10 @@ export async function startWorker(): Promise<void> {
 
       try {
         const job: UserSyncJob = JSON.parse(msg.content.toString());
-        console.log(`[INFO] Processing job: userId=${job.userId}`);
+        logger.info(`Processing job: userId=${job.userId}`, {
+          userId: job.userId,
+          action: 'process_job_start',
+        });
 
         await processUserSyncJob(job);
 
@@ -272,11 +279,12 @@ export async function startWorker(): Promise<void> {
         (ch as AMQPChannel).ack(msg);
 
         const duration = performance.now() - startTime;
-        console.log(
-          `[INFO] Job completed: userId=${job.userId} in ${duration}ms`
+        logger.info(
+          `Job completed: userId=${job.userId} in ${duration}ms`,
+          { userId: job.userId, duration, action: 'process_job_complete' }
         );
       } catch (error) {
-        console.error(`[ERROR] Job failed:`, error);
+        logger.error(`Job failed`, { error: error as Error, action: 'process_job_failed' });
 
         // Reject job (will be sent to dead letter queue after retries)
         (ch as AMQPChannel).nack(msg, false, false);
@@ -314,7 +322,7 @@ export async function getQueueStats(): Promise<{
  * import { startWorker } from '@/lib/auth/background-sync'
  *
  * async function main() {
- *   console.log('Starting auth sync worker...')
+ *   logger.info('Starting auth sync worker...')
  *   await startWorker()
  * }
  *
