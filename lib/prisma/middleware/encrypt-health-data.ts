@@ -8,7 +8,7 @@
  * Applies encryption on create/update, decryption on read operations
  */
 
-import { Prisma } from '@/app/generated/prisma';
+import { Prisma, PrismaClient } from '@/app/generated/prisma';
 import {
   encryptToString,
   decryptFromString,
@@ -17,50 +17,61 @@ import {
 import { logHealthDataAccess } from '../../audit/health-data-access-logger';
 
 /**
- * Prisma middleware to automatically encrypt/decrypt health data in Booking.message field
- * 
+ * Prisma Client Extension to automatically encrypt/decrypt health data in Booking.message field
+ *
  * Encryption happens on:
  * - booking.create
  * - booking.update
  * - booking.upsert
- * 
+ *
  * Decryption happens on:
  * - booking.findUnique
  * - booking.findFirst
  * - booking.findMany
- * 
+ *
  * Only encrypts if message field is present and not already encrypted.
  */
-export function encryptHealthDataMiddleware(): (params: any, next: any) => Promise<any> {
-  return async (params, next) => {
-    // Only process Booking model
-    if (params.model !== 'Booking') {
-      return next(params);
-    }
-
-    // Handle encryption on write operations
-    if (
-      params.action === 'create' ||
-      params.action === 'update' ||
-      params.action === 'upsert'
-    ) {
-      await encryptMessageField(params);
-    }
-
-    // Execute the query
-    const result = await next(params);
-
-    // Handle decryption on read operations
-    if (
-      params.action === 'findUnique' ||
-      params.action === 'findFirst' ||
-      params.action === 'findMany'
-    ) {
-      await decryptMessageField(result, params);
-    }
-
-    return result;
-  };
+export function createHealthDataEncryptionExtension() {
+  return Prisma.defineExtension({
+    name: 'healthDataEncryption',
+    query: {
+      booking: {
+        async create({ args, query }) {
+          await encryptMessageField({ action: 'create', args, model: 'Booking' });
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'create', model: 'Booking' });
+          return result;
+        },
+        async update({ args, query }) {
+          await encryptMessageField({ action: 'update', args, model: 'Booking' });
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'update', model: 'Booking' });
+          return result;
+        },
+        async upsert({ args, query }) {
+          await encryptMessageField({ action: 'upsert', args, model: 'Booking' });
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'upsert', model: 'Booking' });
+          return result;
+        },
+        async findUnique({ args, query }) {
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'findUnique', model: 'Booking' });
+          return result;
+        },
+        async findFirst({ args, query }) {
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'findFirst', model: 'Booking' });
+          return result;
+        },
+        async findMany({ args, query }) {
+          const result = await query(args);
+          await decryptMessageField(result, { action: 'findMany', model: 'Booking' });
+          return result;
+        },
+      },
+    },
+  });
 }
 
 /**
@@ -171,16 +182,16 @@ async function decryptMessageField(
 }
 
 /**
- * Apply health data encryption middleware to Prisma client
- * 
+ * Apply health data encryption extension to Prisma client
+ *
  * Usage:
  * ```typescript
- * import { prisma } from '@/lib/prisma'
- * import { applyHealthDataEncryption } from '@/lib/prisma/middleware/encrypt-health-data'
- * 
- * applyHealthDataEncryption(prisma)
+ * import { createPrismaClientWithEncryption } from '@/lib/prisma/middleware/encrypt-health-data'
+ *
+ * const prisma = createPrismaClientWithEncryption()
  * ```
  */
-export function applyHealthDataEncryption(prismaClient: any): void {
-  prismaClient.$use(encryptHealthDataMiddleware());
+export function createPrismaClientWithEncryption() {
+  const client = new PrismaClient();
+  return client.$extends(createHealthDataEncryptionExtension());
 }
