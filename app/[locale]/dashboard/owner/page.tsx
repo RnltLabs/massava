@@ -8,7 +8,7 @@
  */
 
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { BookingStatus } from '@/app/generated/prisma';
 import { BottomTabNav } from '../_components/BottomTabNav';

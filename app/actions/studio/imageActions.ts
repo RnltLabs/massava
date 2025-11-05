@@ -8,7 +8,7 @@
 
 'use server';
 
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { writeFile, mkdir, unlink } from 'fs/promises';

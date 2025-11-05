@@ -8,7 +8,7 @@
  * Fetch dashboard statistics for the authenticated studio owner
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { statsQuerySchema } from '@/lib/validations/business'

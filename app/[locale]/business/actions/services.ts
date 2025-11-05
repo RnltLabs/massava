@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 /**

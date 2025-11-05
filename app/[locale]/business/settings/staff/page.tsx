@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

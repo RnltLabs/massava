@@ -8,7 +8,7 @@
  * Update the status of a booking (PENDING -> CONFIRMED or CANCELLED)
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { updateBookingStatusSchema } from '@/lib/validations/business'

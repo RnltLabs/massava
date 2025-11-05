@@ -4,7 +4,7 @@
  */
 
 import React, { Suspense } from 'react';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 
 import { redirect } from 'next/navigation';
 import { DashboardStats } from '@/components/business/DashboardStats';

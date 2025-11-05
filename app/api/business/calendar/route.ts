@@ -8,7 +8,7 @@
  * Fetch calendar data (bookings + time slots) for the authenticated studio owner
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { calendarQuerySchema } from '@/lib/validations/business'

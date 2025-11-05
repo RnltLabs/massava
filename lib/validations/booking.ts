@@ -51,7 +51,8 @@ export const bookingFormSchema = z.object({
   // Optional now - filled via guest form
   explicitHealthConsent: z.boolean().optional(),
 
-  customerId: z.string().cuid().nullable().optional(),
+  // P0.1 FIX: customerId REMOVED - NEVER accept from client (IDOR prevention)
+  // customerId is ALWAYS retrieved from server-side session in createBooking()
 })
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>

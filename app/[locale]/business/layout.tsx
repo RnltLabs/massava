@@ -5,10 +5,11 @@
 
 import React, { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { BusinessSidebar } from '@/components/business/BusinessSidebar';
 import { BusinessNav } from '@/components/business/BusinessNav';
 import { MobileBusinessNav } from '@/components/business/MobileBusinessNav';
+import { UserRole } from '@/app/generated/prisma';
 
 /**
  * Runtime Configuration: Node.js
@@ -40,9 +41,26 @@ export default async function BusinessLayout({
   const { locale } = await params;
   const session = await auth();
 
-  // Protect business portal - redirect to login if not authenticated
+  // P0.7 FIX: Protect business portal - redirect to login if not authenticated
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business`);
+  }
+
+  // P0.7 FIX: RBAC - Verify user has business access (STUDIO_OWNER or SUPER_ADMIN role)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userRole = (session.user as any)?.primaryRole;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const userRoles = (session.user as any)?.roles || [];
+
+  const hasBusinessAccess =
+    userRole === UserRole.STUDIO_OWNER ||
+    userRole === UserRole.SUPER_ADMIN ||
+    userRoles.includes(UserRole.STUDIO_OWNER) ||
+    userRoles.includes(UserRole.SUPER_ADMIN);
+
+  if (!hasBusinessAccess) {
+    // Redirect to customer dashboard - insufficient permissions
+    redirect(`/${locale}/dashboard`);
   }
 
   return (

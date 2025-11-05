@@ -27,7 +27,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: UnifiedUserAdapter(prisma),
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days (STRATEGY.md Section 8.2 - Phase 2)
+    // P0.6 FIX: Reduced from 30 days to 24 hours (session fixation protection)
+    // Prevents stolen tokens from being valid for extended periods
+    // Reduces risk of session hijacking after role changes
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 2 * 60 * 60, // Refresh session every 2 hours
   },
   pages: {
     signIn: '/auth/signin',
@@ -38,7 +42,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true, // Allow linking to existing email
+      // P0.3 FIX: SECURITY - Disabled dangerous email account linking
+      // Prevents account takeover via OAuth if email isn't verified
+      allowDangerousEmailAccountLinking: false,
     }),
 
     // Credentials Provider - Unified for all users
@@ -162,7 +168,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account, trigger }) {
       // Initial sign in
       if (user) {
         token.id = user.id;
@@ -172,6 +178,45 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.roles = (user as any).roles || [UserRole.CUSTOMER];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.accountType = (user as any).accountType || 'customer';
+
+        // P0.6 FIX: Session versioning - initialize session version
+        token.sessionVersion = 1;
+        token.issuedAt = Date.now();
+      }
+
+      // P0.6 FIX: On session update/refresh, verify roles haven't changed
+      // This prevents session fixation after role changes (e.g., user promoted to admin)
+      if (trigger === 'update' || (!user && !account)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            primaryRole: true,
+            isSuspended: true,
+            isActive: true,
+            updatedAt: true,
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (!dbUser || dbUser.isSuspended || !dbUser.isActive) {
+          // P0.6 FIX: Invalidate session if user suspended/deleted
+          throw new Error('Session invalid');
+        }
+
+        // P0.6 FIX: Check if roles changed - if yes, increment session version
+        const currentRoles = [dbUser.primaryRole, ...dbUser.roles.map((r) => r.role)];
+        const rolesChanged = JSON.stringify(token.roles) !== JSON.stringify(currentRoles);
+
+        if (rolesChanged) {
+          // Roles changed - invalidate old session by incrementing version
+          token.sessionVersion = ((token.sessionVersion as number) || 1) + 1;
+          token.primaryRole = dbUser.primaryRole;
+          token.roles = currentRoles;
+        }
       }
 
       // OAuth sign in - fetch roles from database
@@ -193,6 +238,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             dbUser.primaryRole,
             ...dbUser.roles.map((r) => r.role),
           ];
+          // P0.6 FIX: Set session version for OAuth logins
+          token.sessionVersion = 1;
+          token.issuedAt = Date.now();
         }
       }
 

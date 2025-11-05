@@ -53,7 +53,7 @@ vi.mock('fs/promises', () => ({
   },
 }));
 
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';

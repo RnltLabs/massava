@@ -13,6 +13,7 @@ import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logge
 import { createAuditLog } from '@/lib/audit';
 import { sendDeletionConfirmationEmail } from '@/lib/notifications/deletion-notifier';
 import { z } from 'zod';
+import { auth } from '@/auth';
 
 const prisma = new PrismaClient();
 
@@ -59,13 +60,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { userId, confirmEmail, reason, locale } = validation.data;
 
-    // TODO: Verify authentication - user can only delete their own data
-    // This should be implemented with your authentication system
-    // For now, assuming authentication is handled by middleware
-    // const session = await getServerSession(authOptions);
-    // if (!session || session.user.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    // P0.2 FIX: Verify authentication - user can only delete their own data
+    const session = await auth();
+
+    if (!session || !session.user) {
+      logger.warn('Unauthenticated GDPR delete attempt', {
+        correlationId,
+        action: 'GDPR_DELETE_DATA',
+      });
+
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // P0.2 FIX: IDOR Prevention - verify user can only delete their own data
+    if (session.user.id !== userId) {
+      logger.warn('Unauthorized GDPR delete attempt', {
+        correlationId,
+        sessionUserId: session.user.id,
+        requestedUserId: userId,
+        action: 'GDPR_DELETE_DATA',
+      });
+
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     logger.info('Starting data deletion request', {
       correlationId,
@@ -247,11 +270,23 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // TODO: Verify authentication
-    // const session = await getServerSession(authOptions);
-    // if (!session || session.user.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    // P0.2 FIX: Verify authentication
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // P0.2 FIX: IDOR Prevention - verify user can only cancel their own deletion
+    if (session.user.id !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     logger.info('Cancelling scheduled deletion', {
       correlationId,
@@ -382,11 +417,23 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // TODO: Verify authentication
-    // const session = await getServerSession(authOptions);
-    // if (!session || session.user.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    // P0.2 FIX: Verify authentication
+    const session = await auth();
+
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // P0.2 FIX: IDOR Prevention - verify user can only check their own deletion status
+    if (session.user.id !== userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

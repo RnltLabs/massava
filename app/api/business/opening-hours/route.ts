@@ -7,7 +7,7 @@
  * POST /api/business/opening-hours - Update opening hours
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { updateOpeningHoursSchema } from '@/lib/validations/business'

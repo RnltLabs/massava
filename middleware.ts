@@ -2,18 +2,26 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * Middleware Chain
+ * Middleware Chain - Edge Runtime Compatible
  * Implements:
  * 1. Internationalization (next-intl)
  * 2. Business Portal Protection (RBAC)
  *
+ * CRITICAL: Uses auth.config.ts (Edge-safe) NOT auth.ts (Node.js with Prisma)
+ * This prevents Edge Runtime errors when importing Prisma Client
+ *
  * Task 2.1: Middleware Protection (MASTER_ORCHESTRATION_PLAN.md)
+ * Phase 1: Config Split (Security Migration)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
-import { auth } from './auth-unified';
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+
+// Initialize NextAuth with Edge-safe config (NO Prisma)
+const { auth } = NextAuth(authConfig);
 
 // Create i18n middleware
 const intlMiddleware = createIntlMiddleware({

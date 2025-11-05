@@ -9,7 +9,7 @@
  */
 
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { UserRole } from '@/app/generated/prisma';
 import { db } from '@/lib/db';
 import Link from 'next/link';

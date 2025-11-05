@@ -7,7 +7,7 @@
  */
 
 import { redirect } from 'next/navigation';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

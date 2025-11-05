@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 
 const prisma = new PrismaClient();
 
