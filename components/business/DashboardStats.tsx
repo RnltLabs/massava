@@ -54,7 +54,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
   // Today's bookings
-  const todayBookings = await prisma.booking.count({
+  const todayBookings = await prisma.newBooking.count({
     where: {
       studioId,
       createdAt: {
@@ -64,7 +64,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // This week's bookings
-  const weekBookings = await prisma.booking.count({
+  const weekBookings = await prisma.newBooking.count({
     where: {
       studioId,
       createdAt: {
@@ -74,7 +74,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // Pending bookings
-  const pendingBookings = await prisma.booking.count({
+  const pendingBookings = await prisma.newBooking.count({
     where: {
       studioId,
       status: BookingStatus.PENDING,
@@ -82,7 +82,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // Month revenue (placeholder - will be calculated from actual booking prices)
-  const monthBookings = await prisma.booking.count({
+  const monthBookings = await prisma.newBooking.count({
     where: {
       studioId,
       status: BookingStatus.CONFIRMED,

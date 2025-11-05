@@ -17,13 +17,15 @@ interface BookingResult {
 /**
  * Create Booking Server Action
  *
- * Creates a new booking and marks the associated time slot as booked.
+ * Creates a new booking using the unified User model (Phase 3)
+ * and marks the associated time slot as booked.
  * This operation is atomic using Prisma transactions.
  *
  * GDPR Compliance:
  * - Stores explicit health consent timestamp
  * - Stores consent text for audit trail
  * - Only processes health data if consent given
+ * - Uses encrypted health data storage (via Prisma extension)
  *
  * @param data - Validated booking form data
  * @returns Result object with success status and booking ID or error message
@@ -86,12 +88,12 @@ export async function createBooking(
 
     // Create Booking + Mark TimeSlot as booked (Atomic Transaction)
     const booking = await prisma.$transaction(async (tx) => {
-      // Create Booking
-      const newBooking = await tx.booking.create({
+      // Create NewBooking with unified User model
+      const newBooking = await tx.newBooking.create({
         data: {
           studioId: validated.studioId,
           serviceId: validated.serviceId,
-          customerId: validated.customerId || null,
+          customerId: validated.customerId || null, // User ID or null for guest
           customerName: validated.customerName || "",
           customerEmail: validated.customerEmail || "",
           customerPhone: validated.customerPhone || "",

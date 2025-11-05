@@ -57,57 +57,62 @@ type BookingArrayResult = Array<{
 /**
  * Prisma Client Extension to automatically encrypt/decrypt health data in Booking.message field
  *
+ * Supports both legacy `booking` and unified `newBooking` models.
+ *
  * Encryption happens on:
- * - booking.create
- * - booking.update
- * - booking.upsert
+ * - booking/newBooking.create
+ * - booking/newBooking.update
+ * - booking/newBooking.upsert
  *
  * Decryption happens on:
- * - booking.findUnique
- * - booking.findFirst
- * - booking.findMany
+ * - booking/newBooking.findUnique
+ * - booking/newBooking.findFirst
+ * - booking/newBooking.findMany
  *
  * Only encrypts if message field is present and not already encrypted.
  */
 export function createHealthDataEncryptionExtension() {
+  const bookingHandlers = {
+    async create({ args, query }: any) {
+      await encryptMessageField({ action: 'create', args, model: 'Booking' });
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'create', model: 'Booking' });
+      return result;
+    },
+    async update({ args, query }: any) {
+      await encryptMessageField({ action: 'update', args, model: 'Booking' });
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'update', model: 'Booking' });
+      return result;
+    },
+    async upsert({ args, query }: any) {
+      await encryptMessageField({ action: 'upsert', args, model: 'Booking' });
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'upsert', model: 'Booking' });
+      return result;
+    },
+    async findUnique({ args, query }: any) {
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'findUnique', model: 'Booking' });
+      return result;
+    },
+    async findFirst({ args, query }: any) {
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'findFirst', model: 'Booking' });
+      return result;
+    },
+    async findMany({ args, query }: any) {
+      const result = await query(args);
+      await decryptMessageField(result, { action: 'findMany', model: 'Booking' });
+      return result;
+    },
+  };
+
   return Prisma.defineExtension({
     name: 'healthDataEncryption',
     query: {
-      booking: {
-        async create({ args, query }) {
-          await encryptMessageField({ action: 'create', args, model: 'Booking' });
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'create', model: 'Booking' });
-          return result;
-        },
-        async update({ args, query }) {
-          await encryptMessageField({ action: 'update', args, model: 'Booking' });
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'update', model: 'Booking' });
-          return result;
-        },
-        async upsert({ args, query }) {
-          await encryptMessageField({ action: 'upsert', args, model: 'Booking' });
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'upsert', model: 'Booking' });
-          return result;
-        },
-        async findUnique({ args, query }) {
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'findUnique', model: 'Booking' });
-          return result;
-        },
-        async findFirst({ args, query }) {
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'findFirst', model: 'Booking' });
-          return result;
-        },
-        async findMany({ args, query }) {
-          const result = await query(args);
-          await decryptMessageField(result, { action: 'findMany', model: 'Booking' });
-          return result;
-        },
-      },
+      booking: bookingHandlers,
+      newBooking: bookingHandlers, // Same handlers for unified model
     },
   });
 }

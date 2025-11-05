@@ -111,7 +111,7 @@ export async function GET(request: Request) {
       recentBookings,
     ] = await Promise.all([
       // Total bookings in period
-      prisma.booking.count({
+      prisma.newBooking.count({
         where: {
           studioId: studio.id,
           createdAt: {
@@ -122,7 +122,7 @@ export async function GET(request: Request) {
       }),
 
       // Pending bookings (current)
-      prisma.booking.count({
+      prisma.newBooking.count({
         where: {
           studioId: studio.id,
           status: BookingStatus.PENDING,
@@ -130,7 +130,7 @@ export async function GET(request: Request) {
       }),
 
       // Confirmed bookings in period
-      prisma.booking.count({
+      prisma.newBooking.count({
         where: {
           studioId: studio.id,
           status: BookingStatus.CONFIRMED,
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
       }),
 
       // Cancelled bookings in period
-      prisma.booking.count({
+      prisma.newBooking.count({
         where: {
           studioId: studio.id,
           status: BookingStatus.CANCELLED,
@@ -154,7 +154,7 @@ export async function GET(request: Request) {
       }),
 
       // Revenue calculation (confirmed bookings only)
-      prisma.booking.findMany({
+      prisma.newBooking.findMany({
         where: {
           studioId: studio.id,
           status: BookingStatus.CONFIRMED,
@@ -204,7 +204,7 @@ export async function GET(request: Request) {
       }),
 
       // Recent bookings
-      prisma.booking.findMany({
+      prisma.newBooking.findMany({
         where: {
           studioId: studio.id,
         },

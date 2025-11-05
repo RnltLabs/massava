@@ -84,7 +84,7 @@ export async function GET(request: Request) {
     // 5. Fetch calendar data in parallel
     const [bookings, timeSlots, services] = await Promise.all([
       // Bookings in date range
-      prisma.booking.findMany({
+      prisma.newBooking.findMany({
         where: bookingWhere,
         include: {
           service: {

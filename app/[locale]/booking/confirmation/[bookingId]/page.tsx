@@ -46,7 +46,7 @@ export default async function ConfirmationPage({
   const { bookingId } = await params
 
   // Fetch Booking with related data
-  const booking = await prisma.booking.findUnique({
+  const booking = await prisma.newBooking.findUnique({
     where: { id: bookingId },
     include: {
       studio: true,
@@ -258,7 +258,7 @@ export default async function ConfirmationPage({
 export async function generateMetadata({ params }: ConfirmationPageProps) {
   const { bookingId } = await params
 
-  const booking = await prisma.booking.findUnique({
+  const booking = await prisma.newBooking.findUnique({
     where: { id: bookingId },
     include: { studio: true },
   })

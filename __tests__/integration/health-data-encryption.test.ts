@@ -14,20 +14,21 @@ import { PrismaClient } from '@/app/generated/prisma';
 import { isEncrypted } from '@/lib/encryption/health-data';
 
 describe('Health Data Encryption (GDPR Art. 9)', () => {
-  let testCustomerId: string;
+  let testUserId: string;
   let testStudioId: string;
   let testServiceId: string;
 
   beforeAll(async () => {
-    // Create test data - use Customer model (bookings reference customers, not users)
-    const customer = await prisma.customer.create({
+    // Create test data - use User model (unified Phase 3 model)
+    const user = await prisma.user.create({
       data: {
         email: 'health-test@example.com',
         name: 'Health Test User',
+        primaryRole: 'CUSTOMER',
         emailVerified: new Date(),
       },
     });
-    testCustomerId = customer.id;
+    testUserId = user.id;
 
     const studio = await prisma.studio.create({
       data: {
@@ -61,8 +62,8 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     await prisma.studio.delete({
       where: { id: testStudioId },
     });
-    await prisma.customer.delete({
-      where: { id: testCustomerId },
+    await prisma.user.delete({
+      where: { id: testUserId },
     });
     await prisma.$disconnect();
   });
@@ -71,11 +72,11 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     const healthData = 'Rückenschmerzen im unteren Bereich';
 
     // Create booking using extended Prisma client (auto-encrypts)
-    const booking = await prisma.booking.create({
+    const booking = await prisma.newBooking.create({
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testCustomerId,
+        customerId: testUserId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
@@ -94,7 +95,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     // But in the actual database, it should be ENCRYPTED
     // Use a fresh Prisma client WITHOUT extension to check raw DB value
     const rawClient = new PrismaClient();
-    const rawBooking = await rawClient.booking.findUnique({
+    const rawBooking = await rawClient.newBooking.findUnique({
       where: { id: booking.id },
     });
     await rawClient.$disconnect();
@@ -105,18 +106,18 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     expect(isEncrypted(rawBooking?.message || '')).toBe(true);
 
     // Cleanup
-    await prisma.booking.delete({ where: { id: booking.id } });
+    await prisma.newBooking.delete({ where: { id: booking.id } });
   });
 
   it('should decrypt health data when reading booking', async () => {
     const healthData = 'Migräne-Probleme, bitte sanften Druck';
 
     // Create booking with health data (will be auto-encrypted in DB)
-    const booking = await prisma.booking.create({
+    const booking = await prisma.newBooking.create({
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testCustomerId,
+        customerId: testUserId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
@@ -130,7 +131,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     });
 
     // When reading with extended client, message should be automatically decrypted
-    const readBooking = await prisma.booking.findUnique({
+    const readBooking = await prisma.newBooking.findUnique({
       where: { id: booking.id },
     });
 
@@ -139,7 +140,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
 
     // Verify it's actually encrypted in the database
     const rawClient = new PrismaClient();
-    const rawBooking = await rawClient.booking.findUnique({
+    const rawBooking = await rawClient.newBooking.findUnique({
       where: { id: booking.id },
     });
     await rawClient.$disconnect();
@@ -148,16 +149,16 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     expect(isEncrypted(rawBooking?.message || '')).toBe(true);
 
     // Cleanup
-    await prisma.booking.delete({ where: { id: booking.id } });
+    await prisma.newBooking.delete({ where: { id: booking.id } });
   });
 
   it('should handle bookings without health data', async () => {
     // Create booking WITHOUT message (no health data)
-    const booking = await prisma.booking.create({
+    const booking = await prisma.newBooking.create({
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testCustomerId,
+        customerId: testUserId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
@@ -172,13 +173,13 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     expect(booking.message).toBeNull();
 
     // Read it back
-    const readBooking = await prisma.booking.findUnique({
+    const readBooking = await prisma.newBooking.findUnique({
       where: { id: booking.id },
     });
 
     expect(readBooking?.message).toBeNull();
 
     // Cleanup
-    await prisma.booking.delete({ where: { id: booking.id } });
+    await prisma.newBooking.delete({ where: { id: booking.id } });
   });
 });

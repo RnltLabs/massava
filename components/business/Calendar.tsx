@@ -68,7 +68,7 @@ async function getCalendarBookings(
   }
 
   // Get bookings in date range
-  const bookings = await prisma.booking.findMany({
+  const bookings = await prisma.newBooking.findMany({
     where: {
       studioId,
       createdAt: {
