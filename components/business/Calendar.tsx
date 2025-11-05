@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { CalendarIcon } from 'lucide-react';
-import { Booking, BookingStatus } from '@/app/generated/prisma';
+import { NewBooking, BookingStatus } from '@/app/generated/prisma';
 
 interface CalendarProps {
   userEmail: string;
@@ -19,7 +19,7 @@ async function getCalendarBookings(
   userEmail: string,
   date: string,
   view: 'day' | 'week' | 'month'
-): Promise<Array<Booking & { service: { name: string } | null }>> {
+): Promise<Array<NewBooking & { service: { name: string } | null }>> {
   // Get user's studio via User->StudioOwnership->Studio path
   const user = await prisma.user.findUnique({
     where: { email: userEmail },
