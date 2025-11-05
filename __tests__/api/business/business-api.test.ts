@@ -21,7 +21,7 @@ import { prisma } from '@/lib/prisma'
 import { BookingStatus, UserRole } from '@/app/generated/prisma'
 
 // Mock auth
-vi.mock('@/auth-unified', () => ({
+vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }))
 

@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { deleteStudio, verifyUserPassword } from '@/app/actions/studio/deleteStudio';
 
 // Mock dependencies
-vi.mock('@/auth-unified', () => ({
+vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }));
 
