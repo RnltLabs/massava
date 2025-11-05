@@ -184,7 +184,7 @@ export async function GET(request: Request) {
           duration: true,
           _count: {
             select: {
-              bookings: {
+              newBookings: {
                 where: {
                   createdAt: {
                     gte: startDate,
@@ -196,7 +196,7 @@ export async function GET(request: Request) {
           },
         },
         orderBy: {
-          bookings: {
+          newBookings: {
             _count: 'desc',
           },
         },
@@ -248,7 +248,7 @@ export async function GET(request: Request) {
         name: service.name,
         price: service.price,
         duration: service.duration,
-        bookingCount: service._count.bookings,
+        bookingCount: service._count.newBookings,
       })),
       recentBookings: recentBookings.map((booking) => ({
         id: booking.id,

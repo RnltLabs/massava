@@ -56,7 +56,7 @@ export async function GET() {
         updatedAt: true,
         _count: {
           select: {
-            bookings: true,
+            newBookings: true,
           },
         },
       },
