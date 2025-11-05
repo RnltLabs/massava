@@ -98,7 +98,8 @@ describe('GDPR Data Retention Policy', () => {
   });
 
   it('should identify users eligible for deletion warning', async () => {
-    const inactiveDate = subYears(subMonths(new Date(), 11), 2); // 2y 11m ago
+    // User inactive for 3 years and 1 month (definitely eligible)
+    const inactiveDate = subYears(subMonths(new Date(), 1), 3); // 3y 1m ago
 
     const user = await prisma.user.create({
       data: {
