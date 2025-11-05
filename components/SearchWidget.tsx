@@ -9,18 +9,22 @@ import { useState, type FormEvent, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { LocationAutocomplete } from '@/components/LocationAutocomplete';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { LocationSearchAutocomplete } from '@/components/LocationSearchAutocomplete';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { SERVICE_TYPE_OPTIONS, type ServiceType } from '@/lib/constants/serviceTypes';
 
 interface SearchWidgetProps {
   autoFocus?: boolean;
   placeholder?: string;
   searchButtonText?: string;
-}
-
-interface LocationData {
-  lat: number;
-  lng: number;
 }
 
 export function SearchWidget({
@@ -30,16 +34,21 @@ export function SearchWidget({
 }: SearchWidgetProps): ReactElement {
   const router = useRouter();
   const [location, setLocation] = useState<string>('');
-  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
   const [radius, setRadius] = useState<string>('20');
+  const [selectedServiceType, setSelectedServiceType] = useState<ServiceType | undefined>(undefined);
   const [dateTime, setDateTime] = useState<Date | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleLocationChange = (value: string, location?: { lat: number; lng: number }): void => {
-    setLocation(value);
-    if (location) {
-      setLocationData({ lat: location.lat, lng: location.lng });
-    }
+  const handleLocationSelect = (locationData: {
+    location: string;
+    lat: number;
+    lng: number;
+  }): void => {
+    setLocation(locationData.location);
+    setLat(locationData.lat);
+    setLng(locationData.lng);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
@@ -47,8 +56,8 @@ export function SearchWidget({
 
     // Validate required fields
     const trimmedLocation = location.trim();
-    if (!trimmedLocation) {
-      return;
+    if (!trimmedLocation || !lat || !lng) {
+      return; // User must select from autocomplete suggestions
     }
 
     setIsSubmitting(true);
@@ -56,15 +65,16 @@ export function SearchWidget({
     // Build search params
     const params = new URLSearchParams();
     params.set('location', trimmedLocation);
+    params.set('lat', String(lat));
+    params.set('lng', String(lng));
     params.set('radius', radius);
-
-    if (locationData) {
-      params.set('lat', String(locationData.lat));
-      params.set('lng', String(locationData.lng));
-    }
 
     if (dateTime) {
       params.set('datetime', dateTime.toISOString());
+    }
+
+    if (selectedServiceType) {
+      params.set('serviceType', selectedServiceType);
     }
 
     // Navigate to search results page
@@ -77,9 +87,10 @@ export function SearchWidget({
         {/* First row: Location and Radius */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
           {/* Location input with autocomplete */}
-          <LocationAutocomplete
+          <LocationSearchAutocomplete
             value={location}
-            onChange={handleLocationChange}
+            onChange={setLocation}
+            onLocationSelect={handleLocationSelect}
             placeholder={placeholder}
             autoFocus={autoFocus}
           />
@@ -104,18 +115,48 @@ export function SearchWidget({
           </div>
         </div>
 
-        {/* Second row: Date and Time */}
+        {/* Second row: Service Type */}
+        <div>
+          <Label htmlFor="service-type-select" className="sr-only">
+            Massage-Typ
+          </Label>
+          <Select
+            value={selectedServiceType}
+            onValueChange={(value) => setSelectedServiceType(value as ServiceType)}
+          >
+            <SelectTrigger
+              id="service-type-select"
+              className="w-full h-11 wellness-shadow"
+              aria-label="Massage-Typ auswählen"
+            >
+              <SelectValue placeholder="Massage-Typ wählen (optional)" />
+            </SelectTrigger>
+            <SelectContent>
+              {SERVICE_TYPE_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className="flex items-center gap-2">
+                    <span>{option.icon}</span>
+                    <span>{option.label}</span>
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Third row: Date and Time */}
         <DateTimePicker
           value={dateTime}
           onChange={setDateTime}
           minDate={new Date()}
           placeholder="Datum und Uhrzeit wählen"
+          showAnyDate={false}
         />
 
         {/* Search button */}
         <Button
           type="submit"
-          disabled={isSubmitting || !location.trim()}
+          disabled={isSubmitting || !location.trim() || !lat || !lng}
           className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 transition-all wellness-shadow hover:shadow-lg text-sm"
         >
           <Search className="h-4 w-4" aria-hidden="true" />

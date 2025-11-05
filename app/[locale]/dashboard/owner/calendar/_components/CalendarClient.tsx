@@ -32,6 +32,7 @@ type BookingWithService = NewBooking & {
 
 interface CalendarClientProps {
   studioId: string;
+  studioCapacity: number;
   initialBookings: BookingWithService[];
   initialBlockedTimes: (BlockedTime | VirtualBlockedTime)[];
   initialDate: Date;
@@ -40,6 +41,7 @@ interface CalendarClientProps {
 
 export function CalendarClient({
   studioId,
+  studioCapacity,
   initialBookings,
   initialBlockedTimes,
   initialDate,
@@ -226,6 +228,7 @@ export function CalendarClient({
           <TimeSlotGrid
             bookings={displayBookings}
             blockedTimes={displayBlockedTimes}
+            studioCapacity={studioCapacity}
             onSlotPress={handleSlotPress}
             onBookingClick={handleBookingClick}
             onBlockedTimeClick={handleBlockedTimeClick}
@@ -235,6 +238,7 @@ export function CalendarClient({
             weekStart={weekStartDate}
             bookings={initialBookings}
             blockedTimes={initialBlockedTimes}
+            studioCapacity={studioCapacity}
             onBookingClick={handleBookingClick}
             onBlockedTimeClick={handleBlockedTimeClick}
           />

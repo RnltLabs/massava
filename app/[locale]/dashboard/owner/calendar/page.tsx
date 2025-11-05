@@ -110,9 +110,9 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   const bookings = rawBookings.map((booking) => ({
     ...booking,
     customer: {
-      name: booking.customer.name || 'Unknown',
-      email: booking.customer.email,
-      phone: booking.customer.phone,
+      name: booking.customer?.name || booking.customerName || 'Unknown',
+      email: booking.customer?.email || booking.customerEmail || '',
+      phone: booking.customer?.phone || booking.customerPhone || '',
     },
   }));
 
@@ -182,6 +182,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
         <Suspense fallback={<CalendarSkeleton />}>
           <CalendarClient
             studioId={studio.id}
+            studioCapacity={studio.capacity}
             initialBookings={bookings}
             initialBlockedTimes={allBlockedTimes}
             initialDate={selectedDate}

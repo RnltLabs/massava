@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Clock, Loader2 } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { TimePickerSheet } from '../components/TimePickerSheet';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
-import { registerStudio } from '@/app/actions/studio/registerStudio';
 import { cn } from '@/lib/utils';
 import type { OpeningHoursFormData } from '../validation/openingHoursSchema';
 
@@ -26,15 +25,14 @@ const DAYS: { key: DayKey; label: string }[] = [
 
 /**
  * Opening Hours Step - Step 4
- * Collects studio opening hours and submits registration
+ * Collects studio opening hours
  */
 export function OpeningHoursStep(): React.JSX.Element {
   const {
     state,
     goToNextStep,
     setErrors,
-    setSubmitting,
-    setStudioId,
+    updateOpeningHours,
   } = useStudioRegistration();
 
   const [mode, setMode] = useState<'same' | 'different'>(
@@ -103,12 +101,7 @@ export function OpeningHoursStep(): React.JSX.Element {
     }
   };
 
-  const handleSkip = async (): Promise<void> => {
-    // Submit without opening hours
-    await submitRegistration(undefined);
-  };
-
-  const handleCompleteRegistration = async (): Promise<void> => {
+  const handleContinue = (): void => {
     // Validate and prepare opening hours data
     let openingHoursData: OpeningHoursFormData | undefined;
 
@@ -135,48 +128,10 @@ export function OpeningHoursStep(): React.JSX.Element {
       };
     }
 
-    await submitRegistration(openingHoursData);
-  };
-
-  const submitRegistration = async (
-    openingHoursData: OpeningHoursFormData | undefined
-  ): Promise<void> => {
-    // Prepare complete data
-    const completeData = {
-      name: state.formData.basicInfo.name || '',
-      description: state.formData.basicInfo.description || '',
-      address: {
-        street: state.formData.address.street || '',
-        line2: state.formData.address.line2,
-        city: state.formData.address.city || '',
-        postalCode: state.formData.address.postalCode || '',
-        country: state.formData.address.country || '',
-      },
-      contact: {
-        phone: state.formData.contact.phone || '',
-        email: state.formData.contact.email || '',
-        website: state.formData.contact.website || undefined,
-      },
-      openingHours: openingHoursData,
-    };
-
-    // Submit to server
-    setSubmitting(true);
-    try {
-      const result = await registerStudio(completeData);
-
-      if (result.success && result.studioId) {
-        setStudioId(result.studioId);
-        goToNextStep();
-      } else {
-        setErrors({ submit: result.error || 'Registration failed' });
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      setErrors({ submit: 'An unexpected error occurred' });
-    } finally {
-      setSubmitting(false);
-    }
+    // Save to context and move to next step
+    updateOpeningHours(openingHoursData);
+    setErrors({});
+    goToNextStep();
   };
 
   const formatTimeRange = (hours: { open: string; close: string }): string => {
@@ -189,22 +144,22 @@ export function OpeningHoursStep(): React.JSX.Element {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-3 sm:space-y-4"
     >
       {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
-        <p className="text-sm text-gray-600">Wann hat Ihr Studio geöffnet?</p>
+      <div className="text-center space-y-1">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
+        <p className="text-xs sm:text-sm text-gray-600">Wann hat Ihr Studio geöffnet?</p>
       </div>
 
       {/* Mode Selection */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {/* Same Hours Every Day */}
         <button
           type="button"
           onClick={() => setMode('same')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             mode === 'same'
               ? 'border-[#B56550] bg-[#B56550]/5'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -212,8 +167,8 @@ export function OpeningHoursStep(): React.JSX.Element {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-gray-900">Gleiche Zeiten jeden Tag</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm sm:text-base font-semibold text-gray-900">Gleiche Zeiten jeden Tag</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 hidden sm:block">
                 Ihr Studio hat immer die gleichen Öffnungszeiten
               </p>
             </div>
@@ -235,7 +190,7 @@ export function OpeningHoursStep(): React.JSX.Element {
           type="button"
           onClick={() => setMode('different')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             mode === 'different'
               ? 'border-[#B56550] bg-[#B56550]/5'
               : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
@@ -243,8 +198,8 @@ export function OpeningHoursStep(): React.JSX.Element {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-semibold text-gray-900">Unterschiedliche Zeiten</p>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm sm:text-base font-semibold text-gray-900">Unterschiedliche Zeiten</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1 hidden sm:block">
                 Verschiedene Öffnungszeiten für jeden Tag
               </p>
             </div>
@@ -269,44 +224,44 @@ export function OpeningHoursStep(): React.JSX.Element {
           type="button"
           onClick={() => openTimePicker('same')}
           className={cn(
-            'w-full p-4 rounded-xl border-2 transition-all text-left',
+            'w-full p-3 sm:p-4 rounded-xl border-2 transition-all text-left',
             'border-gray-200 hover:border-[#B56550] hover:bg-gray-50'
           )}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Clock className="h-5 w-5 text-gray-500" />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-gray-500" />
               <div>
-                <p className="font-medium text-gray-900">Jeden Tag</p>
+                <p className="text-sm sm:text-base font-medium text-gray-900">Jeden Tag</p>
                 {sameHours && (
-                  <p className="text-sm text-gray-600 mt-0.5">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-0.5">
                     {formatTimeRange(sameHours)}
                   </p>
                 )}
               </div>
             </div>
             {!sameHours && (
-              <p className="text-sm text-gray-500">Antippen um festzulegen</p>
+              <p className="text-xs sm:text-sm text-gray-500">Antippen</p>
             )}
           </div>
         </button>
       ) : (
         /* Different Hours - Day Cards */
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           {DAYS.map((day) => (
             <div
               key={day.key}
               className={cn(
-                'p-4 rounded-xl border-2 transition-all',
+                'p-2.5 sm:p-3 rounded-lg border-2 transition-all',
                 dayEnabled[day.key]
                   ? 'border-gray-200 bg-white'
                   : 'border-gray-100 bg-gray-50'
               )}
             >
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-1">
                 <Label
                   htmlFor={`day-${day.key}`}
-                  className="font-medium text-gray-900 cursor-pointer"
+                  className="text-sm font-medium text-gray-900 cursor-pointer"
                 >
                   {day.label}
                 </Label>
@@ -321,14 +276,14 @@ export function OpeningHoursStep(): React.JSX.Element {
                 <button
                   type="button"
                   onClick={() => openTimePicker(day.key)}
-                  className="w-full mt-2 p-3 rounded-lg border border-gray-200 hover:border-[#B56550] hover:bg-gray-50 transition-all text-left"
+                  className="w-full mt-1 p-2 sm:p-2.5 rounded-lg border border-gray-200 hover:border-[#B56550] hover:bg-gray-50 transition-all text-left"
                 >
                   {differentHours[day.key] ? (
-                    <p className="text-sm text-gray-700">
+                    <p className="text-xs sm:text-sm text-gray-700">
                       {formatTimeRange(differentHours[day.key]!)}
                     </p>
                   ) : (
-                    <p className="text-sm text-gray-500">Zeiten festlegen</p>
+                    <p className="text-xs sm:text-sm text-gray-500">Zeiten festlegen</p>
                   )}
                 </button>
               )}
@@ -350,30 +305,21 @@ export function OpeningHoursStep(): React.JSX.Element {
         </div>
       )}
 
-      {/* Complete Button */}
+      {/* Continue Button */}
       <Button
-        onClick={handleCompleteRegistration}
-        disabled={state.isSubmitting}
-        style={!state.isSubmitting ? { backgroundColor: '#B56550' } : undefined}
-        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
+        onClick={handleContinue}
+        style={{ backgroundColor: '#B56550' }}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
       >
-        {state.isSubmitting ? (
-          <>
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
-            Registrierung läuft...
-          </>
-        ) : (
-          'Registrierung abschließen'
-        )}
+        Weiter
       </Button>
 
       {/* Skip Button */}
       <div className="text-center space-y-2">
         <button
           type="button"
-          onClick={handleSkip}
-          disabled={state.isSubmitting}
-          className="text-sm text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed underline"
+          onClick={goToNextStep}
+          className="text-sm text-gray-500 hover:text-gray-700 transition-colors underline"
         >
           Jetzt überspringen
         </button>

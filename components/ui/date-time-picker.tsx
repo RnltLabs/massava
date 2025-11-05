@@ -6,7 +6,7 @@ import { de, enUS, th } from 'date-fns/locale'
 import { Calendar as CalendarIcon, Clock, X, ChevronLeft, Sun, Moon, Sunrise, Calendar as CalendarGridIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
@@ -20,6 +20,8 @@ interface DateTimePickerProps {
   placeholder?: string
   disabled?: boolean
   className?: string
+  showAnyDate?: boolean // Show "Any Date" option (default: true for backwards compatibility)
+  showQuickDates?: boolean // Show "Today" and "Tomorrow" quick options (default: true)
 }
 
 type DateTimeStep = 'date' | 'time' | 'custom-time'
@@ -33,6 +35,8 @@ export function DateTimePicker({
   placeholder,
   disabled = false,
   className,
+  showAnyDate = true,
+  showQuickDates = true,
 }: DateTimePickerProps) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<DateTimeStep>('date')
@@ -64,6 +68,19 @@ export function DateTimePicker({
       default:
         return setHours(setMinutes(date, 0), 12) // 12:00 for "any"
     }
+  }
+
+  // Check if a time slot is in the past
+  const isTimeSlotInPast = (date: Date, slot: TimeSlot): boolean => {
+    const now = new Date()
+    const slotTime = getTimeForSlot(date, slot)
+    return slotTime < now
+  }
+
+  // Check if date is today
+  const isToday = (date: Date): boolean => {
+    const today = new Date()
+    return date.toDateString() === today.toDateString()
   }
 
   // Handle quick date selection (Any, Today, Tomorrow)
@@ -109,6 +126,14 @@ export function DateTimePicker({
     setSelectedTimeSlot(slot)
     if (slot === 'custom') {
       setStep('custom-time')
+    } else {
+      // Auto-submit for morning/afternoon/evening
+      if (selectedDate) {
+        const finalDate = getTimeForSlot(selectedDate, slot)
+        onChange(finalDate)
+        setOpen(false)
+        setStep('date')
+      }
     }
   }
 
@@ -147,56 +172,73 @@ export function DateTimePicker({
   }
 
   // Render custom time selection
-  const renderCustomTimeSelection = () => (
-    <div className="space-y-4">
-      {/* Back Button */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setStep('time')}
-          className="gap-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          {t('back')}
-        </Button>
-      </div>
+  const renderCustomTimeSelection = () => {
+    // Get minimum hour for today
+    const now = new Date()
+    const currentHour = now.getHours()
+    const isTodaySelected = selectedDate && isToday(selectedDate)
+    const minHour = isTodaySelected ? currentHour + 1 : 0 // Next hour if today
 
-      {selectedDate && (
-        <div className="px-4 py-3 bg-accent/50 rounded-lg">
-          <div className="text-xs text-muted-foreground mb-1">
-            {t('selected')}
-          </div>
-          <div className="font-medium">
-            {format(selectedDate, 'EEEE, d. MMMM yyyy', { locale })}
-          </div>
+    // Filter available hours
+    const availableHours = Array.from({ length: 24 }, (_, i) => i).filter(
+      (hour) => !isTodaySelected || hour >= minHour
+    )
+
+    return (
+      <div className="space-y-4">
+        {/* Back Button */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setStep('time')}
+            className="gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            {t('back')}
+          </Button>
         </div>
-      )}
 
-      <Separator />
-
-      {/* Time Input */}
-      <div className="space-y-3">
-        <div className="text-sm font-medium">{t('customTime') || 'Genaue Uhrzeit wählen'}</div>
-        <div className="flex gap-3 items-center justify-center">
-          {/* Hour */}
-          <div className="flex-1">
-            <label htmlFor="hour-input" className="text-xs text-muted-foreground block mb-1">
-              Stunde
-            </label>
-            <select
-              id="hour-input"
-              value={customHour}
-              onChange={(e) => setCustomHour(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card text-center font-semibold"
-            >
-              {Array.from({ length: 24 }, (_, i) => (
-                <option key={i} value={String(i).padStart(2, '0')}>
-                  {String(i).padStart(2, '0')}
-                </option>
-              ))}
-            </select>
+        {selectedDate && (
+          <div className="px-4 py-3 bg-accent/50 rounded-lg">
+            <div className="text-xs text-muted-foreground mb-1">
+              {t('selected')}
+            </div>
+            <div className="font-medium">
+              {format(selectedDate, 'EEEE, d. MMMM yyyy', { locale })}
+            </div>
           </div>
+        )}
+
+        <Separator />
+
+        {/* Time Input */}
+        <div className="space-y-3">
+          <div className="text-sm font-medium">{t('customTime') || 'Genaue Uhrzeit wählen'}</div>
+          {isTodaySelected && (
+            <p className="text-xs text-muted-foreground">
+              Nur zukünftige Uhrzeiten verfügbar (ab {minHour}:00 Uhr)
+            </p>
+          )}
+          <div className="flex gap-3 items-center justify-center">
+            {/* Hour */}
+            <div className="flex-1">
+              <label htmlFor="hour-input" className="text-xs text-muted-foreground block mb-1">
+                Stunde
+              </label>
+              <select
+                id="hour-input"
+                value={customHour}
+                onChange={(e) => setCustomHour(e.target.value)}
+                className="w-full px-3 py-3 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-lg bg-card text-center font-semibold"
+              >
+                {availableHours.map((i) => (
+                  <option key={i} value={String(i).padStart(2, '0')}>
+                    {String(i).padStart(2, '0')}
+                  </option>
+                ))}
+              </select>
+            </div>
 
           <div className="text-2xl font-bold pt-6">:</div>
 
@@ -234,65 +276,81 @@ export function DateTimePicker({
       </div>
     </div>
   )
+}
 
   // Render date selection step
-  const renderDateSelection = () => (
-    <div className="space-y-4">
-      {/* Quick Date Options */}
-      <div className="grid gap-2">
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('any')}
-        >
-          <div className="flex items-center gap-3">
-            <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
-            <div className="text-left">
-              <div className="font-semibold">{t('anyDate')}</div>
+  const renderDateSelection = () => {
+    const hasQuickOptions = showAnyDate || showQuickDates
+
+    return (
+      <div className="space-y-4">
+        {/* Quick Date Options */}
+        {hasQuickOptions && (
+          <>
+            <div className="grid gap-2">
+              {showAnyDate && (
+                <Button
+                  variant="outline"
+                  className="justify-start h-auto py-4 hover:bg-accent"
+                  onClick={() => handleQuickDate('any')}
+                >
+                  <div className="flex items-center gap-3">
+                    <CalendarGridIcon className="h-5 w-5 text-muted-foreground" />
+                    <div className="text-left">
+                      <div className="font-semibold">{t('anyDate')}</div>
+                    </div>
+                  </div>
+                </Button>
+              )}
+
+              {showQuickDates && (
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto py-3 hover:bg-accent"
+                    onClick={() => handleQuickDate('today')}
+                  >
+                    <div className="flex items-start gap-2 w-full">
+                      <Sun className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="font-semibold text-sm mb-0.5">{t('today')}</div>
+                        <div className="text-xs text-muted-foreground whitespace-normal break-words leading-tight">
+                          {formatQuickDate(new Date())}
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto py-3 hover:bg-accent"
+                    onClick={() => handleQuickDate('tomorrow')}
+                  >
+                    <div className="flex items-start gap-2 w-full">
+                      <Sunrise className="h-5 w-5 text-orange-500 shrink-0 mt-0.5" />
+                      <div className="text-left flex-1 min-w-0">
+                        <div className="font-semibold text-sm mb-0.5">{t('tomorrow')}</div>
+                        <div className="text-xs text-muted-foreground whitespace-normal break-words leading-tight">
+                          {formatQuickDate(addDays(new Date(), 1))}
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        </Button>
 
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('today')}
-        >
-          <div className="flex items-center gap-3">
-            <Sun className="h-5 w-5 text-amber-500" />
-            <div className="text-left">
-              <div className="font-semibold">{t('today')}</div>
-              <div className="text-sm text-muted-foreground">
-                {formatQuickDate(new Date())}
-              </div>
+            <Separator />
+          </>
+        )}
+
+        {/* Calendar */}
+        <div className="space-y-3">
+          {hasQuickOptions && (
+            <div className="text-sm font-medium text-muted-foreground">
+              {t('orChooseDate')}
             </div>
-          </div>
-        </Button>
-
-        <Button
-          variant="outline"
-          className="justify-start h-auto py-4 hover:bg-accent"
-          onClick={() => handleQuickDate('tomorrow')}
-        >
-          <div className="flex items-center gap-3">
-            <Sunrise className="h-5 w-5 text-orange-500" />
-            <div className="text-left">
-              <div className="font-semibold">{t('tomorrow')}</div>
-              <div className="text-sm text-muted-foreground">
-                {formatQuickDate(addDays(new Date(), 1))}
-              </div>
-            </div>
-          </div>
-        </Button>
-      </div>
-
-      <Separator />
-
-      {/* Calendar */}
-      <div className="space-y-3">
-        <div className="text-sm font-medium text-muted-foreground">
-          {t('orChooseDate')}
-        </div>
+          )}
         <div className="flex justify-center">
           <Calendar
             mode="single"
@@ -335,7 +393,8 @@ export function DateTimePicker({
         </div>
       </div>
     </div>
-  )
+    )
+  }
 
   // Render time selection step
   const renderTimeSelection = () => (
@@ -372,6 +431,7 @@ export function DateTimePicker({
           variant={selectedTimeSlot === 'morning' ? 'default' : 'outline'}
           className="justify-start h-auto py-4 transition-all"
           onClick={() => handleTimeSlot('morning')}
+          disabled={selectedDate ? isTimeSlotInPast(selectedDate, 'morning') : false}
         >
           <div className="flex items-center gap-3">
             <Sunrise className="h-5 w-5" />
@@ -391,6 +451,7 @@ export function DateTimePicker({
           variant={selectedTimeSlot === 'afternoon' ? 'default' : 'outline'}
           className="justify-start h-auto py-4 transition-all"
           onClick={() => handleTimeSlot('afternoon')}
+          disabled={selectedDate ? isTimeSlotInPast(selectedDate, 'afternoon') : false}
         >
           <div className="flex items-center gap-3">
             <Sun className="h-5 w-5" />
@@ -410,6 +471,7 @@ export function DateTimePicker({
           variant={selectedTimeSlot === 'evening' ? 'default' : 'outline'}
           className="justify-start h-auto py-4 transition-all"
           onClick={() => handleTimeSlot('evening')}
+          disabled={selectedDate ? isTimeSlotInPast(selectedDate, 'evening') : false}
         >
           <div className="flex items-center gap-3">
             <Moon className="h-5 w-5" />
@@ -512,16 +574,16 @@ export function DateTimePicker({
           <SheetContent
             side="bottom"
             className={cn(
-              "h-[85vh] rounded-t-2xl p-0",
+              "h-auto max-h-[90vh] rounded-t-3xl",
               "flex flex-col"
             )}
           >
-            <SheetHeader className="px-6 py-4 border-b">
-              <SheetTitle>
+            <SheetHeader className="px-6 pt-6 pb-4">
+              <SheetTitle className="text-xl font-bold">
                 {step === 'date' ? t('selectDate') : t('selectTime')}
               </SheetTitle>
             </SheetHeader>
-            <div className="flex-1 overflow-y-auto px-6 py-4">
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
               {step === 'date' && renderDateSelection()}
               {step === 'time' && renderTimeSelection()}
               {step === 'custom-time' && renderCustomTimeSelection()}
@@ -532,23 +594,29 @@ export function DateTimePicker({
     )
   }
 
-  // Desktop: Popover
+  // Desktop: Dialog (centered modal)
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <>
+      <div onClick={() => setOpen(true)}>
         {renderTrigger()}
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-auto p-0 max-h-[85vh] overflow-y-auto"
-        align="start"
-        sideOffset={8}
-      >
-        <div className="p-6 space-y-4 w-[380px]">
-          {step === 'date' && renderDateSelection()}
-          {step === 'time' && renderTimeSelection()}
-          {step === 'custom-time' && renderCustomTimeSelection()}
-        </div>
-      </PopoverContent>
-    </Popover>
+      </div>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-[480px] p-0 gap-0">
+          <DialogTitle className="sr-only">
+            {step === 'date' ? t('selectDate') : t('selectTime')}
+          </DialogTitle>
+          <div className="px-6 pt-6 pb-4 border-b">
+            <h2 className="text-xl font-bold">
+              {step === 'date' ? t('selectDate') : t('selectTime')}
+            </h2>
+          </div>
+          <div className="p-6 max-h-[70vh] overflow-y-auto">
+            {step === 'date' && renderDateSelection()}
+            {step === 'time' && renderTimeSelection()}
+            {step === 'custom-time' && renderCustomTimeSelection()}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

@@ -96,11 +96,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create booking with GDPR-compliant health data handling
-    const booking = await prisma.booking.create({
+    // Create booking with GDPR-compliant health data handling (unified User model)
+    const booking = await prisma.newBooking.create({
       data: {
         studioId,
         serviceId: serviceId || null,
+        customerId: null, // Guest booking (no user account)
         customerName,
         customerEmail,
         customerPhone,

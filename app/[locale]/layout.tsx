@@ -12,7 +12,9 @@ import { locales, type Locale } from '@/i18n';
 import Header from '@/components/Header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
-import CookieBanner from '@/components/CookieBanner';
+import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
+import { CookieConsent } from '@/components/CookieConsent';
+import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { Toaster } from '@/components/ui/toaster';
 import "../globals.css";
 
@@ -66,14 +68,17 @@ export default async function LocaleLayout({
       >
         <SentryDebug />
         <SessionProvider>
-          <NextIntlClientProvider messages={messages} locale={locale}>
-            <Header />
-            <main className="pt-16">
-              {children}
-            </main>
-            <CookieBanner />
-            <Toaster />
-          </NextIntlClientProvider>
+          <CookieConsentProvider>
+            <GoogleAnalytics />
+            <NextIntlClientProvider messages={messages} locale={locale}>
+              <Header />
+              <main className="pt-16">
+                {children}
+              </main>
+              <CookieConsent />
+              <Toaster />
+            </NextIntlClientProvider>
+          </CookieConsentProvider>
         </SessionProvider>
       </body>
     </html>
