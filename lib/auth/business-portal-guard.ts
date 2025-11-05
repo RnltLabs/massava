@@ -10,6 +10,7 @@
 
 import { UserRole } from '@/app/generated/prisma';
 import { Session } from 'next-auth';
+import { Result, ok, err } from '@/lib/result';
 
 /**
  * Roles allowed to access the business portal
@@ -80,6 +81,7 @@ export function hasBusinessPortalAccess(session: Session | null): boolean {
  *
  * @param user - User object from NextAuth session
  * @throws BusinessPortalAccessDeniedError if user doesn't have access
+ * @deprecated Use requireBusinessAccessResult instead for Result-based error handling
  */
 export function requireBusinessAccess(user?: {
   id?: string;
@@ -99,6 +101,39 @@ export function requireBusinessAccess(user?: {
       user.primaryRole
     );
   }
+}
+
+/**
+ * Require business portal access - Result-based (no exceptions)
+ * Preferred over requireBusinessAccess for new code
+ *
+ * @param user - User object from NextAuth session
+ * @returns Ok(void) if user has access, Err(BusinessPortalAccessDeniedError) otherwise
+ */
+export function requireBusinessAccessResult(user?: {
+  id?: string;
+  primaryRole?: UserRole;
+  roles?: UserRole[];
+}): Result<void, BusinessPortalAccessDeniedError> {
+  if (!user) {
+    return err(
+      new BusinessPortalAccessDeniedError(
+        'Authentication required to access business portal'
+      )
+    );
+  }
+
+  if (!isBusinessPortalUser(user)) {
+    return err(
+      new BusinessPortalAccessDeniedError(
+        'Business portal access restricted to studio owners and staff',
+        user.id,
+        user.primaryRole
+      )
+    );
+  }
+
+  return ok(undefined);
 }
 
 /**

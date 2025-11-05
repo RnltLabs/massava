@@ -138,13 +138,13 @@ describe('Phase 1 Security Fixes', () => {
 
       // Should NOT contain specific error messages that reveal account existence
       const lines = content.split('\n');
-      const errorMessages = lines.filter(line =>
+      const errorMessages = lines.filter((line: string) =>
         line.includes('error:') &&
         (line.includes('customer') || line.includes('studio owner') || line.includes('registered as'))
       );
 
       // If there are role-mismatch errors, they should also say "Invalid email or password"
-      errorMessages.forEach(line => {
+      errorMessages.forEach((line: string) => {
         if (line.includes('registered as')) {
           // This would be account enumeration - should not exist
           expect(line).not.toContain('registered as');

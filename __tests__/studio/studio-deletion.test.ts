@@ -115,7 +115,7 @@ describe('Studio Deletion', () => {
       });
 
       // Mock transaction
-      vi.mocked(db.$transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.$transaction).mockImplementation(async (callback: (tx: any) => Promise<any>) => {
         return callback({
           service: {
             deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
@@ -268,7 +268,7 @@ describe('Studio Deletion', () => {
       });
 
       // Mock transaction
-      vi.mocked(db.$transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.$transaction).mockImplementation(async (callback: (tx: any) => Promise<any>) => {
         return callback({
           service: { deleteMany: vi.fn().mockResolvedValue({ count: 5 }) },
           newBooking: { deleteMany: vi.fn().mockResolvedValue({ count: 10 }) },
