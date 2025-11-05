@@ -71,37 +71,42 @@ type BookingArrayResult = Array<{
  *
  * Only encrypts if message field is present and not already encrypted.
  */
+interface PrismaExtensionArgs<T = unknown> {
+  args: T;
+  query: (args: T) => Promise<unknown>;
+}
+
 export function createHealthDataEncryptionExtension() {
   const bookingHandlers = {
-    async create({ args, query }: any) {
+    async create({ args, query }: PrismaExtensionArgs) {
       await encryptMessageField({ action: 'create', args, model: 'NewBooking' });
       const result = await query(args);
       await decryptMessageField(result, { action: 'create', model: 'NewBooking' });
       return result;
     },
-    async update({ args, query }: any) {
+    async update({ args, query }: PrismaExtensionArgs) {
       await encryptMessageField({ action: 'update', args, model: 'NewBooking' });
       const result = await query(args);
       await decryptMessageField(result, { action: 'update', model: 'NewBooking' });
       return result;
     },
-    async upsert({ args, query }: any) {
+    async upsert({ args, query }: PrismaExtensionArgs) {
       await encryptMessageField({ action: 'upsert', args, model: 'NewBooking' });
       const result = await query(args);
       await decryptMessageField(result, { action: 'upsert', model: 'NewBooking' });
       return result;
     },
-    async findUnique({ args, query }: any) {
+    async findUnique({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
       await decryptMessageField(result, { action: 'findUnique', model: 'NewBooking' });
       return result;
     },
-    async findFirst({ args, query }: any) {
+    async findFirst({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
       await decryptMessageField(result, { action: 'findFirst', model: 'NewBooking' });
       return result;
     },
-    async findMany({ args, query }: any) {
+    async findMany({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
       await decryptMessageField(result, { action: 'findMany', model: 'NewBooking' });
       return result;

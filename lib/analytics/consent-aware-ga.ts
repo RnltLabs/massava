@@ -17,7 +17,7 @@ export function initGoogleAnalytics(measurementId: string): void {
 
   // Initialize gtag function
   window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: any[]) {
+  window.gtag = function gtag(...args: unknown[]) {
     window.dataLayer.push(args);
   };
 
@@ -103,7 +103,7 @@ export function trackPageView(url: string, title: string): void {
  */
 export function trackEvent(
   eventName: string,
-  eventParams?: Record<string, any>
+  eventParams?: Record<string, string | number | boolean>
 ): void {
   if (typeof window === 'undefined' || !window.gtag) return;
 
@@ -134,10 +134,10 @@ export function getConsentState(): {
 // Type declarations for Google Analytics
 declare global {
   interface Window {
-    dataLayer: any[];
+    dataLayer: unknown[];
     gtag: (
       command: 'consent' | 'config' | 'event' | 'js' | 'set',
-      ...args: any[]
+      ...args: unknown[]
     ) => void;
   }
 }

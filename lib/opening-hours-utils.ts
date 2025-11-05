@@ -8,17 +8,19 @@
 
 import { format, setHours, setMinutes, startOfDay } from 'date-fns';
 
+type DaySchedule = { open: string; close: string } | null;
+
 export type OpeningHours = {
   mode?: 'same' | 'different';
   everyday?: { open: string; close: string };
-  monday?: { open: string; close: string } | null;
-  tuesday?: { open: string; close: string } | null;
-  wednesday?: { open: string; close: string } | null;
-  thursday?: { open: string; close: string } | null;
-  friday?: { open: string; close: string } | null;
-  saturday?: { open: string; close: string } | null;
-  sunday?: { open: string; close: string } | null;
-  [key: string]: any;
+  monday?: DaySchedule;
+  tuesday?: DaySchedule;
+  wednesday?: DaySchedule;
+  thursday?: DaySchedule;
+  friday?: DaySchedule;
+  saturday?: DaySchedule;
+  sunday?: DaySchedule;
+  [key: string]: DaySchedule | 'same' | 'different' | { open: string; close: string } | undefined;
 };
 
 export type VirtualBlockedTime = {

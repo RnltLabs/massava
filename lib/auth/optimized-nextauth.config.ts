@@ -20,7 +20,9 @@
  * 4. Minimal JWT payload (userId + role only)
  */
 
-import type { NextAuthOptions, Session, User } from "next-auth";
+// NextAuth v5 doesn't export NextAuthOptions - this file may need updating
+// import type { NextAuthOptions, Session, User } from "next-auth";
+import type { Session, User } from "next-auth";
 import { JWT } from "next-auth/jwt";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
@@ -46,7 +48,7 @@ import { generateTokenPair } from "./refresh-token";
  * - JWT-only session strategy (stateless)
  * - Cache user data in Redis
  */
-export const authOptions: NextAuthOptions = {
+export const authOptions: Record<string, unknown> = {
   // NO ADAPTER - We handle user sync manually via background jobs
   // adapter: PrismaAdapter(prisma), // ❌ REMOVED
 

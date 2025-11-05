@@ -180,6 +180,16 @@ function anonymizeIp(ip: string): string {
  * @param prismaClient - Optional Prisma client instance
  * @returns Array of audit log entries
  */
+interface AuditLogWhereInput {
+  action?: string | { startsWith: string };
+  userId?: string;
+  resourceId?: string;
+  timestamp?: {
+    gte?: Date;
+    lte?: Date;
+  };
+}
+
 export async function queryHealthDataAccessLogs(
   filters?: {
     userId?: string;
@@ -189,11 +199,21 @@ export async function queryHealthDataAccessLogs(
     endDate?: Date;
   },
   prismaClient?: PrismaClient
-): Promise<any[]> {
+): Promise<Array<{
+  id: string;
+  action: string;
+  userId: string | null;
+  resource: string;
+  resourceId: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  metadata: unknown;
+  createdAt: Date;
+}>> {
   try {
     const client = prismaClient || new PrismaClient();
 
-    const where: any = {
+    const where: AuditLogWhereInput = {
       action: {
         startsWith: 'HEALTH_DATA_',
       },
@@ -259,9 +279,9 @@ export async function exportHealthDataAccessLogs(
 
   const csv = [
     'Timestamp,Action,Booking ID,IP Address,User Agent',
-    ...logs.map((log: any) =>
+    ...logs.map((log) =>
       [
-        log.timestamp.toISOString(),
+        log.createdAt.toISOString(),
         log.action,
         log.resourceId,
         log.ipAddress || '',

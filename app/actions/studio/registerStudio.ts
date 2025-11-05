@@ -7,6 +7,7 @@
 import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@/app/generated/prisma';
 
 /**
  * Hours range schema
@@ -84,14 +85,14 @@ export async function registerStudio(
     const { name, description, address, contact, openingHours, capacity } = validated.data;
 
     // Transform opening hours to database format
-    let openingHoursJson: any = null;
+    let openingHoursJson: Prisma.InputJsonValue | undefined = undefined;
     if (openingHours) {
       if (openingHours.mode === 'same' && openingHours.sameHours) {
         openingHoursJson = {
           everyday: openingHours.sameHours,
-        };
+        } as Prisma.InputJsonValue;
       } else if (openingHours.mode === 'different' && openingHours.differentHours) {
-        openingHoursJson = openingHours.differentHours;
+        openingHoursJson = openingHours.differentHours as Prisma.InputJsonValue;
       }
     }
 

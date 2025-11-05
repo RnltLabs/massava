@@ -17,16 +17,19 @@
  * - NET IMPROVEMENT: -115ms (-76%)
  */
 
-import amqp, { Channel, Connection } from "amqplib";
-import type { UserRole } from "@prisma/client";
+import amqp from "amqplib";
+import type { UserRole } from "@/app/generated/prisma";
+
+type AMQPConnection = Awaited<ReturnType<typeof amqp.connect>>;
+type AMQPChannel = Awaited<ReturnType<AMQPConnection['createChannel']>>;
 
 const RABBITMQ_URL = process.env.RABBITMQ_URL || "amqp://localhost:5672";
 const QUEUE_NAME = "auth-user-sync";
 const DEAD_LETTER_QUEUE = "auth-user-sync-dlq";
 
 // Singleton connection
-let connection: Connection | null = null;
-let channel: Channel | null = null;
+let connection: unknown | null = null;
+let channel: unknown | null = null;
 
 /**
  * Connect to RabbitMQ
@@ -35,35 +38,35 @@ let channel: Channel | null = null;
  * - Connection pooling (reuse across requests)
  * - Auto-reconnect on failure
  */
-async function connect(): Promise<Channel> {
+async function connect(): Promise<unknown> {
   if (channel) return channel;
 
   try {
     connection = await amqp.connect(RABBITMQ_URL);
-    channel = await connection.createChannel();
+    channel = await (connection as AMQPConnection).createChannel();
 
     // Configure queue
-    await channel.assertQueue(QUEUE_NAME, {
+    await (channel as AMQPChannel).assertQueue(QUEUE_NAME, {
       durable: true, // Survive broker restart
       deadLetterExchange: "",
       deadLetterRoutingKey: DEAD_LETTER_QUEUE,
     });
 
     // Configure dead letter queue (failed jobs)
-    await channel.assertQueue(DEAD_LETTER_QUEUE, {
+    await (channel as AMQPChannel).assertQueue(DEAD_LETTER_QUEUE, {
       durable: true,
     });
 
     console.log(`[INFO] Connected to RabbitMQ: ${QUEUE_NAME}`);
 
     // Handle connection errors
-    connection.on("error", (err) => {
+    (connection as AMQPConnection).on("error", (err) => {
       console.error(`[ERROR] RabbitMQ connection error:`, err);
       connection = null;
       channel = null;
     });
 
-    connection.on("close", () => {
+    (connection as AMQPConnection).on("close", () => {
       console.warn(`[WARN] RabbitMQ connection closed`);
       connection = null;
       channel = null;
@@ -125,7 +128,7 @@ export async function enqueueUserSync(job: UserSyncJob): Promise<void> {
     const message = Buffer.from(JSON.stringify(job));
 
     // Enqueue job (fire-and-forget)
-    ch.sendToQueue(QUEUE_NAME, message, {
+    (ch as AMQPChannel).sendToQueue(QUEUE_NAME, message, {
       persistent: true, // Survive broker restart
       timestamp: Date.now(),
       contentType: "application/json",
@@ -165,9 +168,9 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
     const prisma = new PrismaClient();
 
     // Upsert user and account in single transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: unknown) => {
       // Upsert user
-      const user = await tx.user.upsert({
+      const user = await (tx as typeof prisma).user.upsert({
         where: { id: job.userId },
         create: {
           id: job.userId,
@@ -184,7 +187,7 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
       });
 
       // Upsert OAuth account
-      await tx.account.upsert({
+      await (tx as typeof prisma).account.upsert({
         where: {
           provider_providerAccountId: {
             provider: job.provider,
@@ -249,10 +252,10 @@ export async function startWorker(): Promise<void> {
   );
 
   // Set prefetch (process N jobs concurrently)
-  await ch.prefetch(10); // 10 concurrent jobs
+  await (ch as AMQPChannel).prefetch(10); // 10 concurrent jobs
 
   // Consume queue
-  ch.consume(
+  (ch as AMQPChannel).consume(
     QUEUE_NAME,
     async (msg) => {
       if (!msg) return;
@@ -266,7 +269,7 @@ export async function startWorker(): Promise<void> {
         await processUserSyncJob(job);
 
         // Acknowledge job (success)
-        ch.ack(msg);
+        (ch as AMQPChannel).ack(msg);
 
         const duration = performance.now() - startTime;
         console.log(
@@ -276,7 +279,7 @@ export async function startWorker(): Promise<void> {
         console.error(`[ERROR] Job failed:`, error);
 
         // Reject job (will be sent to dead letter queue after retries)
-        ch.nack(msg, false, false);
+        (ch as AMQPChannel).nack(msg, false, false);
       }
     },
     { noAck: false } // Manual acknowledgment
@@ -294,7 +297,7 @@ export async function getQueueStats(): Promise<{
 }> {
   const ch = await connect();
 
-  const queue = await ch.checkQueue(QUEUE_NAME);
+  const queue = await (ch as AMQPChannel).checkQueue(QUEUE_NAME);
 
   return {
     messageCount: queue.messageCount,
