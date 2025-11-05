@@ -39,7 +39,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (provider.id === 'credentials') {
         return {
           ...provider,
-          async authorize(credentials) {
+          async authorize(credentials: Record<string, unknown> | undefined) {
             if (!credentials?.email || !credentials?.password) {
               return null;
             }
@@ -99,7 +99,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (provider.id === 'magic-link') {
         return {
           ...provider,
-          async authorize(credentials) {
+          async authorize(credentials: Record<string, unknown> | undefined) {
             if (!credentials?.email) {
               return null;
             }
@@ -224,7 +224,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
 
     // Use Edge-safe session callback from auth.config.ts
-    ...authConfig.callbacks,
+    session: authConfig.callbacks?.session,
   },
 
   events: {

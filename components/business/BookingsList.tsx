@@ -40,7 +40,17 @@ async function getBookings(
   const studioId = user.ownedStudios[0].studioId;
 
   // Build where clause
-  const where: any = {
+  interface BookingWhereInput {
+    studioId: string;
+    status?: BookingStatus;
+    OR?: Array<{
+      customerName?: { contains: string; mode: 'insensitive' };
+      customerEmail?: { contains: string; mode: 'insensitive' };
+      customerPhone?: { contains: string; mode: 'insensitive' };
+    }>;
+  }
+
+  const where: BookingWhereInput = {
     studioId,
   };
 
