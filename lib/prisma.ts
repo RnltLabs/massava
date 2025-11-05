@@ -31,8 +31,13 @@ const globalForPrisma = globalThis as unknown as {
 function createPrismaClient() {
   const client = new PrismaClient()
 
-  // Production: Enforce encryption key presence (GDPR Art. 9 requirement)
-  if (process.env.NODE_ENV === 'production') {
+  // Check if we're in build phase (Next.js build, Prisma generate, etc.)
+  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build' ||
+                       process.env.npm_lifecycle_event === 'build';
+
+  // Production RUNTIME: Enforce encryption key presence (GDPR Art. 9 requirement)
+  // Skip validation during build phase to allow Docker builds
+  if (process.env.NODE_ENV === 'production' && !isBuildPhase) {
     if (!process.env.HEALTH_DATA_ENCRYPTION_KEY) {
       throw new Error(
         'HEALTH_DATA_ENCRYPTION_KEY must be set in production environment. ' +
@@ -42,12 +47,12 @@ function createPrismaClient() {
     return client.$extends(createHealthDataEncryptionExtension())
   }
 
-  // Development/Test: Warn but allow running without encryption
+  // Development/Test/Build: Warn but allow running without encryption
   if (process.env.HEALTH_DATA_ENCRYPTION_KEY) {
     return client.$extends(createHealthDataEncryptionExtension())
   }
 
-  if (process.env.NODE_ENV !== 'test') {
+  if (process.env.NODE_ENV !== 'test' && !isBuildPhase) {
     console.warn(
       '[Prisma] Health data encryption disabled. Set HEALTH_DATA_ENCRYPTION_KEY to enable.'
     )
