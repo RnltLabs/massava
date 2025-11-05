@@ -50,7 +50,7 @@ jobs:
             --network host \
             -e DATABASE_URL="${{ secrets.DATABASE_URL_STAGING }}" \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging \
-            sh -c "npx prisma migrate deploy"
+            sh -c "prisma migrate deploy"
 
           if [ $? -eq 0 ]; then
             echo "✅ Database migrations completed successfully"
