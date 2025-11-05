@@ -14,21 +14,20 @@ import { PrismaClient } from '@/app/generated/prisma';
 import { isEncrypted } from '@/lib/encryption/health-data';
 
 describe('Health Data Encryption (GDPR Art. 9)', () => {
-  let testUserId: string;
+  let testCustomerId: string;
   let testStudioId: string;
   let testServiceId: string;
 
   beforeAll(async () => {
-    // Create test data
-    const user = await prisma.user.create({
+    // Create test data - use Customer model (bookings reference customers, not users)
+    const customer = await prisma.customer.create({
       data: {
         email: 'health-test@example.com',
         name: 'Health Test User',
-        primaryRole: 'CUSTOMER',
         emailVerified: new Date(),
       },
     });
-    testUserId = user.id;
+    testCustomerId = customer.id;
 
     const studio = await prisma.studio.create({
       data: {
@@ -62,8 +61,8 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
     await prisma.studio.delete({
       where: { id: testStudioId },
     });
-    await prisma.user.delete({
-      where: { id: testUserId },
+    await prisma.customer.delete({
+      where: { id: testCustomerId },
     });
     await prisma.$disconnect();
   });
@@ -76,7 +75,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testUserId,
+        customerId: testCustomerId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
@@ -117,7 +116,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testUserId,
+        customerId: testCustomerId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
@@ -158,7 +157,7 @@ describe('Health Data Encryption (GDPR Art. 9)', () => {
       data: {
         studioId: testStudioId,
         serviceId: testServiceId,
-        customerId: testUserId,
+        customerId: testCustomerId,
         customerName: 'Health Test User',
         customerEmail: 'health-test@example.com',
         customerPhone: '+49 151 12345678',
