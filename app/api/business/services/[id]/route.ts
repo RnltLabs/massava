@@ -7,7 +7,7 @@
  * DELETE /api/business/services/[id] - Delete service
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { updateServiceSchema } from '@/lib/validations/business'

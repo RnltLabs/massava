@@ -158,14 +158,11 @@ export function BookingSheet({
 
     console.log("✅ User is logged in, creating booking", session.user)
 
-    // Check if user is a customer (accountType === 'customer')
-    // If they're a studio owner, treat as guest (no customerId linking)
-    const isCustomer = session.user.accountType === 'customer'
-
+    // P0.1 FIX: customerId is set server-side from session, not client-side
+    // Server action will handle customerId from authenticated session
     // If logged in, proceed with booking directly
     await createBookingNow({
       ...data,
-      customerId: isCustomer ? session.user.id : null, // Only link if actual customer
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",
@@ -175,13 +172,13 @@ export function BookingSheet({
 
   // Handle guest checkout submission
   const handleGuestSubmit = async (guestData: GuestFormData) => {
+    // P0.1 FIX: customerId removed - set server-side in createBooking()
     const bookingData: BookingFormData = {
       ...form.getValues(),
       customerName: guestData.customerName,
       customerEmail: guestData.customerEmail,
       customerPhone: guestData.customerPhone,
       explicitHealthConsent: guestData.explicitHealthConsent,
-      customerId: null,
     }
 
     await createBookingNow(bookingData)
@@ -293,7 +290,7 @@ export function BookingSheet({
             onViewBooking={handleViewBooking}
             onNewSearch={handleNewSearch}
             bookingStatus={bookingStatus}
-            isGuest={!form.getValues("customerId")}
+            isGuest={!session} // P0.1 FIX: Check session instead of customerId
           />
         )
 

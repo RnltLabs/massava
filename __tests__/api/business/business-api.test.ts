@@ -16,7 +16,7 @@ import { PATCH as updateService, DELETE as deleteService } from '@/app/api/busin
 import { GET as getStats } from '@/app/api/business/stats/route'
 import { GET as getOpeningHours, POST as updateOpeningHours } from '@/app/api/business/opening-hours/route'
 import { GET as getCalendar } from '@/app/api/business/calendar/route'
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { prisma } from '@/lib/prisma'
 import { BookingStatus, UserRole } from '@/app/generated/prisma'
 

@@ -8,7 +8,7 @@
  * Fetch bookings for the authenticated studio owner's studio
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { bookingsQuerySchema } from '@/lib/validations/business'

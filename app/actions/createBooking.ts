@@ -6,6 +6,7 @@ import {
   bookingFormSchema,
   type BookingFormData,
 } from "@/lib/validations/booking"
+import { auth } from "@/auth"
 
 interface BookingResult {
   success: boolean
@@ -21,6 +22,10 @@ interface BookingResult {
  * and marks the associated time slot as booked.
  * This operation is atomic using Prisma transactions.
  *
+ * SECURITY (P0.1 Fix):
+ * - IDOR Prevention: customerId is taken from session, not user input
+ * - Prevents users from creating bookings for other users
+ *
  * GDPR Compliance:
  * - Stores explicit health consent timestamp
  * - Stores consent text for audit trail
@@ -34,6 +39,9 @@ export async function createBooking(
   data: BookingFormData
 ): Promise<BookingResult> {
   try {
+    // P0.1 FIX: Get authenticated user from session (IDOR prevention)
+    const session = await auth()
+
     // Validate Input (server-side validation)
     const validated = bookingFormSchema.parse(data)
 
@@ -86,6 +94,10 @@ export async function createBooking(
     const preferredDate = startTime.toISOString().split("T")[0]
     const preferredTime = startTime.toISOString().split("T")[1].slice(0, 5)
 
+    // P0.1 FIX: Use session.user.id for authenticated users (IDOR prevention)
+    // Never trust client-provided customerId - ALWAYS use session
+    const authenticatedUserId = session?.user?.id || null
+
     // Create Booking + Mark TimeSlot as booked (Atomic Transaction)
     const booking = await prisma.$transaction(async (tx) => {
       // Create NewBooking with unified User model
@@ -93,7 +105,7 @@ export async function createBooking(
         data: {
           studioId: validated.studioId,
           serviceId: validated.serviceId,
-          customerId: validated.customerId || null, // User ID or null for guest
+          customerId: authenticatedUserId, // ✅ SECURITY: From session, NOT user input
           customerName: validated.customerName || "",
           customerEmail: validated.customerEmail || "",
           customerPhone: validated.customerPhone || "",
@@ -104,7 +116,7 @@ export async function createBooking(
           healthConsentGivenAt: new Date(),
           healthConsentText:
             "User consented to health data processing via booking form checkbox (GDPR Art. 9)",
-          status: validated.customerId ? "PENDING" : "CONFIRMED",
+          status: authenticatedUserId ? "PENDING" : "CONFIRMED",
         },
         include: {
           studio: true,
