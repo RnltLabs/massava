@@ -178,7 +178,6 @@ export async function scheduledDataRetentionJob(): Promise<Response> {
 
     return new Response(
       JSON.stringify({
-        success: result.success,
         message: 'Data retention job completed',
         ...result,
       }),

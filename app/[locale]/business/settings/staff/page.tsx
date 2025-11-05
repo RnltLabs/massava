@@ -3,8 +3,8 @@
  * All rights reserved.
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,9 +20,9 @@ interface StaffSettingsPageProps {
 
 export default async function StaffSettingsPage({
   params,
-}: StaffSettingsPageProps): Promise<JSX.Element> {
+}: StaffSettingsPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/settings/staff`);

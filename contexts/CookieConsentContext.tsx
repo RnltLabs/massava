@@ -170,13 +170,13 @@ export function useCookieConsent(): CookieConsentContextType {
   return context;
 }
 
-// Type declaration for gtag
-declare global {
-  interface Window {
-    gtag?: (
-      command: string,
-      action: string,
-      params: Record<string, string>
-    ) => void;
-  }
-}
+// Type declaration for gtag is provided by @types/gtag or Next.js
+// declare global {
+//   interface Window {
+//     gtag?: (
+//       command: string,
+//       action: string,
+//       params: Record<string, string>
+//     ) => void;
+//   }
+// }

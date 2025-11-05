@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -26,7 +28,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-export function BusinessSidebar({ locale }: BusinessSidebarProps): JSX.Element {
+export function BusinessSidebar({ locale }: BusinessSidebarProps): React.JSX.Element {
   const pathname = usePathname();
 
   const navItems: NavItem[] = [

@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { CalendarIcon } from 'lucide-react';
@@ -21,7 +21,7 @@ async function getCalendarBookings(
   view: 'day' | 'week' | 'month'
 ): Promise<Array<Booking & { service: { name: string } | null }>> {
   // Get user's studio via User->StudioOwnership->Studio path
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -68,7 +68,7 @@ async function getCalendarBookings(
   }
 
   // Get bookings in date range
-  const bookings = await db.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: {
       studioId,
       createdAt: {
@@ -94,7 +94,7 @@ async function getCalendarBookings(
   return bookings;
 }
 
-export async function Calendar({ userEmail, view, date }: CalendarProps): Promise<JSX.Element> {
+export async function Calendar({ userEmail, view, date }: CalendarProps): Promise<React.JSX.Element> {
   const bookings = await getCalendarBookings(userEmail, date, view);
 
   if (bookings.length === 0) {

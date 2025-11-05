@@ -55,7 +55,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     // Run the data retention job
-    return await scheduledDataRetentionJob();
+    const response = await scheduledDataRetentionJob();
+    const data = await response.json();
+
+    return NextResponse.json(data, {
+      status: response.status,
+    });
   } catch (error) {
     logger.error('Cron job endpoint failed', {
       action: 'CRON_DATA_RETENTION',

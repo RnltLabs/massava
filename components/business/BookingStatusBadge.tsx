@@ -11,7 +11,7 @@ interface BookingStatusBadgeProps {
   status: BookingStatus;
 }
 
-export function BookingStatusBadge({ status }: BookingStatusBadgeProps): JSX.Element {
+export function BookingStatusBadge({ status }: BookingStatusBadgeProps): React.JSX.Element {
   const statusConfig = {
     [BookingStatus.PENDING]: {
       label: 'Pending',

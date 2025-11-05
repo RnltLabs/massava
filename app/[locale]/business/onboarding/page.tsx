@@ -21,7 +21,7 @@ interface OnboardingPageProps {
  * Redirects studio owners through the registration wizard
  * Uses the existing StudioRegistrationDialog component
  */
-export default function OnboardingPage({ params }: OnboardingPageProps): JSX.Element {
+export default function OnboardingPage({ params }: OnboardingPageProps): React.JSX.Element {
   const { locale } = use(params);
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();

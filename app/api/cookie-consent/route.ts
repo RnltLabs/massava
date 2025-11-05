@@ -42,11 +42,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Store in database with user IP (anonymized)
     // 2. Send to analytics service
     // 3. Trigger compliance monitoring
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+               request.headers.get('x-real-ip') ||
+               'unknown';
+
     console.log('Cookie consent saved:', {
       timestamp: consent.timestamp,
       analytics: consent.analytics,
       marketing: consent.marketing,
-      ip: request.ip || 'unknown',
+      ip,
       userAgent: request.headers.get('user-agent') || 'unknown',
     });
 

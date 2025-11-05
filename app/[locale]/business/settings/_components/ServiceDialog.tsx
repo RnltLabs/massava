@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
@@ -31,7 +33,7 @@ import { Loader2 } from 'lucide-react';
 interface Service {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   duration: number;
   category?: string | null;
@@ -49,7 +51,7 @@ export function ServiceDialog({
   onClose,
   service,
   mode,
-}: ServiceDialogProps): JSX.Element {
+}: ServiceDialogProps): React.JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();

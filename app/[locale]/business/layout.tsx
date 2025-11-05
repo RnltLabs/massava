@@ -3,10 +3,9 @@
  * All rights reserved.
  */
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth-unified';
 import { BusinessSidebar } from '@/components/business/BusinessSidebar';
 import { BusinessNav } from '@/components/business/BusinessNav';
 import { MobileBusinessNav } from '@/components/business/MobileBusinessNav';
@@ -37,9 +36,9 @@ interface BusinessLayoutProps {
 export default async function BusinessLayout({
   children,
   params,
-}: BusinessLayoutProps): Promise<JSX.Element> {
+}: BusinessLayoutProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   // Protect business portal - redirect to login if not authenticated
   if (!session) {

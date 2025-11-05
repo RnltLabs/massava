@@ -3,8 +3,9 @@
  * All rights reserved.
  */
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import React from 'react';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,9 @@ interface HelpPageProps {
   }>;
 }
 
-export default async function HelpPage({ params }: HelpPageProps): Promise<JSX.Element> {
+export default async function HelpPage({ params }: HelpPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/help`);

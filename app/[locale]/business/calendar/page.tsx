@@ -3,9 +3,9 @@
  * All rights reserved.
  */
 
-import { Suspense } from 'react';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import React, { Suspense } from 'react';
+import { auth } from '@/auth-unified';
+
 import { redirect } from 'next/navigation';
 import { Calendar } from '@/components/business/Calendar';
 import { CalendarToolbar } from '@/components/business/CalendarToolbar';
@@ -22,7 +22,7 @@ interface CalendarPageProps {
   }>;
 }
 
-function CalendarSkeleton(): JSX.Element {
+function CalendarSkeleton(): React.JSX.Element {
   return (
     <Card>
       <CardContent className="p-6">
@@ -35,10 +35,10 @@ function CalendarSkeleton(): JSX.Element {
 export default async function CalendarPage({
   params,
   searchParams,
-}: CalendarPageProps): Promise<JSX.Element> {
+}: CalendarPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
   const search = await searchParams;
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/calendar`);

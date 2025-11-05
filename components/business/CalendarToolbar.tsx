@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +23,7 @@ interface CalendarToolbarProps {
   currentDate: string;
 }
 
-export function CalendarToolbar({ currentView, currentDate }: CalendarToolbarProps): JSX.Element {
+export function CalendarToolbar({ currentView, currentDate }: CalendarToolbarProps): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

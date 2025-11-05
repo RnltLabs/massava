@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -26,7 +28,7 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-export function MobileBusinessNav({ locale }: MobileBusinessNavProps): JSX.Element {
+export function MobileBusinessNav({ locale }: MobileBusinessNavProps): React.JSX.Element {
   const pathname = usePathname();
 
   const navItems: NavItem[] = [

@@ -5,6 +5,8 @@
 
 'use client';
 
+import React from 'react';
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +17,7 @@ import { ServiceDeleteDialog } from './ServiceDeleteDialog';
 interface Service {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   duration: number;
   category?: string | null;
@@ -25,7 +27,7 @@ interface ServicesPageClientProps {
   services: Service[];
 }
 
-export function ServicesPageClient({ services }: ServicesPageClientProps): JSX.Element {
+export function ServicesPageClient({ services }: ServicesPageClientProps): React.JSX.Element {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);

@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarIcon, ClockIcon, DollarSignIcon, AlertCircleIcon } from 'lucide-react';
 import { BookingStatus } from '@/app/generated/prisma';
@@ -21,7 +21,7 @@ interface StatsData {
 
 async function getStatsData(userEmail: string): Promise<StatsData> {
   // Get user's studio via User->StudioOwnership->Studio path
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -54,7 +54,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
   // Today's bookings
-  const todayBookings = await db.booking.count({
+  const todayBookings = await prisma.booking.count({
     where: {
       studioId,
       createdAt: {
@@ -64,7 +64,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // This week's bookings
-  const weekBookings = await db.booking.count({
+  const weekBookings = await prisma.booking.count({
     where: {
       studioId,
       createdAt: {
@@ -74,7 +74,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // Pending bookings
-  const pendingBookings = await db.booking.count({
+  const pendingBookings = await prisma.booking.count({
     where: {
       studioId,
       status: BookingStatus.PENDING,
@@ -82,7 +82,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   });
 
   // Month revenue (placeholder - will be calculated from actual booking prices)
-  const monthBookings = await db.booking.count({
+  const monthBookings = await prisma.booking.count({
     where: {
       studioId,
       status: BookingStatus.CONFIRMED,
@@ -103,7 +103,7 @@ async function getStatsData(userEmail: string): Promise<StatsData> {
   };
 }
 
-export async function DashboardStats({ userEmail }: DashboardStatsProps): Promise<JSX.Element> {
+export async function DashboardStats({ userEmail }: DashboardStatsProps): Promise<React.JSX.Element> {
   const stats = await getStatsData(userEmail);
 
   const statCards = [

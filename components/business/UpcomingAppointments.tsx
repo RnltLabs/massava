@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { CalendarIcon, ClockIcon, UserIcon } from 'lucide-react';
@@ -17,7 +17,7 @@ async function getUpcomingAppointments(
   userEmail: string
 ): Promise<Array<Booking & { service: { name: string } | null }>> {
   // Get user's studio via User->StudioOwnership->Studio path
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
       ownedStudios: {
@@ -39,7 +39,7 @@ async function getUpcomingAppointments(
   today.setHours(0, 0, 0, 0);
 
   // Get confirmed bookings for today and upcoming
-  const bookings = await db.booking.findMany({
+  const bookings = await prisma.booking.findMany({
     where: {
       studioId,
       status: BookingStatus.CONFIRMED,
@@ -65,7 +65,7 @@ async function getUpcomingAppointments(
 
 export async function UpcomingAppointments({
   userEmail,
-}: UpcomingAppointmentsProps): Promise<JSX.Element> {
+}: UpcomingAppointmentsProps): Promise<React.JSX.Element> {
   const appointments = await getUpcomingAppointments(userEmail);
 
   return (

@@ -12,8 +12,8 @@ import { z } from 'zod';
  * Validates cookie consent preferences according to ePrivacy Directive
  */
 export const cookieConsentSchema = z.object({
-  necessary: z.literal(true, {
-    errorMap: () => ({ message: 'Necessary cookies must always be accepted' }),
+  necessary: z.literal(true).refine((val) => val === true, {
+    message: 'Necessary cookies must always be accepted',
   }),
   analytics: z.boolean(),
   marketing: z.boolean(),
