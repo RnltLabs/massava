@@ -15,7 +15,7 @@
  */
 
 import { Redis } from "@upstash/redis";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/app/generated/prisma";
 
 // Redis client (singleton)
 const redis = new Redis({

@@ -206,7 +206,7 @@ export const authOptions: Record<string, unknown> = {
             userId: token.sub!,
             email: token.email!,
             name: token.name as string | null,
-            primaryRole: "USER" as import("@/app/generated/prisma").UserRole,
+            role: "USER",
             image: token.picture as string | null,
             createdAt: new Date().toISOString(),
             lastAccessedAt: new Date().toISOString(),
@@ -268,7 +268,7 @@ export const authOptions: Record<string, unknown> = {
   events: {
     async signIn({ user, account, isNewUser }: { user: User; account?: unknown; isNewUser?: boolean }) {
       console.log(
-        `[INFO] Sign-in: userId=${user.id}, provider=${account?.provider}, isNewUser=${isNewUser}`
+        `[INFO] Sign-in: userId=${user.id}, provider=${(account as { provider?: string })?.provider}, isNewUser=${isNewUser}`
       );
 
       // Send to monitoring system (Umami/GlitchTip)

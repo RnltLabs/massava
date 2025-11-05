@@ -48,8 +48,8 @@ function getClientIdentifier(request: NextRequest): string {
     return forwardedFor.split(',')[0].trim();
   }
 
-  // Fallback to direct IP
-  const ip = request.ip || request.headers.get('x-real-ip');
+  // Fallback to real-ip header
+  const ip = request.headers.get('x-real-ip');
   return ip || 'unknown';
 }
 

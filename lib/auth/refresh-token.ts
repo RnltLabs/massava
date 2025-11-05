@@ -21,7 +21,7 @@
 
 import { Redis } from "@upstash/redis";
 import { SignJWT, jwtVerify } from "jose";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/app/generated/prisma";
 import { randomBytes } from "crypto";
 
 const redis = new Redis({
