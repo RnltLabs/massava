@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
 import { auth } from './auth-unified';
-import { UserRole } from '@/app/generated/prisma';
+import { UserRole } from '@/lib/types/user-role';
 
 // Create i18n middleware
 const intlMiddleware = createIntlMiddleware({
