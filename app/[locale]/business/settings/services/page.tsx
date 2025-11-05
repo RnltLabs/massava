@@ -10,9 +10,9 @@ import { db } from '@/lib/prisma';
 import { ServicesPageClient } from '../_components/ServicesPageClient';
 
 interface ServicesSettingsPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 async function getStudioServices(userEmail: string) {
@@ -37,11 +37,12 @@ async function getStudioServices(userEmail: string) {
 export default async function ServicesSettingsPage({
   params,
 }: ServicesSettingsPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect(
-      `/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/settings/services`
+      `/${locale}/auth/login?callbackUrl=/${locale}/business/settings/services`
     );
   }
 

@@ -13,18 +13,19 @@ import { Badge } from '@/components/ui/badge';
 import { PlusIcon, Edit2Icon, Trash2Icon, MailIcon } from 'lucide-react';
 
 interface StaffSettingsPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 export default async function StaffSettingsPage({
   params,
 }: StaffSettingsPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/settings/staff`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/settings/staff`);
   }
 
   // Placeholder data - will be replaced with actual staff management in Phase 3

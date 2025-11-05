@@ -13,13 +13,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface CalendarPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     view?: 'day' | 'week' | 'month';
     date?: string;
-  };
+  }>;
 }
 
 function CalendarSkeleton(): JSX.Element {
@@ -36,14 +36,16 @@ export default async function CalendarPage({
   params,
   searchParams,
 }: CalendarPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
+  const search = await searchParams;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/calendar`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/calendar`);
   }
 
-  const view = searchParams.view ?? 'week';
-  const date = searchParams.date ?? new Date().toISOString().split('T')[0];
+  const view = search.view ?? 'week';
+  const date = search.date ?? new Date().toISOString().split('T')[0];
 
   return (
     <div className="space-y-6">

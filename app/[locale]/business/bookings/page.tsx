@@ -13,13 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface BookingsPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     status?: string;
     search?: string;
-  };
+  }>;
 }
 
 function BookingsListSkeleton(): JSX.Element {
@@ -47,10 +47,12 @@ export default async function BookingsPage({
   params,
   searchParams,
 }: BookingsPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
+  const search = await searchParams;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/bookings`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/bookings`);
   }
 
   return (
@@ -68,8 +70,8 @@ export default async function BookingsPage({
       <Suspense fallback={<BookingsListSkeleton />}>
         <BookingsList
           userEmail={session.user?.email ?? ''}
-          statusFilter={searchParams.status}
-          searchQuery={searchParams.search}
+          statusFilter={search.status}
+          searchQuery={search.search}
         />
       </Suspense>
     </div>

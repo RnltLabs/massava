@@ -23,16 +23,17 @@ import {
 } from 'lucide-react';
 
 interface HelpPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 export default async function HelpPage({ params }: HelpPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/help`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/help`);
   }
 
   const faqs = [

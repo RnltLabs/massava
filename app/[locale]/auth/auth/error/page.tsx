@@ -10,9 +10,9 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 
 interface ErrorPageProps {
-  searchParams: {
+  searchParams: Promise<{
     error?: string;
-  };
+  }>;
 }
 
 // Map NextAuth error codes to user-friendly messages
@@ -71,8 +71,9 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
   },
 };
 
-function AuthErrorContent({ searchParams }: ErrorPageProps) {
-  const errorType = searchParams.error || 'Default';
+async function AuthErrorContent({ searchParams }: ErrorPageProps) {
+  const params = await searchParams;
+  const errorType = params.error || 'Default';
   const errorInfo = ERROR_MESSAGES[errorType] || ERROR_MESSAGES.Default;
 
   return (
