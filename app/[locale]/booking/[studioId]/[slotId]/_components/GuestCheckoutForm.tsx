@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ArrowLeft, Info, Loader2 } from "lucide-react"
-import type { GuestFormData } from "./AuthNudgeModal"
+import type { GuestFormData } from "./types"
 
 const guestFormSchema = z.object({
   customerName: z.string().min(2, "Mindestens 2 Zeichen").max(100),

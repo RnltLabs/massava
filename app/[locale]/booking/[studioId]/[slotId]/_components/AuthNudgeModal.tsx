@@ -32,6 +32,7 @@ import { GuestCheckoutForm } from "./GuestCheckoutForm"
 import type { Service, Studio, TimeSlot } from "@/app/generated/prisma"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
+import type { GuestFormData } from "./types"
 
 interface AuthNudgeModalProps {
   isOpen: boolean
@@ -41,13 +42,6 @@ interface AuthNudgeModalProps {
   timeSlot: TimeSlot
   onGuestSubmit: (data: GuestFormData) => Promise<void>
   message?: string
-}
-
-export interface GuestFormData {
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  explicitHealthConsent: boolean
 }
 
 /**

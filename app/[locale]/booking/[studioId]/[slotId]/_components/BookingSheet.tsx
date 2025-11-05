@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
-import { AuthNudgeModal, type GuestFormData } from "./AuthNudgeModal"
+import { AuthNudgeModal } from "./AuthNudgeModal"
+import type { GuestFormData } from "./types"
 
 import { StepService } from "./StepService"
 import { StepConfirm } from "./StepConfirm"
