@@ -600,7 +600,7 @@ async function seedBookings(bookedSlotIds: string[]): Promise<void> {
     const customerPhone = generatePhoneNumber();
     const message = randomElement(BOOKING_MESSAGES);
 
-    await prisma.booking.create({
+    await prisma.newBooking.create({
       data: {
         studioId: slot.studioId,
         serviceId: slot.serviceId,

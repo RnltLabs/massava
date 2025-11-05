@@ -5,7 +5,7 @@
 
 import { getTranslations } from 'next-intl/server';
 import { Clock, MapPin, TrendingUp } from 'lucide-react';
-import { auth } from '@/auth';
+import { auth } from '@/auth-unified';
 import { SearchWidget } from '@/components/SearchWidget';
 import { Footer } from '@/components/Footer';
 

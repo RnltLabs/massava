@@ -74,36 +74,36 @@ type BookingArrayResult = Array<{
 export function createHealthDataEncryptionExtension() {
   const bookingHandlers = {
     async create({ args, query }: any) {
-      await encryptMessageField({ action: 'create', args, model: 'Booking' });
+      await encryptMessageField({ action: 'create', args, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'create', model: 'Booking' });
+      await decryptMessageField(result, { action: 'create', model: 'NewBooking' });
       return result;
     },
     async update({ args, query }: any) {
-      await encryptMessageField({ action: 'update', args, model: 'Booking' });
+      await encryptMessageField({ action: 'update', args, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'update', model: 'Booking' });
+      await decryptMessageField(result, { action: 'update', model: 'NewBooking' });
       return result;
     },
     async upsert({ args, query }: any) {
-      await encryptMessageField({ action: 'upsert', args, model: 'Booking' });
+      await encryptMessageField({ action: 'upsert', args, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'upsert', model: 'Booking' });
+      await decryptMessageField(result, { action: 'upsert', model: 'NewBooking' });
       return result;
     },
     async findUnique({ args, query }: any) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findUnique', model: 'Booking' });
+      await decryptMessageField(result, { action: 'findUnique', model: 'NewBooking' });
       return result;
     },
     async findFirst({ args, query }: any) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findFirst', model: 'Booking' });
+      await decryptMessageField(result, { action: 'findFirst', model: 'NewBooking' });
       return result;
     },
     async findMany({ args, query }: any) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findMany', model: 'Booking' });
+      await decryptMessageField(result, { action: 'findMany', model: 'NewBooking' });
       return result;
     },
   };
@@ -111,8 +111,7 @@ export function createHealthDataEncryptionExtension() {
   return Prisma.defineExtension({
     name: 'healthDataEncryption',
     query: {
-      booking: bookingHandlers,
-      newBooking: bookingHandlers, // Same handlers for unified model
+      newBooking: bookingHandlers, // Unified booking model
     },
   });
 }

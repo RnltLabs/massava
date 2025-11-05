@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
             type: true,
           },
         },
-        customerBookings: {
+        newBookings: {
           include: {
             studio: {
               select: {
@@ -123,7 +123,7 @@ export async function GET(request: NextRequest) {
         lastUpdated: user.updatedAt,
         oauthProviders: user.newAccounts.map((acc) => acc.provider),
       },
-      bookings: user.customerBookings.map((booking) => ({
+      bookings: user.newBookings.map((booking) => ({
         id: booking.id,
         studio: booking.studio,
         service: booking.service,

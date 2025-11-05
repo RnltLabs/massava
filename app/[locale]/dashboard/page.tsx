@@ -47,7 +47,7 @@ export default async function DashboardPage({ params }: Props) {
           services: true,
           _count: {
             select: {
-              bookings: true,
+              newBookings: true,
             },
           },
         },
@@ -118,7 +118,7 @@ export default async function DashboardPage({ params }: Props) {
                   </div>
                   <div className="text-sm">
                     <span className="text-muted-foreground">Buchungen: </span>
-                    <span className="font-medium">{studio._count.bookings}</span>
+                    <span className="font-medium">{studio._count.newBookings}</span>
                   </div>
                 </div>
 
