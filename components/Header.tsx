@@ -10,17 +10,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, LogOut, LayoutDashboard, ChevronDown, Calendar, Briefcase } from 'lucide-react';
+import { User, LogOut, ChevronDown, Calendar } from 'lucide-react';
 import { UnifiedAuthDialog } from './auth/UnifiedAuthDialog';
 import LanguageSwitcher from './LanguageSwitcher';
 import { MobileNav } from './MobileNav';
-import { apiFetch } from '@/lib/api-client';
 import { getAuthCallbackUrl } from '@/lib/navigation';
-
-type Studio = {
-  id: string;
-  name: string;
-};
 
 export default function Header() {
   const locale = useLocale();
@@ -28,7 +22,6 @@ export default function Header() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [studios, setStudios] = useState<Studio[]>([]);
 
   // Unified Auth Dialog State
   const [authDialog, setAuthDialog] = useState<{
@@ -63,47 +56,8 @@ export default function Header() {
     await signOut({ callbackUrl: getAuthCallbackUrl(`/${locale}`) });
   };
 
-  // Fetch user's studios
-  const fetchStudios = () => {
-    if (session?.user) {
-      apiFetch(`/${locale}/api/user/studios`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.studios) {
-            setStudios(data.studios);
-          }
-        })
-        .catch((err) => console.error('Failed to fetch studios:', err));
-    } else {
-      setStudios([]);
-    }
-  };
-
-  // Fetch user's studios when logged in
-  useEffect(() => {
-    fetchStudios();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, locale]);
-
-  // Listen for studio registration events
-  useEffect(() => {
-    const handleStudioRegistered = () => {
-      console.log('Studio registered event received, refreshing studios...');
-      fetchStudios();
-    };
-
-    window.addEventListener('studio-registered', handleStudioRegistered);
-    return () => {
-      window.removeEventListener('studio-registered', handleStudioRegistered);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, locale]);
-
   // Determine display name
   const getDisplayName = () => {
-    if (studios.length > 0) {
-      return studios[0].name; // Show first studio name
-    }
     return session?.user?.name || session?.user?.email || t('my_account');
   };
 
@@ -144,33 +98,21 @@ export default function Header() {
                       />
                       <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
                         <Link
+                          href={`/${locale}/customer/dashboard`}
+                          className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <Calendar className="h-4 w-4" />
+                          {t('my_bookings')}
+                        </Link>
+                        <Link
                           href={`/${locale}/dashboard`}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >
-                          <LayoutDashboard className="h-4 w-4" />
-                          Dashboard
+                          <User className="h-4 w-4" />
+                          {t('my_account')}
                         </Link>
-                        {studios.length > 0 && (
-                          <>
-                            <Link
-                              href={`/${locale}/dashboard/owner/calendar`}
-                              className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
-                              onClick={() => setShowUserMenu(false)}
-                            >
-                              <Calendar className="h-4 w-4" />
-                              Kalender
-                            </Link>
-                            <Link
-                              href={`/${locale}/dashboard/owner/services`}
-                              className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
-                              onClick={() => setShowUserMenu(false)}
-                            >
-                              <Briefcase className="h-4 w-4" />
-                              Leistungen
-                            </Link>
-                          </>
-                        )}
                         <button
                           onClick={() => {
                             setShowUserMenu(false);
@@ -216,7 +158,6 @@ export default function Header() {
               locale={locale}
               isAuthenticated={!!session}
               displayName={session ? getDisplayName() : undefined}
-              hasStudio={studios.length > 0}
               onLoginClick={() => setAuthDialog({ open: true, tab: 'login' })}
               onSignupClick={() => setAuthDialog({ open: true, tab: 'signup' })}
               onLogoutClick={handleLogout}
