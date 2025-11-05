@@ -5,14 +5,14 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { StudioRegistrationDialog } from '@/app/(main)/dashboard/_components/studio-registration/StudioRegistrationDialog';
 
 interface OnboardingPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 /**
@@ -22,6 +22,7 @@ interface OnboardingPageProps {
  * Uses the existing StudioRegistrationDialog component
  */
 export default function OnboardingPage({ params }: OnboardingPageProps): JSX.Element {
+  const { locale } = use(params);
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
 
@@ -32,13 +33,13 @@ export default function OnboardingPage({ params }: OnboardingPageProps): JSX.Ele
 
   const handleClose = (): void => {
     // Redirect to business dashboard when closed
-    router.push(`/${params.locale}/business`);
+    router.push(`/${locale}/business`);
   };
 
   const handleSuccess = (studioId: string): void => {
     // Redirect to business dashboard after successful registration
     console.log('Studio registered successfully:', studioId);
-    router.push(`/${params.locale}/business?registered=true`);
+    router.push(`/${locale}/business?registered=true`);
   };
 
   return (

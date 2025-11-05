@@ -29,20 +29,21 @@ export const runtime = 'nodejs';
 
 interface BusinessLayoutProps {
   children: ReactNode;
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 export default async function BusinessLayout({
   children,
   params,
 }: BusinessLayoutProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   // Protect business portal - redirect to login if not authenticated
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business`);
   }
 
   return (
@@ -50,12 +51,12 @@ export default async function BusinessLayout({
       {/* Desktop Layout */}
       <div className="hidden md:flex">
         {/* Sidebar */}
-        <BusinessSidebar locale={params.locale} />
+        <BusinessSidebar locale={locale} />
 
         {/* Main Content */}
         <div className="flex-1 ml-64">
           {/* Top Navigation */}
-          <BusinessNav session={session} locale={params.locale} />
+          <BusinessNav session={session} locale={locale} />
 
           {/* Page Content */}
           <main className="p-6">{children}</main>
@@ -65,13 +66,13 @@ export default async function BusinessLayout({
       {/* Mobile Layout */}
       <div className="md:hidden">
         {/* Top Navigation */}
-        <BusinessNav session={session} locale={params.locale} />
+        <BusinessNav session={session} locale={locale} />
 
         {/* Page Content */}
         <main className="pb-20 pt-16 px-4">{children}</main>
 
         {/* Bottom Navigation */}
-        <MobileBusinessNav locale={params.locale} />
+        <MobileBusinessNav locale={locale} />
       </div>
     </div>
   );

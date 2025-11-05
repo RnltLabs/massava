@@ -13,9 +13,9 @@ import { ProfileEditForm } from '../_components/ProfileEditForm';
 import { LocationEditForm } from '../_components/LocationEditForm';
 
 interface ProfileSettingsPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 async function getStudioProfile(userEmail: string) {
@@ -36,11 +36,12 @@ async function getStudioProfile(userEmail: string) {
 export default async function ProfileSettingsPage({
   params,
 }: ProfileSettingsPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
     redirect(
-      `/${params.locale}/auth/login?callbackUrl=/${params.locale}/business/settings/profile`
+      `/${locale}/auth/login?callbackUrl=/${locale}/business/settings/profile`
     );
   }
 

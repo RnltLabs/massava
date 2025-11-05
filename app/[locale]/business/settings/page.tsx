@@ -6,12 +6,14 @@
 import { redirect } from 'next/navigation';
 
 interface SettingsPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
-export default function SettingsPage({ params }: SettingsPageProps): never {
+export default async function SettingsPage({ params }: SettingsPageProps): Promise<never> {
+  const { locale } = await params;
+
   // Redirect to profile settings by default
-  redirect(`/${params.locale}/business/settings/profile`);
+  redirect(`/${locale}/business/settings/profile`);
 }

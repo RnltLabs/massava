@@ -14,9 +14,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface BusinessDashboardPageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
 }
 
 function DashboardSkeleton(): JSX.Element {
@@ -59,10 +59,11 @@ function DashboardSkeleton(): JSX.Element {
 export default async function BusinessDashboardPage({
   params,
 }: BusinessDashboardPageProps): Promise<JSX.Element> {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
 
   if (!session) {
-    redirect(`/${params.locale}/auth/login?callbackUrl=/${params.locale}/business`);
+    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business`);
   }
 
   return (
