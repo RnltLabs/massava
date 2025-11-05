@@ -15,76 +15,9 @@ datasource db {
 }
 
 // ============================================
-// NextAuth.js Models
+// NextAuth.js Models - DEPRECATED (Use Phase 3 models below)
 // ============================================
-
-model StudioOwner {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String? // Hashed password for credentials login
-  image         String?
-
-  // Relations (legacy - being phased out)
-  accounts Account[]
-  sessions Session[]
-  // studios relation removed - use User -> StudioOwnership instead
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("studio_owners")
-}
-
-model Customer {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  emailVerified DateTime?
-  password      String? // Hashed password for credentials login
-  phone         String?
-  image         String?
-
-  // Relations
-  bookings  Booking[]
-  favorites Studio[]  @relation("CustomerFavorites")
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("customers")
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user StudioOwner @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
-  @@map("accounts")
-}
-
-model Session {
-  id           String      @id @default(cuid())
-  sessionToken String      @unique
-  userId       String
-  expires      DateTime
-  user         StudioOwner @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("sessions")
-}
+// Legacy models removed - all authentication now uses unified User model
 
 model VerificationToken {
   identifier String
@@ -161,13 +94,11 @@ model Studio {
 
   // Relations
   services     Service[]
-  bookings     Booking[]
-  favoritedBy  Customer[]    @relation("CustomerFavorites")
   timeSlots    TimeSlot[] // Available appointment slots
   blockedTimes BlockedTime[] // Time blocks when studio is unavailable
 
-  // New unified relations (Phase 3)
-  newFavoritedBy  User[]               @relation("UserFavorites")
+  // Unified relations (Phase 3)
+  favoritedBy     User[]               @relation("UserFavorites")
   ownerships      StudioOwnership[] // Multiple owners possible via User model
   roleAssignments UserRoleAssignment[]
   newBookings     NewBooking[]
@@ -194,7 +125,6 @@ model Service {
 
   // Relations
   studio      Studio       @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  bookings    Booking[]
   newBookings NewBooking[]
   timeSlots   TimeSlot[] // Available time slots for this service
 
@@ -206,50 +136,8 @@ model Service {
   @@map("services")
 }
 
-// Booking Model
-// Represents a booking request from a customer
-model Booking {
-  id         String  @id @default(cuid())
-  studioId   String
-  serviceId  String? // Optional: customer might not know exact service
-  customerId String? // Optional: linked to customer account if they have one
-
-  // Customer Information (always stored, even if they have account)
-  customerName  String
-  customerEmail String
-  customerPhone String
-
-  // Booking Details
-  preferredDate String // Customer's preferred date (text: "Next Monday", "15.11.2025")
-  preferredTime String // Customer's preferred time (text: "afternoon", "14:00")
-  message       String? @db.Text // Additional notes/requests
-
-  // GDPR Art. 9 Compliance (Health Data)
-  // Special category data requires explicit consent
-  explicitHealthConsent    Boolean?  @default(false)
-  healthConsentGivenAt     DateTime?
-  healthConsentText        String?   @db.Text // Record of consent text shown to user
-  healthConsentWithdrawnAt DateTime?
-
-  // Status
-  status BookingStatus @default(PENDING)
-
-  // Relations
-  studio   Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  service  Service?  @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([studioId])
-  @@index([customerId])
-  @@index([customerEmail])
-  @@index([status])
-  @@index([createdAt])
-  @@map("bookings")
-}
+// Legacy Booking Model - REMOVED
+// Use NewBooking model below (Phase 3)
 
 // Booking Status Enum
 enum BookingStatus {
