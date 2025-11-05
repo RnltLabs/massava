@@ -3,12 +3,13 @@
  * All rights reserved.
  *
  * Health Data Encryption Utility
- * 
+ *
  * GDPR Art. 9 Compliance - Special Category Data (Health Data)
  * Implements AES-256-GCM encryption with PBKDF2 key derivation
  */
 
 import { createCipheriv, createDecipheriv, randomBytes, pbkdf2Sync } from 'crypto';
+import { Result, ok, err } from '@/lib/result';
 
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32; // 256 bits
@@ -31,6 +32,7 @@ export interface EncryptedData {
 /**
  * Get master encryption key from environment
  * @throws Error if HEALTH_DATA_ENCRYPTION_KEY is not set
+ * @deprecated Use getMasterKeyResult instead for Result-based error handling
  */
 export function getMasterKey(): Buffer {
   const masterKey = process.env.HEALTH_DATA_ENCRYPTION_KEY;
@@ -51,6 +53,33 @@ export function getMasterKey(): Buffer {
   }
 
   return Buffer.from(masterKey, 'hex');
+}
+
+/**
+ * Get master encryption key from environment - Result-based (no exceptions)
+ * Preferred over getMasterKey for new code
+ *
+ * @returns Ok(Buffer) if key is valid, Err(string) otherwise
+ */
+export function getMasterKeyResult(): Result<Buffer, string> {
+  const masterKey = process.env.HEALTH_DATA_ENCRYPTION_KEY;
+
+  if (!masterKey) {
+    return err(
+      'HEALTH_DATA_ENCRYPTION_KEY environment variable is not set. ' +
+      'Generate one with: openssl rand -hex 32'
+    );
+  }
+
+  // Master key should be 64 hex characters (32 bytes)
+  if (masterKey.length !== 64) {
+    return err(
+      'HEALTH_DATA_ENCRYPTION_KEY must be 64 hex characters (32 bytes). ' +
+      'Generate one with: openssl rand -hex 32'
+    );
+  }
+
+  return ok(Buffer.from(masterKey, 'hex'));
 }
 
 /**
@@ -106,6 +135,7 @@ export function encrypt(plaintext: string): EncryptedData {
  * @param encryptedData - Encrypted data structure
  * @returns Decrypted plaintext
  * @throws Error if decryption fails (wrong key, corrupted data, etc.)
+ * @deprecated Use decryptResult instead for Result-based error handling
  */
 export function decrypt(encryptedData: EncryptedData): string {
   try {
@@ -130,6 +160,45 @@ export function decrypt(encryptedData: EncryptedData): string {
     return decrypted;
   } catch (error) {
     throw new Error(
+      'Failed to decrypt health data: ' + (error instanceof Error ? error.message : 'Unknown error')
+    );
+  }
+}
+
+/**
+ * Decrypt encrypted data using AES-256-GCM - Result-based (no exceptions)
+ * Preferred over decrypt for new code
+ *
+ * @param encryptedData - Encrypted data structure
+ * @returns Ok(string) with decrypted plaintext, or Err(string) if decryption fails
+ */
+export function decryptResult(encryptedData: EncryptedData): Result<string, string> {
+  try {
+    // Convert from base64
+    const iv = Buffer.from(encryptedData.iv, 'base64');
+    const authTag = Buffer.from(encryptedData.authTag, 'base64');
+    const salt = Buffer.from(encryptedData.salt, 'base64');
+    const encrypted = encryptedData.encrypted;
+
+    // Derive encryption key from master key
+    const masterKeyResult = getMasterKeyResult();
+    if (!masterKeyResult.ok) {
+      return err(masterKeyResult.error);
+    }
+    const masterKey = masterKeyResult.value;
+    const key = deriveKey(masterKey, salt);
+
+    // Create decipher
+    const decipher = createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAuthTag(authTag);
+
+    // Decrypt data
+    let decrypted = decipher.update(encrypted, 'base64', 'utf8');
+    decrypted += decipher.final('utf8');
+
+    return ok(decrypted);
+  } catch (error) {
+    return err(
       'Failed to decrypt health data: ' + (error instanceof Error ? error.message : 'Unknown error')
     );
   }
@@ -171,6 +240,7 @@ export function serializeEncrypted(encryptedData: EncryptedData): string {
  * @param serialized - JSON string from database
  * @returns Encrypted data structure
  * @throws Error if JSON is invalid or missing required fields
+ * @deprecated Use deserializeEncryptedResult instead for Result-based error handling
  */
 export function deserializeEncrypted(serialized: string): EncryptedData {
   try {
@@ -199,6 +269,39 @@ export function deserializeEncrypted(serialized: string): EncryptedData {
 }
 
 /**
+ * Deserialize encrypted data from JSON string - Result-based (no exceptions)
+ * Preferred over deserializeEncrypted for new code
+ *
+ * @param serialized - JSON string from database
+ * @returns Ok(EncryptedData) if valid, Err(string) otherwise
+ */
+export function deserializeEncryptedResult(serialized: string): Result<EncryptedData, string> {
+  try {
+    const parsed = JSON.parse(serialized);
+
+    if (
+      !parsed.encrypted ||
+      !parsed.iv ||
+      !parsed.authTag ||
+      !parsed.salt
+    ) {
+      return err('Invalid encrypted data format: missing required fields');
+    }
+
+    return ok({
+      encrypted: parsed.encrypted,
+      iv: parsed.iv,
+      authTag: parsed.authTag,
+      salt: parsed.salt,
+    });
+  } catch (error) {
+    return err(
+      'Failed to deserialize encrypted data: ' + (error instanceof Error ? error.message : 'Unknown error')
+    );
+  }
+}
+
+/**
  * Encrypt plaintext and return as serialized JSON string
  * Convenience function combining encrypt + serialize
  */
@@ -210,8 +313,26 @@ export function encryptToString(plaintext: string): string {
 /**
  * Decrypt from serialized JSON string
  * Convenience function combining deserialize + decrypt
+ * @deprecated Use decryptFromStringResult instead for Result-based error handling
  */
 export function decryptFromString(serialized: string): string {
   const encrypted = deserializeEncrypted(serialized);
   return decrypt(encrypted);
+}
+
+/**
+ * Decrypt from serialized JSON string - Result-based (no exceptions)
+ * Preferred over decryptFromString for new code
+ * Convenience function combining deserialize + decrypt
+ *
+ * @param serialized - JSON string from database
+ * @returns Ok(string) with decrypted plaintext, or Err(string) if deserialization or decryption fails
+ */
+export function decryptFromStringResult(serialized: string): Result<string, string> {
+  const deserializeResult = deserializeEncryptedResult(serialized);
+  if (!deserializeResult.ok) {
+    return err(deserializeResult.error);
+  }
+
+  return decryptResult(deserializeResult.value);
 }
