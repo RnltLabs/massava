@@ -59,7 +59,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline for dev
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
-              "img-src 'self' data: https:", // Allow external images (studio photos)
+              "img-src 'self' data: blob: https:", // Allow external images (studio photos) + blob for previews
               "font-src 'self' data:",
               "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de https://photon.komoot.io", // Allow Sentry/GlitchTip + Photon Geocoding API
               "frame-ancestors 'none'",

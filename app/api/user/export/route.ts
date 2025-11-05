@@ -34,11 +34,38 @@ export async function GET(request: NextRequest) {
 
     const email = session.user.email;
 
-    // Check if user is a customer or studio owner
-    const customer = await prisma.customer.findUnique({
+    // Fetch unified User data
+    const user = await prisma.user.findUnique({
       where: { email },
       include: {
-        bookings: {
+        ownedStudios: {
+          include: {
+            studio: {
+              include: {
+                services: true,
+                newBookings: {
+                  select: {
+                    id: true,
+                    customerName: true,
+                    customerEmail: true,
+                    customerPhone: true,
+                    preferredDate: true,
+                    preferredTime: true,
+                    status: true,
+                    createdAt: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        newAccounts: {
+          select: {
+            provider: true,
+            type: true,
+          },
+        },
+        customerBookings: {
           include: {
             studio: {
               select: {
@@ -61,66 +88,10 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        favorites: {
-          select: {
-            id: true,
-            name: true,
-            address: true,
-            city: true,
-            phone: true,
-            email: true,
-          },
-        },
       },
     });
 
-    const studioOwner = await prisma.studioOwner.findUnique({
-      where: { email },
-      include: {
-        accounts: {
-          select: {
-            provider: true,
-            type: true,
-          },
-        },
-      },
-    });
-
-    // Also fetch unified User data if exists
-    const unifiedUser = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        ownedStudios: {
-          include: {
-            studio: {
-              include: {
-                services: true,
-                bookings: {
-                  select: {
-                    id: true,
-                    customerName: true,
-                    customerEmail: true,
-                    customerPhone: true,
-                    preferredDate: true,
-                    preferredTime: true,
-                    status: true,
-                    createdAt: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-        newAccounts: {
-          select: {
-            provider: true,
-            type: true,
-          },
-        },
-      },
-    });
-
-    if (!customer && !studioOwner && !unifiedUser) {
+    if (!user) {
       logger.warn('Data export failed: User not found', {
         correlationId,
         ipAddress,
@@ -140,79 +111,43 @@ export async function GET(request: NextRequest) {
         name: 'RNLT Labs / Massava',
         email: 'datenschutz@massava.com',
       },
-      personalData: customer
-        ? {
-            userType: 'customer',
-            id: customer.id,
-            name: customer.name,
-            email: customer.email,
-            phone: customer.phone,
-            emailVerified: customer.emailVerified,
-            accountCreated: customer.createdAt,
-            lastUpdated: customer.updatedAt,
-          }
-        : unifiedUser
-        ? {
-            userType: 'user',
-            id: unifiedUser.id,
-            name: unifiedUser.name,
-            email: unifiedUser.email,
-            phone: unifiedUser.phone,
-            emailVerified: unifiedUser.emailVerified,
-            primaryRole: unifiedUser.primaryRole,
-            accountCreated: unifiedUser.createdAt,
-            lastUpdated: unifiedUser.updatedAt,
-            oauthProviders: unifiedUser.newAccounts.map((acc) => acc.provider),
-          }
-        : {
-            userType: 'studioOwner',
-            id: studioOwner!.id,
-            name: studioOwner!.name,
-            email: studioOwner!.email,
-            emailVerified: studioOwner!.emailVerified,
-            accountCreated: studioOwner!.createdAt,
-            lastUpdated: studioOwner!.updatedAt,
-            oauthProviders: studioOwner!.accounts.map((acc) => acc.provider),
-          },
-      bookings: customer
-        ? customer.bookings.map((booking) => ({
-            id: booking.id,
-            studio: booking.studio,
-            service: booking.service,
-            preferredDate: booking.preferredDate,
-            preferredTime: booking.preferredTime,
-            message: booking.message,
-            status: booking.status,
-            healthDataConsent: booking.explicitHealthConsent,
-            healthDataConsentGivenAt: booking.healthConsentGivenAt,
-            createdAt: booking.createdAt,
-          }))
-        : [],
-      favorites: customer
-        ? customer.favorites.map((studio) => ({
-            id: studio.id,
-            name: studio.name,
-            address: studio.address,
-            city: studio.city,
-            phone: studio.phone,
-            email: studio.email,
-          }))
-        : [],
-      studios: unifiedUser
-        ? unifiedUser.ownedStudios.map((ownership) => ({
-            id: ownership.studio.id,
-            name: ownership.studio.name,
-            description: ownership.studio.description,
-            address: ownership.studio.address,
-            city: ownership.studio.city,
-            postalCode: ownership.studio.postalCode,
-            phone: ownership.studio.phone,
-            email: ownership.studio.email,
-            services: ownership.studio.services,
-            bookingsCount: ownership.studio.bookings.length,
-            createdAt: ownership.studio.createdAt,
-          }))
-        : [],
+      personalData: {
+        userType: 'user',
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        emailVerified: user.emailVerified,
+        primaryRole: user.primaryRole,
+        accountCreated: user.createdAt,
+        lastUpdated: user.updatedAt,
+        oauthProviders: user.newAccounts.map((acc) => acc.provider),
+      },
+      bookings: user.customerBookings.map((booking) => ({
+        id: booking.id,
+        studio: booking.studio,
+        service: booking.service,
+        preferredDate: booking.preferredDate,
+        preferredTime: booking.preferredTime,
+        message: booking.message,
+        status: booking.status,
+        healthDataConsent: booking.explicitHealthConsent,
+        healthDataConsentGivenAt: booking.healthConsentGivenAt,
+        createdAt: booking.createdAt,
+      })),
+      studios: user.ownedStudios.map((ownership) => ({
+        id: ownership.studio.id,
+        name: ownership.studio.name,
+        description: ownership.studio.description,
+        address: ownership.studio.address,
+        city: ownership.studio.city,
+        postalCode: ownership.studio.postalCode,
+        phone: ownership.studio.phone,
+        email: ownership.studio.email,
+        services: ownership.studio.services,
+        bookingsCount: ownership.studio.newBookings.length,
+        createdAt: ownership.studio.createdAt,
+      })),
     };
 
     logger.info('User data exported successfully', {
@@ -220,10 +155,10 @@ export async function GET(request: NextRequest) {
       ipAddress,
       userAgent,
       email,
-      userId: customer?.id || studioOwner!.id,
+      userId: user.id,
       action: 'EXPORT_USER_DATA',
       resource: 'user',
-      userType: customer ? 'customer' : 'studioOwner',
+      userType: 'user',
     });
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Menu, User, Calendar, HelpCircle, LogOut, Briefcase } from 'lucide-react'
+import { Menu, User, Calendar, HelpCircle, LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,7 +24,6 @@ interface MobileNavProps {
   onSignupClick?: () => void
   onLogoutClick?: () => void
   displayName?: string
-  hasStudio?: boolean
 }
 
 export function MobileNav({
@@ -34,7 +33,6 @@ export function MobileNav({
   onSignupClick,
   onLogoutClick,
   displayName,
-  hasStudio = false,
 }: MobileNavProps) {
   const t = useTranslations('navigation')
   const [open, setOpen] = useState(false)
@@ -124,49 +122,6 @@ export function MobileNav({
 
               {/* Authenticated User Actions */}
               <Link
-                href={`/${locale}/dashboard`}
-                onClick={() => setOpen(false)}
-              >
-                <Button
-                  variant="ghost"
-                  className="w-full h-8 justify-start text-xs font-medium"
-                >
-                  <User className="mr-2 h-4 w-4" />
-                  {t('myProfile')}
-                </Button>
-              </Link>
-
-              {hasStudio && (
-                <>
-                  <Link
-                    href={`/${locale}/dashboard/owner/calendar`}
-                    onClick={() => setOpen(false)}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full h-8 justify-start text-xs font-medium"
-                    >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      Kalender
-                    </Button>
-                  </Link>
-
-                  <Link
-                    href={`/${locale}/dashboard/owner/services`}
-                    onClick={() => setOpen(false)}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full h-8 justify-start text-xs font-medium"
-                    >
-                      <Briefcase className="mr-2 h-4 w-4" />
-                      Leistungen
-                    </Button>
-                  </Link>
-                </>
-              )}
-
-              <Link
                 href={`/${locale}/customer/dashboard`}
                 onClick={() => setOpen(false)}
               >
@@ -178,38 +133,23 @@ export function MobileNav({
                   {t('myBookings')}
                 </Button>
               </Link>
+
+              <Link
+                href={`/${locale}/dashboard`}
+                onClick={() => setOpen(false)}
+              >
+                <Button
+                  variant="ghost"
+                  className="w-full h-8 justify-start text-xs font-medium"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  {t('myProfile')}
+                </Button>
+              </Link>
             </div>
           )}
 
           <Separator />
-
-          {/* Studio Registration Card - Centered between sections */}
-          {!isAuthenticated && (
-            <div className="px-3 flex-1 flex items-center">
-              <div className="w-full rounded-xl border-2 border-accent/50 bg-accent/5 p-3 space-y-2">
-                <div className="space-y-1">
-                  <h3 className="font-semibold text-sm">
-                    {t('studioOwnerTitle')}
-                  </h3>
-                  <p className="text-xs text-muted-foreground leading-snug">
-                    {t('studioOwnerDescription')}
-                  </p>
-                </div>
-                <Link
-                  href={`/${locale}/studios/register`}
-                  onClick={() => setOpen(false)}
-                  className="block"
-                >
-                  <Button
-                    variant="outline"
-                    className="w-full h-9 text-xs font-medium border-2 border-accent hover:bg-accent/10"
-                  >
-                    {t('registerStudioCta')}
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          )}
 
           {/* Secondary Navigation - Above Footer */}
           <div className="flex flex-col gap-1.5 px-3 mb-2 mt-3">

@@ -8,6 +8,8 @@ import type {
   ContactFormData,
 } from './validation/studioSchemas';
 import type { OpeningHoursFormData } from './validation/openingHoursSchema';
+import type { ServiceFormData } from './validation/servicesSchema';
+import type { ImagesStepPreview } from './validation/imagesSchema';
 
 /**
  * Studio Registration State
@@ -17,8 +19,11 @@ export interface StudioRegistrationState {
   formData: {
     basicInfo: Partial<BasicInfoFormData>;
     address: Partial<AddressFormData>;
+    images?: Partial<ImagesStepPreview>; // Logo and gallery image files (preview only)
     contact: Partial<ContactFormData>;
     openingHours?: Partial<OpeningHoursFormData>;
+    capacity?: number; // Treatment beds/rooms (1-10)
+    services?: ServiceFormData[]; // Services to create (max 3)
   };
   errors: Record<string, string>;
   isSubmitting: boolean;
@@ -32,8 +37,11 @@ type StudioRegistrationAction =
   | { type: 'SET_STEP'; payload: number }
   | { type: 'UPDATE_BASIC_INFO'; payload: Partial<BasicInfoFormData> }
   | { type: 'UPDATE_ADDRESS'; payload: Partial<AddressFormData> }
+  | { type: 'UPDATE_IMAGES'; payload: Partial<ImagesStepPreview> }
   | { type: 'UPDATE_CONTACT'; payload: Partial<ContactFormData> }
   | { type: 'UPDATE_OPENING_HOURS'; payload: Partial<OpeningHoursFormData> }
+  | { type: 'UPDATE_CAPACITY'; payload: number }
+  | { type: 'UPDATE_SERVICES'; payload: ServiceFormData[] }
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_STUDIO_ID'; payload: string }
@@ -50,8 +58,11 @@ interface StudioRegistrationContextValue {
   goToPreviousStep: () => void;
   updateBasicInfo: (data: Partial<BasicInfoFormData>) => void;
   updateAddress: (data: Partial<AddressFormData>) => void;
+  updateImages: (data: Partial<ImagesStepPreview>) => void;
   updateContact: (data: Partial<ContactFormData>) => void;
   updateOpeningHours: (data: Partial<OpeningHoursFormData>) => void;
+  updateCapacity: (capacity: number) => void;
+  updateServices: (services: ServiceFormData[]) => void;
   setErrors: (errors: Record<string, string>) => void;
   setSubmitting: (isSubmitting: boolean) => void;
   setStudioId: (studioId: string) => void;
@@ -111,6 +122,18 @@ function studioRegistrationReducer(
         },
       };
 
+    case 'UPDATE_IMAGES':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          images: {
+            ...state.formData.images,
+            ...action.payload,
+          },
+        },
+      };
+
     case 'UPDATE_CONTACT':
       return {
         ...state,
@@ -132,6 +155,24 @@ function studioRegistrationReducer(
             ...state.formData.openingHours,
             ...action.payload,
           },
+        },
+      };
+
+    case 'UPDATE_CAPACITY':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          capacity: action.payload,
+        },
+      };
+
+    case 'UPDATE_SERVICES':
+      return {
+        ...state,
+        formData: {
+          ...state.formData,
+          services: action.payload,
         },
       };
 
@@ -198,11 +239,20 @@ export function StudioRegistrationProvider({
     updateAddress: (data: Partial<AddressFormData>) => {
       dispatch({ type: 'UPDATE_ADDRESS', payload: data });
     },
+    updateImages: (data: Partial<ImagesStepPreview>) => {
+      dispatch({ type: 'UPDATE_IMAGES', payload: data });
+    },
     updateContact: (data: Partial<ContactFormData>) => {
       dispatch({ type: 'UPDATE_CONTACT', payload: data });
     },
     updateOpeningHours: (data: Partial<OpeningHoursFormData>) => {
       dispatch({ type: 'UPDATE_OPENING_HOURS', payload: data });
+    },
+    updateCapacity: (capacity: number) => {
+      dispatch({ type: 'UPDATE_CAPACITY', payload: capacity });
+    },
+    updateServices: (services: ServiceFormData[]) => {
+      dispatch({ type: 'UPDATE_SERVICES', payload: services });
     },
     setErrors: (errors: Record<string, string>) => {
       dispatch({ type: 'SET_ERRORS', payload: errors });

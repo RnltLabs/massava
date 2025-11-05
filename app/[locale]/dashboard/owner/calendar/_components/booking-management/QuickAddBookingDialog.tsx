@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -87,57 +87,59 @@ function QuickAddBookingContent({
 
   console.log('📋 [QuickAddBookingContent] Current Step:', currentStep, 'isSubmitting:', isSubmitting);
 
+  // Use ref to avoid re-renders when onSuccess changes
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
+
   // Handle success callback
   useEffect(() => {
     if (currentStep === 4 && state.bookingId) {
-      onSuccess?.();
+      onSuccessRef.current?.();
     }
-  }, [currentStep, state.bookingId, onSuccess]);
-
-  const steps = [
-    {
-      component: () => <ContactStep />,
-      title: 'Contact',
-    },
-    {
-      component: () => <ServiceStep studioId={studioId} services={services} />,
-      title: 'Service',
-    },
-    {
-      component: () => <DateTimeStep studioId={studioId} services={services} initialDate={initialDate} />,
-      title: 'Date/Time',
-    },
-    {
-      component: () => <ReviewStep studioId={studioId} services={services} />,
-      title: 'Review',
-    },
-    {
-      component: () => <SuccessStep onClose={handleClose} onAddAnother={handleAddAnother} />,
-      title: 'Success',
-    },
-  ];
-
-  const CurrentStepComponent = steps[currentStep]?.component;
+  }, [currentStep, state.bookingId]);
 
   // Show progress indicator for steps 0-3
   const showProgress = currentStep >= 0 && currentStep <= 3;
 
-  function handleClose(): void {
+  const handleClose = useCallback((): void => {
     if (!isSubmitting) {
       reset();
       onClose();
     }
-  }
+  }, [isSubmitting, reset, onClose]);
 
-  function handleAddAnother(): void {
-    // Reset stays at step 0
+  const handleAddAnother = useCallback((): void => {
+    reset();
     // Don't close dialog - user can add another booking
-  }
+  }, [reset]);
 
-  function handleBack(): void {
+  const handleBack = useCallback((): void => {
     if (!isSubmitting && currentStep > 0 && currentStep < 4) {
       goToPreviousStep();
     }
+  }, [isSubmitting, currentStep, goToPreviousStep]);
+
+  // Render current step directly without creating component functions
+  let currentStepContent: React.ReactNode = null;
+
+  switch (currentStep) {
+    case 0:
+      currentStepContent = <ContactStep />;
+      break;
+    case 1:
+      currentStepContent = <ServiceStep studioId={studioId} services={services} />;
+      break;
+    case 2:
+      currentStepContent = <DateTimeStep studioId={studioId} services={services} initialDate={initialDate} />;
+      break;
+    case 3:
+      currentStepContent = <ReviewStep studioId={studioId} services={services} />;
+      break;
+    case 4:
+      currentStepContent = <SuccessStep onClose={handleClose} onAddAnother={handleAddAnother} />;
+      break;
   }
 
   return (
@@ -186,7 +188,7 @@ function QuickAddBookingContent({
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
         >
-          {CurrentStepComponent && <CurrentStepComponent />}
+          {currentStepContent}
         </motion.div>
       </AnimatePresence>
     </div>
