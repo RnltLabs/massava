@@ -158,10 +158,14 @@ export function BookingSheet({
 
     console.log("✅ User is logged in, creating booking", session.user)
 
+    // Check if user is a customer (accountType === 'customer')
+    // If they're a studio owner, treat as guest (no customerId linking)
+    const isCustomer = session.user.accountType === 'customer'
+
     // If logged in, proceed with booking directly
     await createBookingNow({
       ...data,
-      customerId: session.user.id, // Use logged-in user ID
+      customerId: isCustomer ? session.user.id : null, // Only link if actual customer
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",

@@ -1,0 +1,10 @@
+# AVV Contracts Storage
+
+This directory contains signed Data Processing Agreements (AVV/DPA) with third-party processors.
+
+## Files
+- `hetzner-avv-signed.pdf` - Signed AVV with Hetzner (hosting provider)
+- `stripe-dpa-signed.pdf` - Signed DPA with Stripe (payment processor)
+
+## Security Note
+These contracts contain company information. Ensure this directory is properly secured and backed up.

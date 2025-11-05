@@ -137,6 +137,7 @@
     "register_studio": "Studio registrieren",
     "logout": "Abmelden",
     "my_account": "Mein Account",
+    "my_bookings": "Meine Buchungen",
     "customer_login": "Kundenlogin",
     "customer_login_button": "Anmelden",
     "account_type_selector": {
@@ -280,15 +281,29 @@
     "register": "Registrieren",
     "signIn": "Anmelden",
     "registerBenefit": "Erstellen Sie ein Konto, um Buchungen zu verwalten und exklusive Angebote zu erhalten",
-    "studioOwnerTitle": "Haben Sie ein Studio?",
-    "studioOwnerDescription": "Erreichen Sie mehr Kunden und steigern Sie Ihre Auslastung",
-    "registerStudioCta": "Jetzt Studio registrieren",
     "myProfile": "Mein Profil",
     "myBookings": "Meine Buchungen",
     "helpSupport": "Hilfe & Support",
     "signOut": "Abmelden",
     "language": "Sprache",
     "selectLanguage": "Sprache wählen",
-    "appVersion": "Version {version}"
+    "appVersion": "Version {version}",
+    "forStudios": "Für Studios",
+    "partnerWithUs": "Partner werden"
+  },
+  "footer": {
+    "tagline": "Ihre Plattform für spontane Massagebuchungen in Ihrer Stadt.",
+    "forGuests": "Für Gäste",
+    "howItWorks": "So funktioniert's",
+    "findStudios": "Studios finden",
+    "forStudios": "Für Studios",
+    "registerStudio": "Studio registrieren",
+    "businessPortal": "Business Portal",
+    "pricing": "Preise",
+    "legal": "Rechtliches",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "terms": "AGB",
+    "copyright": "© 2025 Massava von RNLT Labs. Alle Rechte vorbehalten."
   }
 }
