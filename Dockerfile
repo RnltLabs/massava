@@ -54,6 +54,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
+# Install Prisma CLI for database migrations
+# This is needed to run migrations in production environment
+RUN npm install -g prisma@6.17.1
+
 COPY --from=builder /app/public ./public
 
 # Set the correct permission for prerender cache
@@ -65,6 +69,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/app/generated ./app/generated
+
+# Copy Prisma schema and migrations for database operations
+# This allows running migrations in production using the same image
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 USER nextjs
 
