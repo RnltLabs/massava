@@ -226,12 +226,9 @@ class CacheMonitor {
         : 0;
 
     // Get Redis memory usage
-    const info = await redis.info();
-    const memoryUsedBytes = parseInt(
-      info.match(/used_memory:(\d+)/)?.[1] || "0",
-      10
-    );
-    const memoryUsedMB = memoryUsedBytes / 1024 / 1024;
+    // Note: Upstash Redis doesn't support INFO command
+    // We'll return 0 for now - can be implemented with a separate monitoring solution
+    const memoryUsedMB = 0;
 
     return {
       hitRate,

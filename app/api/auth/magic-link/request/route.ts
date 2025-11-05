@@ -6,13 +6,12 @@
  * Generates and sends magic link for passwordless authentication
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@/app/generated/prisma';
 import { generateMagicLink } from '@/lib/magic-link';
 import { createAuditLog } from '@/lib/audit';
 
-const prisma = new PrismaClient();
 
 // Validation schema
 const requestSchema = z.object({

@@ -8,7 +8,7 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { BottomTabNav } from '../../_components/BottomTabNav';
 import { CapacitySettings } from './_components/CapacitySettings';
 import { ImagesSettings } from './_components/ImagesSettings';
@@ -32,7 +32,7 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
   }
 
   // Get user's studio
-  const ownership = await db.studioOwnership.findFirst({
+  const ownership = await prisma.studioOwnership.findFirst({
     where: {
       userId: session.user.id,
     },
@@ -68,7 +68,7 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
     : [];
 
   // Calculate badge counts for bottom nav
-  const pendingCount = await db.newBooking.count({
+  const pendingCount = await prisma.newBooking.count({
     where: {
       studioId: studio.id,
       status: BookingStatus.PENDING,
@@ -76,7 +76,7 @@ export default async function SettingsPage({ params }: Props): Promise<React.JSX
   });
 
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todayCount = await db.newBooking.count({
+  const todayCount = await prisma.newBooking.count({
     where: {
       studioId: studio.id,
       status: BookingStatus.CONFIRMED,

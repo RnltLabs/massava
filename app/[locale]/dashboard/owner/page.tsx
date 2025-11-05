@@ -9,7 +9,7 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { BottomTabNav } from '../_components/BottomTabNav';
 import { BookingCard } from '../_components/BookingCard';
@@ -32,7 +32,7 @@ export default async function OwnerDashboardPage({ params }: Props): Promise<Rea
   }
 
   // Get user's studio (single studio model)
-  const ownership = await db.studioOwnership.findFirst({
+  const ownership = await prisma.studioOwnership.findFirst({
     where: {
       userId: session.user.id,
     },
@@ -56,7 +56,7 @@ export default async function OwnerDashboardPage({ params }: Props): Promise<Rea
   const studio = ownership.studio;
 
   // Get pending bookings (need confirmation)
-  const pendingBookings = await db.newBooking.findMany({
+  const pendingBookings = await prisma.newBooking.findMany({
     where: {
       studioId: studio.id,
       status: BookingStatus.PENDING,
@@ -78,7 +78,7 @@ export default async function OwnerDashboardPage({ params }: Props): Promise<Rea
 
   // Get today's confirmed bookings
   const today = format(new Date(), 'yyyy-MM-dd');
-  const todaysBookings = await db.newBooking.findMany({
+  const todaysBookings = await prisma.newBooking.findMany({
     where: {
       studioId: studio.id,
       status: BookingStatus.CONFIRMED,
@@ -100,7 +100,7 @@ export default async function OwnerDashboardPage({ params }: Props): Promise<Rea
   });
 
   // Get total bookings count (all time)
-  const totalBookings = await db.newBooking.count({
+  const totalBookings = await prisma.newBooking.count({
     where: {
       studioId: studio.id,
     },

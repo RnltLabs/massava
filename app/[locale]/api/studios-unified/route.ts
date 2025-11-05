@@ -6,13 +6,12 @@
  * Phase 3: RBAC + Studio Ownership
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { requirePermissionAPI } from '@/lib/auth/permissions';
 import { createAuditLog } from '@/lib/audit';
 
-const prisma = new PrismaClient();
 
 type ServiceInput = {
   name: string;

@@ -6,10 +6,8 @@
  * Implements STRATEGY.md Section 4.1 (Audit Log)
  */
 
-import { PrismaClient } from '@/app/generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { NextRequest } from 'next/server';
-
-const prisma = new PrismaClient();
 
 export type AuditAction =
   // User actions

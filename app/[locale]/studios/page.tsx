@@ -3,16 +3,15 @@
  * All rights reserved.
  */
 
+import { prisma } from '@/lib/prisma';
 import { getTranslations } from 'next-intl/server';
 import { StudioList } from '@/components/StudioList';
-import { PrismaClient } from '@/app/generated/prisma';
 
 type Props = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ city?: string; location?: string; radius?: string }>;
 };
 
-const prisma = new PrismaClient();
 
 export default async function StudiosPage({ params, searchParams }: Props) {
   const { locale } = await params;

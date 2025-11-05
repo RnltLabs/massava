@@ -17,6 +17,7 @@
  * - NET IMPROVEMENT: -115ms (-76%)
  */
 
+import { prisma } from '@/lib/prisma';
 import amqp from "amqplib";
 import type { UserRole } from "@/app/generated/prisma";
 import { logger } from "@/lib/logger";
@@ -166,8 +167,8 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
   const startTime = performance.now();
 
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
+    // Import singleton prisma instance
+    const { prisma } = await import("@/lib/prisma");
 
     // Upsert user and account in single transaction
     await prisma.$transaction(async (tx: unknown) => {
@@ -179,7 +180,7 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
           email: job.email,
           name: job.name,
           image: job.image,
-          role: "USER" as UserRole, // Default role
+          primaryRole: "USER" as UserRole, // Default role
         },
         update: {
           email: job.email,
@@ -189,7 +190,7 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
       });
 
       // Upsert OAuth account
-      await (tx as typeof prisma).account.upsert({
+      await (tx as typeof prisma).newAccount.upsert({
         where: {
           provider_providerAccountId: {
             provider: job.provider,
@@ -221,7 +222,7 @@ export async function processUserSyncJob(job: UserSyncJob): Promise<void> {
       userId: job.userId,
       email: job.email,
       name: job.name,
-      role: "USER",
+      role: "USER" as UserRole,
       image: job.image,
       createdAt: new Date().toISOString(),
       lastAccessedAt: new Date().toISOString(),

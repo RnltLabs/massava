@@ -6,6 +6,7 @@
  * Phase 3: RBAC + Role-based Registration
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
@@ -16,7 +17,6 @@ import { generateEmailVerificationURL } from '@/lib/email-verification';
 import { sendVerificationEmail } from '@/lib/email/send';
 import { createAuditLog } from '@/lib/audit';
 
-const prisma = new PrismaClient();
 
 // GDPR Art. 32 compliant bcrypt cost factor
 const BCRYPT_ROUNDS = 12;

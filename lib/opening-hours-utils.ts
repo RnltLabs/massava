@@ -55,10 +55,13 @@ export function generateClosedTimeBlocks(
   let dayHours: { open: string; close: string } | null = null;
 
   // Determine hours for this specific day
-  if (openingHours.everyday) {
-    dayHours = openingHours.everyday;
+  if (openingHours.everyday && typeof openingHours.everyday === 'object') {
+    dayHours = openingHours.everyday as { open: string; close: string };
   } else if (openingHours[dayOfWeek] !== undefined) {
-    dayHours = openingHours[dayOfWeek];
+    const hours = openingHours[dayOfWeek];
+    if (typeof hours === 'object' && hours !== null && 'open' in hours && 'close' in hours) {
+      dayHours = hours as { open: string; close: string };
+    }
   }
 
   // If day is closed (null or no hours), block entire day

@@ -9,7 +9,7 @@
 'use server';
 
 import { auth } from '@/auth';
-import { db } from '@/lib/db';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -52,7 +52,7 @@ export async function blockTime(input: BlockTimeInput): Promise<{
     const { studioId, startTime, endTime, reason, isAllDay } = validated.data;
 
     // Verify studio ownership
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -72,7 +72,7 @@ export async function blockTime(input: BlockTimeInput): Promise<{
     }
 
     // Check for overlapping bookings (warn only, don't block)
-    const overlappingBookings = await db.newBooking.count({
+    const overlappingBookings = await prisma.newBooking.count({
       where: {
         studioId: studioId,
         status: 'CONFIRMED',
@@ -91,7 +91,7 @@ export async function blockTime(input: BlockTimeInput): Promise<{
     }
 
     // Create blocked time
-    const blocked = await db.blockedTime.create({
+    const blocked = await prisma.blockedTime.create({
       data: {
         studioId,
         startTime: start,
@@ -133,7 +133,7 @@ export async function unblockTime(blockedTimeId: string): Promise<{
     }
 
     // Fetch blocked time with studio ownership check
-    const blocked = await db.blockedTime.findUnique({
+    const blocked = await prisma.blockedTime.findUnique({
       where: { id: blockedTimeId },
       include: {
         studio: {
@@ -155,7 +155,7 @@ export async function unblockTime(blockedTimeId: string): Promise<{
     }
 
     // Delete blocked time
-    await db.blockedTime.delete({
+    await prisma.blockedTime.delete({
       where: { id: blockedTimeId },
     });
 
@@ -198,7 +198,7 @@ export async function getBlockedTimes(
     }
 
     // Verify ownership
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -210,7 +210,7 @@ export async function getBlockedTimes(
     }
 
     // Fetch blocked times
-    const blockedTimes = await db.blockedTime.findMany({
+    const blockedTimes = await prisma.blockedTime.findMany({
       where: {
         studioId,
         startTime: {
@@ -284,7 +284,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
     const { studioId, customerName, customerPhone, serviceId, date, time, notes, overrideCapacity } = validated.data;
 
     // Verify studio ownership and get capacity
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -305,7 +305,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
     const studioCapacity = ownership.studio.capacity;
 
     // Get service to determine duration
-    const service = await db.service.findUnique({
+    const service = await prisma.service.findUnique({
       where: { id: serviceId },
     });
 
@@ -314,7 +314,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
     }
 
     // Check capacity: Count existing confirmed bookings at this time
-    const existingBookings = await db.newBooking.findMany({
+    const existingBookings = await prisma.newBooking.findMany({
       where: {
         studioId: studioId,
         preferredDate: date,
@@ -351,7 +351,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
 
     // Create or find user for this booking
     // Try to find existing user by phone first
-    let user = await db.user.findFirst({
+    let user = await prisma.user.findFirst({
       where: { phone: customerPhone },
     });
 
@@ -359,7 +359,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
       // Create minimal user profile for phone bookings
       // Use phone-based email to avoid duplicates
       const phoneClean = customerPhone.replace(/[^0-9]/g, '');
-      user = await db.user.create({
+      user = await prisma.user.create({
         data: {
           name: customerName,
           phone: customerPhone,
@@ -370,7 +370,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
     }
 
     // Create booking (auto-confirmed for manual bookings)
-    const booking = await db.newBooking.create({
+    const booking = await prisma.newBooking.create({
       data: {
         studioId: studioId,
         customerId: user.id,

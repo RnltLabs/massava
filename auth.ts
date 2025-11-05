@@ -16,13 +16,13 @@
  * App routes use this file (Node.js with database access)
  */
 
+import { prisma } from '@/lib/prisma';
 import NextAuth from 'next-auth';
 import bcrypt from 'bcryptjs';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import { UnifiedUserAdapter } from '@/lib/auth/adapter';
 import { authConfig } from './auth.config';
 
-const prisma = new PrismaClient();
 
 console.log('[NextAuth] Initializing with basePath:', process.env.NEXTAUTH_BASEPATH || '/api/auth');
 
