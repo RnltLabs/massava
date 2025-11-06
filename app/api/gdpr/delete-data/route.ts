@@ -14,6 +14,7 @@ import { createAuditLog } from '@/lib/audit';
 import { sendDeletionConfirmationEmail } from '@/lib/notifications/deletion-notifier';
 import { z } from 'zod';
 import { auth } from '@/auth';
+import { invalidateSessionCache } from '@/lib/auth/session-cache';
 
 
 // Request validation schema
@@ -165,6 +166,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         isActive: false,
       },
     });
+
+    // Invalidate session cache (Phase 2: Redis cache invalidation)
+    await invalidateSessionCache(userId);
 
     // Create audit log for deletion request
     await createAuditLog({
@@ -353,6 +357,9 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
         updatedAt: now, // Update activity timestamp
       },
     });
+
+    // Invalidate session cache (Phase 2: Redis cache invalidation)
+    await invalidateSessionCache(userId);
 
     // Create audit log
     await createAuditLog({

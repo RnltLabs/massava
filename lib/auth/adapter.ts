@@ -8,6 +8,8 @@
 
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import type { Adapter } from 'next-auth/adapters';
+import { invalidateSessionCache, setSessionInCache } from './session-cache';
+import { logger } from '@/lib/logger';
 
 export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
   return {
@@ -29,6 +31,23 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
           role: UserRole.CUSTOMER,
           grantedBy: 'OAUTH_SIGNUP',
         },
+      });
+
+      // Warm cache on user creation (Phase 2: Cache optimization)
+      setSessionInCache(user.id, {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.primaryRole,
+        image: user.image,
+        createdAt: new Date().toISOString(),
+        lastAccessedAt: new Date().toISOString(),
+      }).catch((err) => {
+        logger.warn('Failed to cache new user session in adapter', {
+          userId: user.id,
+          error: err instanceof Error ? err.message : String(err),
+          action: 'CREATE_USER'
+        });
       });
 
       return {
@@ -105,6 +124,9 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
         },
       });
 
+      // Invalidate cache on user update (Phase 2: Cache invalidation)
+      await invalidateSessionCache(id);
+
       return {
         id: user.id,
         email: user.email,
@@ -118,6 +140,9 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
       await prisma.user.delete({
         where: { id: userId },
       });
+
+      // Invalidate cache on user deletion (Phase 2: Cache invalidation)
+      await invalidateSessionCache(userId);
     },
 
     async linkAccount(data) {

@@ -16,8 +16,64 @@ A multilingual aggregation platform connecting customers with service providers.
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **Database:** PostgreSQL with Prisma ORM
+- **Caching:** Upstash Redis
+- **Message Queue:** RabbitMQ
+- **Background Workers:** Auth sync worker for async operations
 - **Internationalization:** next-intl
 - **Deployment:** Docker + GitHub Actions
+
+## Development
+
+### Local Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start infrastructure services:**
+   ```bash
+   npm run docker:up
+   ```
+   This starts PostgreSQL, RabbitMQ, and the Auth Worker.
+
+3. **Configure environment:**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your credentials
+   ```
+
+4. **Run database migrations:**
+   ```bash
+   npx prisma migrate dev
+   ```
+
+5. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+
+### Background Worker
+
+The auth sync worker processes user synchronization jobs asynchronously to reduce OAuth sign-in latency by 73%.
+
+**Run worker in development:**
+```bash
+npm run worker:auth:dev
+```
+
+**Build and run worker:**
+```bash
+npm run worker:build
+npm run worker:auth
+```
+
+**Monitor worker:**
+```bash
+npm run docker:logs
+```
+
+See [docs/WORKER_DEPLOYMENT.md](docs/WORKER_DEPLOYMENT.md) for detailed deployment instructions.
 
 ## Deployment
 

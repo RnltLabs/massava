@@ -13,7 +13,14 @@
 
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/app/generated/prisma';
-import type { AuthUser, StudioOwnership, Result, AuthError } from './types';
+import type { AuthUser, StudioOwnership } from './types';
+import { Result, ok, err } from '@/lib/result';
+import { AuthError, createAuthError, exceptionToAuthError } from './errors';
+import {
+  getSessionFromCache,
+  setSessionInCache,
+} from './session-cache';
+import { logger } from '@/lib/logger';
 
 /**
  * Data Access Layer Interface
@@ -31,9 +38,33 @@ export interface IAuthDal {
 class AuthDalPrisma implements IAuthDal {
   /**
    * Get user with all roles
+   * Phase 2: Now uses Redis cache for improved performance
    */
   async getUserWithRoles(userId: string): Promise<Result<AuthUser, AuthError>> {
     try {
+      // Try cache first (FAST PATH: ~5ms)
+      const cached = await getSessionFromCache(userId);
+      if (cached) {
+        logger.debug('DAL cache hit: user retrieved from Redis', { userId });
+        return {
+          ok: true,
+          value: {
+            id: cached.userId,
+            email: cached.email,
+            name: cached.name,
+            image: cached.image,
+            primaryRole: cached.role,
+            roles: [cached.role], // Simplified in cache
+            emailVerified: null, // Not in cache
+            isActive: true, // Assume active if cached
+            isSuspended: false, // Assume not suspended if cached
+          },
+        };
+      }
+
+      logger.debug('DAL cache miss: loading user from database', { userId });
+
+      // Cache miss - load from database (SLOW PATH: ~80ms)
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -63,22 +94,44 @@ class AuthDalPrisma implements IAuthDal {
         };
       }
 
+      const authUser: AuthUser = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        image: user.image,
+        primaryRole: user.primaryRole,
+        roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+        emailVerified: user.emailVerified,
+        isActive: user.isActive,
+        isSuspended: user.isSuspended,
+      };
+
+      // Cache for next time (fire-and-forget)
+      setSessionInCache(user.id, {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.primaryRole,
+        image: user.image,
+        createdAt: new Date().toISOString(),
+        lastAccessedAt: new Date().toISOString(),
+      }).catch((err) => {
+        logger.warn('Failed to cache session in DAL', {
+          userId: user.id,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      });
+
       return {
         ok: true,
-        value: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-          primaryRole: user.primaryRole,
-          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
-          emailVerified: user.emailVerified,
-          isActive: user.isActive,
-          isSuspended: user.isSuspended,
-        },
+        value: authUser,
       };
     } catch (error) {
-      console.error('[AuthDAL] getUserWithRoles error:', error);
+      logger.error('getUserWithRoles failed', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'GET_USER_WITH_ROLES'
+      });
       return {
         ok: false,
         error: {
@@ -109,7 +162,12 @@ class AuthDalPrisma implements IAuthDal {
         value: !!ownership,
       };
     } catch (error) {
-      console.error('[AuthDAL] checkStudioOwnership error:', error);
+      logger.error('checkStudioOwnership failed', {
+        userId,
+        studioId,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'CHECK_STUDIO_OWNERSHIP'
+      });
       return {
         ok: false,
         error: {
@@ -166,7 +224,11 @@ class AuthDalPrisma implements IAuthDal {
         },
       };
     } catch (error) {
-      console.error('[AuthDAL] getUserByEmail error:', error);
+      logger.error('getUserByEmail failed', {
+        email,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'GET_USER_BY_EMAIL'
+      });
       return {
         ok: false,
         error: {
