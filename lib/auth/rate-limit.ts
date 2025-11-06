@@ -2,40 +2,57 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * P0.4 FIX: Rate Limiting Implementation
- * In-memory rate limiting for authentication endpoints
- * Prevents brute force attacks and credential stuffing
+ * Phase 3: Redis-Backed Rate Limiting
+ * Distributed, persistent rate limiting for production security
  *
- * Phase 1: In-memory storage (simple, no infrastructure)
- * Phase 3: Redis-backed storage (scalable, production-ready)
+ * SECURITY IMPROVEMENTS:
+ * - Rate limits persist across server restarts
+ * - Rate limits shared across all instances (distributed)
+ * - Atomic operations prevent race conditions
+ * - Fail-secure: denies access on Redis errors
+ *
+ * FIXES:
+ * - CR-013: In-memory rate limiting not distributed
+ * - SEC-003: Rate limit bypass on multi-instance deployments
  */
 
+import { Redis } from '@upstash/redis';
 import { NextRequest } from 'next/server';
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
 interface RateLimitConfig {
-  maxAttempts: number;
-  windowMs: number;
+  maxRequests: number;
+  windowSeconds: number;
 }
 
-// In-memory storage (Phase 1)
-// Note: This resets on server restart - acceptable for Phase 1
-// Phase 3 will use Redis for persistence
-const rateLimitStore = new Map<string, RateLimitEntry>();
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+  current: number;
+}
 
-// Cleanup old entries every 5 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key);
-    }
+// Redis client singleton
+let redisClient: Redis | null = null;
+
+function getRedisClient(): Redis {
+  if (redisClient) return redisClient;
+
+  const url = process.env.UPSTASH_REDIS_URL;
+  const token = process.env.UPSTASH_REDIS_TOKEN;
+
+  if (!url || !token) {
+    throw new Error(
+      'UPSTASH_REDIS_URL and UPSTASH_REDIS_TOKEN must be set for rate limiting'
+    );
   }
-}, 5 * 60 * 1000);
+
+  redisClient = new Redis({
+    url,
+    token,
+  });
+
+  return redisClient;
+}
 
 /**
  * Get client identifier (IP address)
@@ -54,82 +71,131 @@ function getClientIdentifier(request: NextRequest): string {
 }
 
 /**
- * Rate limit by IP address
- * Returns true if rate limit exceeded
+ * Check if request should be allowed based on rate limit
+ *
+ * Uses Redis INCR + TTL for atomic, distributed rate limiting.
+ * Each identifier gets independent bucket with windowed resets.
+ *
+ * PERFORMANCE: ~5ms (Redis latency)
+ * SECURITY: Atomic operations, no race conditions
+ * DISTRIBUTED: Works across all instances
+ * PERSISTENT: Survives server restarts
  */
-export function rateLimitByIP(
+export async function checkRateLimit(
+  identifier: string,
+  config: RateLimitConfig
+): Promise<RateLimitResult> {
+  const startTime = performance.now();
+
+  try {
+    const redis = getRedisClient();
+    const key = `ratelimit:${identifier}`;
+    const ttl = config.windowSeconds;
+
+    // Atomic increment (handles concurrent requests safely)
+    const current = await redis.incr(key);
+
+    // First request in window - set expiry
+    if (current === 1) {
+      await redis.expire(key, ttl);
+    }
+
+    // Get remaining time until reset
+    const ttlRemaining = await redis.ttl(key);
+    const resetAt = Date.now() + (ttlRemaining > 0 ? ttlRemaining * 1000 : ttl * 1000);
+
+    const allowed = current <= config.maxRequests;
+    const remaining = Math.max(0, config.maxRequests - current);
+
+    const duration = performance.now() - startTime;
+
+    if (duration > 10) {
+      console.warn(
+        `[PERF] Rate limit check slow: ${duration}ms for identifier=${identifier}`
+      );
+    }
+
+    if (!allowed) {
+      console.warn('[SECURITY] Rate limit exceeded', {
+        identifier,
+        current,
+        max: config.maxRequests,
+        window: config.windowSeconds,
+      });
+    }
+
+    return {
+      allowed,
+      remaining,
+      resetAt,
+      current,
+    };
+  } catch (error) {
+    console.error('[ERROR] Rate limit check failed:', error);
+
+    // FAIL-SECURE: Deny access on Redis errors
+    // This prevents bypass attacks if Redis is down
+    // Production monitoring should alert on these errors
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: Date.now() + config.windowSeconds * 1000,
+      current: config.maxRequests + 1,
+    };
+  }
+}
+
+/**
+ * Rate limit by IP address
+ * Returns rate limit result with detailed status
+ */
+export async function rateLimitByIP(
   request: NextRequest,
   config: RateLimitConfig = {
-    maxAttempts: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 5,
+    windowSeconds: 15 * 60, // 15 minutes
   }
-): { limited: boolean; remaining: number; resetAt: number } {
+): Promise<{
+  limited: boolean;
+  remaining: number;
+  resetAt: number;
+  current?: number;
+}> {
   const identifier = getClientIdentifier(request);
-  const now = Date.now();
-
-  // Get or create rate limit entry
-  let entry = rateLimitStore.get(identifier);
-
-  // Reset if window expired
-  if (!entry || entry.resetAt < now) {
-    entry = {
-      count: 0,
-      resetAt: now + config.windowMs,
-    };
-    rateLimitStore.set(identifier, entry);
-  }
-
-  // Increment attempt count
-  entry.count++;
-
-  // Check if limit exceeded
-  const limited = entry.count > config.maxAttempts;
-  const remaining = Math.max(0, config.maxAttempts - entry.count);
+  const result = await checkRateLimit(identifier, config);
 
   return {
-    limited,
-    remaining,
-    resetAt: entry.resetAt,
+    limited: !result.allowed,
+    remaining: result.remaining,
+    resetAt: result.resetAt,
+    current: result.current,
   };
 }
 
 /**
  * Rate limit by user ID (for authenticated endpoints)
- * Returns true if rate limit exceeded
+ * Returns rate limit result with detailed status
  */
-export function rateLimitByUser(
+export async function rateLimitByUser(
   userId: string,
   config: RateLimitConfig = {
-    maxAttempts: 10,
-    windowMs: 15 * 60 * 1000, // 15 minutes
+    maxRequests: 10,
+    windowSeconds: 15 * 60, // 15 minutes
   }
-): { limited: boolean; remaining: number; resetAt: number } {
+): Promise<{
+  limited: boolean;
+  remaining: number;
+  resetAt: number;
+  current?: number;
+}> {
   const identifier = `user:${userId}`;
-  const now = Date.now();
-
-  // Get or create rate limit entry
-  let entry = rateLimitStore.get(identifier);
-
-  // Reset if window expired
-  if (!entry || entry.resetAt < now) {
-    entry = {
-      count: 0,
-      resetAt: now + config.windowMs,
-    };
-    rateLimitStore.set(identifier, entry);
-  }
-
-  // Increment attempt count
-  entry.count++;
-
-  // Check if limit exceeded
-  const limited = entry.count > config.maxAttempts;
-  const remaining = Math.max(0, config.maxAttempts - entry.count);
+  const result = await checkRateLimit(identifier, config);
 
   return {
-    limited,
-    remaining,
-    resetAt: entry.resetAt,
+    limited: !result.allowed,
+    remaining: result.remaining,
+    resetAt: result.resetAt,
+    current: result.current,
   };
 }
 
@@ -137,24 +203,57 @@ export function rateLimitByUser(
  * Reset rate limit for a specific identifier
  * Useful after successful login to clear failed attempts
  */
-export function resetRateLimit(identifier: string): void {
-  rateLimitStore.delete(identifier);
+export async function resetRateLimit(identifier: string): Promise<void> {
+  try {
+    const redis = getRedisClient();
+    const key = `ratelimit:${identifier}`;
+    await redis.del(key);
+
+    console.log('[INFO] Rate limit reset', { identifier });
+  } catch (error) {
+    console.error('[ERROR] Rate limit reset failed:', error);
+  }
 }
 
 /**
  * Get rate limit status without incrementing
  */
-export function getRateLimitStatus(
-  identifier: string
-): { remaining: number; resetAt: number } | null {
-  const entry = rateLimitStore.get(identifier);
+export async function getRateLimitStatus(
+  identifier: string,
+  config: RateLimitConfig = {
+    maxRequests: 5,
+    windowSeconds: 15 * 60,
+  }
+): Promise<{ remaining: number; resetAt: number; current: number } | null> {
+  try {
+    const redis = getRedisClient();
+    const key = `ratelimit:${identifier}`;
 
-  if (!entry || entry.resetAt < Date.now()) {
+    const current = await redis.get<number>(key);
+    const ttlRemaining = await redis.ttl(key);
+
+    if (current === null || ttlRemaining <= 0) {
+      return null;
+    }
+
+    const remaining = Math.max(0, config.maxRequests - current);
+    const resetAt = Date.now() + ttlRemaining * 1000;
+
+    return {
+      remaining,
+      resetAt,
+      current,
+    };
+  } catch (error) {
+    console.error('[ERROR] Rate limit status check failed:', error);
     return null;
   }
-
-  return {
-    remaining: Math.max(0, 5 - entry.count), // Default maxAttempts = 5
-    resetAt: entry.resetAt,
-  };
 }
+
+// Export config for common scenarios
+export const RATE_LIMIT_CONFIGS = {
+  LOGIN: { maxRequests: 5, windowSeconds: 900 }, // 5 attempts per 15 min
+  MAGIC_LINK: { maxRequests: 3, windowSeconds: 3600 }, // 3 per hour
+  GENERAL: { maxRequests: 60, windowSeconds: 60 }, // 60 per minute
+  STRICT: { maxRequests: 10, windowSeconds: 3600 }, // 10 per hour
+} as const;

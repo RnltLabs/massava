@@ -2,22 +2,19 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * P0.4 FIX: Rate Limiting Middleware for Auth Routes
- * This will be integrated into NextAuth callbacks
+ * Phase 3: Redis-Backed Rate Limiting Test Endpoint
+ * Demonstrates distributed rate limiting with Redis
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { rateLimitByIP } from '@/lib/auth/rate-limit';
+import { rateLimitByIP, RATE_LIMIT_CONFIGS } from '@/lib/auth/rate-limit';
 
 /**
  * Rate limit check endpoint
  * Returns 429 if rate limit exceeded
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const result = rateLimitByIP(request, {
-    maxAttempts: 5,
-    windowMs: 15 * 60 * 1000, // 15 minutes
-  });
+  const result = await rateLimitByIP(request, RATE_LIMIT_CONFIGS.LOGIN);
 
   if (result.limited) {
     const resetDate = new Date(result.resetAt);
@@ -28,12 +25,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         error: 'Too many login attempts',
         message: `Please try again in ${minutesRemaining} minutes`,
         resetAt: resetDate.toISOString(),
+        current: result.current,
       },
       {
         status: 429,
         headers: {
           'Retry-After': String(Math.ceil((result.resetAt - Date.now()) / 1000)),
-          'X-RateLimit-Limit': '5',
+          'X-RateLimit-Limit': String(RATE_LIMIT_CONFIGS.LOGIN.maxRequests),
           'X-RateLimit-Remaining': String(result.remaining),
           'X-RateLimit-Reset': String(result.resetAt),
         },
@@ -45,6 +43,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     success: true,
     remaining: result.remaining,
     resetAt: new Date(result.resetAt).toISOString(),
+    current: result.current,
+    message: 'Rate limit check passed - Redis-backed',
   });
 }
 
@@ -59,6 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({
     ip,
-    message: 'Rate limiting is active. POST to this endpoint to test.',
+    message: 'Rate limiting is active (Redis-backed). POST to this endpoint to test.',
+    config: RATE_LIMIT_CONFIGS.LOGIN,
   });
 }
