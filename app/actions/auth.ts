@@ -220,16 +220,23 @@ export async function signIn(
     }
 
     // 5. Now sign in via NextAuth (we know credentials are valid)
+    console.log('[actions/auth.ts] About to call nextAuthSignIn with:', {
+      email,
+      accountType,
+      passwordLength: password.length
+    });
+
     try {
-      await nextAuthSignIn('credentials', {
+      const result = await nextAuthSignIn('credentials', {
         email,
         password,
         accountType, // Pass account type preference for session
         redirect: false,
       });
+      console.log('[actions/auth.ts] nextAuthSignIn result:', result);
     } catch (error: unknown) {
       // This shouldn't happen since we already verified credentials
-      console.error('NextAuth sign in error:', error);
+      console.error('[actions/auth.ts] NextAuth sign in error:', error);
       return {
         success: false,
         error: 'Login failed. Please try again.',

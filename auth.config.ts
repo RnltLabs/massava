@@ -48,36 +48,9 @@ export const authConfig = {
       allowDangerousEmailAccountLinking: false,
     }),
 
-    // Credentials Provider
-    Credentials({
-      id: 'credentials',
-      name: 'Email and Password',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-        accountType: { label: 'Account Type', type: 'text' },
-      },
-      // NOTE: authorize() is handled in auth.ts (Node.js runtime with Prisma)
-      // This is just the provider definition for Edge compatibility
-      async authorize() {
-        // This will never be called from middleware
-        // Actual authorization happens in auth.ts
-        return null;
-      },
-    }),
-
-    // Magic Link Provider
-    Credentials({
-      id: 'magic-link',
-      name: 'Magic Link',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-      },
-      async authorize() {
-        // Handled in auth.ts
-        return null;
-      },
-    }),
+    // NOTE: Credentials providers are defined in auth.ts (not here)
+    // They require database access via Prisma, which is not available in Edge runtime
+    // Edge-safe config only includes OAuth providers
   ],
 
   callbacks: {
