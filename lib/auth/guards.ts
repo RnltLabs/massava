@@ -10,10 +10,12 @@ import { auth } from '@/auth';
 import { UserRole } from '@/app/generated/prisma';
 import type { AuthUser, Result, AuthError } from './types';
 import { authDal } from './dal';
+import { getCurrentUser } from './permissions';
 
 /**
  * Require authentication
  * Returns authenticated user or error
+ * Uses cached getCurrentUser() for improved performance
  */
 export async function requireAuth(): Promise<Result<AuthUser, AuthError>> {
   const session = await auth();
@@ -28,15 +30,21 @@ export async function requireAuth(): Promise<Result<AuthUser, AuthError>> {
     };
   }
 
-  // Fetch user from database with roles
-  const userResult = await authDal.getUserWithRoles(session.user.id);
+  // Use cached getCurrentUser() instead of direct DB query
+  const user = await getCurrentUser();
 
-  if (!userResult.ok) {
-    return userResult;
+  if (!user) {
+    return {
+      ok: false,
+      error: {
+        type: 'NOT_FOUND',
+        message: 'User not found',
+      },
+    };
   }
 
   // Check if user is active
-  if (!userResult.value.isActive || userResult.value.isSuspended) {
+  if (!user.isActive || user.isSuspended) {
     return {
       ok: false,
       error: {
@@ -46,7 +54,10 @@ export async function requireAuth(): Promise<Result<AuthUser, AuthError>> {
     };
   }
 
-  return userResult;
+  return {
+    ok: true,
+    value: user,
+  };
 }
 
 /**

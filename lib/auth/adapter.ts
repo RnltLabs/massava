@@ -8,6 +8,7 @@
 
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import type { Adapter } from 'next-auth/adapters';
+import { invalidateSessionCache, setSessionInCache } from './session-cache';
 
 export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
   return {
@@ -29,6 +30,19 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
           role: UserRole.CUSTOMER,
           grantedBy: 'OAUTH_SIGNUP',
         },
+      });
+
+      // Warm cache on user creation (Phase 2: Cache optimization)
+      setSessionInCache(user.id, {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.primaryRole,
+        image: user.image,
+        createdAt: new Date().toISOString(),
+        lastAccessedAt: new Date().toISOString(),
+      }).catch((err) => {
+        console.warn('[Adapter] Failed to cache new user session:', err);
       });
 
       return {
@@ -105,6 +119,9 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
         },
       });
 
+      // Invalidate cache on user update (Phase 2: Cache invalidation)
+      await invalidateSessionCache(id);
+
       return {
         id: user.id,
         email: user.email,
@@ -118,6 +135,9 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
       await prisma.user.delete({
         where: { id: userId },
       });
+
+      // Invalidate cache on user deletion (Phase 2: Cache invalidation)
+      await invalidateSessionCache(userId);
     },
 
     async linkAccount(data) {
