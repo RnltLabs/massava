@@ -62,6 +62,11 @@ export function CookieConsentBanner() {
     setShowBanner(false)
     setShowSettings(false)
 
+    // Dispatch custom event for GoogleAnalytics component
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("cookie-consent-changed"))
+    }
+
     // Reload if analytics consent changed to load/unload scripts
     if (newConsent.analytics) {
       window.location.reload()
