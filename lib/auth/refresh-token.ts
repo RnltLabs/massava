@@ -23,6 +23,7 @@ import { Redis } from "@upstash/redis";
 import { SignJWT, jwtVerify } from "jose";
 import type { UserRole } from "@/app/generated/prisma";
 import { randomBytes } from "crypto";
+import { logger } from '@/lib/logger';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -90,9 +91,11 @@ export async function generateTokenPair(
 
   const duration = performance.now() - startTime;
   if (duration > 50) {
-    console.warn(
-      `[PERF] Token generation slow: ${duration}ms for userId=${userId}`
-    );
+    logger.warn('Token generation slow', {
+      userId,
+      duration,
+      action: 'TOKEN_GENERATION'
+    });
   }
 
   return {
@@ -129,15 +132,20 @@ export async function refreshAccessToken(
     );
 
     if (!metadata) {
-      console.warn(`[SECURITY] Invalid refresh token: ${refreshToken}`);
+      logger.warn('Invalid refresh token provided', {
+        action: 'TOKEN_REFRESH',
+        reason: 'TOKEN_NOT_FOUND'
+      });
       return null;
     }
 
     // Check expiry
     if (new Date(metadata.expiresAt) < new Date()) {
-      console.warn(
-        `[SECURITY] Expired refresh token for userId=${metadata.userId}`
-      );
+      logger.warn('Expired refresh token', {
+        userId: metadata.userId,
+        action: 'TOKEN_REFRESH',
+        reason: 'TOKEN_EXPIRED'
+      });
       await redis.del(`refresh:${refreshToken}`);
       return null;
     }
@@ -147,9 +155,11 @@ export async function refreshAccessToken(
     const session = await getSessionFromCache(metadata.userId);
 
     if (!session) {
-      console.warn(
-        `[SECURITY] User not found for refresh token: userId=${metadata.userId}`
-      );
+      logger.warn('User not found for refresh token', {
+        userId: metadata.userId,
+        action: 'TOKEN_REFRESH',
+        reason: 'USER_NOT_FOUND'
+      });
       return null;
     }
 
@@ -164,18 +174,25 @@ export async function refreshAccessToken(
 
     const duration = performance.now() - startTime;
     if (duration > 50) {
-      console.warn(
-        `[PERF] Token refresh slow: ${duration}ms for userId=${metadata.userId}`
-      );
+      logger.warn('Token refresh slow', {
+        userId: metadata.userId,
+        duration,
+        action: 'TOKEN_REFRESH'
+      });
     }
 
-    console.log(
-      `[INFO] Access token refreshed for userId=${metadata.userId} in ${duration}ms`
-    );
+    logger.info('Access token refreshed', {
+      userId: metadata.userId,
+      duration,
+      action: 'TOKEN_REFRESH'
+    });
 
     return newTokenPair;
   } catch (error) {
-    console.error(`[ERROR] Token refresh failed:`, error);
+    logger.error('Token refresh failed', {
+      error: error instanceof Error ? error.message : String(error),
+      action: 'TOKEN_REFRESH'
+    });
     return null;
   }
 }
@@ -211,11 +228,18 @@ export async function revokeAllRefreshTokens(userId: string): Promise<void> {
     }
 
     const duration = performance.now() - startTime;
-    console.log(
-      `[INFO] Revoked ${userTokens.length} refresh tokens for userId=${userId} in ${duration}ms`
-    );
+    logger.info('Refresh tokens revoked', {
+      userId,
+      tokenCount: userTokens.length,
+      duration,
+      action: 'TOKEN_REVOCATION'
+    });
   } catch (error) {
-    console.error(`[ERROR] Token revocation failed:`, error);
+    logger.error('Token revocation failed', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'TOKEN_REVOCATION'
+    });
   }
 }
 

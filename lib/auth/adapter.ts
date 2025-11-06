@@ -9,6 +9,7 @@
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import type { Adapter } from 'next-auth/adapters';
 import { invalidateSessionCache, setSessionInCache } from './session-cache';
+import { logger } from '@/lib/logger';
 
 export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
   return {
@@ -42,7 +43,11 @@ export function UnifiedUserAdapter(prisma: PrismaClient): Adapter {
         createdAt: new Date().toISOString(),
         lastAccessedAt: new Date().toISOString(),
       }).catch((err) => {
-        console.warn('[Adapter] Failed to cache new user session:', err);
+        logger.warn('Failed to cache new user session in adapter', {
+          userId: user.id,
+          error: err instanceof Error ? err.message : String(err),
+          action: 'CREATE_USER'
+        });
       });
 
       return {

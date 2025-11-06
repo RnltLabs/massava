@@ -18,6 +18,7 @@
 
 import { Redis } from '@upstash/redis';
 import { NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
 
 interface RateLimitConfig {
   maxRequests: number;
@@ -110,17 +111,20 @@ export async function checkRateLimit(
     const duration = performance.now() - startTime;
 
     if (duration > 10) {
-      console.warn(
-        `[PERF] Rate limit check slow: ${duration}ms for identifier=${identifier}`
-      );
+      logger.warn('Rate limit check slow', {
+        identifier,
+        duration,
+        action: 'RATE_LIMIT_CHECK'
+      });
     }
 
     if (!allowed) {
-      console.warn('[SECURITY] Rate limit exceeded', {
+      logger.warn('Rate limit exceeded', {
         identifier,
         current,
         max: config.maxRequests,
         window: config.windowSeconds,
+        action: 'RATE_LIMIT_EXCEEDED'
       });
     }
 
@@ -131,7 +135,11 @@ export async function checkRateLimit(
       current,
     };
   } catch (error) {
-    console.error('[ERROR] Rate limit check failed:', error);
+    logger.error('Rate limit check failed', {
+      identifier,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'RATE_LIMIT_CHECK'
+    });
 
     // FAIL-SECURE: Deny access on Redis errors
     // This prevents bypass attacks if Redis is down
@@ -209,9 +217,16 @@ export async function resetRateLimit(identifier: string): Promise<void> {
     const key = `ratelimit:${identifier}`;
     await redis.del(key);
 
-    console.log('[INFO] Rate limit reset', { identifier });
+    logger.info('Rate limit reset', {
+      identifier,
+      action: 'RATE_LIMIT_RESET'
+    });
   } catch (error) {
-    console.error('[ERROR] Rate limit reset failed:', error);
+    logger.error('Rate limit reset failed', {
+      identifier,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'RATE_LIMIT_RESET'
+    });
   }
 }
 
@@ -245,7 +260,11 @@ export async function getRateLimitStatus(
       current,
     };
   } catch (error) {
-    console.error('[ERROR] Rate limit status check failed:', error);
+    logger.error('Rate limit status check failed', {
+      identifier,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'RATE_LIMIT_STATUS'
+    });
     return null;
   }
 }

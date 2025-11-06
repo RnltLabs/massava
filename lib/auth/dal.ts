@@ -18,6 +18,7 @@ import {
   getSessionFromCache,
   setSessionInCache,
 } from './session-cache';
+import { logger } from '@/lib/logger';
 
 /**
  * Data Access Layer Interface
@@ -42,7 +43,7 @@ class AuthDalPrisma implements IAuthDal {
       // Try cache first (FAST PATH: ~5ms)
       const cached = await getSessionFromCache(userId);
       if (cached) {
-        console.log('[DAL CACHE HIT] User from Redis:', userId);
+        logger.debug('DAL cache hit: user retrieved from Redis', { userId });
         return {
           ok: true,
           value: {
@@ -59,7 +60,7 @@ class AuthDalPrisma implements IAuthDal {
         };
       }
 
-      console.log('[DAL CACHE MISS] Loading user from database:', userId);
+      logger.debug('DAL cache miss: loading user from database', { userId });
 
       // Cache miss - load from database (SLOW PATH: ~80ms)
       const user = await prisma.user.findUnique({
@@ -113,7 +114,10 @@ class AuthDalPrisma implements IAuthDal {
         createdAt: new Date().toISOString(),
         lastAccessedAt: new Date().toISOString(),
       }).catch((err) => {
-        console.warn('[DAL] Failed to cache session:', err);
+        logger.warn('Failed to cache session in DAL', {
+          userId: user.id,
+          error: err instanceof Error ? err.message : String(err)
+        });
       });
 
       return {
@@ -121,7 +125,11 @@ class AuthDalPrisma implements IAuthDal {
         value: authUser,
       };
     } catch (error) {
-      console.error('[AuthDAL] getUserWithRoles error:', error);
+      logger.error('getUserWithRoles failed', {
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'GET_USER_WITH_ROLES'
+      });
       return {
         ok: false,
         error: {
@@ -152,7 +160,12 @@ class AuthDalPrisma implements IAuthDal {
         value: !!ownership,
       };
     } catch (error) {
-      console.error('[AuthDAL] checkStudioOwnership error:', error);
+      logger.error('checkStudioOwnership failed', {
+        userId,
+        studioId,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'CHECK_STUDIO_OWNERSHIP'
+      });
       return {
         ok: false,
         error: {
@@ -209,7 +222,11 @@ class AuthDalPrisma implements IAuthDal {
         },
       };
     } catch (error) {
-      console.error('[AuthDAL] getUserByEmail error:', error);
+      logger.error('getUserByEmail failed', {
+        email,
+        error: error instanceof Error ? error.message : String(error),
+        action: 'GET_USER_BY_EMAIL'
+      });
       return {
         ok: false,
         error: {

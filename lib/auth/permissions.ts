@@ -18,6 +18,7 @@ import {
   setSessionInCache,
   CachedSession,
 } from './session-cache';
+import { logger } from '@/lib/logger';
 
 /**
  * Get current user from session with all roles
@@ -33,7 +34,10 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   // 1. Try cache first (FAST PATH: ~5ms)
   const cached = await getSessionFromCache(session.user.id);
   if (cached) {
-    console.log('[CACHE HIT] User session from Redis:', session.user.id);
+    logger.debug('Session cache hit in permissions check', {
+      userId: session.user.id,
+      action: 'GET_CURRENT_USER'
+    });
     return {
       id: cached.userId,
       email: cached.email,
@@ -47,7 +51,10 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     };
   }
 
-  console.log('[CACHE MISS] Loading user from database:', session.user.id);
+  logger.debug('Session cache miss in permissions check', {
+    userId: session.user.id,
+    action: 'GET_CURRENT_USER'
+  });
 
   // 2. Cache miss - load from database (SLOW PATH: ~80ms)
   const user = await prisma.user.findUnique({
@@ -92,7 +99,11 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     lastAccessedAt: new Date().toISOString(),
   }).catch((err) => {
     // Log cache write errors but don't fail the request
-    console.warn('[CACHE] Failed to cache session:', err);
+    logger.warn('Failed to cache session in permissions', {
+      userId: user.id,
+      error: err instanceof Error ? err.message : String(err),
+      action: 'CACHE_SESSION'
+    });
   });
 
   return authUser;

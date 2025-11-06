@@ -16,6 +16,7 @@
 
 import { Redis } from "@upstash/redis";
 import type { UserRole } from "@/app/generated/prisma";
+import { logger } from '@/lib/logger';
 
 // Redis client (singleton)
 const redis = new Redis({
@@ -78,9 +79,11 @@ export async function getSessionFromCache(
 
     // Track performance
     if (duration > 10) {
-      console.warn(
-        `[PERF] Redis cache slow: ${duration}ms for userId=${userId}`
-      );
+      logger.warn('Redis cache read slow', {
+        userId,
+        duration,
+        action: 'CACHE_READ'
+      });
     }
 
     // Update lastAccessedAt on cache hit (track activity)
@@ -92,7 +95,11 @@ export async function getSessionFromCache(
 
     return cached;
   } catch (error) {
-    console.error(`[ERROR] Redis cache read failed:`, error);
+    logger.error('Redis cache read failed', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'CACHE_READ'
+    });
     return null; // Fallback to DB
   }
 }
@@ -121,12 +128,18 @@ export async function setSessionInCache(
     const duration = performance.now() - startTime;
 
     if (duration > 10) {
-      console.warn(
-        `[PERF] Redis cache write slow: ${duration}ms for userId=${userId}`
-      );
+      logger.warn('Redis cache write slow', {
+        userId,
+        duration,
+        action: 'CACHE_WRITE'
+      });
     }
   } catch (error) {
-    console.error(`[ERROR] Redis cache write failed:`, error);
+    logger.error('Redis cache write failed', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'CACHE_WRITE'
+    });
     // Don't throw - cache failure shouldn't break auth
   }
 }
@@ -152,12 +165,18 @@ export async function invalidateSessionCache(userId: string): Promise<void> {
     const duration = performance.now() - startTime;
 
     if (duration > 10) {
-      console.warn(
-        `[PERF] Redis invalidation slow: ${duration}ms for userId=${userId}`
-      );
+      logger.warn('Redis cache invalidation slow', {
+        userId,
+        duration,
+        action: 'CACHE_INVALIDATE'
+      });
     }
   } catch (error) {
-    console.error(`[ERROR] Redis cache invalidation failed:`, error);
+    logger.error('Redis cache invalidation failed', {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'CACHE_INVALIDATE'
+    });
     // Don't throw - cache failure shouldn't break app
   }
 }
@@ -178,11 +197,17 @@ export async function invalidateMultipleSessions(
 
     const duration = performance.now() - startTime;
 
-    console.log(
-      `[PERF] Batch invalidation: ${userIds.length} sessions in ${duration}ms`
-    );
+    logger.info('Batch session invalidation completed', {
+      sessionCount: userIds.length,
+      duration,
+      action: 'BATCH_INVALIDATE'
+    });
   } catch (error) {
-    console.error(`[ERROR] Batch invalidation failed:`, error);
+    logger.error('Batch invalidation failed', {
+      sessionCount: userIds.length,
+      error: error instanceof Error ? error.message : String(error),
+      action: 'BATCH_INVALIDATE'
+    });
   }
 }
 
