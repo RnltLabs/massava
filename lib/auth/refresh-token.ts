@@ -24,6 +24,8 @@ import { SignJWT, jwtVerify } from "jose";
 import type { UserRole } from "@/app/generated/prisma";
 import { randomBytes } from "crypto";
 import { logger } from '@/lib/logger';
+import { Result, ok, err } from '@/lib/result';
+import { AuthError, createAuthError, exceptionToAuthError } from './errors';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -62,47 +64,54 @@ interface RefreshTokenMetadata {
 export async function generateTokenPair(
   userId: string,
   role: UserRole
-): Promise<TokenPair> {
+): Promise<Result<TokenPair, AuthError>> {
   const startTime = performance.now();
 
-  // Generate access token (JWT)
-  const accessToken = await new SignJWT({ sub: userId, role })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime("15m")
-    .setIssuedAt()
-    .sign(JWT_SECRET);
+  try {
+    // Generate access token (JWT)
+    const accessToken = await new SignJWT({ sub: userId, role })
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("15m")
+      .setIssuedAt()
+      .sign(JWT_SECRET);
 
-  // Generate refresh token (random string)
-  const refreshToken = randomBytes(32).toString("hex");
-  const tokenFamily = randomBytes(16).toString("hex"); // Detect token reuse
+    // Generate refresh token (random string)
+    const refreshToken = randomBytes(32).toString("hex");
+    const tokenFamily = randomBytes(16).toString("hex"); // Detect token reuse
 
-  // Store refresh token metadata in Redis
-  const metadata: RefreshTokenMetadata = {
-    userId,
-    tokenFamily,
-    createdAt: new Date().toISOString(),
-    lastUsedAt: new Date().toISOString(),
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
-  };
-
-  await redis.set(`refresh:${refreshToken}`, metadata, {
-    ex: 30 * 24 * 60 * 60, // 30 days TTL
-  });
-
-  const duration = performance.now() - startTime;
-  if (duration > 50) {
-    logger.warn('Token generation slow', {
+    // Store refresh token metadata in Redis
+    const metadata: RefreshTokenMetadata = {
       userId,
-      duration,
-      action: 'TOKEN_GENERATION'
-    });
-  }
+      tokenFamily,
+      createdAt: new Date().toISOString(),
+      lastUsedAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+    };
 
-  return {
-    accessToken,
-    refreshToken,
-    expiresIn: 900, // 15 minutes in seconds
-  };
+    await redis.set(`refresh:${refreshToken}`, metadata, {
+      ex: 30 * 24 * 60 * 60, // 30 days TTL
+    });
+
+    const duration = performance.now() - startTime;
+    if (duration > 50) {
+      logger.warn('Token generation slow', {
+        userId,
+        duration,
+        action: 'TOKEN_GENERATION'
+      });
+    }
+
+    return ok({
+      accessToken,
+      refreshToken,
+      expiresIn: 900, // 15 minutes in seconds
+    });
+  } catch (error) {
+    return err(exceptionToAuthError(error, {
+      userId,
+      action: 'TOKEN_GENERATION',
+    }));
+  }
 }
 
 /**
@@ -122,7 +131,7 @@ export async function generateTokenPair(
  */
 export async function refreshAccessToken(
   refreshToken: string
-): Promise<TokenPair | null> {
+): Promise<Result<TokenPair, AuthError>> {
   const startTime = performance.now();
 
   try {
@@ -136,7 +145,7 @@ export async function refreshAccessToken(
         action: 'TOKEN_REFRESH',
         reason: 'TOKEN_NOT_FOUND'
       });
-      return null;
+      return err(createAuthError('INVALID_TOKEN', 'Invalid refresh token'));
     }
 
     // Check expiry
@@ -147,7 +156,7 @@ export async function refreshAccessToken(
         reason: 'TOKEN_EXPIRED'
       });
       await redis.del(`refresh:${refreshToken}`);
-      return null;
+      return err(createAuthError('TOKEN_EXPIRED', 'Refresh token has expired'));
     }
 
     // Fetch user role from cache (or database if cache miss)
@@ -160,14 +169,18 @@ export async function refreshAccessToken(
         action: 'TOKEN_REFRESH',
         reason: 'USER_NOT_FOUND'
       });
-      return null;
+      return err(createAuthError('NOT_FOUND', 'User not found', { resource: 'user' }));
     }
 
     // Generate new token pair (rotate refresh token)
-    const newTokenPair = await generateTokenPair(
+    const newTokenPairResult = await generateTokenPair(
       metadata.userId,
       session.role
     );
+
+    if (!newTokenPairResult.ok) {
+      return newTokenPairResult;
+    }
 
     // Invalidate old refresh token (one-time use)
     await redis.del(`refresh:${refreshToken}`);
@@ -187,13 +200,13 @@ export async function refreshAccessToken(
       action: 'TOKEN_REFRESH'
     });
 
-    return newTokenPair;
+    return newTokenPairResult;
   } catch (error) {
     logger.error('Token refresh failed', {
       error: error instanceof Error ? error.message : String(error),
       action: 'TOKEN_REFRESH'
     });
-    return null;
+    return err(exceptionToAuthError(error, { action: 'TOKEN_REFRESH' }));
   }
 }
 
@@ -296,26 +309,18 @@ export async function detectTokenReuse(
  */
 export async function handleRefreshRequest(
   refreshToken: string
-): Promise<{ success: true; tokens: TokenPair } | { success: false; error: string }> {
+): Promise<Result<TokenPair, AuthError>> {
   // Detect token reuse (security check)
   const reuseDetected = await detectTokenReuse(refreshToken);
   if (reuseDetected) {
-    return {
-      success: false,
-      error: "Token reuse detected. Please sign in again.",
-    };
+    return err(
+      createAuthError('TOKEN_REVOKED', 'Token reuse detected. Please sign in again.')
+    );
   }
 
   // Refresh access token
-  const tokens = await refreshAccessToken(refreshToken);
-  if (!tokens) {
-    return {
-      success: false,
-      error: "Invalid or expired refresh token",
-    };
-  }
-
-  return { success: true, tokens };
+  const tokensResult = await refreshAccessToken(refreshToken);
+  return tokensResult;
 }
 
 /**

@@ -13,7 +13,9 @@
 
 import { prisma } from '@/lib/prisma';
 import { UserRole } from '@/app/generated/prisma';
-import type { AuthUser, StudioOwnership, Result, AuthError } from './types';
+import type { AuthUser, StudioOwnership } from './types';
+import { Result, ok, err } from '@/lib/result';
+import { AuthError, createAuthError, exceptionToAuthError } from './errors';
 import {
   getSessionFromCache,
   setSessionInCache,

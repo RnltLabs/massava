@@ -13,6 +13,7 @@ import { hasPermission, Permission } from './rbac';
 import { NextRequest, NextResponse } from 'next/server';
 import { Result, ok, err } from '@/lib/result';
 import { AuthUser } from './types';
+import { AuthError, createAuthError } from './errors';
 import {
   getSessionFromCache,
   setSessionInCache,
@@ -127,16 +128,18 @@ export async function checkPermission(
 }
 
 /**
- * Require a specific permission or throw an error
- * @deprecated Use requirePermissionResult instead for Result-based error handling
+ * Require a specific permission - Result-based (no exceptions)
+ *
+ * @param permission - Required permission
+ * @returns Ok(AuthUser) if user has permission, Err(AuthError) otherwise
  */
 export async function requirePermission(
   permission: Permission
-): Promise<AuthUser> {
+): Promise<Result<AuthUser, AuthError>> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    return err(createAuthError('UNAUTHORIZED', 'Authentication required'));
   }
 
   const hasAccess = user.roles.some((role) =>
@@ -144,34 +147,12 @@ export async function requirePermission(
   );
 
   if (!hasAccess) {
-    throw new Error(`Missing permission: ${permission}`);
-  }
-
-  return user;
-}
-
-/**
- * Require a specific permission - Result-based (no exceptions)
- * Preferred over requirePermission for new code
- *
- * @param permission - Required permission
- * @returns Ok(AuthUser) if user has permission, Err(string) otherwise
- */
-export async function requirePermissionResult(
-  permission: Permission
-): Promise<Result<AuthUser, string>> {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return err('Authentication required');
-  }
-
-  const hasAccess = user.roles.some((role) =>
-    hasPermission(role, permission)
-  );
-
-  if (!hasAccess) {
-    return err(`Missing permission: ${permission}`);
+    return err(
+      createAuthError('FORBIDDEN', `Missing permission: ${permission}`, {
+        required: permission,
+        actual: user.primaryRole,
+      })
+    );
   }
 
   return ok(user);
@@ -206,47 +187,30 @@ export async function checkStudioAccess(studioId: string): Promise<boolean> {
 }
 
 /**
- * Require studio access or throw an error
- * @deprecated Use requireStudioAccessResult instead for Result-based error handling
+ * Require studio access - Result-based (no exceptions)
+ *
+ * @param studioId - Studio ID to check access for
+ * @returns Ok(AuthUser) if user has access, Err(AuthError) otherwise
  */
 export async function requireStudioAccess(
   studioId: string
-): Promise<AuthUser> {
+): Promise<Result<AuthUser, AuthError>> {
   const user = await getCurrentUser();
 
   if (!user) {
-    throw new Error('Authentication required');
+    return err(createAuthError('UNAUTHORIZED', 'Authentication required'));
   }
 
   const hasAccess = await checkStudioAccess(studioId);
 
   if (!hasAccess) {
-    throw new Error('Access denied: You do not own this studio');
-  }
-
-  return user;
-}
-
-/**
- * Require studio access - Result-based (no exceptions)
- * Preferred over requireStudioAccess for new code
- *
- * @param studioId - Studio ID to check access for
- * @returns Ok(AuthUser) if user has access, Err(string) otherwise
- */
-export async function requireStudioAccessResult(
-  studioId: string
-): Promise<Result<AuthUser, string>> {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    return err('Authentication required');
-  }
-
-  const hasAccess = await checkStudioAccess(studioId);
-
-  if (!hasAccess) {
-    return err('Access denied: You do not own this studio');
+    return err(
+      createAuthError('FORBIDDEN', 'Access denied: You do not own this studio', {
+        resource: 'studio',
+        studioId,
+        userId: user.id,
+      })
+    );
   }
 
   return ok(user);

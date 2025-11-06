@@ -8,7 +8,9 @@
 
 import { auth } from '@/auth';
 import { UserRole } from '@/app/generated/prisma';
-import type { AuthUser, Result, AuthError } from './types';
+import type { AuthUser } from './types';
+import { Result, ok, err } from '@/lib/result';
+import { AuthError, createAuthError } from './errors';
 import { authDal } from './dal';
 import { getCurrentUser } from './permissions';
 
@@ -21,43 +23,30 @@ export async function requireAuth(): Promise<Result<AuthUser, AuthError>> {
   const session = await auth();
 
   if (!session || !session.user) {
-    return {
-      ok: false,
-      error: {
-        type: 'UNAUTHORIZED',
-        message: 'Authentication required',
-      },
-    };
+    return err(createAuthError('UNAUTHORIZED', 'Authentication required'));
   }
 
   // Use cached getCurrentUser() instead of direct DB query
   const user = await getCurrentUser();
 
   if (!user) {
-    return {
-      ok: false,
-      error: {
-        type: 'NOT_FOUND',
-        message: 'User not found',
-      },
-    };
+    return err(createAuthError('NOT_FOUND', 'User not found', { resource: 'user' }));
   }
 
   // Check if user is active
-  if (!user.isActive || user.isSuspended) {
-    return {
-      ok: false,
-      error: {
-        type: 'FORBIDDEN',
-        message: 'Account is not active',
-      },
-    };
+  if (!user.isActive) {
+    return err(
+      createAuthError('ACCOUNT_INACTIVE', 'Account is not active', { userId: user.id })
+    );
   }
 
-  return {
-    ok: true,
-    value: user,
-  };
+  if (user.isSuspended) {
+    return err(
+      createAuthError('ACCOUNT_SUSPENDED', 'Account has been suspended', { userId: user.id })
+    );
+  }
+
+  return ok(user);
 }
 
 /**
@@ -80,16 +69,15 @@ export async function requireRole(
   );
 
   if (!hasRole) {
-    return {
-      ok: false,
-      error: {
-        type: 'FORBIDDEN',
-        message: 'Insufficient permissions',
-      },
-    };
+    return err(
+      createAuthError('INVALID_ROLE', 'Insufficient permissions', {
+        required: allowedRoles.join(', '),
+        actual: user.primaryRole,
+      })
+    );
   }
 
-  return authResult;
+  return ok(user);
 }
 
 /**
@@ -116,30 +104,27 @@ export async function requireStudioOwnership(
 
   // Super admins can access any studio
   if (user.primaryRole === UserRole.SUPER_ADMIN) {
-    return authResult;
+    return ok(user);
   }
 
   // Check ownership
   const ownershipResult = await authDal.checkStudioOwnership(user.id, studioId);
 
   if (!ownershipResult.ok) {
-    return {
-      ok: false,
-      error: ownershipResult.error,
-    };
+    return err(ownershipResult.error);
   }
 
   if (!ownershipResult.value) {
-    return {
-      ok: false,
-      error: {
-        type: 'FORBIDDEN',
-        message: 'You do not own this studio',
-      },
-    };
+    return err(
+      createAuthError('FORBIDDEN', 'You do not own this studio', {
+        resource: 'studio',
+        studioId,
+        userId: user.id,
+      })
+    );
   }
 
-  return authResult;
+  return ok(user);
 }
 
 /**
