@@ -8,19 +8,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/auth';
-import { PrismaClient, UserRole } from '@/app/generated/prisma';
+import { UserRole } from '@/app/generated/prisma';
 import { hasPermission, Permission } from './rbac';
 import { NextRequest, NextResponse } from 'next/server';
 import { Result, ok, err } from '@/lib/result';
-
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  name?: string | null;
-  primaryRole: UserRole;
-  roles: UserRole[];
-}
+import { AuthUser } from './types';
 
 /**
  * Get current user from session with all roles
@@ -51,11 +43,15 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     id: user.id,
     email: user.email,
     name: user.name,
+    image: user.image,
     primaryRole: user.primaryRole,
     roles: [
       user.primaryRole,
       ...user.roles.map((r) => r.role),
     ].filter((role, index, self) => self.indexOf(role) === index), // Remove duplicates
+    emailVerified: user.emailVerified,
+    isActive: user.isActive,
+    isSuspended: user.isSuspended,
   };
 }
 

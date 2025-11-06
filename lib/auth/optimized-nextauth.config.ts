@@ -94,7 +94,7 @@ export const authOptions: Record<string, unknown> = {
      *
      * PERFORMANCE: -145ms (-97%)
      */
-    async signIn({ user, account, profile }: { user: User; account: unknown; profile?: unknown }) {
+    async signIn({ user, account, profile }: { user: User; account: unknown; profile?: unknown }): Promise<boolean> {
       const startTime = performance.now();
 
       try {
