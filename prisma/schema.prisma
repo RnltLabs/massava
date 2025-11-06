@@ -189,6 +189,9 @@ model User {
   newFavorites Studio[]             @relation("UserFavorites")
   auditLogs    AuditLog[]
 
+  // Phase 9: Token family revocation
+  refreshTokens RefreshToken[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -418,4 +421,39 @@ model BlockedTime {
   @@index([startTime])
   @@index([studioId, startTime])
   @@map("blocked_times")
+}
+
+// ============================================
+// Phase 9: Token Family Revocation
+// ============================================
+
+// Refresh Token with Family Tracking
+// Detects and prevents token replay attacks
+model RefreshToken {
+  id     String @id @default(cuid())
+  token  String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Token family tracking (Phase 9)
+  family   String         @default(cuid()) // Groups related tokens
+  parentId String? // Track token lineage
+  parent   RefreshToken?  @relation("TokenChild", fields: [parentId], references: [id], onDelete: SetNull)
+  children RefreshToken[] @relation("TokenChild")
+
+  // Token metadata
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  revokedAt DateTime?
+
+  // Revocation audit trail
+  revocationReason String? // "user_logout", "suspicious_reuse", "admin_revoke", "password_change"
+  revokedBy        String? // User ID or "system"
+
+  @@index([userId])
+  @@index([family])
+  @@index([expiresAt])
+  @@index([parentId])
+  @@index([family, revokedAt])
+  @@map("refresh_tokens")
 }
