@@ -85,13 +85,7 @@ class AuthDalPrisma implements IAuthDal {
       });
 
       if (!user) {
-        return {
-          ok: false,
-          error: {
-            type: 'NOT_FOUND',
-            message: 'User not found',
-          },
-        };
+        return err(createAuthError('NOT_FOUND', 'User not found', { resource: 'user' }));
       }
 
       const authUser: AuthUser = {
@@ -132,13 +126,9 @@ class AuthDalPrisma implements IAuthDal {
         error: error instanceof Error ? error.message : String(error),
         action: 'GET_USER_WITH_ROLES'
       });
-      return {
-        ok: false,
-        error: {
-          type: 'INVALID_SESSION',
-          message: 'Failed to fetch user',
-        },
-      };
+      return err(createAuthError('DATABASE_ERROR', 'Failed to fetch user', {
+        originalError: error instanceof Error ? error.message : String(error)
+      }));
     }
   }
 
@@ -168,13 +158,9 @@ class AuthDalPrisma implements IAuthDal {
         error: error instanceof Error ? error.message : String(error),
         action: 'CHECK_STUDIO_OWNERSHIP'
       });
-      return {
-        ok: false,
-        error: {
-          type: 'INVALID_SESSION',
-          message: 'Failed to check studio ownership',
-        },
-      };
+      return err(createAuthError('DATABASE_ERROR', 'Failed to check studio ownership', {
+        originalError: error instanceof Error ? error.message : String(error)
+      }));
     }
   }
 
@@ -229,13 +215,9 @@ class AuthDalPrisma implements IAuthDal {
         error: error instanceof Error ? error.message : String(error),
         action: 'GET_USER_BY_EMAIL'
       });
-      return {
-        ok: false,
-        error: {
-          type: 'INVALID_SESSION',
-          message: 'Failed to fetch user by email',
-        },
-      };
+      return err(createAuthError('DATABASE_ERROR', 'Failed to fetch user by email', {
+        originalError: error instanceof Error ? error.message : String(error)
+      }));
     }
   }
 }
