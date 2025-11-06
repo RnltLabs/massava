@@ -1,117 +1,113 @@
 /**
  * Cookie Consent Management
  *
- * GDPR-compliant consent management for analytics cookies.
+ * GDPR-compliant consent management for cookies.
  * Stores user's consent choice in localStorage.
  *
  * @module cookie-consent
  */
 
 const CONSENT_STORAGE_KEY = "massava_cookie_consent"
+const CONSENT_VERSION = "1.0"
 
 /**
- * Possible consent statuses
- *
- * - `accepted`: User has accepted cookies
- * - `rejected`: User has rejected cookies
- * - `pending`: User has not made a choice yet
+ * Cookie consent preferences
  */
-export type ConsentStatus = "accepted" | "rejected" | "pending"
+export interface CookieConsent {
+  necessary: boolean // Always true (required for functionality)
+  analytics: boolean
+  marketing: boolean
+  timestamp: number
+  version: string
+}
 
 /**
- * Get the current consent status from localStorage
+ * Get the current consent from localStorage
  *
- * @returns The current consent status, defaults to 'pending' if not set
- *
- * @example
- * ```ts
- * const status = getConsentStatus()
- * if (status === 'accepted') {
- *   // Load analytics
- * }
- * ```
+ * @returns The current consent object
  */
-export function getConsentStatus(): ConsentStatus {
+export function getConsent(): CookieConsent | null {
   // Server-side rendering guard
   if (typeof window === "undefined") {
-    return "pending"
+    return null
   }
 
   try {
     const stored = localStorage.getItem(CONSENT_STORAGE_KEY)
-
-    if (stored === "accepted" || stored === "rejected") {
-      return stored
+    if (!stored) {
+      return null
     }
 
-    return "pending"
+    return JSON.parse(stored) as CookieConsent
   } catch (error) {
-    // localStorage might be disabled or throw errors in some browsers
     console.error("Failed to read cookie consent from localStorage:", error)
-    return "pending"
+    return null
   }
 }
 
 /**
- * Set the consent status in localStorage
+ * Set the consent in localStorage
  *
- * @param status - The consent status to store
- *
- * @example
- * ```ts
- * // User accepted cookies
- * setConsentStatus('accepted')
- *
- * // User rejected cookies
- * setConsentStatus('rejected')
- * ```
+ * @param consent - The consent object to store
  */
-export function setConsentStatus(status: ConsentStatus): void {
+export function setConsent(consent: Omit<CookieConsent, "timestamp" | "version">): void {
   // Server-side rendering guard
   if (typeof window === "undefined") {
     return
   }
 
   try {
-    localStorage.setItem(CONSENT_STORAGE_KEY, status)
+    const consentWithMeta: CookieConsent = {
+      ...consent,
+      timestamp: Date.now(),
+      version: CONSENT_VERSION,
+    }
+
+    localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(consentWithMeta))
   } catch (error) {
     console.error("Failed to save cookie consent to localStorage:", error)
   }
 }
 
 /**
- * Check if user has given consent for cookies
- *
- * @returns `true` if consent is accepted, `false` otherwise
- *
- * @example
- * ```ts
- * if (hasConsent()) {
- *   // Initialize Google Analytics
- *   initAnalytics()
- * }
- * ```
+ * Legacy: Get simple consent status
+ */
+export type ConsentStatus = "accepted" | "rejected" | "pending"
+
+export function getConsentStatus(): ConsentStatus {
+  const consent = getConsent()
+  if (!consent) return "pending"
+  return consent.analytics ? "accepted" : "rejected"
+}
+
+export function setConsentStatus(status: ConsentStatus): void {
+  if (status === "accepted") {
+    setConsent({ necessary: true, analytics: true, marketing: false })
+  } else if (status === "rejected") {
+    setConsent({ necessary: true, analytics: false, marketing: false })
+  }
+}
+
+/**
+ * Check if user has given consent for analytics
  */
 export function hasConsent(): boolean {
-  return getConsentStatus() === "accepted"
+  const consent = getConsent()
+  return consent?.analytics === true
+}
+
+/**
+ * Check if user has given consent for marketing
+ */
+export function hasMarketingConsent(): boolean {
+  const consent = getConsent()
+  return consent?.marketing === true
 }
 
 /**
  * Reset consent status (remove from localStorage)
- *
- * Useful for testing or allowing users to change their preferences.
- *
- * @example
- * ```ts
- * // In user settings page
- * function handleResetConsent() {
- *   resetConsent()
- *   window.location.reload() // Reload to show banner again
- * }
- * ```
  */
 export function resetConsent(): void {
-  // Server-side rendering guard
   if (typeof window === "undefined") {
     return
   }
@@ -125,16 +121,7 @@ export function resetConsent(): void {
 
 /**
  * Check if consent banner should be shown
- *
- * @returns `true` if banner should be shown (consent is pending)
- *
- * @example
- * ```ts
- * if (shouldShowConsentBanner()) {
- *   // Render banner component
- * }
- * ```
  */
 export function shouldShowConsentBanner(): boolean {
-  return getConsentStatus() === "pending"
+  return getConsent() === null
 }

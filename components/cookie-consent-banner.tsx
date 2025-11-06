@@ -1,118 +1,257 @@
+/**
+ * Copyright (c) 2025 Roman Reinelt / RNLT Labs
+ * All rights reserved.
+ *
+ * Massava - GDPR-Compliant Cookie Consent Banner
+ */
+
 "use client"
 
-import { useEffect, useState } from "react"
-import { X } from "lucide-react"
-import { getConsentStatus, setConsentStatus, type ConsentStatus } from "@/lib/cookie-consent"
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { X, Cookie, Settings } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import {
+  getConsent,
+  setConsent,
+  type CookieConsent,
+} from "@/lib/cookie-consent"
 
-/**
- * GDPR-compliant cookie consent banner
- *
- * Features:
- * - Opt-in consent (GDPR compliant)
- * - Blocks analytics until consent given
- * - Persists choice in localStorage
- * - WCAG 2.1 AA accessible
- * - Mobile-responsive
- */
-export function CookieConsentBanner(): JSX.Element | null {
-  const [isVisible, setIsVisible] = useState<boolean>(false)
-  const [isClient, setIsClient] = useState<boolean>(false)
+export function CookieConsentBanner() {
+  const [showBanner, setShowBanner] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [consent, setConsentState] = useState<Omit<CookieConsent, "timestamp" | "version">>({
+    necessary: true,
+    analytics: false,
+    marketing: false,
+  })
 
   useEffect(() => {
-    // Ensure we're on the client side
-    setIsClient(true)
+    // Check if user has already given consent
+    const savedConsent = getConsent()
 
-    // Check if user has already made a choice
-    const consentStatus: ConsentStatus = getConsentStatus()
-
-    // Show banner only if consent is pending
-    if (consentStatus === "pending") {
-      setIsVisible(true)
+    if (!savedConsent) {
+      // Show banner after a short delay for better UX
+      const timer = setTimeout(() => {
+        setShowBanner(true)
+      }, 1000)
+      return () => clearTimeout(timer)
+    } else {
+      // Load saved consent
+      setConsentState({
+        necessary: savedConsent.necessary,
+        analytics: savedConsent.analytics,
+        marketing: savedConsent.marketing,
+      })
     }
   }, [])
 
-  const handleAccept = (): void => {
-    setConsentStatus("accepted")
-    setIsVisible(false)
+  const saveConsent = (newConsent: Omit<CookieConsent, "timestamp" | "version">) => {
+    setConsent(newConsent)
+    setConsentState(newConsent)
+    setShowBanner(false)
+    setShowSettings(false)
 
-    // Reload to load analytics scripts
-    if (typeof window !== "undefined") {
+    // Reload if analytics consent changed to load/unload scripts
+    if (newConsent.analytics) {
       window.location.reload()
     }
   }
 
-  const handleReject = (): void => {
-    setConsentStatus("rejected")
-    setIsVisible(false)
+  const acceptAll = () => {
+    saveConsent({
+      necessary: true,
+      analytics: true,
+      marketing: true,
+    })
   }
 
-  // Don't render on server or if not visible
-  if (!isClient || !isVisible) {
+  const acceptNecessary = () => {
+    saveConsent({
+      necessary: true,
+      analytics: false,
+      marketing: false,
+    })
+  }
+
+  const saveSettings = () => {
+    saveConsent(consent)
+  }
+
+  if (!showBanner) {
     return null
   }
 
   return (
-    <div
-      className="fixed inset-x-0 bottom-0 z-50 animate-slide-up"
-      role="dialog"
-      aria-labelledby="cookie-consent-title"
-      aria-describedby="cookie-consent-description"
-    >
-      {/* Backdrop */}
-      <div className="bg-black/20 backdrop-blur-sm">
-        {/* Container */}
-        <div className="container mx-auto px-4 py-4 sm:px-6">
-          {/* Card */}
-          <div className="relative bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 p-4 sm:p-6 max-w-4xl mx-auto">
-            {/* Close button (optional - for better UX) */}
-            <button
-              onClick={handleReject}
-              className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              aria-label="Reject cookies and close banner"
-            >
-              <X className="h-5 w-5" />
-            </button>
+    <>
+      {/* Cookie Banner */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg">
+        <Card className="max-w-6xl mx-auto p-6">
+          <div className="flex items-start gap-4">
+            <Cookie className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
 
-            {/* Content */}
-            <div className="pr-8">
-              <h2
-                id="cookie-consent-title"
-                className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2"
-              >
-                We value your privacy
-              </h2>
-
-              <p
-                id="cookie-consent-description"
-                className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4"
-              >
-                We use cookies to improve your experience and analyze site traffic.
-                By clicking "Accept", you consent to our use of cookies for analytics.
-                You can change your preferences at any time in your account settings.
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-2">
+                Wir respektieren Ihre Privatsphäre
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Wir verwenden Cookies, um Ihnen die bestmögliche Erfahrung auf unserer Website zu
+                bieten. Notwendige Cookies sind für die Funktionalität der Website erforderlich.
+                Optionale Cookies helfen uns, die Website zu verbessern und auf Ihre Bedürfnisse
+                zuzuschneiden.
               </p>
-
-              {/* Action buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button
-                  onClick={handleAccept}
-                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 active:scale-95"
-                  aria-label="Accept cookies and enable analytics"
+              <p className="text-xs text-muted-foreground">
+                Mehr Informationen finden Sie in unserer{" "}
+                <a
+                  href="/datenschutz#cookies"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
                 >
-                  Accept Cookies
-                </button>
+                  Datenschutzerklärung
+                </a>
+                .
+              </p>
+            </div>
 
-                <button
-                  onClick={handleReject}
-                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 active:scale-95"
-                  aria-label="Reject cookies and continue without analytics"
-                >
-                  Reject Cookies
-                </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={acceptNecessary}
+              className="flex-shrink-0"
+            >
+              <X className="h-4 w-4" />
+              <span className="sr-only">Banner schließen</span>
+            </Button>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
+            <Button onClick={acceptAll} className="flex-1 sm:flex-none">
+              Alle akzeptieren
+            </Button>
+            <Button
+              onClick={acceptNecessary}
+              variant="outline"
+              className="flex-1 sm:flex-none"
+            >
+              Nur notwendige
+            </Button>
+            <Button
+              onClick={() => setShowSettings(true)}
+              variant="outline"
+              className="flex-1 sm:flex-none"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Einstellungen
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Cookie-Einstellungen</DialogTitle>
+            <DialogDescription>
+              Wählen Sie, welche Cookies Sie zulassen möchten. Notwendige Cookies sind für die
+              Funktionalität der Website erforderlich und können nicht deaktiviert werden.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Necessary Cookies */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Label htmlFor="necessary" className="text-base font-semibold cursor-pointer">
+                    Notwendige Cookies
+                  </Label>
+                  <span className="text-xs bg-primary text-primary-foreground px-2 py-1 rounded">
+                    Erforderlich
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Diese Cookies sind für den Betrieb der Website unerlässlich und ermöglichen
+                  grundlegende Funktionen wie Authentifizierung und Spracheinstellungen.
+                </p>
+                <ul className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <li>• Session-Cookie (Anmeldung)</li>
+                  <li>• Spracheinstellung</li>
+                  <li>• Cookie-Consent-Status</li>
+                </ul>
               </div>
+              <Switch id="necessary" checked={true} disabled />
+            </div>
+
+            {/* Analytics Cookies */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b">
+              <div className="flex-1">
+                <Label htmlFor="analytics" className="text-base font-semibold cursor-pointer">
+                  Analyse-Cookies
+                </Label>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Diese Cookies helfen uns zu verstehen, wie Besucher mit der Website interagieren.
+                  Alle Informationen werden anonymisiert gesammelt.
+                </p>
+                <ul className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <li>• Seitenaufrufe und Navigation</li>
+                  <li>• Verweildauer</li>
+                  <li>• Fehlerberichte (Sentry)</li>
+                </ul>
+              </div>
+              <Switch
+                id="analytics"
+                checked={consent.analytics}
+                onCheckedChange={(checked) =>
+                  setConsentState({ ...consent, analytics: checked })
+                }
+              />
+            </div>
+
+            {/* Marketing Cookies */}
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <Label htmlFor="marketing" className="text-base font-semibold cursor-pointer">
+                  Marketing-Cookies
+                </Label>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Diese Cookies werden verwendet, um Ihnen relevante Werbung anzuzeigen und die
+                  Effektivität unserer Marketingkampagnen zu messen.
+                </p>
+                <ul className="text-xs text-muted-foreground mt-2 space-y-1">
+                  <li>• Werbeanzeigen-Personalisierung</li>
+                  <li>• Kampagnen-Tracking</li>
+                </ul>
+              </div>
+              <Switch
+                id="marketing"
+                checked={consent.marketing}
+                onCheckedChange={(checked) =>
+                  setConsentState({ ...consent, marketing: checked })
+                }
+              />
             </div>
           </div>
-        </div>
-      </div>
-    </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSettings(false)}>
+              Abbrechen
+            </Button>
+            <Button onClick={saveSettings}>Einstellungen speichern</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
