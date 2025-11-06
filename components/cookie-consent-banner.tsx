@@ -5,12 +5,12 @@
  * Massava - GDPR-Compliant Cookie Consent Banner
  */
 
-'use client';
+"use client"
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { X, Cookie, Settings } from 'lucide-react';
+import { useState, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { X, Cookie, Settings } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -18,111 +18,83 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Switch } from "@/components/ui/switch"
+import {
+  getConsent,
+  setConsent,
+  type CookieConsent,
+} from "@/lib/cookie-consent"
 
-interface CookieConsent {
-  necessary: boolean; // Always true (required for functionality)
-  analytics: boolean;
-  marketing: boolean;
-  timestamp: number;
-}
-
-const COOKIE_CONSENT_KEY = 'massava_cookie_consent';
-const COOKIE_CONSENT_VERSION = '1.0';
-
-export default function CookieBanner() {
-  const [showBanner, setShowBanner] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [consent, setConsent] = useState<CookieConsent>({
+export function CookieConsentBanner() {
+  const [showBanner, setShowBanner] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [consent, setConsentState] = useState<Omit<CookieConsent, "timestamp" | "version">>({
     necessary: true,
     analytics: false,
     marketing: false,
-    timestamp: Date.now(),
-  });
+  })
 
   useEffect(() => {
     // Check if user has already given consent
-    const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
+    const savedConsent = getConsent()
 
     if (!savedConsent) {
       // Show banner after a short delay for better UX
       const timer = setTimeout(() => {
-        setShowBanner(true);
-      }, 1000);
-      return () => clearTimeout(timer);
+        setShowBanner(true)
+      }, 1000)
+      return () => clearTimeout(timer)
     } else {
       // Load saved consent
-      try {
-        const parsed = JSON.parse(savedConsent);
-        setConsent(parsed);
-        applyConsent(parsed);
-      } catch (error) {
-        console.error('Failed to parse cookie consent:', error);
-        setShowBanner(true);
-      }
+      setConsentState({
+        necessary: savedConsent.necessary,
+        analytics: savedConsent.analytics,
+        marketing: savedConsent.marketing,
+      })
     }
-  }, []);
+  }, [])
 
-  const applyConsent = (consent: CookieConsent) => {
-    // Analytics cookies
-    if (consent.analytics) {
-      // Enable analytics (e.g., Google Analytics)
-      // window.gtag?.('consent', 'update', { analytics_storage: 'granted' });
-    } else {
-      // Disable analytics
-      // window.gtag?.('consent', 'update', { analytics_storage: 'denied' });
+  const saveConsent = (newConsent: Omit<CookieConsent, "timestamp" | "version">) => {
+    setConsent(newConsent)
+    setConsentState(newConsent)
+    setShowBanner(false)
+    setShowSettings(false)
+
+    // Dispatch custom event for GoogleAnalytics component
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("cookie-consent-changed"))
     }
 
-    // Marketing cookies
-    if (consent.marketing) {
-      // Enable marketing (e.g., Facebook Pixel)
-      // window.fbq?.('consent', 'grant');
-    } else {
-      // Disable marketing
-      // window.fbq?.('consent', 'revoke');
+    // Reload if analytics consent changed to load/unload scripts
+    if (newConsent.analytics) {
+      window.location.reload()
     }
-  };
-
-  const saveConsent = (newConsent: CookieConsent) => {
-    const consentWithTimestamp = {
-      ...newConsent,
-      timestamp: Date.now(),
-      version: COOKIE_CONSENT_VERSION,
-    };
-
-    localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(consentWithTimestamp));
-    applyConsent(newConsent);
-    setConsent(newConsent);
-    setShowBanner(false);
-    setShowSettings(false);
-  };
+  }
 
   const acceptAll = () => {
     saveConsent({
       necessary: true,
       analytics: true,
       marketing: true,
-      timestamp: Date.now(),
-    });
-  };
+    })
+  }
 
   const acceptNecessary = () => {
     saveConsent({
       necessary: true,
       analytics: false,
       marketing: false,
-      timestamp: Date.now(),
-    });
-  };
+    })
+  }
 
   const saveSettings = () => {
-    saveConsent(consent);
-  };
+    saveConsent(consent)
+  }
 
   if (!showBanner) {
-    return null;
+    return null
   }
 
   return (
@@ -144,7 +116,7 @@ export default function CookieBanner() {
                 zuzuschneiden.
               </p>
               <p className="text-xs text-muted-foreground">
-                Mehr Informationen finden Sie in unserer{' '}
+                Mehr Informationen finden Sie in unserer{" "}
                 <a
                   href="/datenschutz#cookies"
                   target="_blank"
@@ -247,7 +219,7 @@ export default function CookieBanner() {
                 id="analytics"
                 checked={consent.analytics}
                 onCheckedChange={(checked) =>
-                  setConsent({ ...consent, analytics: checked })
+                  setConsentState({ ...consent, analytics: checked })
                 }
               />
             </div>
@@ -271,7 +243,7 @@ export default function CookieBanner() {
                 id="marketing"
                 checked={consent.marketing}
                 onCheckedChange={(checked) =>
-                  setConsent({ ...consent, marketing: checked })
+                  setConsentState({ ...consent, marketing: checked })
                 }
               />
             </div>
@@ -286,5 +258,5 @@ export default function CookieBanner() {
         </DialogContent>
       </Dialog>
     </>
-  );
+  )
 }

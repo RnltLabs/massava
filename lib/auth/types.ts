@@ -32,19 +32,3 @@ export interface StudioOwnership {
   userId: string;
   canTransfer: boolean;
 }
-
-/**
- * Auth error types
- */
-export type AuthError =
-  | { type: 'UNAUTHORIZED'; message: string }
-  | { type: 'FORBIDDEN'; message: string }
-  | { type: 'NOT_FOUND'; message: string }
-  | { type: 'INVALID_SESSION'; message: string };
-
-/**
- * Result type for auth operations
- */
-export type Result<T, E = AuthError> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };

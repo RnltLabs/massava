@@ -35,6 +35,7 @@ import {
 } from "./session-cache";
 import { enqueueUserSync } from "./background-sync";
 import { generateTokenPair } from "./refresh-token";
+import { logger } from '@/lib/logger';
 
 /**
  * OPTIMIZATION 1: Remove Prisma adapter (use background sync)
@@ -94,7 +95,7 @@ export const authOptions: Record<string, unknown> = {
      *
      * PERFORMANCE: -145ms (-97%)
      */
-    async signIn({ user, account, profile }: { user: User; account: unknown; profile?: unknown }) {
+    async signIn({ user, account, profile }: { user: User; account: unknown; profile?: unknown }): Promise<boolean> {
       const startTime = performance.now();
 
       try {
@@ -112,15 +113,21 @@ export const authOptions: Record<string, unknown> = {
         const duration = performance.now() - startTime;
 
         if (duration > 10) {
-          console.warn(
-            `[PERF] signIn callback slow: ${duration}ms for userId=${user.id}`
-          );
+          logger.warn('signIn callback slow', {
+            userId: user.id,
+            duration,
+            action: 'SIGN_IN_CALLBACK'
+          });
         }
 
         // Allow sign-in immediately (don't wait for DB sync)
         return true;
       } catch (error) {
-        console.error(`[ERROR] signIn callback failed:`, error);
+        logger.error('signIn callback failed', {
+          userId: user.id,
+          error: error instanceof Error ? error.message : String(error),
+          action: 'SIGN_IN_CALLBACK'
+        });
         // Allow sign-in even if job enqueue fails (graceful degradation)
         return true;
       }
@@ -157,9 +164,11 @@ export const authOptions: Record<string, unknown> = {
       const duration = performance.now() - startTime;
 
       if (duration > 40) {
-        console.warn(
-          `[PERF] jwt callback slow: ${duration}ms for userId=${token.sub}`
-        );
+        logger.warn('jwt callback slow', {
+          userId: token.sub,
+          duration,
+          action: 'JWT_CALLBACK'
+        });
       }
 
       return token;
@@ -217,14 +226,20 @@ export const authOptions: Record<string, unknown> = {
         const duration = performance.now() - startTime;
 
         if (duration > 15) {
-          console.warn(
-            `[PERF] session callback slow: ${duration}ms for userId=${token.sub}`
-          );
+          logger.warn('session callback slow', {
+            userId: token.sub,
+            duration,
+            action: 'SESSION_CALLBACK'
+          });
         }
 
         return session;
       } catch (error) {
-        console.error(`[ERROR] session callback failed:`, error);
+        logger.error('session callback failed', {
+          userId: token.sub,
+          error: error instanceof Error ? error.message : String(error),
+          action: 'SESSION_CALLBACK'
+        });
 
         // Graceful fallback: Return JWT data
         session.user = {
@@ -268,15 +283,21 @@ export const authOptions: Record<string, unknown> = {
    */
   events: {
     async signIn({ user, account, isNewUser }: { user: User; account?: unknown; isNewUser?: boolean }) {
-      console.log(
-        `[INFO] Sign-in: userId=${user.id}, provider=${(account as { provider?: string })?.provider}, isNewUser=${isNewUser}`
-      );
+      logger.info('User sign-in', {
+        userId: user.id,
+        provider: (account as { provider?: string })?.provider,
+        isNewUser,
+        action: 'SIGN_IN'
+      });
 
       // Send to monitoring system (Umami/GlitchTip)
       // await trackEvent('user_sign_in', { userId: user.id, provider: account?.provider })
     },
     async signOut({ token }: { token?: JWT }) {
-      console.log(`[INFO] Sign-out: userId=${token?.sub}`);
+      logger.info('User sign-out', {
+        userId: token?.sub,
+        action: 'SIGN_OUT'
+      });
 
       // Invalidate cache
       const { invalidateSessionCache } = await import("./session-cache");

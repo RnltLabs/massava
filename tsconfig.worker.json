@@ -1,0 +1,35 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "noEmit": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "workers/**/*",
+    "lib/auth/background-sync.ts",
+    "lib/logger.ts",
+    "lib/prisma.ts",
+    "lib/redis.ts",
+    "lib/auth/session-cache.ts",
+    "app/generated/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "__tests__",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "app",
+    "components",
+    "public",
+    "scripts"
+  ]
+}

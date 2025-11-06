@@ -21,7 +21,14 @@
     "data-retention:dry-run": "tsx lib/cron/data-retention-job.ts --dry-run",
     "data-retention:execute": "tsx lib/cron/data-retention-job.ts",
     "test:retention": "tsx --test lib/data-retention/retention-policy.test.ts",
-    "generate:cron-secret": "tsx scripts/generate-cron-secret.ts"
+    "generate:cron-secret": "tsx scripts/generate-cron-secret.ts",
+    "worker:auth": "node dist/workers/auth-sync-worker.js",
+    "worker:auth:dev": "tsx workers/auth-sync-worker.ts",
+    "worker:build": "tsc --project tsconfig.worker.json",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",

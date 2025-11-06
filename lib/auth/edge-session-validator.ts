@@ -13,6 +13,7 @@
  */
 
 import { jwtVerify, type JWTPayload } from "jose";
+import { logger } from '@/lib/logger';
 
 // Minimal session interface (56 bytes vs 2KB full User object)
 export interface EdgeSession {
@@ -54,7 +55,10 @@ export async function validateEdgeSession(
     // Measure performance
     const duration = performance.now() - startTime;
     if (duration > 10) {
-      console.warn(`[PERF] Edge validation slow: ${duration}ms`);
+      logger.warn('Edge validation slow', {
+        duration,
+        action: 'EDGE_SESSION_VALIDATION'
+      });
     }
 
     return session;
