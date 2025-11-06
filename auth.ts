@@ -18,6 +18,7 @@
 
 import { prisma } from '@/lib/prisma';
 import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
 import { UnifiedUserAdapter } from '@/lib/auth/adapter';
@@ -33,117 +34,137 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: UnifiedUserAdapter(prisma),
 
   providers: [
-    // Extend providers with authorization logic
-    ...authConfig.providers.map((provider) => {
-      // Override Credentials provider with full authorization
-      if (provider.id === 'credentials') {
-        return {
-          ...provider,
-          async authorize(credentials: Record<string, unknown> | undefined) {
-            if (!credentials?.email || !credentials?.password) {
-              return null;
-            }
+    // Include OAuth providers from Edge-safe config
+    ...authConfig.providers,
 
-            const accountType = credentials.accountType as 'customer' | 'studio' | undefined;
+    // Define Credentials provider directly (NOT via override)
+    // This is required because NextAuth v5 doesn't support provider overriding via spread
+    Credentials({
+      id: 'credentials',
+      name: 'Email and Password',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+        accountType: { label: 'Account Type', type: 'text' },
+      },
+      async authorize(credentials) {
+        const timestamp = new Date().toISOString();
+        console.log('[auth.ts] ===== AUTHORIZE CALLED AT', timestamp, '=====');
+        console.log('[auth.ts] authorize() called with email:', credentials?.email);
 
-            // Database query with Prisma
-            const user = await prisma.user.findUnique({
-              where: { email: credentials.email as string },
-              include: {
-                roles: {
-                  select: {
-                    role: true,
-                  },
-                },
+        if (!credentials?.email || !credentials?.password) {
+          console.log('[auth.ts] Missing credentials');
+          return null;
+        }
+
+        const accountType = credentials.accountType as 'customer' | 'studio' | undefined;
+        console.log('[auth.ts] Account type:', accountType);
+
+        // Database query with Prisma
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+          include: {
+            roles: {
+              select: {
+                role: true,
               },
-            });
-
-            if (user && user.password) {
-              // Verify password with bcrypt
-              const isPasswordValid = await bcrypt.compare(
-                credentials.password as string,
-                user.password
-              );
-
-              if (!isPasswordValid) {
-                return null;
-              }
-
-              // Check email verification
-              if (!user.emailVerified) {
-                throw new Error('Email not verified');
-              }
-
-              // Check if account is suspended
-              if (user.isSuspended) {
-                throw new Error('Account suspended');
-              }
-
-              return {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                image: user.image,
-                primaryRole: user.primaryRole,
-                roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
-                accountType: accountType || 'customer',
-              };
-            }
-
-            return null;
+            },
           },
-        };
-      }
+        });
 
-      // Override Magic Link provider with authorization
-      if (provider.id === 'magic-link') {
+        console.log('[auth.ts] User found:', !!user, 'Has password:', !!user?.password);
+
+        if (!user || !user.password) {
+          console.log('[auth.ts] No user or no password - returning null');
+          return null;
+        }
+
+        // Verify password with bcrypt
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        );
+
+        console.log('[auth.ts] Password valid:', isPasswordValid);
+
+        if (!isPasswordValid) {
+          console.log('[auth.ts] Password mismatch - returning null');
+          return null;
+        }
+
+        // Check email verification
+        if (!user.emailVerified) {
+          console.log('[auth.ts] Email not verified');
+          throw new Error('Email not verified');
+        }
+
+        // Check if account is suspended
+        if (user.isSuspended) {
+          console.log('[auth.ts] Account suspended');
+          throw new Error('Account suspended');
+        }
+
+        console.log('[auth.ts] Authorization successful, returning user object');
         return {
-          ...provider,
-          async authorize(credentials: Record<string, unknown> | undefined) {
-            if (!credentials?.email) {
-              return null;
-            }
-
-            const user = await prisma.user.findUnique({
-              where: { email: credentials.email as string },
-              include: {
-                roles: {
-                  select: {
-                    role: true,
-                  },
-                },
-              },
-            });
-
-            if (!user) {
-              return null;
-            }
-
-            if (user.isSuspended) {
-              throw new Error('Account suspended');
-            }
-
-            // Mark email as verified (magic link implies verification)
-            if (!user.emailVerified) {
-              await prisma.user.update({
-                where: { id: user.id },
-                data: { emailVerified: new Date() },
-              });
-            }
-
-            return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
-              primaryRole: user.primaryRole,
-              roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
-            };
-          },
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          primaryRole: user.primaryRole,
+          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+          accountType: accountType || 'customer',
         };
-      }
+      },
+    }),
 
-      return provider;
+    // Define Magic Link provider directly (NOT via override)
+    Credentials({
+      id: 'magic-link',
+      name: 'Magic Link',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+          include: {
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        if (user.isSuspended) {
+          throw new Error('Account suspended');
+        }
+
+        // Mark email as verified (magic link implies verification)
+        if (!user.emailVerified) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() },
+          });
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          primaryRole: user.primaryRole,
+          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+        };
+      },
     }),
   ],
 
