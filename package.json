@@ -12,6 +12,7 @@
     "test:coverage": "jest --coverage",
     "test:integration": "jest __tests__/integration",
     "seed:karlsruhe": "tsx prisma/seed-karlsruhe.ts",
+    "seed:clean": "tsx prisma/seed-karlsruhe-clean.ts",
     "orchestrate:implement": "tsx scripts/orchestrate.ts",
     "db:seed:test": "tsx prisma/seed-test-karlsruhe.ts",
     "db:backup": "echo 'Database backup not implemented yet - please backup manually'",

@@ -211,10 +211,10 @@ export async function signIn(
     }
 
     // 4. Determine redirect URL based on validated account type
-    let redirectUrl = '/dashboard';
+    let redirectUrl = '/';
 
     if (accountType === 'studio') {
-      redirectUrl = '/dashboard'; // Studio dashboard view
+      redirectUrl = '/business'; // Business Portal for studio owners
     } else if (accountType === 'customer') {
       redirectUrl = '/'; // Landing page with search widget
     }

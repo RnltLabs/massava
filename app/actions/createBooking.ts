@@ -50,7 +50,15 @@ export async function createBooking(
       where: { id: validated.slotId },
     })
 
+    console.log('[createBooking] TimeSlot check:', {
+      slotId: validated.slotId,
+      exists: !!timeSlot,
+      isAvailable: timeSlot?.isAvailable,
+      isBooked: timeSlot?.isBooked,
+    })
+
     if (!timeSlot) {
+      console.log('[createBooking] ERROR: TimeSlot not found')
       return {
         success: false,
         error: "Der ausgewählte Zeitslot existiert nicht mehr",
@@ -58,6 +66,7 @@ export async function createBooking(
     }
 
     if (!timeSlot.isAvailable || timeSlot.isBooked) {
+      console.log('[createBooking] ERROR: TimeSlot not available or already booked')
       return {
         success: false,
         error:
@@ -139,9 +148,10 @@ export async function createBooking(
     // TODO: Send email notification to customer and studio
     // await sendBookingConfirmationEmail(booking)
 
-    // Revalidate pages to show updated availability
-    revalidatePath("/search/appointments")
-    revalidatePath(`/studios/${validated.studioId}`)
+    // NOTE: We DON'T call revalidatePath here because it could trigger a page reload
+    // and show the "slot unavailable" error. The search page will be revalidated
+    // when the user navigates back to it naturally.
+    // If you need immediate revalidation, consider doing it client-side after navigation.
 
     return {
       success: true,

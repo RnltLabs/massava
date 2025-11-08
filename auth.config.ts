@@ -86,11 +86,10 @@ export const authConfig = {
         const isAuthCallback = url.includes('/api/auth/callback/') || url.includes('/api/auth/signin');
 
         const isBusinessUser = accountType === 'studio' ||
-                               callbackUrl?.includes('/dashboard/owner') ||
                                callbackUrl?.includes('/business');
 
         if (isBusinessUser) {
-          if (callbackUrl && (callbackUrl.includes('/dashboard/owner') || callbackUrl.includes('/business'))) {
+          if (callbackUrl && callbackUrl.includes('/business')) {
             if (callbackUrl.startsWith(baseUrl)) {
               return callbackUrl;
             }
@@ -98,7 +97,7 @@ export const authConfig = {
               return `${baseUrl}${callbackUrl}`;
             }
           }
-          return `${baseUrl}/dashboard/owner`;
+          return `${baseUrl}/business`;
         }
 
         if (callbackUrl) {
