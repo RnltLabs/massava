@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { CheckCircle2, Calendar, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
@@ -46,48 +45,18 @@ export function SuccessStep({
       ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-8"
-    >
+    <div className="space-y-8">
       {/* Animated Checkmark */}
       <div className="flex justify-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{
-            type: 'spring',
-            stiffness: 200,
-            damping: 15,
-            delay: 0.2,
-          }}
-          className="w-20 h-20 rounded-full bg-terracotta-100 flex items-center justify-center"
-        >
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{
-              type: 'spring',
-              stiffness: 200,
-              damping: 15,
-              delay: 0.4,
-            }}
-          >
+        <div className="w-20 h-20 rounded-full bg-terracotta-100 flex items-center justify-center">
+          <div>
             <CheckCircle2 className="h-10 w-10 text-terracotta-600" />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
 
       {/* Success Message */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-        className="text-center space-y-3"
-      >
+      <div className="text-center space-y-3">
         <h2 className="text-3xl font-bold text-gray-900">
           {hasServices ? 'Dein Studio ist jetzt live!' : 'Willkommen bei Massava!'}
         </h2>
@@ -95,26 +64,18 @@ export function SuccessStep({
           <span className="font-semibold text-terracotta-600">{studioName}</span>{' '}
           {hasServices ? 'ist jetzt sichtbar für Buchungen' : 'wurde erfolgreich registriert'}
         </p>
-      </motion.div>
+      </div>
 
       {/* What's Next Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="space-y-4"
-      >
+      <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900 text-center">
           Was kommt als Nächstes?
         </h3>
 
         <div className="space-y-3">
           {nextSteps.map((step, index) => (
-            <motion.div
+            <div
               key={step.title}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.0 + index * 0.1 }}
               className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 border border-gray-200"
             >
               <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-terracotta-100 flex items-center justify-center">
@@ -128,18 +89,13 @@ export function SuccessStep({
                   {step.description}
                 </p>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {/* CTAs */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2 }}
-        className="space-y-3"
-      >
+      <div className="space-y-3">
         {!hasServices && (
           <Button
             onClick={onAddService}
@@ -157,7 +113,7 @@ export function SuccessStep({
         >
           Zum Dashboard
         </Button>
-      </motion.div>
-    </motion.div>
+      </div>
+    </div>
   );
 }

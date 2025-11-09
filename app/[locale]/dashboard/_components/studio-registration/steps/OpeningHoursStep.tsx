@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -139,13 +138,7 @@ export function OpeningHoursStep(): React.JSX.Element {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-3 sm:space-y-4"
-    >
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
       <div className="text-center space-y-1">
         <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Öffnungszeiten</h2>
@@ -340,6 +333,6 @@ export function OpeningHoursStep(): React.JSX.Element {
             : (differentHours[selectedDay as DayKey] || undefined)
         }
       />
-    </motion.div>
+    </div>
   );
 }

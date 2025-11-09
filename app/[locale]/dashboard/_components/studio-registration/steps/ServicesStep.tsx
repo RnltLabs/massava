@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -249,13 +249,7 @@ export function ServicesStep(): React.JSX.Element {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-2.5 sm:space-y-3"
-    >
+    <div className="space-y-2.5 sm:space-y-3">
       {/* Header */}
       <div className="space-y-0.5 text-center">
         <div className="text-3xl">
@@ -273,12 +267,8 @@ export function ServicesStep(): React.JSX.Element {
       <div className="space-y-2">
         <AnimatePresence mode="popLayout">
           {services.map((service, index) => (
-            <motion.div
+            <div
               key={index}
-              initial={{ opacity: 0, scale: 0.9, y: -10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              transition={{ duration: 0.2 }}
               className="relative p-3 border-2 border-gray-200 rounded-xl bg-white"
             >
               {/* Remove Button */}
@@ -406,24 +396,22 @@ export function ServicesStep(): React.JSX.Element {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </AnimatePresence>
 
         {/* Add Service Button */}
         {services.length < 3 && (
-          <motion.button
+          <button
             type="button"
             onClick={handleAddService}
             className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#B56550] hover:bg-[#B56550]/5 transition-all group"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
           >
             <div className="flex items-center justify-center gap-2 text-gray-600 group-hover:text-[#B56550]">
               <Plus className="h-4 w-4" />
               <span className="text-sm font-medium">Weiteren Service hinzufügen</span>
             </div>
-          </motion.button>
+          </button>
         )}
       </div>
 
@@ -477,6 +465,6 @@ export function ServicesStep(): React.JSX.Element {
           </button>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

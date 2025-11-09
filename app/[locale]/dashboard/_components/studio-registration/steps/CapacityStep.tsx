@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,13 +46,7 @@ export function CapacityStep(): React.JSX.Element {
   }, [capacity]);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-3 sm:space-y-4"
-    >
+    <div className="space-y-3 sm:space-y-4">
       {/* Header */}
       <div className="space-y-1 text-center">
         <div className="text-3xl sm:text-4xl">
@@ -129,6 +122,6 @@ export function CapacityStep(): React.JSX.Element {
           Weiter
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 }
