@@ -10,9 +10,7 @@ import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { TodayDashboard } from '@/components/business/TodayDashboard';
 import { BookingStatus } from '@/app/generated/prisma';
-import { Building2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { StudioRegistrationTrigger } from '@/app/[locale]/dashboard/_components/StudioRegistrationTrigger';
+import { OnboardingScreen } from './_components/OnboardingScreen';
 
 interface BusinessDashboardPageProps {
   params: Promise<{
@@ -194,80 +192,9 @@ export default async function BusinessDashboardPage({
     },
   });
 
-  // If user has no studios, show empty state banner
+  // If user has no studios, show onboarding screen
   if (!user || user.ownedStudios.length === 0) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold tracking-tight mb-4">
-              Willkommen, {user?.name || 'Studio-Besitzer'}!
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
-              Bereit, dein Studio auf Massava zu präsentieren?
-            </p>
-          </div>
-
-          {/* Prominent Studio Setup CTA Card */}
-          <Card className="mb-12 border-2 border-primary/50 shadow-2xl">
-            <CardContent className="p-12">
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="p-6 bg-primary/10 rounded-full">
-                  <Building2 className="h-16 w-16 text-primary" />
-                </div>
-
-                <div className="space-y-4">
-                  <h2 className="text-3xl font-bold">
-                    Jetzt dein Studio einrichten
-                  </h2>
-                  <p className="text-lg text-muted-foreground max-w-2xl">
-                    Registriere dein Studio in wenigen Schritten und erreiche tausende potenzielle Kunden.
-                    Komplett kostenlos, keine versteckten Gebühren.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto pt-4">
-                  <StudioRegistrationTrigger
-                    buttonText="Studio jetzt einrichten"
-                    buttonIcon={
-                      <div className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                      </div>
-                    }
-                    variant="default"
-                    size="lg"
-                    className="text-lg px-8 py-6"
-                  />
-                </div>
-
-                {/* Benefits */}
-                <div className="grid md:grid-cols-3 gap-6 pt-8 w-full">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">100%</div>
-                    <div className="text-sm text-muted-foreground">
-                      Der Einnahmen bleiben bei dir
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">0€</div>
-                    <div className="text-sm text-muted-foreground">
-                      Keine Provisionen oder versteckten Kosten
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">5 Min</div>
-                    <div className="text-sm text-muted-foreground">
-                      Schnelle und einfache Registrierung
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
+    return <OnboardingScreen userName={user?.name} locale={locale} />;
   }
 
   const dashboardData = await getDashboardData(userEmail);

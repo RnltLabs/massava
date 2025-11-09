@@ -36,6 +36,29 @@ interface BusinessLayoutProps {
   }>;
 }
 
+/**
+ * Check if user owns a studio
+ * Used for progressive onboarding UX (hide sidebar when no studio)
+ */
+async function checkStudioOwnership(userEmail: string): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      include: {
+        ownedStudios: true,
+      },
+    });
+
+    return !!user && user.ownedStudios.length > 0;
+  } catch (error) {
+    logger.error('Error checking studio ownership', {
+      error: error instanceof Error ? error.message : String(error),
+      userEmail
+    });
+    return false;
+  }
+}
+
 async function getPendingBookingsCount(userEmail: string): Promise<number> {
   try {
     // Get user's studio via User->StudioOwnership->Studio path
@@ -103,20 +126,23 @@ export default async function BusinessLayout({
     redirect(`/${locale}/dashboard`);
   }
 
-  // Get pending bookings count for badge
-  const pendingCount = await getPendingBookingsCount(session.user?.email ?? '');
+  // Progressive Onboarding: Check if user owns a studio
+  const hasStudio = await checkStudioOwnership(session.user?.email ?? '');
+
+  // Get pending bookings count for badge (only if user has studio)
+  const pendingCount = hasStudio ? await getPendingBookingsCount(session.user?.email ?? '') : 0;
 
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Desktop Layout */}
       <div className="hidden md:flex">
-        {/* Sidebar */}
-        <BusinessSidebar locale={locale} />
+        {/* Sidebar - Only show when user has a studio */}
+        {hasStudio && <BusinessSidebar locale={locale} />}
 
         {/* Main Content */}
-        <div className="flex-1 ml-64">
+        <div className={hasStudio ? "flex-1 ml-64" : "flex-1"}>
           {/* Top Navigation */}
-          <BusinessNav session={session} locale={locale} />
+          <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
 
           {/* Page Content */}
           <main className="p-6">{children}</main>
@@ -126,13 +152,13 @@ export default async function BusinessLayout({
       {/* Mobile Layout */}
       <div className="md:hidden">
         {/* Top Navigation */}
-        <BusinessNav session={session} locale={locale} />
+        <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
 
         {/* Page Content */}
-        <main className="pb-20 pt-16 px-4">{children}</main>
+        <main className={hasStudio ? "pb-20 pt-16 px-4" : "pt-16 px-4"}>{children}</main>
 
-        {/* Bottom Navigation */}
-        <MobileBusinessNav locale={locale} pendingCount={pendingCount} />
+        {/* Bottom Navigation - Only show when user has a studio */}
+        {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}
       </div>
     </div>
   );

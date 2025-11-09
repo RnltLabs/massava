@@ -34,10 +34,15 @@ function StudioRegistrationContent({
   onClose: () => void;
   onSuccess?: (studioId: string) => void;
 }): React.JSX.Element {
-  const { state, goToPreviousStep, reset } = useStudioRegistration();
+  const { state, goToPreviousStep, reset, loadDraftData } = useStudioRegistration();
   const { currentStep, isSubmitting, studioId } = state;
 
   console.log('🎯 StudioRegistrationContent rendered, currentStep:', currentStep);
+
+  // Load draft on mount
+  useEffect(() => {
+    loadDraftData();
+  }, [loadDraftData]);
 
   // Handle success
   useEffect(() => {
@@ -152,7 +157,7 @@ export function StudioRegistrationDialog({
   isOpen,
   onClose,
   onSuccess,
-}: StudioRegistrationDialogProps): React.JSX.Element {
+}: StudioRegistrationDialogProps): React.JSX.Element | null {
   console.log('🔍 [StudioRegistrationDialog] Rendered - isOpen:', isOpen);
 
   React.useEffect(() => {
