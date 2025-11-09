@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
-import { ServiceDialog } from './ServiceDialog';
+import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
 
 interface Service {
@@ -25,23 +25,21 @@ interface Service {
 
 interface ServicesPageClientProps {
   services: Service[];
+  studioId: string;
 }
 
-export function ServicesPageClient({ services }: ServicesPageClientProps): React.JSX.Element {
+export function ServicesPageClient({ services, studioId }: ServicesPageClientProps): React.JSX.Element {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
 
   const handleAddService = (): void => {
     setSelectedService(null);
-    setDialogMode('create');
     setIsDialogOpen(true);
   };
 
   const handleEditService = (service: Service): void => {
     setSelectedService(service);
-    setDialogMode('edit');
     setIsDialogOpen(true);
   };
 
@@ -133,12 +131,21 @@ export function ServicesPageClient({ services }: ServicesPageClientProps): React
         )}
       </div>
 
-      {/* Service Dialog (Create/Edit) */}
-      <ServiceDialog
+      {/* Service Management Dialog (Companion Style - Create/Edit) */}
+      <ServiceManagementDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        service={selectedService}
-        mode={dialogMode}
+        studioId={studioId}
+        editService={selectedService ? {
+          id: selectedService.id,
+          name: selectedService.name,
+          duration: selectedService.duration,
+          price: selectedService.price,
+        } : undefined}
+        onSuccess={() => {
+          setIsDialogOpen(false);
+          // Page will auto-refresh via router.refresh() in the dialog
+        }}
       />
 
       {/* Delete Confirmation Dialog */}

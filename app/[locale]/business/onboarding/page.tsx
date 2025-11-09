@@ -7,7 +7,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { StudioRegistrationDialog } from '@/app/(main)/dashboard/_components/studio-registration/StudioRegistrationDialog';
+import { StudioRegistrationDialog } from '@/app/[locale]/dashboard/_components/studio-registration/StudioRegistrationDialog';
 
 interface OnboardingPageProps {
   params: Promise<{
@@ -32,8 +32,9 @@ export default function OnboardingPage({ params }: OnboardingPageProps): React.J
   }, []);
 
   const handleClose = (): void => {
-    // Redirect to business dashboard when closed
-    router.push(`/${locale}/business`);
+    // If user closes without registering, redirect to homepage
+    // They can't access business portal without a studio
+    router.push(`/${locale}`);
   };
 
   const handleSuccess = (studioId: string): void => {

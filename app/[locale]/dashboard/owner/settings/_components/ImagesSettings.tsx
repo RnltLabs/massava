@@ -12,8 +12,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
-import { LogoUpload } from '@/app/(main)/dashboard/_components/studio-registration/components/LogoUpload';
-import { GalleryUpload } from '@/app/(main)/dashboard/_components/studio-registration/components/GalleryUpload';
+import { LogoUpload } from '@/app/[locale]/dashboard/_components/studio-registration/components/LogoUpload';
+import { GalleryUpload } from '@/app/[locale]/dashboard/_components/studio-registration/components/GalleryUpload';
 import { uploadStudioLogo, uploadGalleryImage, deleteGalleryImage, reorderGalleryImages } from '@/app/actions/studio/imageActions';
 import { Info, Check } from 'lucide-react';
 
