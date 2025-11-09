@@ -297,5 +297,69 @@
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",
     "copyright": "© 2025 Massava by RNLT Labs. All rights reserved."
+  },
+  "business": {
+    "nav": {
+      "today": "Today",
+      "week": "Week",
+      "new": "New",
+      "requests": "Requests",
+      "more": "More"
+    },
+    "dashboard": {
+      "greeting": "Good {timeOfDay}, {name}",
+      "greetingMorning": "morning",
+      "greetingAfternoon": "afternoon",
+      "greetingEvening": "evening",
+      "todayOverview": "Today's Overview",
+      "appointments": "Appointments",
+      "open": "Open",
+      "revenue": "Revenue",
+      "cancelled": "Cancelled",
+      "nextAppointment": "Next Appointment",
+      "todayAppointments": "Today's Appointments",
+      "openRequests": "Open Requests",
+      "noAppointments": "No appointments today",
+      "noRequests": "No open requests",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "contact": "Contact",
+      "details": "Details",
+      "confirm": "Confirm",
+      "decline": "Decline"
+    },
+    "booking": {
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled"
+      },
+      "noService": "No Service",
+      "confirmBooking": "Confirm Booking",
+      "declineBooking": "Decline Booking",
+      "contactCustomer": "Contact Customer"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "blockTime": "Block Time",
+      "blockTimeDesc": "Break, vacation or private",
+      "editService": "Edit Service",
+      "editServiceDesc": "Adjust prices or details",
+      "viewStats": "View Statistics",
+      "viewStatsDesc": "Revenue and utilization",
+      "editHours": "Change Opening Hours",
+      "editHoursDesc": "Adjust business hours"
+    },
+    "more": {
+      "title": "Profile & Settings",
+      "profile": "Edit Profile",
+      "services": "Manage Services",
+      "servicesCount": "{count} services active",
+      "hours": "Opening Hours",
+      "location": "Location & Contact",
+      "stats": "Statistics & Reports",
+      "help": "Help & Support",
+      "signOut": "Sign Out"
+    }
   }
 }
