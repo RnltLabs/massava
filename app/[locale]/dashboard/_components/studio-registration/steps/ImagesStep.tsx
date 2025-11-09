@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Camera, Image as ImageIcon } from 'lucide-react';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
@@ -163,13 +162,7 @@ export function ImagesStep(): React.JSX.Element {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       {/* Header - Compact */}
       <div className="text-center space-y-1">
         <h2 className="text-2xl font-bold text-gray-900">Studio-Bilder</h2>
@@ -248,6 +241,6 @@ export function ImagesStep(): React.JSX.Element {
           Überspringen
         </Button>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -91,13 +90,7 @@ export function BasicInfoStep(): React.JSX.Element {
   const isValid = name.trim().length >= 3 && description.trim().length >= 10;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">Studio-Informationen</h2>
@@ -203,6 +196,6 @@ export function BasicInfoStep(): React.JSX.Element {
       >
         Weiter
       </Button>
-    </motion.div>
+    </div>
   );
 }

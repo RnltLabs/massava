@@ -2,11 +2,8 @@
 
 import React from 'react';
 import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { cn } from '@/lib/utils';
 
 import { StudioRegistrationProvider } from './StudioRegistrationContext';
 import { useStudioRegistration } from './hooks/useStudioRegistration';
@@ -39,6 +36,8 @@ function StudioRegistrationContent({
 }): React.JSX.Element {
   const { state, goToPreviousStep, reset } = useStudioRegistration();
   const { currentStep, isSubmitting, studioId } = state;
+
+  console.log('🎯 StudioRegistrationContent rendered, currentStep:', currentStep);
 
   // Handle success
   useEffect(() => {
@@ -129,27 +128,17 @@ function StudioRegistrationContent({
         </button>
       </div>
 
-      {/* Step Content with cross-fade transition */}
-      <AnimatePresence initial={false} mode="wait">
-        <motion.div
-          key={currentStep}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{
-            duration: 0.1
-          }}
-        >
-          {currentStep === 8 ? (
-            <SuccessStep
-              onAddService={handleAddService}
-              onGoToDashboard={handleGoToDashboard}
-            />
-          ) : (
-            CurrentStepComponent && <CurrentStepComponent />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      {/* Step Content */}
+      <div>
+        {currentStep === 8 ? (
+          <SuccessStep
+            onAddService={handleAddService}
+            onGoToDashboard={handleGoToDashboard}
+          />
+        ) : (
+          CurrentStepComponent && <CurrentStepComponent />
+        )}
+      </div>
     </div>
   );
 }
@@ -164,29 +153,38 @@ export function StudioRegistrationDialog({
   onClose,
   onSuccess,
 }: StudioRegistrationDialogProps): React.JSX.Element {
-  const isMobile = useMediaQuery('(max-width: 767px)');
+  console.log('🔍 [StudioRegistrationDialog] Rendered - isOpen:', isOpen);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('✅ [StudioRegistrationDialog] Dialog OPENED');
+    } else {
+      console.log('❌ [StudioRegistrationDialog] Dialog CLOSED');
+    }
+  }, [isOpen]);
+
+  // Don't render the Dialog at all when closed - this prevents multiple portal instances
+  if (!isOpen) {
+    return null;
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose} modal>
-      <DialogContent
-        style={{ backgroundColor: '#F4EDE8' }}
-        className={cn(
-          isMobile &&
-            'fixed inset-x-0 bottom-0 top-auto rounded-t-3xl h-[90vh] w-full max-w-full translate-x-0 translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom p-6 overflow-y-auto',
-          !isMobile && 'sm:max-w-[500px] max-h-[90vh] overflow-y-auto'
-        )}
-        showCloseButton={false}
-        onPointerDownOutside={(e) => e.preventDefault()}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogTitle className="sr-only">Studio Registration</DialogTitle>
-        <DialogDescription className="sr-only">
-          Complete the registration process to create your studio profile
-        </DialogDescription>
-        <StudioRegistrationProvider>
+    <StudioRegistrationProvider>
+      <Dialog open={isOpen} onOpenChange={onClose} modal>
+        <DialogContent
+          style={{ backgroundColor: '#F4EDE8' }}
+          className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
+          showCloseButton={false}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogTitle className="sr-only">Studio Registration</DialogTitle>
+          <DialogDescription className="sr-only">
+            Complete the registration process to create your studio profile
+          </DialogDescription>
           <StudioRegistrationContent onClose={onClose} onSuccess={onSuccess} />
-        </StudioRegistrationProvider>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </StudioRegistrationProvider>
   );
 }

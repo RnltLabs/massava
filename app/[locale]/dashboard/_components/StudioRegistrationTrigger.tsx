@@ -52,11 +52,14 @@ export function StudioRegistrationTrigger({
         {buttonText}
       </Button>
 
-      <StudioRegistrationDialog
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        onSuccess={handleSuccess}
-      />
+      {isOpen && (
+        <StudioRegistrationDialog
+          key="studio-registration-dialog"
+          isOpen={isOpen}
+          onClose={() => setIsOpen(false)}
+          onSuccess={handleSuccess}
+        />
+      )}
     </>
   );
 }

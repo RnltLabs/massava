@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Building2, MapPin, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStudioRegistration } from '../hooks/useStudioRegistration';
@@ -37,13 +36,7 @@ export function WelcomeStep(): React.JSX.Element {
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-4"
-    >
+    <div className="space-y-4">
       {/* Icon - Smaller and closer to top */}
       <div className="flex justify-center">
         <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -63,12 +56,9 @@ export function WelcomeStep(): React.JSX.Element {
 
       {/* Features - Compact */}
       <div className="space-y-3">
-        {features.map((feature, index) => (
-          <motion.div
+        {features.map((feature) => (
+          <div
             key={feature.title}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
             className="flex items-start gap-3 p-3 rounded-lg bg-background border border-border cursor-default select-none"
           >
             <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -82,7 +72,7 @@ export function WelcomeStep(): React.JSX.Element {
                 {feature.description}
               </p>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -101,6 +91,6 @@ export function WelcomeStep(): React.JSX.Element {
           Dauert ca. 2-3 Minuten
         </p>
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -140,13 +139,7 @@ export function ContactStep(): React.JSX.Element {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <h2 className="text-2xl font-bold text-gray-900">Kontaktinformationen</h2>
@@ -249,6 +242,6 @@ export function ContactStep(): React.JSX.Element {
           'Weiter'
         )}
       </Button>
-    </motion.div>
+    </div>
   );
 }
