@@ -5,6 +5,7 @@ import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StudioRegistrationDialog } from './studio-registration/StudioRegistrationDialog';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 interface StudioRegistrationTriggerProps {
   buttonText?: string;
@@ -32,6 +33,7 @@ export function StudioRegistrationTrigger({
 }: StudioRegistrationTriggerProps): React.JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
+  const { update } = useSession();
 
   // Handle external trigger (for resume functionality)
   useEffect(() => {
@@ -40,8 +42,11 @@ export function StudioRegistrationTrigger({
     }
   }, [externalTrigger]);
 
-  const handleSuccess = (studioId: string): void => {
+  const handleSuccess = async (studioId: string): Promise<void> => {
     console.log('Studio registered successfully:', studioId);
+
+    // Update session to set hasStudio flag
+    await update({ hasStudio: true });
 
     // Dispatch custom event to notify Header component
     window.dispatchEvent(new CustomEvent('studio-registered', {
