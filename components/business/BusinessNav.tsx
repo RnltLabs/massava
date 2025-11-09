@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 import { Session } from 'next-auth';
 import { signOut } from 'next-auth/react';
@@ -46,10 +47,12 @@ export function BusinessNav({ session, locale }: BusinessNavProps): React.JSX.El
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-6">
-      {/* Breadcrumbs or Title - Can be enhanced later */}
-      <div className="text-lg font-semibold text-neutral-900 md:hidden">Massava</div>
+      {/* Logo - Only on mobile, desktop has it in sidebar */}
+      <Link href={`/${locale}/business`} className="flex items-center md:hidden">
+        <span className="text-xl font-bold text-[#B56550]">Massava</span>
+      </Link>
 
-      {/* User Menu */}
+      {/* User Menu - Positioned on the right */}
       <div className="ml-auto">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
