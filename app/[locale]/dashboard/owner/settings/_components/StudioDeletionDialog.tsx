@@ -269,7 +269,7 @@ export function StudioDeletionDialog({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent
           side="bottom"
-          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white dark:bg-gray-900"
+          className="h-[80vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white dark:bg-gray-900"
           showCloseButton={false}
         >
           <VisuallyHidden>
@@ -427,7 +427,6 @@ function PasswordStep({
           onKeyDown={handleKeyDown}
           placeholder="Ihr Passwort eingeben"
           className={`min-h-[48px] text-base ${passwordError ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-          autoFocus
           autoComplete="current-password"
         />
         {passwordError && (

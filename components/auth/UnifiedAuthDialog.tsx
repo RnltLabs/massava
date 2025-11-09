@@ -361,7 +361,7 @@ export function UnifiedAuthDialog({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
+          className="h-[80vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
           showCloseButton={false}
         >
           {/* Accessibility: Hidden title for screen readers */}
