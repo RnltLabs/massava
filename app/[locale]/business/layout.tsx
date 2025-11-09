@@ -145,7 +145,7 @@ export default async function BusinessLayout({
           <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
 
           {/* Page Content */}
-          <main className="p-6">{children}</main>
+          <main className={hasStudio ? "p-6" : ""}>{children}</main>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export default async function BusinessLayout({
         <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
 
         {/* Page Content */}
-        <main className={hasStudio ? "pb-20 pt-16 px-4" : "pt-16 px-4"}>{children}</main>
+        <main className={hasStudio ? "pb-20 pt-16 px-4" : "pt-16"}>{children}</main>
 
         {/* Bottom Navigation - Only show when user has a studio */}
         {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}

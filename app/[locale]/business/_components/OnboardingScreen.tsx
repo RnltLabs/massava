@@ -62,21 +62,8 @@ export function OnboardingScreen({
   const displayName = userName || 'Studio-Besitzer';
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F4EDE8] to-white">
+    <div className="min-h-screen" style={{ backgroundColor: '#F4EDE8' }}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-
-        {/* Welcome Header */}
-        <header className="text-center mb-12">
-          <div className="inline-flex items-center justify-center p-4 bg-[#B56550]/10 rounded-full mb-6">
-            <Building2 className="h-12 w-12 md:h-16 md:w-16 text-[#B56550]" aria-hidden="true" />
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4 text-gray-900">
-            Willkommen, {displayName}!
-          </h1>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-            Bereit, dein Studio auf Massava zu präsentieren?
-          </p>
-        </header>
 
         {/* Main CTA Card */}
         <section className="mb-12" aria-labelledby="cta-heading">
@@ -84,6 +71,9 @@ export function OnboardingScreen({
             <CardContent className="p-10 md:p-16">
               <div className="flex flex-col items-center text-center space-y-8">
                 <div className="space-y-4">
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+                    Willkommen, {displayName}!
+                  </h1>
                   <h2
                     id="cta-heading"
                     className="text-2xl md:text-3xl font-bold text-gray-900"

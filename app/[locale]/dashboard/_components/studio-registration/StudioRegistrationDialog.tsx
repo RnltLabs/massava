@@ -3,7 +3,10 @@
 import React from 'react';
 import { useEffect } from 'react';
 import { X, ArrowLeft } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 import { StudioRegistrationProvider } from './StudioRegistrationContext';
 import { useStudioRegistration } from './hooks/useStudioRegistration';
@@ -145,14 +148,15 @@ function StudioRegistrationContent({
 
 /**
  * Main Studio Registration Dialog Component
- * Responsive: Uses single Dialog component with conditional styling
- * This prevents SSR/hydration mismatches that cause double rendering
+ * Responsive: Sheet on mobile, Dialog on desktop
  */
 export function StudioRegistrationDialog({
   isOpen,
   onClose,
   onSuccess,
-}: StudioRegistrationDialogProps): React.JSX.Element | null {
+}: StudioRegistrationDialogProps): React.JSX.Element {
+  const isMobile = useMediaQuery('(max-width: 767px)');
+
   console.log('🔍 [StudioRegistrationDialog] Rendered - isOpen:', isOpen);
 
   React.useEffect(() => {
@@ -163,28 +167,42 @@ export function StudioRegistrationDialog({
     }
   }, [isOpen]);
 
-  // Don't render the Dialog at all when closed - this prevents multiple portal instances
-  if (!isOpen) {
-    return null;
+  const content = (
+    <StudioRegistrationProvider>
+      <StudioRegistrationContent onClose={onClose} onSuccess={onSuccess} />
+    </StudioRegistrationProvider>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={isOpen} onOpenChange={onClose}>
+        <SheetContent
+          side="bottom"
+          style={{ backgroundColor: '#F4EDE8' }}
+          className="h-[90vh] rounded-t-3xl p-6 overflow-y-auto"
+          showCloseButton={false}
+        >
+          <VisuallyHidden>
+            <SheetTitle>Studio Registration</SheetTitle>
+          </VisuallyHidden>
+          {content}
+        </SheetContent>
+      </Sheet>
+    );
   }
 
   return (
-    <StudioRegistrationProvider>
-      <Dialog open={isOpen} onOpenChange={onClose} modal>
-        <DialogContent
-          style={{ backgroundColor: '#F4EDE8' }}
-          className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
-          showCloseButton={false}
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-        >
-          <DialogTitle className="sr-only">Studio Registration</DialogTitle>
-          <DialogDescription className="sr-only">
-            Complete the registration process to create your studio profile
-          </DialogDescription>
-          <StudioRegistrationContent onClose={onClose} onSuccess={onSuccess} />
-        </DialogContent>
-      </Dialog>
-    </StudioRegistrationProvider>
+    <Dialog open={isOpen} onOpenChange={onClose} modal>
+      <DialogContent
+        style={{ backgroundColor: '#F4EDE8' }}
+        className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
+        showCloseButton={false}
+      >
+        <VisuallyHidden>
+          <DialogTitle>Studio Registration</DialogTitle>
+        </VisuallyHidden>
+        {content}
+      </DialogContent>
+    </Dialog>
   );
 }
