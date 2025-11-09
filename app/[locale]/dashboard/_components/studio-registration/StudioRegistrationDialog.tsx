@@ -98,7 +98,7 @@ function StudioRegistrationContent({
           <button
             onClick={handleBack}
             disabled={isSubmitting}
-            className="p-2 -ml-2 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -108,6 +108,13 @@ function StudioRegistrationContent({
         {/* Spacer when no back button */}
         {(currentStep === 0 || currentStep === 8) && <div className="w-9" />}
 
+        {/* Progress Indicator */}
+        {showProgress && (
+          <div className="flex-1 flex justify-center">
+            <ProgressIndicator currentStep={currentStep} totalSteps={7} />
+          </div>
+        )}
+
         {/* Title (hidden visually, for screen readers) */}
         <h2 className="sr-only">{stepTitle}</h2>
 
@@ -115,22 +122,12 @@ function StudioRegistrationContent({
         <button
           onClick={handleClose}
           disabled={isSubmitting}
-          className={cn(
-            'p-2 -mr-2 rounded-full hover:bg-gray-100',
-            'transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
-          )}
+          className="p-2 -mr-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Close dialog"
         >
-          <X className="h-5 w-5 text-gray-700" />
+          <X className="h-5 w-5" />
         </button>
       </div>
-
-      {/* Progress Indicator */}
-      {showProgress && (
-        <div className="mb-4">
-          <ProgressIndicator currentStep={currentStep} totalSteps={7} />
-        </div>
-      )}
 
       {/* Step Content with cross-fade transition */}
       <AnimatePresence initial={false} mode="wait">
@@ -142,7 +139,6 @@ function StudioRegistrationContent({
           transition={{
             duration: 0.1
           }}
-          className="bg-white"
         >
           {currentStep === 8 ? (
             <SuccessStep
@@ -173,6 +169,7 @@ export function StudioRegistrationDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose} modal>
       <DialogContent
+        style={{ backgroundColor: '#F4EDE8' }}
         className={cn(
           isMobile &&
             'fixed inset-x-0 bottom-0 top-auto rounded-t-3xl h-[90vh] w-full max-w-full translate-x-0 translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom p-6 overflow-y-auto',

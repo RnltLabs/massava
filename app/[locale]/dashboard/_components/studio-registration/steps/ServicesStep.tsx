@@ -454,7 +454,7 @@ export function ServicesStep(): React.JSX.Element {
               ? { backgroundColor: '#B56550' }
               : undefined
           }
-          className="w-full text-white py-5 text-base font-semibold rounded-2xl shadow-lg hover:opacity-90 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed"
+          className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {state.isSubmitting ? (
             <>

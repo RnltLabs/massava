@@ -46,17 +46,17 @@ export function WelcomeStep(): React.JSX.Element {
     >
       {/* Icon - Smaller and closer to top */}
       <div className="flex justify-center">
-        <div className="w-16 h-16 rounded-2xl bg-terracotta-100 flex items-center justify-center">
-          <Building2 className="h-8 w-8 text-terracotta-600" />
+        <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+          <Building2 className="h-8 w-8 text-primary" />
         </div>
       </div>
 
       {/* Header - Compact */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-foreground">
           Lass uns dein Studio-Profil einrichten
         </h2>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Wir helfen dir, in wenigen Schritten ein vollständiges Profil zu erstellen
         </p>
       </div>
@@ -69,16 +69,16 @@ export function WelcomeStep(): React.JSX.Element {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: index * 0.1 + 0.2, duration: 0.3 }}
-            className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200 cursor-default select-none"
+            className="flex items-start gap-3 p-3 rounded-lg bg-background border border-border cursor-default select-none"
           >
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-terracotta-100 flex items-center justify-center">
-              <feature.icon className="h-4 w-4 text-terracotta-600" />
+            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+              <feature.icon className="h-4 w-4 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-sm font-semibold text-foreground">
                 {feature.title}
               </h3>
-              <p className="text-xs text-gray-600 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {feature.description}
               </p>
             </div>
@@ -92,12 +92,12 @@ export function WelcomeStep(): React.JSX.Element {
           type="button"
           onClick={handleGetStarted}
           style={{ backgroundColor: '#B56550' }}
-          className="w-full h-11 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 cursor-pointer"
+          className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
         >
           Los geht&apos;s
         </Button>
 
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-muted-foreground">
           Dauert ca. 2-3 Minuten
         </p>
       </div>

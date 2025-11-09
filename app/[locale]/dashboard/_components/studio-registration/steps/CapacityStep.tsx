@@ -124,7 +124,7 @@ export function CapacityStep(): React.JSX.Element {
         <Button
           onClick={handleContinue}
           style={{ backgroundColor: '#B56550' }}
-          className="w-full text-white py-6 text-lg font-semibold rounded-2xl shadow-lg hover:opacity-90 transition-all"
+          className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90"
         >
           Weiter
         </Button>
