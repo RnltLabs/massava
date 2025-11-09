@@ -6,10 +6,12 @@
 import React, { ReactNode } from 'react';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 import { BusinessSidebar } from '@/components/business/BusinessSidebar';
 import { BusinessNav } from '@/components/business/BusinessNav';
 import { MobileBusinessNav } from '@/components/business/MobileBusinessNav';
-import { UserRole } from '@/app/generated/prisma';
+import { UserRole, BookingStatus } from '@/app/generated/prisma';
 
 /**
  * Runtime Configuration: Node.js
@@ -32,6 +34,44 @@ interface BusinessLayoutProps {
   params: Promise<{
     locale: string;
   }>;
+}
+
+async function getPendingBookingsCount(userEmail: string): Promise<number> {
+  try {
+    // Get user's studio via User->StudioOwnership->Studio path
+    const user = await prisma.user.findUnique({
+      where: { email: userEmail },
+      include: {
+        ownedStudios: {
+          include: {
+            studio: true,
+          },
+        },
+      },
+    });
+
+    if (!user || user.ownedStudios.length === 0) {
+      return 0;
+    }
+
+    const studioId = user.ownedStudios[0].studioId;
+
+    // Get pending bookings count
+    const pendingCount = await prisma.newBooking.count({
+      where: {
+        studioId,
+        status: BookingStatus.PENDING,
+      },
+    });
+
+    return pendingCount;
+  } catch (error) {
+    logger.error('Error fetching pending bookings count', {
+      error: error instanceof Error ? error.message : String(error),
+      userEmail
+    });
+    return 0;
+  }
 }
 
 export default async function BusinessLayout({
@@ -63,6 +103,9 @@ export default async function BusinessLayout({
     redirect(`/${locale}/dashboard`);
   }
 
+  // Get pending bookings count for badge
+  const pendingCount = await getPendingBookingsCount(session.user?.email ?? '');
+
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Desktop Layout */}
@@ -89,7 +132,7 @@ export default async function BusinessLayout({
         <main className="pb-20 pt-16 px-4">{children}</main>
 
         {/* Bottom Navigation */}
-        <MobileBusinessNav locale={locale} />
+        <MobileBusinessNav locale={locale} pendingCount={pendingCount} />
       </div>
     </div>
   );
