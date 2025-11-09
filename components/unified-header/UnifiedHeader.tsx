@@ -58,7 +58,7 @@ export function UnifiedHeader({ className }: UnifiedHeaderProps): React.JSX.Elem
     <>
       <header
         className={cn(
-          'sticky top-0 z-50 w-full',
+          'fixed top-0 z-50 w-full',
           'h-14 md:h-16',
           'bg-card/80 backdrop-blur-lg',
           'border-b border-muted/20',
