@@ -66,7 +66,7 @@ export async function signUp(
     if (existingUser) {
       return {
         success: false,
-        error: 'An account with this email already exists',
+        error: 'Ein Konto mit dieser E-Mail-Adresse existiert bereits',
       };
     }
 
@@ -114,7 +114,7 @@ export async function signUp(
     console.error('Registration error:', error);
     return {
       success: false,
-      error: 'An unexpected error occurred during registration',
+      error: 'Ein unerwarteter Fehler ist bei der Registrierung aufgetreten',
     };
   }
 }

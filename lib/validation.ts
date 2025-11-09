@@ -20,9 +20,9 @@ import { z } from 'zod';
  */
 export const unifiedPasswordSchema = z
   .string()
-  .min(10, 'Password must be at least 10 characters')
-  .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-  .regex(/[0-9]/, 'Password must contain at least one number');
+  .min(10, 'Passwort muss mindestens 10 Zeichen lang sein')
+  .regex(/[A-Z]/, 'Passwort muss mindestens einen Großbuchstaben enthalten')
+  .regex(/[0-9]/, 'Passwort muss mindestens eine Zahl enthalten');
 
 /**
  * Legacy Strong Password Schema
@@ -86,7 +86,7 @@ export const phoneSchema = z
  * Role determined by accountType selection
  */
 export const unifiedRegistrationSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
+  name: z.string().min(2, 'Name muss mindestens 2 Zeichen lang sein'),
   email: emailSchema,
   password: unifiedPasswordSchema,
   phone: z
@@ -103,7 +103,7 @@ export const unifiedRegistrationSchema = z.object({
       }
     ),
   terms: z.boolean().refine(val => val === true, {
-    message: 'You must agree to the terms and privacy policy',
+    message: 'Sie müssen die Nutzungsbedingungen und Datenschutzerklärung akzeptieren',
   }),
   accountType: z.enum(['customer', 'studio']).default('customer'),
 });
