@@ -71,9 +71,14 @@ export function OnboardingScreen({
             <CardContent className="p-6 sm:p-8 md:p-10">
               <div className="flex flex-col items-center text-center space-y-5 md:space-y-6">
                 <div className="space-y-2 md:space-y-3">
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
-                    Willkommen, {displayName}!
-                  </h1>
+                  <div>
+                    <div className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+                      Willkommen,
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-gray-900">
+                      {displayName}!
+                    </h1>
+                  </div>
                   <h2
                     id="cta-heading"
                     className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900"
@@ -99,13 +104,13 @@ export function OnboardingScreen({
                 </div>
 
                 {/* Trust Indicators - 2 columns on mobile, 3 on larger screens */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 pt-4 w-full max-w-2xl">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 pt-4 w-full max-w-2xl justify-items-center">
                   {trustIndicators.map((indicator, index) => {
                     const Icon = indicator.icon;
                     return (
                       <div
                         key={index}
-                        className="flex flex-col items-center gap-1.5 sm:gap-2 text-center"
+                        className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 text-center w-full"
                         role="status"
                         aria-label={indicator.label}
                       >
