@@ -33,15 +33,13 @@ const intlMiddleware = createIntlMiddleware({
 
 /**
  * Routes that require a registered studio
- * Users without a studio will be redirected to /business/onboarding
+ * Users without a studio will be redirected to /business (onboarding)
  */
 const STUDIO_REQUIRED_ROUTES = [
   '/business/bookings',
   '/business/calendar',
   '/business/settings',
-  '/business/more',
   '/business/actions',
-  '/business/help',
 ];
 
 /**
