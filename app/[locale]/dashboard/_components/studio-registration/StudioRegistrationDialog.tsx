@@ -141,6 +141,7 @@ function StudioRegistrationContent({
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -20 }}
           transition={{ duration: 0.3, ease: 'easeInOut' }}
+          className="relative z-10"
         >
           {currentStep === 8 ? (
             <SuccessStep
@@ -179,14 +180,14 @@ export function StudioRegistrationDialog({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
+          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white flex flex-col"
           showCloseButton={false}
         >
           <SheetTitle className="sr-only">Studio Registration</SheetTitle>
           <SheetDescription className="sr-only">
             Complete the registration process to create your studio profile
           </SheetDescription>
-          <div className="overflow-y-auto h-full px-6 pt-4 pb-8">
+          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
             {content}
           </div>
         </SheetContent>
@@ -198,14 +199,14 @@ export function StudioRegistrationDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[500px] p-0 gap-0 bg-white border-0 shadow-2xl"
+        className="sm:max-w-[500px] max-h-[90vh] p-0 gap-0 bg-white border-0 shadow-2xl flex flex-col"
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">Studio Registration</DialogTitle>
         <DialogDescription className="sr-only">
           Complete the registration process to create your studio profile
         </DialogDescription>
-        <div className="px-6 pt-4 pb-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
           {content}
         </div>
       </DialogContent>

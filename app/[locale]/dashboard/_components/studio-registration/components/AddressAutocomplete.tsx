@@ -208,7 +208,7 @@ export function AddressAutocomplete({
           ref={dropdownRef}
           id="address-suggestions"
           role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-auto"
+          className="absolute z-[100] w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-[240px] overflow-y-auto"
         >
           {suggestions.map((suggestion, index) => (
             <button
