@@ -15,7 +15,7 @@ interface ServicesSettingsPageProps {
   }>;
 }
 
-async function getStudioServices(userEmail: string) {
+async function getStudioData(userEmail: string) {
   const user = await prisma.user.findUnique({
     where: { email: userEmail },
     include: {
@@ -31,7 +31,11 @@ async function getStudioServices(userEmail: string) {
     },
   });
 
-  return user?.ownedStudios[0]?.studio?.services ?? [];
+  const studioData = user?.ownedStudios[0]?.studio;
+  return {
+    services: studioData?.services ?? [],
+    studioId: studioData?.id ?? '',
+  };
 }
 
 export default async function ServicesSettingsPage({
@@ -46,7 +50,7 @@ export default async function ServicesSettingsPage({
     );
   }
 
-  const services = await getStudioServices(session.user?.email ?? '');
+  const { services, studioId } = await getStudioData(session.user?.email ?? '');
 
-  return <ServicesPageClient services={services} />;
+  return <ServicesPageClient services={services} studioId={studioId} />;
 }

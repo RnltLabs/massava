@@ -178,7 +178,25 @@ export default async function BusinessDashboardPage({
     redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business`);
   }
 
-  const dashboardData = await getDashboardData(session.user?.email ?? '');
+  // Check if user owns any studios
+  const userEmail = session.user?.email ?? '';
+  const user = await prisma.user.findUnique({
+    where: { email: userEmail },
+    include: {
+      ownedStudios: {
+        include: {
+          studio: true,
+        },
+      },
+    },
+  });
+
+  // If user has no studios, redirect to onboarding to complete studio registration
+  if (!user || user.ownedStudios.length === 0) {
+    redirect(`/${locale}/business/onboarding`);
+  }
+
+  const dashboardData = await getDashboardData(userEmail);
 
   return (
     <TodayDashboard
