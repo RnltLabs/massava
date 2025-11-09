@@ -2,10 +2,9 @@
 
 import React from 'react';
 import { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 
@@ -92,7 +91,7 @@ function StudioRegistrationContent({
 
   return (
     <div className="relative">
-      {/* Header */}
+      {/* Header - Fixed position to prevent layout shift */}
       <div className="flex items-center justify-between mb-4">
         {/* Back Button */}
         {currentStep > 0 && currentStep < 8 && (
@@ -133,15 +132,17 @@ function StudioRegistrationContent({
         </div>
       )}
 
-      {/* Step Content */}
-      <AnimatePresence mode="wait">
+      {/* Step Content with cross-fade transition */}
+      <AnimatePresence initial={false} mode="wait">
         <motion.div
           key={currentStep}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-          className="relative z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{
+            duration: 0.1
+          }}
+          className="bg-white"
         >
           {currentStep === 8 ? (
             <SuccessStep
@@ -159,7 +160,8 @@ function StudioRegistrationContent({
 
 /**
  * Main Studio Registration Dialog Component
- * Responsive: Sheet on mobile, Dialog on desktop
+ * Responsive: Uses single Dialog component with conditional styling
+ * This prevents SSR/hydration mismatches that cause double rendering
  */
 export function StudioRegistrationDialog({
   isOpen,
@@ -168,47 +170,25 @@ export function StudioRegistrationDialog({
 }: StudioRegistrationDialogProps): React.JSX.Element {
   const isMobile = useMediaQuery('(max-width: 767px)');
 
-  const content = (
-    <StudioRegistrationProvider>
-      <StudioRegistrationContent onClose={onClose} onSuccess={onSuccess} />
-    </StudioRegistrationProvider>
-  );
-
-  // Mobile: Sheet
-  if (isMobile) {
-    return (
-      <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent
-          side="bottom"
-          className="h-[95vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white flex flex-col"
-          showCloseButton={false}
-        >
-          <SheetTitle className="sr-only">Studio Registration</SheetTitle>
-          <SheetDescription className="sr-only">
-            Complete the registration process to create your studio profile
-          </SheetDescription>
-          <div className="flex-1 overflow-y-auto px-6 pt-4 pb-8">
-            {content}
-          </div>
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
-  // Desktop: Dialog
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal>
       <DialogContent
-        className="sm:max-w-[500px] max-h-[90vh] p-0 gap-0 bg-white border-0 shadow-2xl flex flex-col"
+        className={cn(
+          isMobile &&
+            'fixed inset-x-0 bottom-0 top-auto rounded-t-3xl h-[90vh] w-full max-w-full translate-x-0 translate-y-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom p-6 overflow-y-auto',
+          !isMobile && 'sm:max-w-[500px] max-h-[90vh] overflow-y-auto'
+        )}
         showCloseButton={false}
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogTitle className="sr-only">Studio Registration</DialogTitle>
         <DialogDescription className="sr-only">
           Complete the registration process to create your studio profile
         </DialogDescription>
-        <div className="flex-1 overflow-y-auto px-6 pt-4 pb-6">
-          {content}
-        </div>
+        <StudioRegistrationProvider>
+          <StudioRegistrationContent onClose={onClose} onSuccess={onSuccess} />
+        </StudioRegistrationProvider>
       </DialogContent>
     </Dialog>
   );
