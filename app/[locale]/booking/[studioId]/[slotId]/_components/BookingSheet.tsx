@@ -331,7 +331,7 @@ export function BookingSheet({
         <Sheet open={isOpen} onOpenChange={onClose}>
           <SheetContent
             side="bottom"
-            className="h-[85vh] rounded-t-3xl p-4 flex flex-col"
+            className="h-[80vh] rounded-t-3xl p-4 flex flex-col"
           >
             {/* Drag Handle - Reduced margin: mb-4 (was mb-6) */}
             <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4 flex-shrink-0" />
