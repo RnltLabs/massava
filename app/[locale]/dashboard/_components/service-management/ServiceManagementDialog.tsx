@@ -184,6 +184,7 @@ export function ServiceManagementDialog({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
+          style={{ backgroundColor: '#F4EDE8' }}
           className="h-[90vh] rounded-t-3xl p-6 overflow-y-auto"
           showCloseButton={false}
         >
@@ -199,6 +200,7 @@ export function ServiceManagementDialog({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
+        style={{ backgroundColor: '#F4EDE8' }}
         className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
         showCloseButton={false}
       >
