@@ -10,7 +10,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Calendar, User, Settings, LayoutDashboard, LogOut, HelpCircle, Globe, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -76,25 +76,36 @@ export function MobileProfileSheet({
           </Avatar>
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="rounded-t-3xl p-6 pb-8">
-        {/* User Info Header */}
-        <div className="mb-4 flex items-center gap-3">
+      <SheetContent
+        side="bottom"
+        className="max-h-[85vh] rounded-t-[20px] px-4 pb-8 overflow-y-auto flex flex-col gap-0"
+      >
+        {/* Drag Handle (accessibility + affordance) */}
+        <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted-foreground/20 mb-4 mt-2" />
+
+        {/* Accessible Title (required for screen readers) */}
+        <SheetHeader className="sr-only">
+          <SheetTitle>Profile Menu</SheetTitle>
+        </SheetHeader>
+
+        {/* User Info Header (Compact) */}
+        <div className="flex items-center gap-3 pb-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={user?.image || undefined} alt={user?.name || 'User'} />
             <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
               {getUserInitials(user?.name)}
             </AvatarFallback>
           </Avatar>
-          <div className="flex-1 overflow-hidden">
-            <p className="font-semibold truncate">{user?.name || 'User'}</p>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-base truncate">{user?.name || 'User'}</p>
             <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
 
-        <Separator className="my-4" />
+        <Separator className="mb-2" />
 
-        {/* Navigation Items */}
-        <nav className="space-y-1">
+        {/* Primary Navigation */}
+        <nav className="flex flex-col gap-1 mb-2">
           {isStudioOwner ? (
             <>
               <SheetMenuItem
@@ -143,52 +154,54 @@ export function MobileProfileSheet({
           )}
         </nav>
 
-        <Separator className="my-4" />
+        <Separator className="my-2" />
 
-        {/* Language Selection */}
-        <div className="space-y-1">
+        {/* Secondary Actions - Language Selection */}
+        <div className="flex flex-col gap-1 mb-2">
           <p className="px-4 py-2 text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
             Language
           </p>
           <button
             onClick={() => handleLocaleChange('de')}
-            className="w-full px-4 py-3 flex items-center justify-between rounded-xl hover:bg-accent transition-colors"
+            className="w-full h-12 px-4 flex items-center justify-between rounded-xl hover:bg-accent transition-colors"
           >
-            <span>Deutsch</span>
+            <span className="font-medium">Deutsch</span>
             {locale === 'de' && <Check className="h-4 w-4 text-primary" />}
           </button>
           <button
             onClick={() => handleLocaleChange('en')}
-            className="w-full px-4 py-3 flex items-center justify-between rounded-xl hover:bg-accent transition-colors"
+            className="w-full h-12 px-4 flex items-center justify-between rounded-xl hover:bg-accent transition-colors"
           >
-            <span>English</span>
+            <span className="font-medium">English</span>
             {locale === 'en' && <Check className="h-4 w-4 text-primary" />}
           </button>
+
+          {isStudioOwner && (
+            <Link
+              href={`/${locale}/business/help`}
+              onClick={() => onOpenChange(false)}
+              className="flex items-center gap-3 h-12 px-4 rounded-xl hover:bg-accent transition-colors"
+            >
+              <HelpCircle className="h-5 w-5" />
+              <span className="flex-1 font-medium">Help</span>
+            </Link>
+          )}
         </div>
 
-        {isStudioOwner && (
-          <>
-            <Separator className="my-4" />
-            <SheetMenuItem
-              href={`/${locale}/business/help`}
-              icon={HelpCircle}
-              label="Help"
-              onClick={() => onOpenChange(false)}
-            />
-          </>
-        )}
+        <Separator className="my-2" />
 
-        <Separator className="my-4" />
-
-        {/* Logout */}
+        {/* Logout (Destructive Action) */}
         <button
           onClick={handleLogout}
-          className="w-full px-4 py-3 flex items-center gap-3 rounded-xl hover:bg-destructive/10 text-destructive transition-colors"
+          className="w-full h-12 px-4 flex items-center gap-3 rounded-xl hover:bg-destructive/10 text-destructive transition-colors font-medium"
         >
           <LogOut className="h-5 w-5" />
-          <span className="font-medium">Logout</span>
+          <span>Logout</span>
         </button>
+
+        {/* Bottom padding for safe area */}
+        <div className="h-2" />
       </SheetContent>
     </Sheet>
   );
@@ -207,12 +220,12 @@ function SheetMenuItem({ href, icon: Icon, label, badge, onClick }: SheetMenuIte
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-accent transition-colors"
+      className="flex items-center gap-3 h-12 px-4 rounded-xl hover:bg-accent transition-colors"
     >
-      <Icon className="h-5 w-5" />
+      <Icon className="h-5 w-5 text-muted-foreground" />
       <span className="flex-1 font-medium">{label}</span>
       {badge && (
-        <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
+        <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs ml-auto">
           {badge}
         </Badge>
       )}
