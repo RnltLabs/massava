@@ -185,7 +185,7 @@ export function ServiceManagementDialog({
         <SheetContent
           side="bottom"
           style={{ backgroundColor: '#F4EDE8' }}
-          className="h-[90vh] rounded-t-3xl p-6 overflow-y-auto"
+          className="h-[80vh] rounded-t-3xl p-6 overflow-y-auto"
           showCloseButton={false}
         >
           <VisuallyHidden>

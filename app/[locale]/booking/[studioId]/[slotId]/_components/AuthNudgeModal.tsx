@@ -289,7 +289,7 @@ export function AuthNudgeModal({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[90vh] rounded-t-3xl overflow-y-auto"
+          className="h-[80vh] rounded-t-3xl overflow-y-auto"
         >
           {/* Drag Handle */}
           <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />

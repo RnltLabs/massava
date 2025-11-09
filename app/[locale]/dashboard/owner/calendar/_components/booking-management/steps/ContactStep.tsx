@@ -97,7 +97,6 @@ export function ContactStep(): React.JSX.Element {
                 setErrors({});
               }
             }}
-            autoFocus
           />
           {state.errors.name && (
             <p className="text-sm text-destructive">{state.errors.name}</p>

@@ -86,7 +86,6 @@ export function ServicePriceStep({
             max={500}
             step={5}
             className="h-14 pl-10 text-2xl font-bold text-center"
-            autoFocus
           />
         </div>
         <p
