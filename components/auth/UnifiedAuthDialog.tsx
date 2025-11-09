@@ -123,7 +123,27 @@ export function UnifiedAuthDialog({
         // Don't close - show success message in form
       } else {
         console.error('❌ [CLIENT] Signup error:', result.error, result.errors);
-        throw new Error(result.error || 'Registration failed');
+
+        // Handle validation errors (field-level errors from Zod)
+        if (result.errors) {
+          // Convert server validation errors to user-friendly messages
+          const errorMessages: string[] = [];
+
+          Object.entries(result.errors).forEach(([field, messages]) => {
+            if (Array.isArray(messages) && messages.length > 0) {
+              errorMessages.push(`${field}: ${messages.join(', ')}`);
+            }
+          });
+
+          const errorMessage = errorMessages.length > 0
+            ? errorMessages.join('; ')
+            : 'Validierung fehlgeschlagen';
+
+          throw new Error(errorMessage);
+        }
+
+        // Handle general error message
+        throw new Error(result.error || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.');
       }
     } catch (error) {
       console.error('❌ [CLIENT] Signup exception:', error);
