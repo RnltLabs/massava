@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { StudioRegistrationTrigger } from '@/app/[locale]/dashboard/_components/StudioRegistrationTrigger';
-import { DraftResumeBanner } from './DraftResumeBanner';
 
 interface OnboardingScreenProps {
   userName?: string | null;
@@ -61,17 +60,10 @@ export function OnboardingScreen({
   locale,
 }: OnboardingScreenProps): React.JSX.Element {
   const displayName = userName || 'Studio-Besitzer';
-  const [triggerOpen, setTriggerOpen] = useState(false);
-
-  const handleResumeDraft = (): void => {
-    setTriggerOpen(true);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F4EDE8] to-white">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-        {/* Draft Resume Banner */}
-        <DraftResumeBanner onResume={handleResumeDraft} />
 
         {/* Welcome Header */}
         <header className="text-center mb-12">
@@ -113,8 +105,6 @@ export function OnboardingScreen({
                     variant="default"
                     size="lg"
                     className="text-lg px-10 py-7 w-full sm:w-auto bg-[#B56550] hover:bg-[#A0554A] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-                    externalTrigger={triggerOpen}
-                    onExternalTriggerChange={setTriggerOpen}
                   />
                 </div>
 
