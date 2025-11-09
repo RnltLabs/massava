@@ -141,14 +141,14 @@ export default async function BusinessLayout({
         {/* Main Content */}
         <div className={hasStudio ? "flex-1 ml-64" : "flex-1"}>
           {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
-          <main className={hasStudio ? "p-6" : ""}>{children}</main>
+          <main className={hasStudio ? "p-6" : "-mt-14 md:-mt-16"}>{children}</main>
         </div>
       </div>
 
       {/* Mobile Layout */}
       <div className="md:hidden">
         {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
-        <main className={hasStudio ? "pb-20 px-4" : ""}>{children}</main>
+        <main className={hasStudio ? "pb-20 px-4" : "-mt-14"}>{children}</main>
 
         {/* Bottom Navigation - Only show when user has a studio */}
         {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}
