@@ -10,11 +10,6 @@ import type {
 import type { OpeningHoursFormData } from './validation/openingHoursSchema';
 import type { ServiceFormData } from './validation/servicesSchema';
 import type { ImagesStepPreview } from './validation/imagesSchema';
-import {
-  saveDraft,
-  loadDraft,
-  clearDraft,
-} from '@/lib/storage/registration-draft';
 
 /**
  * Studio Registration State
@@ -50,7 +45,6 @@ type StudioRegistrationAction =
   | { type: 'SET_ERRORS'; payload: Record<string, string> }
   | { type: 'SET_SUBMITTING'; payload: boolean }
   | { type: 'SET_STUDIO_ID'; payload: string }
-  | { type: 'LOAD_DRAFT'; payload: { formData: StudioRegistrationState['formData']; currentStep: number } }
   | { type: 'RESET' };
 
 /**
@@ -72,7 +66,6 @@ interface StudioRegistrationContextValue {
   setErrors: (errors: Record<string, string>) => void;
   setSubmitting: (isSubmitting: boolean) => void;
   setStudioId: (studioId: string) => void;
-  loadDraftData: () => void;
   reset: () => void;
 }
 
@@ -201,13 +194,6 @@ function studioRegistrationReducer(
         studioId: action.payload,
       };
 
-    case 'LOAD_DRAFT':
-      return {
-        ...state,
-        formData: action.payload.formData,
-        currentStep: action.payload.currentStep,
-      };
-
     case 'RESET':
       return initialState;
 
@@ -234,25 +220,6 @@ export function StudioRegistrationProvider({
   children,
 }: StudioRegistrationProviderProps): React.JSX.Element {
   const [state, dispatch] = useReducer(studioRegistrationReducer, initialState);
-
-  // Auto-save draft after state changes
-  useEffect(() => {
-    // Don't save if:
-    // - Currently submitting
-    // - On welcome step (0)
-    // - On success step (8)
-    // - Has studioId (registration completed)
-    if (!state.isSubmitting && state.currentStep > 0 && state.currentStep < 8 && !state.studioId) {
-      saveDraft(state);
-    }
-  }, [state]);
-
-  // Clear draft on successful completion
-  useEffect(() => {
-    if (state.studioId && state.currentStep === 8) {
-      clearDraft();
-    }
-  }, [state.studioId, state.currentStep]);
 
   const contextValue: StudioRegistrationContextValue = {
     state,
@@ -296,20 +263,7 @@ export function StudioRegistrationProvider({
     setStudioId: (studioId: string) => {
       dispatch({ type: 'SET_STUDIO_ID', payload: studioId });
     },
-    loadDraftData: () => {
-      const draft = loadDraft();
-      if (draft) {
-        dispatch({
-          type: 'LOAD_DRAFT',
-          payload: {
-            formData: draft.formData,
-            currentStep: draft.currentStep,
-          },
-        });
-      }
-    },
     reset: () => {
-      clearDraft();
       dispatch({ type: 'RESET' });
     },
   };

@@ -34,15 +34,10 @@ function StudioRegistrationContent({
   onClose: () => void;
   onSuccess?: (studioId: string) => void;
 }): React.JSX.Element {
-  const { state, goToPreviousStep, reset, loadDraftData } = useStudioRegistration();
+  const { state, goToPreviousStep, reset } = useStudioRegistration();
   const { currentStep, isSubmitting, studioId } = state;
 
   console.log('🎯 StudioRegistrationContent rendered, currentStep:', currentStep);
-
-  // Load draft on mount
-  useEffect(() => {
-    loadDraftData();
-  }, [loadDraftData]);
 
   // Handle success
   useEffect(() => {
