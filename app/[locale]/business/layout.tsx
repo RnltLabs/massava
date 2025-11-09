@@ -9,7 +9,6 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { BusinessSidebar } from '@/components/business/BusinessSidebar';
-import { BusinessNav } from '@/components/business/BusinessNav';
 import { MobileBusinessNav } from '@/components/business/MobileBusinessNav';
 import { UserRole, BookingStatus } from '@/app/generated/prisma';
 
@@ -141,21 +140,15 @@ export default async function BusinessLayout({
 
         {/* Main Content */}
         <div className={hasStudio ? "flex-1 ml-64" : "flex-1"}>
-          {/* Top Navigation */}
-          <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
-
-          {/* Page Content */}
+          {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
           <main className={hasStudio ? "p-6" : ""}>{children}</main>
         </div>
       </div>
 
       {/* Mobile Layout */}
       <div className="md:hidden">
-        {/* Top Navigation */}
-        <BusinessNav session={session} locale={locale} hasStudio={hasStudio} />
-
-        {/* Page Content */}
-        <main className={hasStudio ? "pb-20 pt-16 px-4" : "pt-16"}>{children}</main>
+        {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
+        <main className={hasStudio ? "pb-20 px-4" : ""}>{children}</main>
 
         {/* Bottom Navigation - Only show when user has a studio */}
         {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}

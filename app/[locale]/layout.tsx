@@ -9,7 +9,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales, type Locale } from '@/i18n';
-import Header from '@/components/Header';
+import { UnifiedHeader } from '@/components/unified-header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
@@ -69,8 +69,8 @@ export default async function LocaleLayout({
         <SessionProvider>
           <GoogleAnalytics />
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <Header />
-            <main className="pt-16">
+            <UnifiedHeader />
+            <main className="pt-14 md:pt-16">
               {children}
             </main>
             <CookieConsentBanner />
