@@ -41,5 +41,69 @@
       "afternoon": "12:00 - 17:00",
       "evening": "17:00 - 22:00"
     }
+  },
+  "business": {
+    "nav": {
+      "today": "Heute",
+      "week": "Woche",
+      "new": "Neu",
+      "requests": "Anfragen",
+      "more": "Mehr"
+    },
+    "dashboard": {
+      "greeting": "Guten {timeOfDay}, {name}",
+      "greetingMorning": "Morgen",
+      "greetingAfternoon": "Tag",
+      "greetingEvening": "Abend",
+      "todayOverview": "Heute im Überblick",
+      "appointments": "Termine",
+      "open": "Offen",
+      "revenue": "Umsatz",
+      "cancelled": "Abgesagt",
+      "nextAppointment": "Nächster Termin",
+      "todayAppointments": "Heutige Termine",
+      "openRequests": "Offene Anfragen",
+      "noAppointments": "Keine Termine heute",
+      "noRequests": "Keine offenen Anfragen",
+      "confirmed": "Bestätigt",
+      "pending": "Ausstehend",
+      "contact": "Kontaktieren",
+      "details": "Details",
+      "confirm": "Bestätigen",
+      "decline": "Ablehnen"
+    },
+    "booking": {
+      "status": {
+        "pending": "Ausstehend",
+        "confirmed": "Bestätigt",
+        "cancelled": "Abgesagt"
+      },
+      "noService": "Kein Service",
+      "confirmBooking": "Buchung bestätigen",
+      "declineBooking": "Buchung ablehnen",
+      "contactCustomer": "Kunde kontaktieren"
+    },
+    "quickActions": {
+      "title": "Schnellaktionen",
+      "blockTime": "Zeit blockieren",
+      "blockTimeDesc": "Pause, Urlaub oder privat",
+      "editService": "Service bearbeiten",
+      "editServiceDesc": "Preise oder Details anpassen",
+      "viewStats": "Statistiken ansehen",
+      "viewStatsDesc": "Umsatz und Auslastung",
+      "editHours": "Öffnungszeiten ändern",
+      "editHoursDesc": "Geschäftszeiten anpassen"
+    },
+    "more": {
+      "title": "Profil & Einstellungen",
+      "profile": "Profil bearbeiten",
+      "services": "Services verwalten",
+      "servicesCount": "{count} Services aktiv",
+      "hours": "Öffnungszeiten",
+      "location": "Standort & Kontakt",
+      "stats": "Statistiken & Berichte",
+      "help": "Hilfe & Support",
+      "signOut": "Abmelden"
+    }
   }
 }
