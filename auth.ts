@@ -27,6 +27,24 @@ import { authConfig } from './auth.config';
 
 console.log('[NextAuth] Initializing with basePath:', process.env.NEXTAUTH_BASEPATH || '/api/auth');
 
+/**
+ * Helper function to check if user owns a studio
+ * Used to determine sidebar visibility and route access
+ */
+async function checkStudioOwnership(userId: string): Promise<boolean> {
+  try {
+    const ownership = await prisma.studioOwnership.findFirst({
+      where: {
+        userId,
+      },
+    });
+    return !!ownership;
+  } catch (error) {
+    console.error('[NextAuth] Error checking studio ownership:', error);
+    return false;
+  }
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
 
@@ -181,6 +199,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         token.accountType = (user as any).accountType || 'customer';
 
+        // Check studio ownership for progressive onboarding UX
+        token.hasStudio = user.id ? await checkStudioOwnership(user.id) : false;
+
         // P0.6 FIX: Session versioning
         token.sessionVersion = 1;
         token.issuedAt = Date.now();
@@ -215,6 +236,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.primaryRole = dbUser.primaryRole;
           token.roles = currentRoles;
         }
+
+        // Re-check studio ownership on session update
+        token.hasStudio = await checkStudioOwnership(token.id as string);
       }
 
       // OAuth sign in - fetch roles from database
@@ -238,6 +262,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ];
           token.sessionVersion = 1;
           token.issuedAt = Date.now();
+
+          // Check studio ownership for OAuth users
+          token.hasStudio = await checkStudioOwnership(dbUser.id);
         }
       }
 

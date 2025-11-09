@@ -71,6 +71,8 @@ export const authConfig = {
         (session.user as any).roles = token.roles;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (session.user as any).accountType = token.accountType || 'customer';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).hasStudio = token.hasStudio ?? false;
       }
 
       return session;

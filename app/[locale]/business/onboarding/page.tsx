@@ -7,6 +7,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { StudioRegistrationDialog } from '@/app/[locale]/dashboard/_components/studio-registration/StudioRegistrationDialog';
 
 interface OnboardingPageProps {
@@ -25,6 +26,7 @@ export default function OnboardingPage({ params }: OnboardingPageProps): React.J
   const { locale } = use(params);
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
+  const { update } = useSession();
 
   useEffect(() => {
     // Auto-open the registration dialog on mount
@@ -37,9 +39,11 @@ export default function OnboardingPage({ params }: OnboardingPageProps): React.J
     router.push(`/${locale}`);
   };
 
-  const handleSuccess = (studioId: string): void => {
+  const handleSuccess = async (studioId: string): Promise<void> => {
+    // Update session to include hasStudio flag
+    await update({ hasStudio: true });
+
     // Redirect to business dashboard after successful registration
-    console.log('Studio registered successfully:', studioId);
     router.push(`/${locale}/business?registered=true`);
   };
 

@@ -32,6 +32,19 @@ const intlMiddleware = createIntlMiddleware({
 });
 
 /**
+ * Routes that require a registered studio
+ * Users without a studio will be redirected to /business/onboarding
+ */
+const STUDIO_REQUIRED_ROUTES = [
+  '/business/bookings',
+  '/business/calendar',
+  '/business/settings',
+  '/business/more',
+  '/business/actions',
+  '/business/help',
+];
+
+/**
  * Check if a path is a business portal route
  */
 function isBusinessPortalRoute(pathname: string): boolean {
@@ -41,6 +54,17 @@ function isBusinessPortalRoute(pathname: string): boolean {
   return (
     pathWithoutLocale.startsWith('/business') ||
     pathWithoutLocale.startsWith('/api/business')
+  );
+}
+
+/**
+ * Check if a path requires a registered studio
+ */
+function requiresStudio(pathname: string): boolean {
+  const pathWithoutLocale = pathname.replace(/^\/(de|en|th|zh|vi|pl|ru)/, '');
+
+  return STUDIO_REQUIRED_ROUTES.some((route) =>
+    pathWithoutLocale.startsWith(route)
   );
 }
 
@@ -91,6 +115,19 @@ export default async function middleware(request: NextRequest) {
       const unauthorizedUrl = new URL('/unauthorized', request.url);
       unauthorizedUrl.searchParams.set('requested', pathname);
       return NextResponse.redirect(unauthorizedUrl);
+    }
+
+    // Check if route requires studio ownership
+    if (requiresStudio(pathname)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasStudio = (session.user as any)?.hasStudio ?? false;
+
+      if (!hasStudio) {
+        // Extract locale from pathname
+        const locale = pathname.match(/^\/(de|en|th|zh|vi|pl|ru)/)?.[1] || 'en';
+        const onboardingUrl = new URL(`/${locale}/business/onboarding`, request.url);
+        return NextResponse.redirect(onboardingUrl);
+      }
     }
   }
 

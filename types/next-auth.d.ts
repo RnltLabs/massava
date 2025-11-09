@@ -16,6 +16,7 @@ declare module 'next-auth' {
       primaryRole?: UserRole;
       roles?: UserRole[];
       accountType?: 'customer' | 'studio';
+      hasStudio?: boolean;
     } & DefaultSession['user'];
   }
 
@@ -23,6 +24,7 @@ declare module 'next-auth' {
     primaryRole?: UserRole;
     roles?: UserRole[];
     accountType?: 'customer' | 'studio';
+    hasStudio?: boolean;
   }
 }
 
@@ -32,5 +34,6 @@ declare module 'next-auth/jwt' {
     primaryRole?: UserRole;
     roles?: UserRole[];
     accountType?: 'customer' | 'studio';
+    hasStudio?: boolean;
   }
 }
