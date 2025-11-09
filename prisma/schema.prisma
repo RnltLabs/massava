@@ -336,12 +336,24 @@ model NewBooking {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Single-column indexes
   @@index([studioId])
   @@index([serviceId])
   @@index([customerId])
   @@index([customerEmail])
   @@index([status])
   @@index([createdAt])
+
+  // Composite indexes for common query patterns (Performance Optimization)
+  // Dashboard query: Today's bookings by studio (filtered by date range + studio)
+  @@index([studioId, createdAt])
+
+  // Pending requests query: Pending bookings by studio, ordered by creation time
+  @@index([studioId, status, createdAt])
+
+  // Confirmed bookings for revenue calculation: Studio + status filter
+  @@index([studioId, status])
+
   @@map("new_bookings")
 }
 
