@@ -82,6 +82,7 @@ jobs:
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
             -e RESEND_FROM_EMAIL="noreply@massava.app" \
             -e NEXT_PUBLIC_VERCEL_ENV=staging \
+            -e HEALTH_DATA_ENCRYPTION_KEY="${{ secrets.HEALTH_DATA_ENCRYPTION_KEY_STAGING }}" \
             --name massava-staging \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
