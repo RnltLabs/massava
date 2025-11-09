@@ -62,8 +62,8 @@ export function OnboardingScreen({
   const displayName = userName || 'Studio-Besitzer';
 
   return (
-    <div className="min-h-screen flex items-center" style={{ backgroundColor: '#F4EDE8' }}>
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#F4EDE8' }}>
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 flex flex-col">
 
         {/* Main CTA Card */}
         <section className="mb-6" aria-labelledby="cta-heading">
