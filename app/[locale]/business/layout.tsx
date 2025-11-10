@@ -132,23 +132,23 @@ export default async function BusinessLayout({
   const pendingCount = hasStudio ? await getPendingBookingsCount(session.user?.email ?? '') : 0;
 
   return (
-    <div className={hasStudio ? "min-h-screen max-h-screen overflow-hidden bg-neutral-50" : ""}>
+    <div className={hasStudio ? "bg-neutral-50" : ""}>
       {/* Desktop Layout */}
-      <div className="hidden md:flex h-screen overflow-hidden">
+      <div className="hidden md:flex">
         {/* Sidebar - Only show when user has a studio */}
         {hasStudio && <BusinessSidebar locale={locale} />}
 
         {/* Main Content */}
-        <div className={hasStudio ? "flex-1 ml-64 overflow-hidden" : "flex-1"}>
+        <div className={hasStudio ? "flex-1 ml-64" : "flex-1"}>
           {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
-          <main className={hasStudio ? "p-6 h-full overflow-hidden" : "-mt-14 md:-mt-16"}>{children}</main>
+          <main className={hasStudio ? "p-6" : "-mt-14 md:-mt-16"}>{children}</main>
         </div>
       </div>
 
       {/* Mobile Layout */}
-      <div className="md:hidden h-screen overflow-hidden">
+      <div className="md:hidden">
         {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
-        <main className={hasStudio ? "pb-20 px-4 h-full overflow-hidden" : "-mt-14"}>{children}</main>
+        <main className={hasStudio ? "pb-20 px-4" : "-mt-14"}>{children}</main>
 
         {/* Bottom Navigation - Only show when user has a studio */}
         {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}
