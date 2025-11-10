@@ -75,11 +75,11 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
             }
           />
           {/* Divider line */}
-          <hr className="mt-6 mb-0 border-border" />
+          <hr className="my-6 border-border" />
         </div>
 
         {/* Scrollable Section - Only service cards, starts right after divider */}
-        <div className="flex-1 overflow-y-auto pt-6">
+        <div className="flex-1 overflow-y-auto">
           {services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
