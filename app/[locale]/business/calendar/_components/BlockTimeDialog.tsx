@@ -17,11 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { blockTime } from '../actions';
 import { generateTimeOptions, parseTimeString } from '@/lib/calendar-utils';
 
@@ -40,8 +43,10 @@ const REASON_OPTIONS = [
   { value: 'Geschlossen', label: 'Geschlossen' },
 ];
 
-export function BlockTimeDialog({
-  open,
+/**
+ * Inner content component
+ */
+function BlockTimeContent({
   onOpenChange,
   studioId,
   selectedDate,
@@ -120,94 +125,141 @@ export function BlockTimeDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Zeit blockieren</DialogTitle>
-          <DialogDescription>
-            Blockieren Sie einen Zeitraum, in dem keine Buchungen möglich sind.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle>Zeit blockieren</DialogTitle>
+        <DialogDescription>
+          Blockieren Sie einen Zeitraum, in dem keine Buchungen möglich sind.
+        </DialogDescription>
+      </DialogHeader>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
-            {/* Date (read-only) */}
-            <div className="space-y-2">
-              <Label htmlFor="date">Datum</Label>
-              <Input
-                id="date"
-                value={selectedDate.toLocaleDateString('de-DE', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-                readOnly
-                className="bg-muted"
-              />
-            </div>
-
-            {/* Start Time */}
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Startzeit</Label>
-              <Select value={startTime} onValueChange={setStartTime}>
-                <SelectTrigger id="startTime">
-                  <SelectValue placeholder="Startzeit wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* End Time */}
-            <div className="space-y-2">
-              <Label htmlFor="endTime">Endzeit</Label>
-              <Select value={endTime} onValueChange={setEndTime}>
-                <SelectTrigger id="endTime">
-                  <SelectValue placeholder="Endzeit wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Reason (optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="reason">Grund (optional)</Label>
-              <Select value={reason} onValueChange={setReason}>
-                <SelectTrigger id="reason">
-                  <SelectValue placeholder="Grund wählen" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REASON_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-4 py-4">
+          {/* Date (read-only) */}
+          <div className="space-y-2">
+            <Label htmlFor="date">Datum</Label>
+            <Input
+              id="date"
+              value={selectedDate.toLocaleDateString('de-DE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
+              readOnly
+              className="bg-muted"
+            />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Blockiere...' : 'Blockieren'}
-            </Button>
-          </DialogFooter>
-        </form>
+          {/* Start Time */}
+          <div className="space-y-2">
+            <Label htmlFor="startTime">Startzeit</Label>
+            <Select value={startTime} onValueChange={setStartTime}>
+              <SelectTrigger id="startTime">
+                <SelectValue placeholder="Startzeit wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* End Time */}
+          <div className="space-y-2">
+            <Label htmlFor="endTime">Endzeit</Label>
+            <Select value={endTime} onValueChange={setEndTime}>
+              <SelectTrigger id="endTime">
+                <SelectValue placeholder="Endzeit wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {timeOptions.map((time) => (
+                  <SelectItem key={time} value={time}>
+                    {time}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Reason (optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="reason">Grund (optional)</Label>
+            <Select value={reason} onValueChange={setReason}>
+              <SelectTrigger id="reason">
+                <SelectValue placeholder="Grund wählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {REASON_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Abbrechen
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? 'Blockiere...' : 'Blockieren'}
+          </Button>
+        </DialogFooter>
+      </form>
+    </>
+  );
+}
+
+/**
+ * Main Block Time Dialog Component
+ * Responsive: Sheet on mobile, Dialog on desktop
+ */
+export function BlockTimeDialog({
+  open,
+  onOpenChange,
+  studioId,
+  selectedDate,
+  prefilledTime,
+}: BlockTimeDialogProps): React.JSX.Element {
+  const isMobile = useMediaQuery('(max-width: 767px)');
+
+  const content = (
+    <BlockTimeContent
+      open={open}
+      onOpenChange={onOpenChange}
+      studioId={studioId}
+      selectedDate={selectedDate}
+      prefilledTime={prefilledTime}
+    />
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent
+          side="bottom"
+          className="h-[80vh] rounded-t-3xl p-6 overflow-y-auto"
+          showCloseButton={false}
+        >
+          <VisuallyHidden>
+            <SheetTitle>Zeit blockieren</SheetTitle>
+          </VisuallyHidden>
+          {content}
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        {content}
       </DialogContent>
     </Dialog>
   );
