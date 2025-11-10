@@ -19,9 +19,7 @@ import { Package } from 'lucide-react';
 const EXAMPLE_NAMES = [
   'Thai-Massage',
   'Öl-Massage',
-  'Traditionelle Thai-Massage',
   'Aromatherapie-Massage',
-  'Fußreflexzonenmassage',
 ];
 
 interface ServiceNameStepProps {

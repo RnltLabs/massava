@@ -132,7 +132,7 @@ export default async function BusinessLayout({
   const pendingCount = hasStudio ? await getPendingBookingsCount(session.user?.email ?? '') : 0;
 
   return (
-    <div className={hasStudio ? "min-h-screen bg-neutral-50" : ""}>
+    <div className={hasStudio ? "bg-neutral-50" : ""}>
       {/* Desktop Layout */}
       <div className="hidden md:flex">
         {/* Sidebar - Only show when user has a studio */}
