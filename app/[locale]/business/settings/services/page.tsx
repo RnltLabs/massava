@@ -52,5 +52,9 @@ export default async function ServicesSettingsPage({
 
   const { services, studioId } = await getStudioData(session.user?.email ?? '');
 
-  return <ServicesPageClient services={services} studioId={studioId} locale={locale} />;
+  return (
+    <div className="h-screen overflow-hidden">
+      <ServicesPageClient services={services} studioId={studioId} locale={locale} />
+    </div>
+  );
 }

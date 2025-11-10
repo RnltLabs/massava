@@ -54,7 +54,7 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
   return (
     <>
       {/* Fixed container - takes full viewport height minus navigation */}
-      <div className="fixed inset-0 top-0 bottom-20 md:relative md:bottom-auto flex flex-col bg-background">
+      <div className="fixed inset-0 top-0 bottom-20 md:relative md:bottom-auto flex flex-col">
         {/* Fixed Header Section - Everything above the divider line */}
         <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0">
           <PageHeader
