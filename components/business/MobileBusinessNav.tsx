@@ -14,7 +14,7 @@ import {
   HomeIcon,
   CalendarDaysIcon,
   MessageSquareIcon,
-  MoreHorizontalIcon,
+  SettingsIcon,
 } from 'lucide-react';
 
 interface MobileBusinessNavProps {
@@ -100,9 +100,9 @@ function MobileBusinessNavComponent({ locale, pendingCount = 0 }: MobileBusiness
         badge: pendingCount,
       },
       {
-        label: t('more'),
+        label: t('settings'),
         href: `/${locale}/business/more`,
-        icon: MoreHorizontalIcon,
+        icon: SettingsIcon,
       },
     ],
     [locale, pendingCount, t]

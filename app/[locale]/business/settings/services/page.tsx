@@ -52,5 +52,5 @@ export default async function ServicesSettingsPage({
 
   const { services, studioId } = await getStudioData(session.user?.email ?? '');
 
-  return <ServicesPageClient services={services} studioId={studioId} />;
+  return <ServicesPageClient services={services} studioId={studioId} locale={locale} />;
 }

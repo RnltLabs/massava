@@ -5,12 +5,13 @@
 
 import React from 'react';
 import { auth } from '@/auth';
-
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { ArrowLeftIcon } from 'lucide-react';
 import { ProfileEditForm } from '../_components/ProfileEditForm';
 import { LocationEditForm } from '../_components/LocationEditForm';
 
@@ -67,10 +68,19 @@ export default async function ProfileSettingsPage({
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Studio Profile</h1>
-        <p className="text-muted-foreground mt-1">Manage your studio information and settings</p>
+      {/* Page Header with Back Button */}
+      <div className="space-y-4">
+        <Link
+          href={`/${locale}/business/more`}
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+          <span>Einstellungen</span>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Studio-Profil</h1>
+          <p className="text-muted-foreground mt-1">Verwalten Sie Ihre Studio-Informationen</p>
+        </div>
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">

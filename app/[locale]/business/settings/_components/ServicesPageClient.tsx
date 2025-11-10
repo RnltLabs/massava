@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { PlusIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
 import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Service {
   id: string;
@@ -26,9 +27,10 @@ interface Service {
 interface ServicesPageClientProps {
   services: Service[];
   studioId: string;
+  locale: string;
 }
 
-export function ServicesPageClient({ services, studioId }: ServicesPageClientProps): React.JSX.Element {
+export function ServicesPageClient({ services, studioId, locale }: ServicesPageClientProps): React.JSX.Element {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
@@ -51,17 +53,20 @@ export function ServicesPageClient({ services, studioId }: ServicesPageClientPro
   return (
     <>
       <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Services</h1>
-            <p className="text-muted-foreground mt-1">Manage your studio's service offerings</p>
-          </div>
-          <Button onClick={handleAddService}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Service
-          </Button>
-        </div>
+        {/* Page Header with Back Button */}
+        <PageHeader
+          title="Services verwalten"
+          subtitle="Verwalten Sie Ihre Service-Angebote"
+          breadcrumb="Einstellungen"
+          backHref={`/${locale}/business/more`}
+          backLabel="Einstellungen"
+          actions={
+            <Button onClick={handleAddService} size="sm">
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Hinzufügen
+            </Button>
+          }
+        />
 
         {/* Services List */}
         {services.length === 0 ? (
