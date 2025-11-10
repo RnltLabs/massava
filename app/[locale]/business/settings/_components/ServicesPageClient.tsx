@@ -53,29 +53,32 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
 
   return (
     <>
-      <div className="space-y-6">
-        {/* Page Header with Back Button */}
-        <PageHeader
-          title="Services verwalten"
-          subtitle="Verwalten Sie Ihre Service-Angebote"
-          breadcrumb="Einstellungen"
-          backHref={`/${locale}/business/more`}
-          backLabel="Einstellungen"
-          actionPlacement="stacked"
-          actions={
-            <Button
-              onClick={handleAddService}
-              size="sm"
-              className="w-full md:w-auto h-11 md:h-10"
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Hinzufügen
-            </Button>
-          }
-        />
+      <div className="flex flex-col h-screen">
+        {/* Page Header with Back Button - Sticky */}
+        <div className="sticky top-0 z-10 bg-background pb-4">
+          <PageHeader
+            title="Services verwalten"
+            subtitle="Verwalten Sie Ihre Service-Angebote"
+            breadcrumb="Einstellungen"
+            backHref={`/${locale}/business/more`}
+            backLabel="Einstellungen"
+            actionPlacement="stacked"
+            actions={
+              <Button
+                onClick={handleAddService}
+                size="sm"
+                className="w-full md:w-auto h-11 md:h-10"
+              >
+                <PlusIcon className="mr-2 h-4 w-4" />
+                Hinzufügen
+              </Button>
+            }
+          />
+        </div>
 
-        {/* Services List */}
-        {services.length === 0 ? (
+        {/* Services List - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          {services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-lg font-medium text-neutral-900 mb-2">No services yet</p>
@@ -153,6 +156,7 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Service Management Dialog (Companion Style - Create/Edit) */}
