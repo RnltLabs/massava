@@ -8,8 +8,9 @@
 import React from 'react';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { PlusIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
 import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
@@ -60,8 +61,13 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
           breadcrumb="Einstellungen"
           backHref={`/${locale}/business/more`}
           backLabel="Einstellungen"
+          actionPlacement="stacked"
           actions={
-            <Button onClick={handleAddService} size="sm">
+            <Button
+              onClick={handleAddService}
+              size="sm"
+              className="w-full md:w-auto h-11 md:h-10"
+            >
               <PlusIcon className="mr-2 h-4 w-4" />
               Hinzufügen
             </Button>
@@ -85,52 +91,65 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {services.map((service) => (
-              <Card key={service.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle>{service.name}</CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditService(service)}
-                        aria-label={`Edit ${service.name}`}
-                      >
-                        <Edit2Icon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteService(service)}
-                        aria-label={`Delete ${service.name}`}
-                      >
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
-                    </div>
+              <div
+                key={service.id}
+                className="group relative flex min-h-[120px] flex-col justify-center overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                {/* Header: Name + Price/Duration */}
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    {service.name}
+                  </h3>
+                  <div className="shrink-0 text-right">
+                    <span className="whitespace-nowrap text-base font-medium text-primary">
+                      €{service.price.toFixed(2)} • {service.duration} Min
+                    </span>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Price</span>
-                      <span className="font-medium">€{service.price.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Duration</span>
-                      <span className="font-medium">{service.duration} minutes</span>
-                    </div>
+                </div>
+
+                {/* Description */}
+                {service.description && (
+                  <p className="mb-3 line-clamp-1 text-sm text-muted-foreground">
+                    {service.description}
+                  </p>
+                )}
+
+                {/* Footer: Category + Actions */}
+                <div className="flex items-center justify-between gap-4">
+                  {/* Category Badge */}
+                  <div className="flex items-center gap-2">
                     {service.category && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Category</span>
-                        <span className="font-medium">{service.category}</span>
-                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
+                      >
+                        {service.category}
+                      </Badge>
                     )}
                   </div>
-                </CardContent>
-              </Card>
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => handleEditService(service)}
+                      className="h-8 gap-1.5 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    >
+                      <Edit2Icon className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">Bearbeiten</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleDeleteService(service)}
+                      aria-label={`${service.name} löschen`}
+                      className="h-8 w-8 rounded-xl bg-muted p-0 transition-colors hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <Trash2Icon className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
