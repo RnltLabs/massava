@@ -45,7 +45,7 @@ export function PageHeader({
   actionPlacement = 'inline',
 }: PageHeaderProps): React.JSX.Element {
   return (
-    <header className={cn('pb-4 border-b border-gray-200 bg-white', className)}>
+    <header className={cn('pb-4 border-b border-gray-200', className)}>
       <div className="space-y-3">
         {/* Back Button + Breadcrumb (Navigation Row) */}
         {showBackButton && (
