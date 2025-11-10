@@ -17,15 +17,9 @@ import {
   HelpCircleIcon,
   LogOutIcon,
   ChevronRightIcon,
-  StarIcon,
 } from 'lucide-react';
 
 interface StudioProfile {
-  id: string;
-  name: string;
-  logoUrl: string | null;
-  averageRating: number | null;
-  totalReviews: number;
   servicesCount: number;
 }
 
@@ -148,64 +142,8 @@ function MoreMenuClientComponent({ locale, studioProfile }: MoreMenuClientProps)
     [locale, studioProfile.servicesCount, t]
   );
 
-  // Memoize computed values
-  const hasReviews = studioProfile.totalReviews > 0;
-  const rating = studioProfile.averageRating?.toFixed(1) ?? '0.0';
-
   return (
     <main className="space-y-6 pb-6">
-      {/* Studio Profile Card */}
-      <section className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm" aria-label="Studio profile">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <div
-            className="w-16 h-16 rounded-xl bg-[#D4A89F] flex items-center justify-center flex-shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            {studioProfile.logoUrl ? (
-              <img
-                src={studioProfile.logoUrl}
-                alt=""
-                className="w-full h-full object-cover"
-                loading="lazy"
-                width={64}
-                height={64}
-              />
-            ) : (
-              <LayoutGridIcon className="h-8 w-8 text-[#B56550]" />
-            )}
-          </div>
-
-          {/* Studio Info */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold text-gray-900 truncate">{studioProfile.name}</h1>
-            {hasReviews ? (
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex items-center gap-1">
-                  <StarIcon className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  <span className="text-sm font-medium text-gray-900">{rating}</span>
-                </div>
-                <span className="text-sm text-gray-500">
-                  ({studioProfile.totalReviews} Bewertungen)
-                </span>
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 mt-1">Noch keine Bewertungen</p>
-            )}
-          </div>
-
-          {/* Edit Profile Button */}
-          <Link
-            href={`/${locale}/business/settings/profile`}
-            style={{ backgroundColor: '#B56550' }}
-            className="px-4 min-h-[44px] flex items-center text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-offset-2"
-            aria-label="Edit studio profile"
-          >
-            Bearbeiten
-          </Link>
-        </div>
-      </section>
-
       {/* Menu Sections */}
       {menuSections.map((section) => (
         <section key={section.title} className="space-y-2" aria-labelledby={`section-${section.title}`}>

@@ -34,11 +34,6 @@ async function getStudioProfile(userEmail: string) {
 
   if (!user || user.ownedStudios.length === 0) {
     return {
-      id: '',
-      name: 'Studio',
-      logoUrl: null,
-      averageRating: null,
-      totalReviews: 0,
       servicesCount: 0,
     };
   }
@@ -46,11 +41,6 @@ async function getStudioProfile(userEmail: string) {
   const studio = user.ownedStudios[0].studio;
 
   return {
-    id: studio.id,
-    name: studio.name,
-    logoUrl: studio.logoUrl,
-    averageRating: null, // TODO: Calculate from reviews when review system is implemented
-    totalReviews: 0, // TODO: Calculate from reviews when review system is implemented
     servicesCount: studio.services.length,
   };
 }
