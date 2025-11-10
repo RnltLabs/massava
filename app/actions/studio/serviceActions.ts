@@ -91,8 +91,8 @@ export async function createService(
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,
@@ -197,8 +197,8 @@ export async function updateService(
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,
@@ -285,8 +285,8 @@ export async function deleteService(serviceId: string): Promise<ServiceActionRes
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,

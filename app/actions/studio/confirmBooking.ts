@@ -81,9 +81,9 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       },
     });
 
-    // Revalidate dashboard pages
-    revalidatePath('/[locale]/dashboard/owner');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
 
     return {
       success: true,
@@ -166,9 +166,9 @@ export async function declineBooking(
     // TODO: Send cancellation email to customer
     // This would be implemented when email service is ready
 
-    // Revalidate dashboard pages
-    revalidatePath('/[locale]/dashboard/owner');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
 
     return {
       success: true,
