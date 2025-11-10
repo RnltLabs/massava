@@ -311,7 +311,7 @@
       "today": "Heute",
       "calendar": "Kalender",
       "requests": "Anfragen",
-      "more": "Mehr"
+      "settings": "Einstellungen"
     },
     "dashboard": {
       "greeting": "Guten {timeOfDay}, {name}",
