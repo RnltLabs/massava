@@ -64,8 +64,8 @@ export async function updateStudioCapacity(input: UpdateCapacityInput): Promise<
     });
 
     // Revalidate relevant pages
-    revalidatePath('/[locale]/dashboard/owner/settings');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+    revalidatePath('/[locale]/business/settings');
+    revalidatePath('/[locale]/business/calendar');
 
     return { success: true };
   } catch (error) {
