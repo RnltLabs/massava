@@ -56,7 +56,7 @@ export default async function BookingsPage({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pt-4">
       {/* Filters - Compact on mobile */}
       <BookingFilters />
 
