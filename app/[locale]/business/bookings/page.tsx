@@ -56,14 +56,8 @@ export default async function BookingsPage({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Bookings</h1>
-        <p className="text-muted-foreground mt-1">Manage all your booking requests</p>
-      </div>
-
-      {/* Filters */}
+    <div className="space-y-4">
+      {/* Filters - Compact on mobile */}
       <BookingFilters />
 
       {/* Bookings List */}

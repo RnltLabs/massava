@@ -149,15 +149,9 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   const allBlockedTimes = [...blockedTimes, ...virtualBlockedTimes];
 
   return (
-    <div className="min-h-screen pb-20 md:pb-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Kalender</h1>
-          <p className="text-base md:text-lg text-muted-foreground">{studio.name}</p>
-        </div>
-
-        {/* Time-Slot Calendar */}
+    <div className="min-h-screen pb-20 md:pb-8 bg-white">
+      <div className="max-w-4xl mx-auto px-2 sm:px-4 lg:px-6 pt-2 md:pt-4">
+        {/* Time-Slot Calendar - No header on mobile for maximum space */}
         <Suspense fallback={<CalendarSkeleton />}>
           <CalendarClient
             studioId={studio.id}

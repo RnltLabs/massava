@@ -170,7 +170,7 @@ export function CalendarClient({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-background border-b pb-4">
+      <div className="sticky top-0 z-20 bg-white border-b pb-4">
         {/* View Toggle - Hidden on mobile, visible on tablet/desktop */}
         <div className="hidden sm:flex items-center justify-center gap-2 mb-4">
           <Button
