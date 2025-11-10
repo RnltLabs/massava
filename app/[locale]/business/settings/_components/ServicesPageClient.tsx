@@ -52,35 +52,34 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
   };
 
   return (
-    <>
-      {/* Fixed container - takes full viewport height minus navigation */}
-      <div className="h-full flex flex-col">
-        {/* Fixed Header Section - Everything above the divider line */}
-        <div className="flex-shrink-0">
-          <PageHeader
-            title="Services verwalten"
-            subtitle="Verwalten Sie Ihre Service-Angebote"
-            breadcrumb="Einstellungen"
-            backHref={`/${locale}/business/more`}
-            backLabel="Einstellungen"
-            actionPlacement="stacked"
-            actions={
-              <Button
-                onClick={handleAddService}
-                size="sm"
-                className="w-full md:w-auto h-11 md:h-10"
-              >
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Hinzufügen
-              </Button>
-            }
-          />
-          {/* Divider line */}
-          <hr className="my-6 border-border" />
-        </div>
+    <div className="fixed inset-0 top-0 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full">
+      {/* Fixed Header Section - Everything above the divider line */}
+      <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0 bg-neutral-50">
+        <PageHeader
+          title="Services verwalten"
+          subtitle="Verwalten Sie Ihre Service-Angebote"
+          breadcrumb="Einstellungen"
+          backHref={`/${locale}/business/more`}
+          backLabel="Einstellungen"
+          showBackButton={true}
+          actionPlacement="stacked"
+          actions={
+            <Button
+              onClick={handleAddService}
+              size="sm"
+              className="w-full md:w-auto h-11 md:h-10"
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Hinzufügen
+            </Button>
+          }
+        />
+        {/* Divider line */}
+        <hr className="my-6 border-border" />
+      </div>
 
-        {/* Scrollable Section - Only service cards list */}
-        <div className="flex-1 overflow-y-auto">
+      {/* Scrollable Section - Only service cards list */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
           {services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -159,7 +158,6 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
             ))}
           </div>
         )}
-        </div>
       </div>
 
       {/* Service Management Dialog (Companion Style - Create/Edit) */}
@@ -187,6 +185,6 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
           service={selectedService}
         />
       )}
-    </>
+    </div>
   );
 }
