@@ -309,8 +309,7 @@
   "business": {
     "nav": {
       "today": "Heute",
-      "week": "Woche",
-      "new": "Neu",
+      "calendar": "Kalender",
       "requests": "Anfragen",
       "more": "Mehr"
     },
