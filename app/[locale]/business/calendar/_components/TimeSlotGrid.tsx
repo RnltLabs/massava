@@ -90,7 +90,7 @@ export function TimeSlotGrid({
   }, [longPressTimer]);
 
   return (
-    <div className="relative w-full bg-background">
+    <div className="relative w-full bg-white">
       {/* Time Grid */}
       <div ref={gridRef} className="relative">
         {hours.map((hour) => {
