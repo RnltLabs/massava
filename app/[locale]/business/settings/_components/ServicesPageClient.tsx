@@ -53,8 +53,8 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
 
   return (
     <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
-      {/* Fixed Header Section - Everything above the divider line */}
-      <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 bg-neutral-50">
+      {/* Fixed Header Section with backdrop blur - Everything above the divider line */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 backdrop-blur-lg bg-neutral-50/95 sticky top-0 z-10">
         <PageHeader
           title="Services verwalten"
           subtitle="Verwalten Sie Ihre Service-Angebote"
