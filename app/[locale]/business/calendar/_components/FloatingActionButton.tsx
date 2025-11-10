@@ -82,7 +82,7 @@ export function FloatingActionButton({
                 className="flex items-center gap-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-4 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
               >
                 <Calendar className="h-5 w-5 text-primary" />
-                <span className="font-medium whitespace-nowrap">Termin buchen</span>
+                <span className="font-medium whitespace-nowrap">Termin anlegen</span>
               </button>
 
               {/* Block Time */}
