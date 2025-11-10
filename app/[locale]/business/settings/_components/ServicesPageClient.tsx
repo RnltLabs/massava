@@ -54,9 +54,9 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
   return (
     <>
       {/* Fixed container - takes full viewport height minus navigation */}
-      <div className="fixed inset-0 top-0 bottom-20 md:relative md:bottom-auto flex flex-col">
+      <div className="h-full flex flex-col">
         {/* Fixed Header Section - Everything above the divider line */}
-        <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0">
+        <div className="flex-shrink-0">
           <PageHeader
             title="Services verwalten"
             subtitle="Verwalten Sie Ihre Service-Angebote"
@@ -80,7 +80,7 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
         </div>
 
         {/* Scrollable Section - Only service cards list */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 md:px-0 md:pb-0">
+        <div className="flex-1 overflow-y-auto">
           {services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
