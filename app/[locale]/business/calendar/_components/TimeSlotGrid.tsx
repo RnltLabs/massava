@@ -35,7 +35,9 @@ interface TimeSlotGridProps {
   onBlockedTimeClick: (blocked: BlockedTime | VirtualBlockedTime) => void;
 }
 
-const SLOT_HEIGHT = 60; // 60px per hour
+// Responsive slot height: 56px mobile, 64px desktop for better space utilization
+const SLOT_HEIGHT_MOBILE = 56; // Optimized for mobile viewports
+const SLOT_HEIGHT_DESKTOP = 64; // Comfortable for desktop
 const TIME_LABEL_WIDTH = 64; // 64px for time labels
 
 export function TimeSlotGrid({
@@ -48,9 +50,21 @@ export function TimeSlotGrid({
 }: TimeSlotGridProps): React.JSX.Element {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [pressedSlot, setPressedSlot] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const hours = getBusinessHours();
+
+  // Determine slot height based on screen size
+  const slotHeight = isMobile ? SLOT_HEIGHT_MOBILE : SLOT_HEIGHT_DESKTOP;
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Count bookings per timeslot
   const getBookingCountForTime = (timeSlot: string): number => {
@@ -101,8 +115,7 @@ export function TimeSlotGrid({
           return (
             <div
               key={hour}
-              className="flex border-b border-border/50 last:border-b-0"
-              style={{ height: `${SLOT_HEIGHT}px` }}
+              className="flex border-b border-border/50 last:border-b-0 h-14 md:h-16"
             >
               {/* Time Label */}
               <div
@@ -142,7 +155,7 @@ export function TimeSlotGrid({
           style={{
             left: `${TIME_LABEL_WIDTH}px`,
             right: 0,
-            height: `${hours.length * SLOT_HEIGHT}px`,
+            height: `${hours.length * slotHeight}px`,
           }}
         >
           {/* Render booking blocks */}
