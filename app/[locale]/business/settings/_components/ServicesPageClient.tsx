@@ -52,9 +52,9 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
   };
 
   return (
-    <div className="fixed inset-0 top-0 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full">
+    <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
       {/* Fixed Header Section - Everything above the divider line */}
-      <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0 bg-neutral-50">
+      <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 bg-neutral-50">
         <PageHeader
           title="Services verwalten"
           subtitle="Verwalten Sie Ihre Service-Angebote"
@@ -74,8 +74,6 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
             </Button>
           }
         />
-        {/* Divider line */}
-        <hr className="my-6 border-border" />
       </div>
 
       {/* Scrollable Section - Only service cards list */}
