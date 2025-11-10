@@ -63,7 +63,7 @@ export function BookingFilters(): React.JSX.Element {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search by customer name or email..."
+            placeholder="Nach Kundenname oder E-Mail suchen..."
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             onKeyDown={(e) => {
@@ -75,7 +75,7 @@ export function BookingFilters(): React.JSX.Element {
           />
         </div>
         <Button onClick={handleSearch} variant="outline">
-          Search
+          Suchen
         </Button>
       </div>
 
@@ -84,19 +84,19 @@ export function BookingFilters(): React.JSX.Element {
         <FilterIcon className="h-4 w-4 text-muted-foreground" />
         <Select value={statusValue} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder="Nach Status filtern" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Bookings</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="CONFIRMED">Confirmed</SelectItem>
-            <SelectItem value="CANCELLED">Cancelled</SelectItem>
+            <SelectItem value="all">Alle Buchungen</SelectItem>
+            <SelectItem value="PENDING">Ausstehend</SelectItem>
+            <SelectItem value="CONFIRMED">Bestätigt</SelectItem>
+            <SelectItem value="CANCELLED">Storniert</SelectItem>
           </SelectContent>
         </Select>
 
         {(searchParams.get('status') || searchParams.get('search')) && (
           <Button onClick={handleClearFilters} variant="ghost" size="sm">
-            Clear filters
+            Filter löschen
           </Button>
         )}
       </div>

@@ -98,11 +98,11 @@ export async function BookingsList({
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
           <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium text-neutral-900">No bookings found</p>
+          <p className="text-lg font-medium text-neutral-900">Keine Buchungen gefunden</p>
           <p className="text-sm text-muted-foreground mt-1">
             {searchQuery || statusFilter
-              ? 'Try adjusting your filters'
-              : 'New bookings will appear here'}
+              ? 'Versuchen Sie, Ihre Filter anzupassen'
+              : 'Neue Buchungen werden hier angezeigt'}
           </p>
         </CardContent>
       </Card>
@@ -138,12 +138,12 @@ export async function BookingsList({
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="flex items-center gap-2 text-sm">
                     <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Date:</span>
+                    <span className="font-medium">Datum:</span>
                     <span className="text-muted-foreground">{booking.preferredDate}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Time:</span>
+                    <span className="font-medium">Uhrzeit:</span>
                     <span className="text-muted-foreground">{booking.preferredTime}</span>
                   </div>
                 </div>
@@ -163,7 +163,7 @@ export async function BookingsList({
                       <MessageSquareIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
                       <div>
                         <p className="text-xs font-medium text-neutral-700 mb-1">
-                          Customer Message:
+                          Kundennachricht:
                         </p>
                         <p className="text-sm text-neutral-600">{booking.message}</p>
                       </div>
@@ -173,8 +173,8 @@ export async function BookingsList({
 
                 {/* Booking Date */}
                 <p className="text-xs text-muted-foreground">
-                  Requested on {new Date(booking.createdAt).toLocaleDateString()} at{' '}
-                  {new Date(booking.createdAt).toLocaleTimeString()}
+                  Angefragt am {new Date(booking.createdAt).toLocaleDateString('de-DE')} um{' '}
+                  {new Date(booking.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
 
@@ -185,17 +185,17 @@ export async function BookingsList({
                 {booking.status === BookingStatus.PENDING && (
                   <div className="flex flex-col gap-2 w-full sm:w-auto">
                     <Button size="sm" className="w-full sm:w-auto">
-                      Confirm
+                      Bestätigen
                     </Button>
                     <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                      Decline
+                      Ablehnen
                     </Button>
                   </div>
                 )}
 
                 {booking.status === BookingStatus.CONFIRMED && (
                   <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                    Contact Customer
+                    Kunde kontaktieren
                   </Button>
                 )}
               </div>
