@@ -93,7 +93,7 @@ export function ServiceReviewStep({
 
       {/* Review Card */}
       <Card className="border-2">
-        <CardContent className="p-6 space-y-4">
+        <CardContent className="p-4 space-y-3">
           {/* Service Name */}
           <div className="flex items-start gap-3">
             <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
