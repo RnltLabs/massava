@@ -355,9 +355,14 @@
       "profile": "Edit Profile",
       "services": "Manage Services",
       "servicesCount": "{count} services active",
+      "studio": "Studio Settings",
+      "studioDescription": "Location, Hours & Images",
       "hours": "Opening Hours",
       "location": "Location & Contact",
+      "images": "Studio Images",
       "stats": "Statistics & Reports",
+      "account": "Account & Security",
+      "accountDescription": "Email, Password & Settings",
       "help": "Help & Support",
       "signOut": "Sign Out"
     }

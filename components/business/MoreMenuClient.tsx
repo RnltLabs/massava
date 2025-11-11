@@ -17,6 +17,8 @@ import {
   HelpCircleIcon,
   LogOutIcon,
   ChevronRightIcon,
+  ImageIcon,
+  UserIcon,
 } from 'lucide-react';
 
 interface StudioProfile {
@@ -108,22 +110,23 @@ function MoreMenuClientComponent({ locale, studioProfile }: MoreMenuClientProps)
         title: 'Geschäftsdaten',
         items: [
           {
-            key: 'hours',
-            label: t('hours'),
-            href: `/${locale}/business/settings/hours`,
-            icon: ClockIcon,
-          },
-          {
-            key: 'location',
-            label: t('location'),
-            href: `/${locale}/business/settings/location`,
+            key: 'studio',
+            label: t('studio'),
+            href: `/${locale}/business/settings/studio`,
             icon: MapPinIcon,
+            description: t('studioDescription'),
           },
+        ],
+      },
+      {
+        title: 'Einstellungen',
+        items: [
           {
-            key: 'stats',
-            label: t('stats'),
-            href: `/${locale}/business/stats`,
-            icon: BarChartIcon,
+            key: 'account',
+            label: t('account'),
+            href: `/${locale}/business/settings/account`,
+            icon: UserIcon,
+            description: t('accountDescription'),
           },
         ],
       },

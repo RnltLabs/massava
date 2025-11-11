@@ -14,6 +14,6 @@ interface SettingsPageProps {
 export default async function SettingsPage({ params }: SettingsPageProps): Promise<never> {
   const { locale } = await params;
 
-  // Redirect to profile settings by default
-  redirect(`/${locale}/business/settings/profile`);
+  // Redirect to more menu (settings hub)
+  redirect(`/${locale}/business/more`);
 }
