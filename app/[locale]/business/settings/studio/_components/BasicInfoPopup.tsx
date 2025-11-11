@@ -131,7 +131,7 @@ export function BasicInfoPopup({ open, onOpenChange, initialData }: BasicInfoPop
     <>
       {/* Custom Header for Mobile */}
       {isMobile && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Grundinformationen bearbeiten</h2>
           <button
             onClick={() => onOpenChange(false)}
@@ -144,7 +144,7 @@ export function BasicInfoPopup({ open, onOpenChange, initialData }: BasicInfoPop
         </div>
       )}
 
-      <div className="space-y-4 py-4">
+      <div className="space-y-4 pb-4">
           {/* Studio Name */}
           <div className="space-y-2">
             <Label htmlFor="name" className="after:content-['*'] after:ml-0.5 after:text-red-500">
