@@ -135,7 +135,7 @@ export function OpeningHoursPopup({ open, onOpenChange, initialData }: OpeningHo
     <>
       {/* Custom Header for Mobile */}
       {isMobile && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Öffnungszeiten bearbeiten</h2>
           <button
             onClick={() => onOpenChange(false)}
@@ -148,7 +148,7 @@ export function OpeningHoursPopup({ open, onOpenChange, initialData }: OpeningHo
         </div>
       )}
 
-      <div className="space-y-4 py-6">
+      <div className="space-y-4 pb-6">
             {/* Different Hours - Day Cards */}
             <div className="space-y-2">
               {DAYS.map((day) => (

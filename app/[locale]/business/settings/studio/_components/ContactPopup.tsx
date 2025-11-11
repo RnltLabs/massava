@@ -141,7 +141,7 @@ export function ContactPopup({ open, onOpenChange, initialData }: ContactPopupPr
     <>
       {/* Custom Header for Mobile */}
       {isMobile && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Kontakt bearbeiten</h2>
           <button
             onClick={() => onOpenChange(false)}
@@ -154,7 +154,7 @@ export function ContactPopup({ open, onOpenChange, initialData }: ContactPopupPr
         </div>
       )}
 
-      <div className="space-y-6 py-6">
+      <div className="space-y-6 pb-6">
         {/* Phone */}
         <PhoneInput
           id="phone"

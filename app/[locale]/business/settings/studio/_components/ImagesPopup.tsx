@@ -231,7 +231,7 @@ export function ImagesPopup({
     <>
       {/* Custom Header for Mobile */}
       {isMobile && (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Bilder bearbeiten</h2>
           <button
             onClick={() => onOpenChange(false)}
@@ -244,7 +244,7 @@ export function ImagesPopup({
         </div>
       )}
 
-      <div className="space-y-4 py-6">
+      <div className="space-y-4 pb-6">
           {/* Logo Section */}
           <div className="border border-gray-200 rounded-lg p-4 bg-white">
             <div className="flex items-center justify-between mb-3">
