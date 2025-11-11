@@ -96,62 +96,59 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
             {services.map((service) => (
               <div
                 key={service.id}
-                className="group relative flex min-h-[120px] flex-col justify-center overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
               >
-                {/* Header: Name + Price/Duration */}
+                {/* Header: Name + Actions (Edit & Delete) */}
                 <div className="mb-3 flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-foreground">
+                  <h3 className="text-lg font-semibold text-foreground flex-1">
                     {service.name}
                   </h3>
-                  <div className="shrink-0 text-right">
-                    <span className="whitespace-nowrap text-base font-medium text-primary">
-                      €{service.price.toFixed(2)} • {service.duration} Min
-                    </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEditService(service)}
+                      className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
+                    >
+                      <Edit2Icon className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDeleteService(service)}
+                      aria-label={`${service.name} löschen`}
+                      className="h-9 w-9 shrink-0 rounded-full hover:bg-destructive/10"
+                    >
+                      <Trash2Icon className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
+                </div>
+
+                {/* Price/Duration */}
+                <div className="mb-3">
+                  <span className="text-base font-medium text-primary">
+                    €{service.price.toFixed(2)} • {service.duration} Min
+                  </span>
                 </div>
 
                 {/* Description */}
                 {service.description && (
-                  <p className="mb-3 line-clamp-1 text-sm text-muted-foreground">
+                  <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
                     {service.description}
                   </p>
                 )}
 
-                {/* Footer: Category + Actions */}
-                <div className="flex items-center justify-between gap-4">
-                  {/* Category Badge */}
+                {/* Footer: Category only */}
+                {service.category && (
                   <div className="flex items-center gap-2">
-                    {service.category && (
-                      <Badge
-                        variant="secondary"
-                        className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
-                      >
-                        {service.category}
-                      </Badge>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => handleEditService(service)}
-                      className="h-8 gap-1.5 rounded-xl bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
                     >
-                      <Edit2Icon className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Bearbeiten</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteService(service)}
-                      aria-label={`${service.name} löschen`}
-                      className="h-8 w-8 rounded-xl bg-muted p-0 transition-colors hover:bg-destructive hover:text-destructive-foreground"
-                    >
-                      <Trash2Icon className="h-3.5 w-3.5" />
-                    </Button>
+                      {service.category}
+                    </Badge>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>

@@ -9,7 +9,7 @@
 'use client';
 
 import React from 'react';
-import { createContext, useReducer, type ReactNode } from 'react';
+import { createContext, useReducer, useCallback, useMemo, type ReactNode } from 'react';
 import type {
   ServiceNameFormData,
   ServiceDurationFormData,
@@ -187,46 +187,84 @@ export function ServiceManagementProvider({
 }: ServiceManagementProviderProps): React.JSX.Element {
   const [state, dispatch] = useReducer(serviceManagementReducer, initialState);
 
-  const contextValue: ServiceManagementContextValue = {
+  const goToStep = useCallback((step: number) => {
+    dispatch({ type: 'SET_STEP', payload: step });
+  }, []);
+
+  const goToNextStep = useCallback(() => {
+    dispatch({ type: 'SET_STEP', payload: state.currentStep + 1 });
+  }, [state.currentStep]);
+
+  const goToPreviousStep = useCallback(() => {
+    dispatch({ type: 'SET_STEP', payload: Math.max(0, state.currentStep - 1) });
+  }, [state.currentStep]);
+
+  const updateName = useCallback((name: string) => {
+    dispatch({ type: 'UPDATE_NAME', payload: name });
+  }, []);
+
+  const updateDuration = useCallback((duration: number) => {
+    dispatch({ type: 'UPDATE_DURATION', payload: duration });
+  }, []);
+
+  const updatePrice = useCallback((price: number) => {
+    dispatch({ type: 'UPDATE_PRICE', payload: price });
+  }, []);
+
+  const setErrors = useCallback((errors: Record<string, string>) => {
+    dispatch({ type: 'SET_ERRORS', payload: errors });
+  }, []);
+
+  const setSubmitting = useCallback((isSubmitting: boolean) => {
+    dispatch({ type: 'SET_SUBMITTING', payload: isSubmitting });
+  }, []);
+
+  const setServiceId = useCallback((serviceId: string) => {
+    dispatch({ type: 'SET_SERVICE_ID', payload: serviceId });
+  }, []);
+
+  const setMode = useCallback((mode: 'create' | 'edit') => {
+    dispatch({ type: 'SET_MODE', payload: mode });
+  }, []);
+
+  const loadService = useCallback((data: { name: string; duration: number; price: number; serviceId: string }) => {
+    dispatch({ type: 'LOAD_SERVICE', payload: data });
+  }, []);
+
+  const reset = useCallback(() => {
+    dispatch({ type: 'RESET' });
+  }, []);
+
+  const contextValue = useMemo<ServiceManagementContextValue>(() => ({
     state,
     dispatch,
-    goToStep: (step: number) => {
-      dispatch({ type: 'SET_STEP', payload: step });
-    },
-    goToNextStep: () => {
-      dispatch({ type: 'SET_STEP', payload: state.currentStep + 1 });
-    },
-    goToPreviousStep: () => {
-      dispatch({ type: 'SET_STEP', payload: Math.max(0, state.currentStep - 1) });
-    },
-    updateName: (name: string) => {
-      dispatch({ type: 'UPDATE_NAME', payload: name });
-    },
-    updateDuration: (duration: number) => {
-      dispatch({ type: 'UPDATE_DURATION', payload: duration });
-    },
-    updatePrice: (price: number) => {
-      dispatch({ type: 'UPDATE_PRICE', payload: price });
-    },
-    setErrors: (errors: Record<string, string>) => {
-      dispatch({ type: 'SET_ERRORS', payload: errors });
-    },
-    setSubmitting: (isSubmitting: boolean) => {
-      dispatch({ type: 'SET_SUBMITTING', payload: isSubmitting });
-    },
-    setServiceId: (serviceId: string) => {
-      dispatch({ type: 'SET_SERVICE_ID', payload: serviceId });
-    },
-    setMode: (mode: 'create' | 'edit') => {
-      dispatch({ type: 'SET_MODE', payload: mode });
-    },
-    loadService: (data) => {
-      dispatch({ type: 'LOAD_SERVICE', payload: data });
-    },
-    reset: () => {
-      dispatch({ type: 'RESET' });
-    },
-  };
+    goToStep,
+    goToNextStep,
+    goToPreviousStep,
+    updateName,
+    updateDuration,
+    updatePrice,
+    setErrors,
+    setSubmitting,
+    setServiceId,
+    setMode,
+    loadService,
+    reset,
+  }), [
+    state,
+    goToStep,
+    goToNextStep,
+    goToPreviousStep,
+    updateName,
+    updateDuration,
+    updatePrice,
+    setErrors,
+    setSubmitting,
+    setServiceId,
+    setMode,
+    loadService,
+    reset,
+  ]);
 
   return (
     <ServiceManagementContext.Provider value={contextValue}>
