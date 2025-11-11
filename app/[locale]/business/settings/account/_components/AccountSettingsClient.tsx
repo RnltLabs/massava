@@ -17,6 +17,7 @@ import {
   BellIcon,
   SettingsIcon,
   AlertTriangleIcon,
+  Edit2Icon,
 } from 'lucide-react';
 import { EmailChangeDialog } from './EmailChangeDialog';
 import { PasswordChangeDialog } from './PasswordChangeDialog';
@@ -147,7 +148,7 @@ export function AccountSettingsClient({
               className="group relative overflow-hidden rounded-[1.5rem] border border-border bg-background transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="mt-0.5">
                       <card.icon className="h-5 w-5 text-gray-600" />
@@ -161,30 +162,22 @@ export function AccountSettingsClient({
                       </CardDescription>
                     </div>
                   </div>
-                  {card.badge && <div className="ml-2">{card.badge}</div>}
+                  <div className="flex items-center gap-2">
+                    {card.badge && <div>{card.badge}</div>}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={card.action}
+                      className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
+                    >
+                      <Edit2Icon className="h-4 w-4 text-primary" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               {card.value && (
                 <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground mb-4">{card.value}</p>
-                  <Button
-                    onClick={card.action}
-                    size="sm"
-                    className="w-full bg-[#B56550] hover:bg-[#A05540] text-white"
-                  >
-                    Bearbeiten
-                  </Button>
-                </CardContent>
-              )}
-              {!card.value && (
-                <CardContent className="pt-0">
-                  <Button
-                    onClick={card.action}
-                    size="sm"
-                    className="w-full bg-[#B56550] hover:bg-[#A05540] text-white"
-                  >
-                    Verwalten
-                  </Button>
+                  <p className="text-sm text-muted-foreground">{card.value}</p>
                 </CardContent>
               )}
             </Card>
@@ -194,7 +187,7 @@ export function AccountSettingsClient({
           {studio && (
             <Card className="group relative overflow-hidden rounded-[1.5rem] border-2 border-red-200 bg-red-50/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg md:col-span-2">
               <CardHeader>
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div className="flex items-start gap-3 flex-1">
                     <div className="mt-0.5">
                       <AlertTriangleIcon className="h-5 w-5 text-red-600" />
@@ -208,19 +201,16 @@ export function AccountSettingsClient({
                       </CardDescription>
                     </div>
                   </div>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setDangerZonePopupOpen(true)}
+                    className="h-9 w-9 shrink-0 rounded-full hover:bg-destructive/10"
+                  >
+                    <AlertTriangleIcon className="h-4 w-4 text-red-600" />
+                  </Button>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <Button
-                  onClick={() => setDangerZonePopupOpen(true)}
-                  size="sm"
-                  variant="destructive"
-                  className="w-full md:w-auto"
-                >
-                  <AlertTriangleIcon className="mr-2 h-4 w-4" />
-                  Konto löschen
-                </Button>
-              </CardContent>
             </Card>
           )}
         </div>

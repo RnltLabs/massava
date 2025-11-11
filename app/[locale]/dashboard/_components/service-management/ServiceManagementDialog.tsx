@@ -9,7 +9,7 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -56,10 +56,11 @@ function ServiceManagementContent({
 }): React.JSX.Element {
   const { state, goToPreviousStep, reset, loadService, setMode } = useServiceManagement();
   const { currentStep, isSubmitting, serviceId, mode } = state;
+  const loadedServiceIdRef = useRef<string | null>(null);
 
-  // Load service data for edit mode
+  // Load service data for edit mode - only when editService.id changes
   useEffect(() => {
-    if (editService) {
+    if (editService && editService.id !== loadedServiceIdRef.current) {
       loadService({
         name: editService.name,
         duration: editService.duration,
@@ -67,8 +68,12 @@ function ServiceManagementContent({
         serviceId: editService.id,
       });
       setMode('edit');
+      loadedServiceIdRef.current = editService.id;
+    } else if (!editService && loadedServiceIdRef.current !== null) {
+      // Reset when switching from edit to create mode
+      loadedServiceIdRef.current = null;
     }
-  }, [editService, loadService, setMode]);
+  }, [editService?.id, loadService, setMode, editService]);
 
   // Handle success
   useEffect(() => {
