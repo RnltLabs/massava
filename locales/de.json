@@ -362,9 +362,14 @@
       "profile": "Profil bearbeiten",
       "services": "Services verwalten",
       "servicesCount": "{count} Services aktiv",
+      "studio": "Studio-Einstellungen",
+      "studioDescription": "Standort, Öffnungszeiten & Bilder",
       "hours": "Öffnungszeiten",
       "location": "Standort & Kontakt",
+      "images": "Studio-Bilder",
       "stats": "Statistiken & Berichte",
+      "account": "Konto & Sicherheit",
+      "accountDescription": "E-Mail, Passwort & Einstellungen",
       "help": "Hilfe & Support",
       "signOut": "Abmelden"
     }

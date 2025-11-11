@@ -160,7 +160,7 @@ export function AddressAutocomplete({
         htmlFor="street-autocomplete"
         className={cn(required && "after:content-['*'] after:ml-0.5 after:text-red-500")}
       >
-        Straße und Hausnummer
+        Adresse
       </Label>
 
       <div className="relative">
