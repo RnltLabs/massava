@@ -160,6 +160,7 @@ export async function declineBooking(
         status: BookingStatus.CANCELLED,
         cancelledBy: session.user.id,
         cancelledAt: new Date(),
+        cancellationReason: reason,
       },
     });
 
