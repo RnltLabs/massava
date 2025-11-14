@@ -55,7 +55,7 @@ export function BusinessSidebar({ locale }: BusinessSidebarProps): React.JSX.Ele
     },
     {
       label: 'Settings',
-      href: `/${locale}/business/settings/profile`,
+      href: `/${locale}/business/settings`,
       icon: SettingsIcon,
     },
     {

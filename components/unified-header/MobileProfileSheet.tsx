@@ -116,7 +116,7 @@ export function MobileProfileSheet({
               />
               {hasRegisteredStudio && (
                 <SheetMenuItem
-                  href={`/${locale}/business/settings/profile`}
+                  href={`/${locale}/business/settings`}
                   icon={Settings}
                   label="Studio Settings"
                   onClick={() => onOpenChange(false)}

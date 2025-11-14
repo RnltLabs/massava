@@ -82,7 +82,7 @@ export function BusinessNav({ session, locale, hasStudio = true }: BusinessNavPr
             <DropdownMenuSeparator />
             {/* Settings - Only show when user has a studio */}
             {hasStudio && (
-              <DropdownMenuItem onClick={() => router.push(`/${locale}/business/settings/profile`)}>
+              <DropdownMenuItem onClick={() => router.push(`/${locale}/business/settings`)}>
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
