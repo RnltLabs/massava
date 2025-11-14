@@ -221,6 +221,7 @@ model NewBooking {
   confirmedAt              DateTime?
   cancelledBy              String?
   cancelledAt              DateTime?
+  cancellationReason       String?
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   customer                 User?         @relation(fields: [customerId], references: [id], onDelete: Cascade)

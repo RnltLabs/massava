@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { Button } from '@/components/ui/button';
+import { BookingActions } from '@/components/business/BookingActions';
 import { CalendarIcon, ClockIcon, MailIcon, PhoneIcon, MessageSquareIcon } from 'lucide-react';
 import { NewBooking, BookingStatus } from '@/app/generated/prisma';
 
@@ -183,14 +184,10 @@ export async function BookingsList({
                 <BookingStatusBadge status={booking.status} />
 
                 {booking.status === BookingStatus.PENDING && (
-                  <div className="flex flex-col gap-2 w-full sm:w-auto">
-                    <Button size="sm" className="w-full sm:w-auto">
-                      Bestätigen
-                    </Button>
-                    <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                      Ablehnen
-                    </Button>
-                  </div>
+                  <BookingActions
+                    bookingId={booking.id}
+                    customerName={booking.customerName || 'Kunde'}
+                  />
                 )}
 
                 {booking.status === BookingStatus.CONFIRMED && (
