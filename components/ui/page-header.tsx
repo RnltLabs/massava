@@ -17,13 +17,13 @@ interface PageHeaderProps {
   title: string;
   /** Optional subtitle/description */
   subtitle?: string;
-  /** Optional breadcrumb (e.g., "Einstellungen") */
+  /** Current page name for breadcrumb (e.g., "Studio", "Services", "Konto") */
   breadcrumb?: string;
   /** Show back button (default: true on mobile) */
   showBackButton?: boolean;
   /** Optional custom back button href */
   backHref?: string;
-  /** Optional back button label */
+  /** Back button label / parent page name (e.g., "Einstellungen") */
   backLabel?: string;
   /** Optional className for custom styling */
   className?: string;
@@ -55,7 +55,7 @@ export function PageHeader({
           )}>
             <div className="flex items-center gap-2">
               <BackButton href={backHref} label={backLabel} />
-              {breadcrumb && (
+              {backLabel && breadcrumb && (
                 <>
                   <span className="text-gray-400" aria-hidden="true">/</span>
                   <span className="text-sm text-gray-600">{breadcrumb}</span>
