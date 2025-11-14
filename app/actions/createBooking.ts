@@ -7,6 +7,7 @@ import {
   type BookingFormData,
 } from "@/lib/validations/booking"
 import { auth } from "@/auth"
+import { sendBookingRequestReceivedEmail } from "@/lib/email/send"
 
 interface BookingResult {
   success: boolean
@@ -145,8 +146,35 @@ export async function createBooking(
       return newBooking
     })
 
-    // TODO: Send email notification to customer and studio
-    // await sendBookingConfirmationEmail(booking)
+    // Send booking request received email to customer
+    try {
+      const emailResult = await sendBookingRequestReceivedEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName,
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          bookingTime: booking.preferredTime,
+          message: booking.message || undefined,
+        },
+        'de'
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send booking request received email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending booking request received email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
 
     // NOTE: We DON'T call revalidatePath here because it could trigger a page reload
     // and show the "slot unavailable" error. The search page will be revalidated
