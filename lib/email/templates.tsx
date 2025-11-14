@@ -189,6 +189,14 @@ const styles = {
     marginBottom: '24px',
   },
 
+  highlightBox: {
+    padding: '20px 24px',
+    backgroundColor: `${COLORS.primary}10`, // 6% opacity
+    border: `2px solid ${COLORS.primary}30`, // 19% opacity
+    borderRadius: '16px',
+    marginBottom: '24px',
+  },
+
   // Booking details card with warm tones
   bookingCard: {
     backgroundColor: COLORS.background,
@@ -232,6 +240,14 @@ const styles = {
 
   // Footer with warm background
   footer: {
+    fontSize: '16px',
+    color: COLORS.textSecondary,
+    lineHeight: '1.8',
+    marginTop: '32px',
+    textAlign: 'center' as const,
+  },
+
+  footerSection: {
     marginTop: '48px',
     padding: '40px 32px',
     backgroundColor: COLORS.background,
@@ -244,6 +260,13 @@ const styles = {
     color: COLORS.textMuted,
     lineHeight: '1.8',
     marginBottom: '8px',
+  },
+
+  helpText: {
+    fontSize: '14px',
+    color: COLORS.textMuted,
+    lineHeight: '1.8',
+    marginBottom: '16px',
   },
 
   footerLink: {
@@ -547,10 +570,163 @@ export function PasswordResetTemplate({
 }
 
 // ============================================================================
+// BOOKING REQUEST RECEIVED TEMPLATE
+// ============================================================================
+
+interface BookingRequestReceivedTemplateProps {
+  bookingId: string;
+  customerName: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  message?: string;
+  locale?: string;
+}
+
+export function BookingRequestReceivedTemplate({
+  bookingId,
+  customerName,
+  studioName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  message,
+  locale = 'de',
+}: BookingRequestReceivedTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Buchungsanfrage erhalten - Massava',
+      greeting: `Hallo ${customerName}! 👋`,
+      intro: `Ihre Buchungsanfrage bei ${studioName} wurde erfolgreich übermittelt.`,
+      detailsTitle: 'Ihre Buchungsanfrage:',
+      bookingNumberLabel: 'Buchungsnummer',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      studioLabel: 'Studio',
+      messageTitle: 'Ihre Nachricht:',
+      statusTitle: 'Was passiert jetzt?',
+      status1: '📧 Das Studio wurde über Ihre Anfrage informiert',
+      status2: '⏳ Sie erhalten eine E-Mail, sobald das Studio Ihre Buchung bestätigt oder ablehnt',
+      status3: '💼 Wir informieren Sie über jede Statusänderung',
+      bookingNumberInfo: `Ihre Buchungsnummer: ${bookingId}`,
+      bookingNumberNote: 'Bewahren Sie diese Nummer für Ihre Unterlagen auf.',
+      ctaText: 'Weitere Studios entdecken',
+      footer: 'Wir halten Sie auf dem Laufenden! 📬',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Booking Request Received - Massava',
+      greeting: `Hello ${customerName}! 👋`,
+      intro: `Your booking request at ${studioName} has been successfully submitted.`,
+      detailsTitle: 'Your Booking Request:',
+      bookingNumberLabel: 'Booking Number',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      studioLabel: 'Studio',
+      messageTitle: 'Your Message:',
+      statusTitle: 'What happens next?',
+      status1: '📧 The studio has been notified of your request',
+      status2: '⏳ You will receive an email once the studio confirms or declines your booking',
+      status3: '💼 We will notify you of any status changes',
+      bookingNumberInfo: `Your booking number: ${bookingId}`,
+      bookingNumberNote: 'Keep this number for your records.',
+      ctaText: 'Discover More Studios',
+      footer: 'We\'ll keep you updated! 📬',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.primary }}>✓ Anfrage übermittelt</p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+        </div>
+
+        {message && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.textBold, marginBottom: '8px' }}>💬 {t.messageTitle}</p>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{message}</p>
+          </div>
+        )}
+
+        <p style={styles.textBold}>{t.statusTitle}</p>
+
+        <div style={styles.list}>
+          <p style={styles.listItem}>{t.status1}</p>
+          <p style={styles.listItem}>{t.status2}</p>
+          <p style={styles.listItem}>{t.status3}</p>
+        </div>
+
+        <div style={styles.highlightBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px' }}>{t.bookingNumberInfo}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '14px' }}>{t.bookingNumberNote}</p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={studiosUrl} style={styles.buttonSecondary}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
 // BOOKING CONFIRMATION TEMPLATE
 // ============================================================================
 
 interface BookingConfirmationTemplateProps {
+  bookingId: string;
   customerName: string;
   studioName: string;
   serviceName: string;
@@ -563,6 +739,7 @@ interface BookingConfirmationTemplateProps {
 }
 
 export function BookingConfirmationTemplate({
+  bookingId,
   customerName,
   studioName,
   serviceName,
@@ -579,6 +756,7 @@ export function BookingConfirmationTemplate({
       greeting: `Hallo ${customerName}! 🎉`,
       intro: `Gute Nachrichten! Ihre Buchung bei ${studioName} wurde bestätigt.`,
       detailsTitle: 'Ihre Buchungsdetails:',
+      bookingNumberLabel: 'Buchungsnummer',
       serviceLabel: 'Service',
       dateLabel: 'Datum',
       timeLabel: 'Uhrzeit',
@@ -602,6 +780,7 @@ export function BookingConfirmationTemplate({
       greeting: `Hello ${customerName}! 🎉`,
       intro: `Good news! Your booking at ${studioName} has been confirmed.`,
       detailsTitle: 'Your Booking Details:',
+      bookingNumberLabel: 'Booking Number',
       serviceLabel: 'Service',
       dateLabel: 'Date',
       timeLabel: 'Time',
@@ -639,6 +818,11 @@ export function BookingConfirmationTemplate({
         <p style={styles.textBold}>{t.detailsTitle}</p>
 
         <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
           <div style={{ marginBottom: '20px' }}>
             <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
             <p style={styles.bookingDetailValue}>{serviceName}</p>
@@ -725,6 +909,7 @@ export function BookingConfirmationTemplate({
 // ============================================================================
 
 interface BookingCancellationTemplateProps {
+  bookingId: string;
   customerName: string;
   studioName: string;
   serviceName: string;
@@ -735,6 +920,7 @@ interface BookingCancellationTemplateProps {
 }
 
 export function BookingCancellationTemplate({
+  bookingId,
   customerName,
   studioName,
   serviceName,
@@ -749,6 +935,7 @@ export function BookingCancellationTemplate({
       greeting: `Hallo ${customerName}`,
       intro: `Leider muss ${studioName} Ihre Buchungsanfrage ablehnen.`,
       detailsTitle: 'Details der abgelehnten Buchung:',
+      bookingNumberLabel: 'Buchungsnummer',
       serviceLabel: 'Service',
       dateLabel: 'Datum',
       timeLabel: 'Uhrzeit',
@@ -771,6 +958,7 @@ export function BookingCancellationTemplate({
       greeting: `Hello ${customerName}`,
       intro: `Unfortunately, ${studioName} has to decline your booking request.`,
       detailsTitle: 'Details of Declined Booking:',
+      bookingNumberLabel: 'Booking Number',
       serviceLabel: 'Service',
       dateLabel: 'Date',
       timeLabel: 'Time',
@@ -803,6 +991,11 @@ export function BookingCancellationTemplate({
         <p style={styles.textBold}>{t.detailsTitle}</p>
 
         <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
           <div style={{ marginBottom: '20px' }}>
             <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
             <p style={styles.bookingDetailValue}>{serviceName}</p>
@@ -1011,7 +1204,95 @@ If you have questions, reach us at support@massava.app
   return content[locale as keyof typeof content] || content.de;
 }
 
+export function getPlainTextBookingRequestReceived(
+  bookingId: string,
+  customerName: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  message?: string,
+  locale = 'de'
+): string {
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  const content = {
+    de: `
+Hallo ${customerName}! 👋
+
+Ihre Buchungsanfrage bei ${studioName} wurde erfolgreich übermittelt.
+
+✓ Anfrage übermittelt
+
+Ihre Buchungsanfrage:
+
+Buchungsnummer: ${bookingId}
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+Studio: ${studioName}
+
+${message ? `💬 Ihre Nachricht:\n${message}\n` : ''}
+
+Was passiert jetzt?
+
+📧 Das Studio wurde über Ihre Anfrage informiert
+⏳ Sie erhalten eine E-Mail, sobald das Studio Ihre Buchung bestätigt oder ablehnt
+💼 Wir informieren Sie über jede Statusänderung
+
+Ihre Buchungsnummer: ${bookingId}
+Bewahren Sie diese Nummer für Ihre Unterlagen auf.
+
+Weitere Studios entdecken: ${studiosUrl}
+
+Wir halten Sie auf dem Laufenden! 📬
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}! 👋
+
+Your booking request at ${studioName} has been successfully submitted.
+
+✓ Request Submitted
+
+Your Booking Request:
+
+Booking Number: ${bookingId}
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+Studio: ${studioName}
+
+${message ? `💬 Your Message:\n${message}\n` : ''}
+
+What happens next?
+
+📧 The studio has been notified of your request
+⏳ You will receive an email once the studio confirms or declines your booking
+💼 We will notify you of any status changes
+
+Your booking number: ${bookingId}
+Keep this number for your records.
+
+Discover More Studios: ${studiosUrl}
+
+We'll keep you updated! 📬
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
 export function getPlainTextBookingConfirmation(
+  bookingId: string,
   customerName: string,
   studioName: string,
   serviceName: string,
@@ -1035,6 +1316,7 @@ Gute Nachrichten! Ihre Buchung bei ${studioName} wurde bestätigt.
 
 Ihre Buchungsdetails:
 
+Buchungsnummer: ${bookingId}
 Service: ${serviceName}
 Datum: ${bookingDate}
 Uhrzeit: ${bookingTime}
@@ -1068,6 +1350,7 @@ Good news! Your booking at ${studioName} has been confirmed.
 
 Your Booking Details:
 
+Booking Number: ${bookingId}
 Service: ${serviceName}
 Date: ${bookingDate}
 Time: ${bookingTime}
@@ -1098,6 +1381,7 @@ If you have questions, reach us at support@massava.app
 }
 
 export function getPlainTextBookingCancellation(
+  bookingId: string,
   customerName: string,
   studioName: string,
   serviceName: string,
@@ -1117,6 +1401,7 @@ Leider muss ${studioName} Ihre Buchungsanfrage ablehnen.
 
 Details der abgelehnten Buchung:
 
+Buchungsnummer: ${bookingId}
 Service: ${serviceName}
 Datum: ${bookingDate}
 Uhrzeit: ${bookingTime}
@@ -1149,6 +1434,7 @@ Unfortunately, ${studioName} has to decline your booking request.
 
 Details of Declined Booking:
 
+Booking Number: ${bookingId}
 Service: ${serviceName}
 Date: ${bookingDate}
 Time: ${bookingTime}

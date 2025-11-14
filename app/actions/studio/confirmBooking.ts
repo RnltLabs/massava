@@ -92,6 +92,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       const emailResult = await sendBookingConfirmationEmail(
         booking.customerEmail,
         {
+          bookingId: booking.id,
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
@@ -212,6 +213,7 @@ export async function declineBooking(
       const emailResult = await sendBookingCancellationEmail(
         booking.customerEmail,
         {
+          bookingId: booking.id,
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
