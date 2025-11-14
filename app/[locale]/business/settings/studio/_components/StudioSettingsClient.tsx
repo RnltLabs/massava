@@ -61,7 +61,7 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
           title="Studio-Einstellungen"
           subtitle="Verwalte deine Studio-Informationen"
           breadcrumb="Einstellungen"
-          backHref={`/${locale}/business/more`}
+          backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}
         />

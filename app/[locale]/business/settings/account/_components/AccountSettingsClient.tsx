@@ -133,7 +133,7 @@ export function AccountSettingsClient({
           title="Konto & Sicherheit"
           subtitle="Verwalte deine Konto-Einstellungen"
           breadcrumb="Einstellungen"
-          backHref={`/${locale}/business/more`}
+          backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}
         />

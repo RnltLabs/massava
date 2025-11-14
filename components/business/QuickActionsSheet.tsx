@@ -106,7 +106,7 @@ function QuickActionsSheetComponent({
         icon: ClockIcon,
         title: t('editHours'),
         description: t('editHoursDesc'),
-        action: handleNavigate(`/${locale}/business/settings/profile?tab=hours`),
+        action: handleNavigate(`/${locale}/business/settings/studio?tab=hours`),
       },
     ],
     [t, locale, handleNavigate]

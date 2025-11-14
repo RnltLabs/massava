@@ -101,7 +101,7 @@ function MobileBusinessNavComponent({ locale, pendingCount = 0 }: MobileBusiness
       },
       {
         label: t('settings'),
-        href: `/${locale}/business/more`,
+        href: `/${locale}/business/settings`,
         icon: SettingsIcon,
       },
     ],

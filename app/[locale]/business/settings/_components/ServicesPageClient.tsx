@@ -59,7 +59,7 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
           title="Services verwalten"
           subtitle="Verwalten Sie Ihre Service-Angebote"
           breadcrumb="Einstellungen"
-          backHref={`/${locale}/business/more`}
+          backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}
           actionPlacement="stacked"

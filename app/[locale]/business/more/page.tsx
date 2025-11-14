@@ -3,11 +3,7 @@
  * All rights reserved.
  */
 
-import React from 'react';
-import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
-import { MoreMenuClient } from '@/components/business/MoreMenuClient';
 
 interface MorePageProps {
   params: Promise<{
@@ -15,47 +11,9 @@ interface MorePageProps {
   }>;
 }
 
-async function getStudioProfile(userEmail: string) {
-  // Get user's studio via User->StudioOwnership->Studio path
-  const user = await prisma.user.findUnique({
-    where: { email: userEmail },
-    include: {
-      ownedStudios: {
-        include: {
-          studio: {
-            include: {
-              services: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user || user.ownedStudios.length === 0) {
-    return {
-      servicesCount: 0,
-    };
-  }
-
-  const studio = user.ownedStudios[0].studio;
-
-  return {
-    servicesCount: studio.services.length,
-  };
-}
-
-export default async function MorePage({
-  params,
-}: MorePageProps): Promise<React.JSX.Element> {
+export default async function MorePage({ params }: MorePageProps): Promise<never> {
   const { locale } = await params;
-  const session = await auth();
 
-  if (!session) {
-    redirect(`/${locale}/auth/login?callbackUrl=/${locale}/business/more`);
-  }
-
-  const studioProfile = await getStudioProfile(session.user?.email ?? '');
-
-  return <MoreMenuClient locale={locale} studioProfile={studioProfile} />;
+  // Redirect to settings (new canonical URL)
+  redirect(`/${locale}/business/settings`);
 }
