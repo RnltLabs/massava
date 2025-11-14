@@ -14,7 +14,6 @@ import {
   HomeIcon,
   CalendarIcon,
   ClipboardListIcon,
-  LayoutGridIcon,
   SettingsIcon,
   HelpCircleIcon,
 } from 'lucide-react';
@@ -47,11 +46,6 @@ export function BusinessSidebar({ locale }: BusinessSidebarProps): React.JSX.Ele
       label: 'Calendar',
       href: `/${locale}/business/calendar`,
       icon: CalendarIcon,
-    },
-    {
-      label: 'Services',
-      href: `/${locale}/business/settings/services`,
-      icon: LayoutGridIcon,
     },
     {
       label: 'Settings',

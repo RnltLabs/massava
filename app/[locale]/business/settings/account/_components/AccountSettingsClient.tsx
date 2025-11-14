@@ -132,7 +132,7 @@ export function AccountSettingsClient({
         <PageHeader
           title="Konto & Sicherheit"
           subtitle="Verwalte deine Konto-Einstellungen"
-          breadcrumb="Einstellungen"
+          breadcrumb="Konto"
           backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}

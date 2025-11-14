@@ -60,7 +60,7 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
         <PageHeader
           title="Studio-Einstellungen"
           subtitle="Verwalte deine Studio-Informationen"
-          breadcrumb="Einstellungen"
+          breadcrumb="Studio"
           backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}
