@@ -2,101 +2,276 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * Email Templates - German Language
- * STRATEGY.md Section 8.2 - Phase 2.5 Quick Wins
+ * Email Templates - Massava Corporate Design
+ * Unified design system for all email communications
  */
 
 import * as React from 'react';
 
-// Email Template Styles - Massava Wellness Branding
+// Massava Corporate Design Colors
+const COLORS = {
+  // Primary brand colors
+  primary: '#7c9885', // Warm sage green
+  primaryLight: '#9cb5a3', // Light sage green
+  primaryDark: '#6a8473', // Dark sage green
+
+  // Accent colors
+  accent: '#d4a574', // Warm terracotta/gold
+  accentLight: '#e8c9a8',
+
+  // Neutral colors
+  white: '#ffffff',
+  background: '#fafafa',
+  textPrimary: '#1a1a1a',
+  textSecondary: '#4a5568',
+  textMuted: '#6b7280',
+
+  // UI colors
+  border: '#e5e7eb',
+  success: '#10b981',
+  warning: '#f59e0b',
+  error: '#ef4444',
+};
+
+// Massava Email Template Styles - Corporate Design
 const styles = {
+  // Container
   container: {
     fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-    maxWidth: '600px',
+    maxWidth: '640px',
     margin: '0 auto',
-    padding: '0',
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.white,
   },
+
+  // Header with brand gradient
   header: {
-    background: 'linear-gradient(135deg, #7c9885 0%, #9cb5a3 100%)',
-    padding: '48px 20px',
+    background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
+    padding: '56px 24px',
     textAlign: 'center' as const,
-    marginBottom: '40px',
-    borderRadius: '0',
   },
+
   logo: {
-    fontSize: '36px',
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: '8px',
+    fontSize: '42px',
+    fontWeight: '700',
+    color: COLORS.white,
+    marginBottom: '12px',
+    letterSpacing: '1px',
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  },
+
+  tagline: {
+    fontSize: '16px',
+    color: 'rgba(255, 255, 255, 0.95)',
+    fontWeight: '500',
     letterSpacing: '0.5px',
   },
-  tagline: {
-    fontSize: '15px',
-    color: '#f0f4f1',
-    fontWeight: '500',
-  },
+
+  // Content area
   content: {
-    padding: '0 32px 40px 32px',
+    padding: '48px 32px',
+    backgroundColor: COLORS.white,
   },
-  heading: {
-    fontSize: '26px',
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: '16px',
+
+  greeting: {
+    fontSize: '28px',
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: '24px',
     lineHeight: '1.3',
   },
+
   text: {
     fontSize: '16px',
-    color: '#4a5568',
-    lineHeight: '1.7',
+    color: COLORS.textSecondary,
+    lineHeight: '1.8',
     marginBottom: '20px',
   },
+
+  textBold: {
+    fontSize: '16px',
+    color: COLORS.textPrimary,
+    lineHeight: '1.8',
+    fontWeight: '600',
+    marginBottom: '16px',
+  },
+
+  // Primary CTA button
+  buttonContainer: {
+    textAlign: 'center' as const,
+    margin: '40px 0',
+  },
+
   button: {
     display: 'inline-block',
-    padding: '16px 40px',
-    background: 'linear-gradient(135deg, #7c9885 0%, #9cb5a3 100%)',
-    color: '#ffffff',
+    padding: '18px 48px',
+    background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
+    color: COLORS.white,
     textDecoration: 'none',
-    borderRadius: '10px',
+    borderRadius: '12px',
+    fontSize: '17px',
+    fontWeight: '600',
+    textAlign: 'center' as const,
+    boxShadow: `0 4px 16px rgba(124, 152, 133, 0.35)`,
+    transition: 'all 0.3s ease',
+  },
+
+  // Secondary button
+  buttonSecondary: {
+    display: 'inline-block',
+    padding: '16px 40px',
+    backgroundColor: 'transparent',
+    color: COLORS.primary,
+    textDecoration: 'none',
+    border: `2px solid ${COLORS.primary}`,
+    borderRadius: '12px',
     fontSize: '16px',
     fontWeight: '600',
     textAlign: 'center' as const,
-    margin: '20px 0',
-    boxShadow: '0 4px 12px rgba(124, 152, 133, 0.3)',
+    transition: 'all 0.3s ease',
   },
-  buttonContainer: {
-    textAlign: 'center' as const,
-    margin: '32px 0',
-  },
-  warning: {
-    padding: '16px 20px',
-    backgroundColor: '#fef3c7',
-    border: '1px solid #fbbf24',
-    borderRadius: '8px',
-    fontSize: '14px',
-    color: '#92400e',
+
+  // Info boxes
+  infoBox: {
+    padding: '20px 24px',
+    backgroundColor: '#f0f9ff',
+    border: `2px solid #bae6fd`,
+    borderRadius: '12px',
     marginBottom: '24px',
-    lineHeight: '1.5',
   },
+
+  successBox: {
+    padding: '20px 24px',
+    backgroundColor: '#f0fdf4',
+    border: `2px solid #86efac`,
+    borderRadius: '12px',
+    marginBottom: '24px',
+  },
+
+  warningBox: {
+    padding: '20px 24px',
+    backgroundColor: '#fffbeb',
+    border: `2px solid #fcd34d`,
+    borderRadius: '12px',
+    marginBottom: '24px',
+  },
+
+  errorBox: {
+    padding: '20px 24px',
+    backgroundColor: '#fef2f2',
+    border: `2px solid #fca5a5`,
+    borderRadius: '12px',
+    marginBottom: '24px',
+  },
+
+  // Booking details card
+  bookingCard: {
+    backgroundColor: COLORS.background,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '16px',
+    padding: '32px',
+    marginBottom: '32px',
+  },
+
+  bookingDetail: {
+    display: 'flex',
+    padding: '16px 0',
+    borderBottom: `1px solid ${COLORS.border}`,
+  },
+
+  bookingDetailLabel: {
+    fontSize: '14px',
+    color: COLORS.textMuted,
+    fontWeight: '600',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px',
+    marginBottom: '6px',
+  },
+
+  bookingDetailValue: {
+    fontSize: '18px',
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+  },
+
+  // List styling
+  list: {
+    marginLeft: '0',
+    paddingLeft: '0',
+    listStyleType: 'none',
+  },
+
+  listItem: {
+    fontSize: '16px',
+    color: COLORS.textSecondary,
+    lineHeight: '1.8',
+    marginBottom: '12px',
+    paddingLeft: '28px',
+    position: 'relative' as const,
+  },
+
+  // Footer
   footer: {
     marginTop: '48px',
-    padding: '32px 32px',
-    backgroundColor: '#f9fafb',
-    fontSize: '13px',
-    color: '#6b7280',
+    padding: '40px 32px',
+    backgroundColor: COLORS.background,
+    borderTop: `1px solid ${COLORS.border}`,
     textAlign: 'center' as const,
-    lineHeight: '1.6',
   },
-  link: {
-    color: '#7c9885',
+
+  footerText: {
+    fontSize: '14px',
+    color: COLORS.textMuted,
+    lineHeight: '1.8',
+    marginBottom: '8px',
+  },
+
+  footerLink: {
+    color: COLORS.primary,
     textDecoration: 'underline',
+    fontWeight: '500',
   },
+
+  copyright: {
+    fontSize: '13px',
+    color: COLORS.textMuted,
+    marginTop: '24px',
+  },
+
   divider: {
-    borderTop: '1px solid #e5e7eb',
+    borderTop: `1px solid ${COLORS.border}`,
     margin: '32px 0',
   },
+
+  link: {
+    color: COLORS.primary,
+    textDecoration: 'underline',
+    fontWeight: '500',
+  },
 };
+
+// ============================================================================
+// BASE LAYOUT COMPONENT
+// ============================================================================
+
+interface EmailLayoutProps {
+  children: React.ReactNode;
+}
+
+function EmailLayout({ children }: EmailLayoutProps): React.ReactElement {
+  return (
+    <div style={styles.container}>
+      <div style={styles.header}>
+        <div style={styles.logo}>Massava</div>
+        <div style={styles.tagline}>Ihre Massage-Buchungsplattform</div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ============================================================================
+// EMAIL VERIFICATION TEMPLATE
+// ============================================================================
 
 interface EmailVerificationTemplateProps {
   verificationUrl: string;
@@ -110,22 +285,26 @@ export function EmailVerificationTemplate({
   const content = {
     de: {
       subject: 'Verifizieren Sie Ihre E-Mail-Adresse - Massava',
-      greeting: 'Willkommen bei Massava!',
-      intro: 'Vielen Dank für Ihre Registrierung. Bitte verifizieren Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.',
-      buttonText: 'E-Mail verifizieren',
-      expiryNotice: 'Dieser Link ist 24 Stunden gültig.',
-      alternativeText: 'Wenn der Button nicht funktioniert, kopieren Sie bitte den folgenden Link in Ihren Browser:',
-      footer: 'Falls Sie dieses Konto nicht erstellt haben, ignorieren Sie diese E-Mail bitte.',
+      greeting: 'Willkommen bei Massava! 👋',
+      intro: 'Schön, dass Sie dabei sind! Bitte verifizieren Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren und die volle Funktionalität von Massava zu nutzen.',
+      buttonText: 'E-Mail jetzt verifizieren',
+      expiryTitle: 'Wichtig zu wissen:',
+      expiryNotice: 'Dieser Verifizierungslink ist 24 Stunden gültig.',
+      alternativeText: 'Falls der Button nicht funktioniert, können Sie auch diesen Link kopieren:',
+      footer: 'Sie haben dieses Konto nicht erstellt? Dann können Sie diese E-Mail einfach ignorieren.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
       copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
     },
     en: {
       subject: 'Verify Your Email Address - Massava',
-      greeting: 'Welcome to Massava!',
-      intro: 'Thank you for registering. Please verify your email address to activate your account.',
-      buttonText: 'Verify Email',
-      expiryNotice: 'This link is valid for 24 hours.',
-      alternativeText: 'If the button doesn\'t work, please copy the following link into your browser:',
-      footer: 'If you didn\'t create this account, please ignore this email.',
+      greeting: 'Welcome to Massava! 👋',
+      intro: 'Great to have you here! Please verify your email address to activate your account and enjoy the full functionality of Massava.',
+      buttonText: 'Verify Email Now',
+      expiryTitle: 'Important to know:',
+      expiryNotice: 'This verification link is valid for 24 hours.',
+      alternativeText: 'If the button doesn\'t work, you can copy this link:',
+      footer: 'Didn\'t create this account? You can simply ignore this email.',
+      help: 'If you have questions, reach us at support@massava.app',
       copyright: '© 2025 Massava. All rights reserved.',
     },
   };
@@ -133,15 +312,9 @@ export function EmailVerificationTemplate({
   const t = content[locale as keyof typeof content] || content.de;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.logo}>Massava</div>
-        <div style={styles.tagline}>Ihre Massage-Buchungsplattform</div>
-      </div>
-
+    <EmailLayout>
       <div style={styles.content}>
-        <h1 style={styles.heading}>{t.greeting}</h1>
-
+        <h1 style={styles.greeting}>{t.greeting}</h1>
         <p style={styles.text}>{t.intro}</p>
 
         <div style={styles.buttonContainer}>
@@ -150,25 +323,29 @@ export function EmailVerificationTemplate({
           </a>
         </div>
 
-        <div style={styles.warning}>
-          <strong>⏱ {t.expiryNotice}</strong>
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⏱ {t.expiryTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.expiryNotice}</p>
         </div>
 
-        <p style={styles.text}>
-          {t.alternativeText}
-        </p>
-        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '12px' }}>
-          <a href={verificationUrl} style={styles.link}>{verificationUrl}</a>
+        <p style={styles.text}>{t.alternativeText}</p>
+        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '8px' }}>
+          {verificationUrl}
         </p>
       </div>
 
       <div style={styles.footer}>
-        <p>{t.footer}</p>
-        <p style={{ marginTop: '10px' }}>{t.copyright}</p>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
       </div>
-    </div>
+    </EmailLayout>
   );
 }
+
+// ============================================================================
+// WELCOME EMAIL TEMPLATE
+// ============================================================================
 
 interface WelcomeEmailTemplateProps {
   name: string;
@@ -181,59 +358,66 @@ export function WelcomeEmailTemplate({
 }: WelcomeEmailTemplateProps): React.ReactElement {
   const content = {
     de: {
-      subject: 'Willkommen bei Massava!',
-      greeting: `Hallo ${name}!`,
-      intro: 'Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen bei Massava!',
-      whatNext: 'Was Sie jetzt tun können:',
-      step1: '✓ Durchsuchen Sie Massage-Studios in Ihrer Nähe',
-      step2: '✓ Buchen Sie Ihre erste Massage',
-      step3: '✓ Verwalten Sie Ihre Termine bequem online',
-      ctaText: 'Jetzt Studios entdecken',
-      support: 'Bei Fragen oder Problemen stehen wir Ihnen gerne zur Verfügung.',
-      footer: 'Viel Freude mit Massava!',
+      subject: 'Willkommen bei Massava! 🎉',
+      greeting: `Hallo ${name}! 🌟`,
+      intro: 'Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen in der Massava-Community!',
+      whatNext: 'Das können Sie jetzt tun:',
+      step1: '🔍 Massage-Studios in Ihrer Nähe entdecken',
+      step2: '📅 Ihren Wunschtermin schnell und einfach buchen',
+      step3: '💆 Ihre Buchungen bequem online verwalten',
+      step4: '⭐ Ihre Lieblings-Studios speichern',
+      ctaText: 'Studios jetzt entdecken',
+      support: 'Haben Sie Fragen oder Anregungen? Wir sind für Sie da!',
+      supportEmail: 'Schreiben Sie uns: support@massava.app',
+      footer: 'Wir wünschen Ihnen entspannte Momente mit Massava! 🧘',
       copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
     },
     en: {
-      subject: 'Welcome to Massava!',
-      greeting: `Hello ${name}!`,
-      intro: 'Your email address has been successfully verified. Welcome to Massava!',
-      whatNext: 'What you can do now:',
-      step1: '✓ Browse massage studios near you',
-      step2: '✓ Book your first massage',
-      step3: '✓ Manage your appointments conveniently online',
+      subject: 'Welcome to Massava! 🎉',
+      greeting: `Hello ${name}! 🌟`,
+      intro: 'Your email address has been successfully verified. Welcome to the Massava community!',
+      whatNext: 'Here\'s what you can do now:',
+      step1: '🔍 Discover massage studios near you',
+      step2: '📅 Book your preferred appointment quickly and easily',
+      step3: '💆 Manage your bookings conveniently online',
+      step4: '⭐ Save your favorite studios',
       ctaText: 'Discover Studios Now',
-      support: 'If you have any questions or issues, we are happy to help.',
-      footer: 'Enjoy using Massava!',
+      support: 'Have questions or suggestions? We\'re here for you!',
+      supportEmail: 'Contact us: support@massava.app',
+      footer: 'We wish you relaxing moments with Massava! 🧘',
       copyright: '© 2025 Massava. All rights reserved.',
     },
   };
 
   const t = content[locale as keyof typeof content] || content.de;
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  // Since migration to massava.app, no basePath is used
-  const basePath = '';
-  const studiosUrl = `${appUrl}${basePath}/studios`;
+  const studiosUrl = `${appUrl}/de/studios`;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.logo}>Massava</div>
-        <div style={styles.tagline}>Ihre Massage-Buchungsplattform</div>
-      </div>
-
+    <EmailLayout>
       <div style={styles.content}>
-        <h1 style={styles.heading}>{t.greeting}</h1>
-
+        <h1 style={styles.greeting}>{t.greeting}</h1>
         <p style={styles.text}>{t.intro}</p>
 
-        <div style={{ margin: '30px 0' }}>
-          <p style={{ ...styles.text, fontWeight: 'bold', marginBottom: '15px' }}>
-            {t.whatNext}
-          </p>
-          <ul style={{ fontSize: '16px', color: '#333333', lineHeight: '1.8' }}>
-            <li>{t.step1}</li>
-            <li>{t.step2}</li>
-            <li>{t.step3}</li>
+        <div style={styles.successBox}>
+          <p style={{ ...styles.textBold, marginBottom: '16px' }}>{t.whatNext}</p>
+          <ul style={styles.list}>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.step1}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.step2}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.step3}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.step4}
+            </li>
           </ul>
         </div>
 
@@ -245,16 +429,21 @@ export function WelcomeEmailTemplate({
 
         <div style={styles.divider}></div>
 
-        <p style={styles.text}>{t.support}</p>
+        <p style={styles.textBold}>{t.support}</p>
+        <p style={styles.text}>{t.supportEmail}</p>
       </div>
 
       <div style={styles.footer}>
-        <p>{t.footer}</p>
-        <p style={{ marginTop: '10px' }}>{t.copyright}</p>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
       </div>
-    </div>
+    </EmailLayout>
   );
 }
+
+// ============================================================================
+// PASSWORD RESET TEMPLATE
+// ============================================================================
 
 interface PasswordResetTemplateProps {
   resetUrl: string;
@@ -268,24 +457,30 @@ export function PasswordResetTemplate({
   const content = {
     de: {
       subject: 'Passwort zurücksetzen - Massava',
-      greeting: 'Passwort zurücksetzen',
-      intro: 'Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den Button unten, um ein neues Passwort zu erstellen.',
+      greeting: 'Passwort zurücksetzen 🔐',
+      intro: 'Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den Button, um ein neues Passwort zu erstellen.',
       buttonText: 'Neues Passwort erstellen',
-      expiryNotice: 'Dieser Link ist 1 Stunde gültig.',
-      notRequested: 'Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail bitte. Ihr Passwort bleibt unverändert.',
-      alternativeText: 'Wenn der Button nicht funktioniert, kopieren Sie bitte den folgenden Link in Ihren Browser:',
+      expiryTitle: 'Wichtig:',
+      expiryNotice: 'Dieser Link ist aus Sicherheitsgründen nur 1 Stunde gültig.',
+      securityTitle: 'Sicherheitshinweis:',
+      notRequested: 'Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren. Ihr Passwort bleibt dann unverändert.',
+      alternativeText: 'Alternativ können Sie diesen Link kopieren:',
       footer: 'Diese E-Mail wurde aus Sicherheitsgründen automatisch versendet.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
       copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
     },
     en: {
       subject: 'Reset Your Password - Massava',
-      greeting: 'Reset Your Password',
-      intro: 'You have requested to reset your password. Click the button below to create a new password.',
+      greeting: 'Reset Your Password 🔐',
+      intro: 'You requested to reset your password. Click the button below to create a new password.',
       buttonText: 'Create New Password',
-      expiryNotice: 'This link is valid for 1 hour.',
-      notRequested: 'If you didn\'t request this, please ignore this email. Your password will remain unchanged.',
-      alternativeText: 'If the button doesn\'t work, please copy the following link into your browser:',
+      expiryTitle: 'Important:',
+      expiryNotice: 'For security reasons, this link is only valid for 1 hour.',
+      securityTitle: 'Security Notice:',
+      notRequested: 'If you didn\'t request this, you can ignore this email. Your password will remain unchanged.',
+      alternativeText: 'Alternatively, you can copy this link:',
       footer: 'This email was sent automatically for security reasons.',
+      help: 'If you have questions, reach us at support@massava.app',
       copyright: '© 2025 Massava. All rights reserved.',
     },
   };
@@ -293,15 +488,9 @@ export function PasswordResetTemplate({
   const t = content[locale as keyof typeof content] || content.de;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.header}>
-        <div style={styles.logo}>Massava</div>
-        <div style={styles.tagline}>Ihre Massage-Buchungsplattform</div>
-      </div>
-
+    <EmailLayout>
       <div style={styles.content}>
-        <h1 style={styles.heading}>{t.greeting}</h1>
-
+        <h1 style={styles.greeting}>{t.greeting}</h1>
         <p style={styles.text}>{t.intro}</p>
 
         <div style={styles.buttonContainer}>
@@ -310,58 +499,395 @@ export function PasswordResetTemplate({
           </a>
         </div>
 
-        <div style={styles.warning}>
-          <strong>⏱ {t.expiryNotice}</strong>
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⏱ {t.expiryTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.expiryNotice}</p>
         </div>
 
-        <div style={{ ...styles.warning, backgroundColor: '#f8d7da', borderColor: '#f5c6cb', color: '#721c24', marginTop: '20px' }}>
-          <strong>🔒 {t.notRequested}</strong>
+        <div style={styles.errorBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>🔒 {t.securityTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.notRequested}</p>
         </div>
 
-        <p style={styles.text}>
-          {t.alternativeText}
-        </p>
-        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '12px' }}>
-          <a href={resetUrl} style={styles.link}>{resetUrl}</a>
+        <p style={styles.text}>{t.alternativeText}</p>
+        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '8px' }}>
+          {resetUrl}
         </p>
       </div>
 
       <div style={styles.footer}>
-        <p>{t.footer}</p>
-        <p style={{ marginTop: '10px' }}>{t.copyright}</p>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
       </div>
-    </div>
+    </EmailLayout>
   );
 }
 
-// Plain text versions for email clients that don't support HTML
+// ============================================================================
+// BOOKING CONFIRMATION TEMPLATE
+// ============================================================================
+
+interface BookingConfirmationTemplateProps {
+  customerName: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  studioAddress?: string;
+  studioPhone?: string;
+  message?: string;
+  locale?: string;
+}
+
+export function BookingConfirmationTemplate({
+  customerName,
+  studioName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  studioAddress,
+  studioPhone,
+  message,
+  locale = 'de',
+}: BookingConfirmationTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Buchung bestätigt - Massava',
+      greeting: `Hallo ${customerName}! 🎉`,
+      intro: `Gute Nachrichten! Ihre Buchung bei ${studioName} wurde bestätigt.`,
+      detailsTitle: 'Ihre Buchungsdetails:',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      studioLabel: 'Studio',
+      addressLabel: 'Adresse',
+      phoneLabel: 'Telefon',
+      messageTitle: 'Nachricht vom Studio:',
+      nextSteps: 'Was Sie jetzt tun können:',
+      step1: '📅 Termin in Ihren Kalender eintragen',
+      step2: '📍 Route zum Studio planen',
+      step3: '📞 Bei Fragen das Studio kontaktieren',
+      importantTitle: 'Wichtig:',
+      importantText: 'Bitte erscheinen Sie pünktlich zu Ihrem Termin. Bei Verspätungen oder Terminänderungen kontaktieren Sie bitte direkt das Studio.',
+      ctaText: 'Weitere Studios entdecken',
+      footer: 'Wir wünschen Ihnen eine entspannende Massage! 🧘',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Booking Confirmed - Massava',
+      greeting: `Hello ${customerName}! 🎉`,
+      intro: `Good news! Your booking at ${studioName} has been confirmed.`,
+      detailsTitle: 'Your Booking Details:',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      studioLabel: 'Studio',
+      addressLabel: 'Address',
+      phoneLabel: 'Phone',
+      messageTitle: 'Message from Studio:',
+      nextSteps: 'What you can do now:',
+      step1: '📅 Add appointment to your calendar',
+      step2: '📍 Plan route to studio',
+      step3: '📞 Contact studio if you have questions',
+      importantTitle: 'Important:',
+      importantText: 'Please arrive on time for your appointment. For delays or changes, please contact the studio directly.',
+      ctaText: 'Discover More Studios',
+      footer: 'We wish you a relaxing massage! 🧘',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.successBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.success }}>✓ Buchung bestätigt</p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+
+          {studioAddress && (
+            <div style={{ marginBottom: '20px' }}>
+              <p style={styles.bookingDetailLabel}>{t.addressLabel}</p>
+              <p style={{ ...styles.text, marginBottom: '0' }}>{studioAddress}</p>
+            </div>
+          )}
+
+          {studioPhone && (
+            <div>
+              <p style={styles.bookingDetailLabel}>{t.phoneLabel}</p>
+              <p style={{ ...styles.text, marginBottom: '0' }}>
+                <a href={`tel:${studioPhone}`} style={styles.link}>{studioPhone}</a>
+              </p>
+            </div>
+          )}
+        </div>
+
+        {message && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.textBold, marginBottom: '8px' }}>💬 {t.messageTitle}</p>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{message}</p>
+          </div>
+        )}
+
+        <p style={styles.textBold}>{t.nextSteps}</p>
+        <ul style={styles.list}>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step1}
+          </li>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step2}
+          </li>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step3}
+          </li>
+        </ul>
+
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⚠️ {t.importantTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.importantText}</p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={studiosUrl} style={styles.buttonSecondary}>
+            {t.ctaText}
+          </a>
+        </div>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
+// BOOKING CANCELLATION TEMPLATE
+// ============================================================================
+
+interface BookingCancellationTemplateProps {
+  customerName: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  cancellationReason?: string;
+  locale?: string;
+}
+
+export function BookingCancellationTemplate({
+  customerName,
+  studioName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  cancellationReason,
+  locale = 'de',
+}: BookingCancellationTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Buchung abgelehnt - Massava',
+      greeting: `Hallo ${customerName}`,
+      intro: `Leider muss ${studioName} Ihre Buchungsanfrage ablehnen.`,
+      detailsTitle: 'Details der abgelehnten Buchung:',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      studioLabel: 'Studio',
+      reasonTitle: 'Grund der Absage:',
+      noReason: 'Kein spezifischer Grund angegeben',
+      whatNextTitle: 'Was Sie jetzt tun können:',
+      whatNext: 'Kein Problem! Bei Massava finden Sie viele weitere Studios und alternative Termine.',
+      step1: '🔍 Andere Studios in Ihrer Nähe entdecken',
+      step2: '📅 Alternative Termine finden',
+      step3: '⭐ Vielleicht ein neues Lieblings-Studio entdecken',
+      ctaText: 'Neuen Termin finden',
+      support: 'Wir helfen Ihnen gerne, den perfekten Termin zu finden!',
+      footer: 'Ihr Massava-Team',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Booking Declined - Massava',
+      greeting: `Hello ${customerName}`,
+      intro: `Unfortunately, ${studioName} has to decline your booking request.`,
+      detailsTitle: 'Details of Declined Booking:',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      studioLabel: 'Studio',
+      reasonTitle: 'Reason for Cancellation:',
+      noReason: 'No specific reason provided',
+      whatNextTitle: 'What you can do now:',
+      whatNext: 'No problem! At Massava you can find many more studios and alternative appointments.',
+      step1: '🔍 Discover other studios near you',
+      step2: '📅 Find alternative appointments',
+      step3: '⭐ Maybe discover a new favorite studio',
+      ctaText: 'Find New Appointment',
+      support: 'We\'re happy to help you find the perfect appointment!',
+      footer: 'Your Massava Team',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+        </div>
+
+        {cancellationReason && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.textBold, marginBottom: '8px' }}>💬 {t.reasonTitle}</p>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{cancellationReason}</p>
+          </div>
+        )}
+
+        {!cancellationReason && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px', fontStyle: 'italic' }}>{t.noReason}</p>
+          </div>
+        )}
+
+        <div style={styles.divider}></div>
+
+        <p style={styles.textBold}>{t.whatNextTitle}</p>
+        <p style={styles.text}>{t.whatNext}</p>
+
+        <ul style={styles.list}>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step1}
+          </li>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step2}
+          </li>
+          <li style={styles.listItem}>
+            <span style={{ position: 'absolute', left: '0' }}>✓</span>
+            {t.step3}
+          </li>
+        </ul>
+
+        <div style={styles.buttonContainer}>
+          <a href={studiosUrl} style={styles.button}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <p style={{ ...styles.text, textAlign: 'center' as const }}>{t.support}</p>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
+// PLAIN TEXT VERSIONS
+// ============================================================================
+
 export function getPlainTextVerification(verificationUrl: string, locale = 'de'): string {
   const content = {
     de: `
-Willkommen bei Massava!
+Willkommen bei Massava! 👋
 
-Vielen Dank für Ihre Registrierung. Bitte verifizieren Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
+Schön, dass Sie dabei sind! Bitte verifizieren Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
 
 Verifizierungslink:
 ${verificationUrl}
 
-Dieser Link ist 24 Stunden gültig.
+⏱ Dieser Link ist 24 Stunden gültig.
 
-Falls Sie dieses Konto nicht erstellt haben, ignorieren Sie diese E-Mail bitte.
+Sie haben dieses Konto nicht erstellt? Dann können Sie diese E-Mail einfach ignorieren.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
 
 © 2025 Massava. Alle Rechte vorbehalten.
     `.trim(),
     en: `
-Welcome to Massava!
+Welcome to Massava! 👋
 
-Thank you for registering. Please verify your email address to activate your account.
+Great to have you here! Please verify your email address to activate your account.
 
 Verification link:
 ${verificationUrl}
 
-This link is valid for 24 hours.
+⏱ This link is valid for 24 hours.
 
-If you didn't create this account, please ignore this email.
+Didn't create this account? You can simply ignore this email.
+
+If you have questions, reach us at support@massava.app
 
 © 2025 Massava. All rights reserved.
     `.trim(),
@@ -372,44 +898,46 @@ If you didn't create this account, please ignore this email.
 
 export function getPlainTextWelcome(name: string, locale = 'de'): string {
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-  // Since migration to massava.app, no basePath is used
-  const basePath = '';
-  const studiosUrl = `${appUrl}${basePath}/studios`;
+  const studiosUrl = `${appUrl}/de/studios`;
 
   const content = {
     de: `
-Hallo ${name}!
+Hallo ${name}! 🌟
 
-Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen bei Massava!
+Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen in der Massava-Community!
 
-Was Sie jetzt tun können:
-- Durchsuchen Sie Massage-Studios in Ihrer Nähe
-- Buchen Sie Ihre erste Massage
-- Verwalten Sie Ihre Termine bequem online
+Das können Sie jetzt tun:
+✓ 🔍 Massage-Studios in Ihrer Nähe entdecken
+✓ 📅 Ihren Wunschtermin schnell und einfach buchen
+✓ 💆 Ihre Buchungen bequem online verwalten
+✓ ⭐ Ihre Lieblings-Studios speichern
 
 Studios entdecken: ${studiosUrl}
 
-Bei Fragen oder Problemen stehen wir Ihnen gerne zur Verfügung.
+Haben Sie Fragen oder Anregungen? Wir sind für Sie da!
+Schreiben Sie uns: support@massava.app
 
-Viel Freude mit Massava!
+Wir wünschen Ihnen entspannte Momente mit Massava! 🧘
 
 © 2025 Massava. Alle Rechte vorbehalten.
     `.trim(),
     en: `
-Hello ${name}!
+Hello ${name}! 🌟
 
-Your email address has been successfully verified. Welcome to Massava!
+Your email address has been successfully verified. Welcome to the Massava community!
 
-What you can do now:
-- Browse massage studios near you
-- Book your first massage
-- Manage your appointments conveniently online
+Here's what you can do now:
+✓ 🔍 Discover massage studios near you
+✓ 📅 Book your preferred appointment quickly and easily
+✓ 💆 Manage your bookings conveniently online
+✓ ⭐ Save your favorite studios
 
 Discover studios: ${studiosUrl}
 
-If you have any questions or issues, we are happy to help.
+Have questions or suggestions? We're here for you!
+Contact us: support@massava.app
 
-Enjoy using Massava!
+We wish you relaxing moments with Massava! 🧘
 
 © 2025 Massava. All rights reserved.
     `.trim(),
@@ -421,34 +949,206 @@ Enjoy using Massava!
 export function getPlainTextPasswordReset(resetUrl: string, locale = 'de'): string {
   const content = {
     de: `
-Passwort zurücksetzen
+Passwort zurücksetzen 🔐
 
 Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt.
 
 Passwort zurücksetzen:
 ${resetUrl}
 
-Dieser Link ist 1 Stunde gültig.
+⏱ Wichtig: Dieser Link ist aus Sicherheitsgründen nur 1 Stunde gültig.
 
-Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail bitte. Ihr Passwort bleibt unverändert.
+🔒 Sicherheitshinweis: Falls Sie diese Anfrage nicht gestellt haben, können Sie diese E-Mail ignorieren. Ihr Passwort bleibt dann unverändert.
 
 Diese E-Mail wurde aus Sicherheitsgründen automatisch versendet.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
 
 © 2025 Massava. Alle Rechte vorbehalten.
     `.trim(),
     en: `
-Reset Your Password
+Reset Your Password 🔐
 
-You have requested to reset your password.
+You requested to reset your password.
 
 Reset password:
 ${resetUrl}
 
-This link is valid for 1 hour.
+⏱ Important: For security reasons, this link is only valid for 1 hour.
 
-If you didn't request this, please ignore this email. Your password will remain unchanged.
+🔒 Security Notice: If you didn't request this, you can ignore this email. Your password will remain unchanged.
 
 This email was sent automatically for security reasons.
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+export function getPlainTextBookingConfirmation(
+  customerName: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  studioAddress?: string,
+  studioPhone?: string,
+  message?: string,
+  locale = 'de'
+): string {
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  const content = {
+    de: `
+Hallo ${customerName}! 🎉
+
+Gute Nachrichten! Ihre Buchung bei ${studioName} wurde bestätigt.
+
+✓ Buchung bestätigt
+
+Ihre Buchungsdetails:
+
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+Studio: ${studioName}
+${studioAddress ? `Adresse: ${studioAddress}` : ''}
+${studioPhone ? `Telefon: ${studioPhone}` : ''}
+
+${message ? `💬 Nachricht vom Studio:\n${message}\n` : ''}
+
+Was Sie jetzt tun können:
+✓ 📅 Termin in Ihren Kalender eintragen
+✓ 📍 Route zum Studio planen
+✓ 📞 Bei Fragen das Studio kontaktieren
+
+⚠️ Wichtig: Bitte erscheinen Sie pünktlich zu Ihrem Termin. Bei Verspätungen oder Terminänderungen kontaktieren Sie bitte direkt das Studio.
+
+Weitere Studios entdecken: ${studiosUrl}
+
+Wir wünschen Ihnen eine entspannende Massage! 🧘
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}! 🎉
+
+Good news! Your booking at ${studioName} has been confirmed.
+
+✓ Booking Confirmed
+
+Your Booking Details:
+
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+Studio: ${studioName}
+${studioAddress ? `Address: ${studioAddress}` : ''}
+${studioPhone ? `Phone: ${studioPhone}` : ''}
+
+${message ? `💬 Message from Studio:\n${message}\n` : ''}
+
+What you can do now:
+✓ 📅 Add appointment to your calendar
+✓ 📍 Plan route to studio
+✓ 📞 Contact studio if you have questions
+
+⚠️ Important: Please arrive on time for your appointment. For delays or changes, please contact the studio directly.
+
+Discover More Studios: ${studiosUrl}
+
+We wish you a relaxing massage! 🧘
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+export function getPlainTextBookingCancellation(
+  customerName: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  cancellationReason?: string,
+  locale = 'de'
+): string {
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const studiosUrl = `${appUrl}/de/studios`;
+
+  const content = {
+    de: `
+Hallo ${customerName}
+
+Leider muss ${studioName} Ihre Buchungsanfrage ablehnen.
+
+Details der abgelehnten Buchung:
+
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+Studio: ${studioName}
+
+${cancellationReason ? `💬 Grund der Absage:\n${cancellationReason}\n` : '💬 Kein spezifischer Grund angegeben\n'}
+
+Was Sie jetzt tun können:
+
+Kein Problem! Bei Massava finden Sie viele weitere Studios und alternative Termine.
+
+✓ 🔍 Andere Studios in Ihrer Nähe entdecken
+✓ 📅 Alternative Termine finden
+✓ ⭐ Vielleicht ein neues Lieblings-Studio entdecken
+
+Neuen Termin finden: ${studiosUrl}
+
+Wir helfen Ihnen gerne, den perfekten Termin zu finden!
+
+Ihr Massava-Team
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}
+
+Unfortunately, ${studioName} has to decline your booking request.
+
+Details of Declined Booking:
+
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+Studio: ${studioName}
+
+${cancellationReason ? `💬 Reason for Cancellation:\n${cancellationReason}\n` : '💬 No specific reason provided\n'}
+
+What you can do now:
+
+No problem! At Massava you can find many more studios and alternative appointments.
+
+✓ 🔍 Discover other studios near you
+✓ 📅 Find alternative appointments
+✓ ⭐ Maybe discover a new favorite studio
+
+Find New Appointment: ${studiosUrl}
+
+We're happy to help you find the perfect appointment!
+
+Your Massava Team
+
+If you have questions, reach us at support@massava.app
 
 © 2025 Massava. All rights reserved.
     `.trim(),
