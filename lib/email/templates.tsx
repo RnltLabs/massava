@@ -3,34 +3,42 @@
  * All rights reserved.
  *
  * Email Templates - Massava Corporate Design
- * Unified design system for all email communications
+ * Unified design system matching massava.app website
  */
 
 import * as React from 'react';
 
-// Massava Corporate Design Colors
+// Massava Corporate Design Colors - Matching Website
+// Based on globals.css OKLCH values
 const COLORS = {
-  // Primary brand colors
-  primary: '#7c9885', // Warm sage green
-  primaryLight: '#9cb5a3', // Light sage green
-  primaryDark: '#6a8473', // Dark sage green
+  // Primary brand colors - Warm Wellness Tones
+  primary: '#a67c52', // Warm terracotta (oklch(0.55 0.12 35))
+  primaryLight: '#c39a76', // Light terracotta
+  primaryDark: '#8b6842', // Dark terracotta
 
-  // Accent colors
-  accent: '#d4a574', // Warm terracotta/gold
-  accentLight: '#e8c9a8',
+  // Accent color - Sage Green
+  accent: '#93a08a', // Sage green (oklch(0.62 0.08 140))
+  accentLight: '#b0baa9',
+  accentDark: '#7a8771',
 
-  // Neutral colors
+  // Secondary - Warm Sand/Beige
+  secondary: '#e0d7c8', // Warm sand (oklch(0.88 0.03 80))
+  secondaryDark: '#cfc6b7',
+
+  // Neutral colors - Warm Earth Palette
   white: '#ffffff',
-  background: '#fafafa',
-  textPrimary: '#1a1a1a',
-  textSecondary: '#4a5568',
-  textMuted: '#6b7280',
+  background: '#f2f0ec', // Warm cream (oklch(0.95 0.01 60))
+  cardBg: '#faf9f7', // Soft warm white (oklch(0.98 0.008 50))
+
+  textPrimary: '#3d3630', // Warm dark brown (oklch(0.25 0.02 40))
+  textSecondary: '#6b5f52', // Warm medium brown
+  textMuted: '#8c7e6f', // Warm muted brown (oklch(0.45 0.02 40))
 
   // UI colors
-  border: '#e5e7eb',
-  success: '#10b981',
-  warning: '#f59e0b',
-  error: '#ef4444',
+  border: '#dfd9d0', // Warm border (oklch(0.88 0.015 60))
+  success: '#6b9f7b', // Warm green
+  warning: '#d4a574', // Warm gold
+  error: '#c97a6a', // Warm red
 };
 
 // Massava Email Template Styles - Corporate Design
@@ -43,11 +51,25 @@ const styles = {
     backgroundColor: COLORS.white,
   },
 
-  // Header with brand gradient
+  // Header with warm terracotta gradient matching website
   header: {
     background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
     padding: '56px 24px',
     textAlign: 'center' as const,
+    position: 'relative' as const,
+    overflow: 'hidden' as const,
+  },
+
+  // Organic decorative elements in header (matching website blobs)
+  headerDecoration: {
+    position: 'absolute' as const,
+    width: '300px',
+    height: '300px',
+    background: `${COLORS.accent}33`, // 20% opacity
+    borderRadius: '50% 40% 60% 50%',
+    top: '-100px',
+    right: '-50px',
+    opacity: '0.3',
   },
 
   logo: {
@@ -56,7 +78,9 @@ const styles = {
     color: COLORS.white,
     marginBottom: '12px',
     letterSpacing: '1px',
-    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    textShadow: '0 2px 8px rgba(0,0,0,0.15)',
+    position: 'relative' as const,
+    zIndex: 1,
   },
 
   tagline: {
@@ -64,9 +88,11 @@ const styles = {
     color: 'rgba(255, 255, 255, 0.95)',
     fontWeight: '500',
     letterSpacing: '0.5px',
+    position: 'relative' as const,
+    zIndex: 1,
   },
 
-  // Content area
+  // Content area with warm background
   content: {
     padding: '48px 32px',
     backgroundColor: COLORS.white,
@@ -95,7 +121,7 @@ const styles = {
     marginBottom: '16px',
   },
 
-  // Primary CTA button
+  // Primary CTA button with terracotta gradient
   buttonContainer: {
     textAlign: 'center' as const,
     margin: '40px 0',
@@ -107,83 +133,77 @@ const styles = {
     background: `linear-gradient(135deg, ${COLORS.primary} 0%, ${COLORS.primaryLight} 100%)`,
     color: COLORS.white,
     textDecoration: 'none',
-    borderRadius: '12px',
+    borderRadius: '24px', // Extra soft organic corners (matching 1.5rem radius)
     fontSize: '17px',
     fontWeight: '600',
     textAlign: 'center' as const,
-    boxShadow: `0 4px 16px rgba(124, 152, 133, 0.35)`,
+    boxShadow: `0 4px 16px ${COLORS.primary}55`,
     transition: 'all 0.3s ease',
   },
 
-  // Secondary button
+  // Secondary button with sage green
   buttonSecondary: {
     display: 'inline-block',
     padding: '16px 40px',
     backgroundColor: 'transparent',
-    color: COLORS.primary,
+    color: COLORS.accent,
     textDecoration: 'none',
-    border: `2px solid ${COLORS.primary}`,
-    borderRadius: '12px',
+    border: `2px solid ${COLORS.accent}`,
+    borderRadius: '24px',
     fontSize: '16px',
     fontWeight: '600',
     textAlign: 'center' as const,
     transition: 'all 0.3s ease',
   },
 
-  // Info boxes
+  // Info boxes with warm colors
   infoBox: {
     padding: '20px 24px',
-    backgroundColor: '#f0f9ff',
-    border: `2px solid #bae6fd`,
-    borderRadius: '12px',
+    backgroundColor: `${COLORS.accent}15`, // 8% opacity
+    border: `2px solid ${COLORS.accent}40`, // 25% opacity
+    borderRadius: '16px',
     marginBottom: '24px',
   },
 
   successBox: {
     padding: '20px 24px',
-    backgroundColor: '#f0fdf4',
-    border: `2px solid #86efac`,
-    borderRadius: '12px',
+    backgroundColor: `${COLORS.success}15`,
+    border: `2px solid ${COLORS.success}50`,
+    borderRadius: '16px',
     marginBottom: '24px',
   },
 
   warningBox: {
     padding: '20px 24px',
-    backgroundColor: '#fffbeb',
-    border: `2px solid #fcd34d`,
-    borderRadius: '12px',
+    backgroundColor: `${COLORS.warning}15`,
+    border: `2px solid ${COLORS.warning}50`,
+    borderRadius: '16px',
     marginBottom: '24px',
   },
 
   errorBox: {
     padding: '20px 24px',
-    backgroundColor: '#fef2f2',
-    border: `2px solid #fca5a5`,
-    borderRadius: '12px',
+    backgroundColor: `${COLORS.error}15`,
+    border: `2px solid ${COLORS.error}50`,
+    borderRadius: '16px',
     marginBottom: '24px',
   },
 
-  // Booking details card
+  // Booking details card with warm tones
   bookingCard: {
     backgroundColor: COLORS.background,
     border: `1px solid ${COLORS.border}`,
-    borderRadius: '16px',
+    borderRadius: '20px', // Organic corners
     padding: '32px',
     marginBottom: '32px',
   },
 
-  bookingDetail: {
-    display: 'flex',
-    padding: '16px 0',
-    borderBottom: `1px solid ${COLORS.border}`,
-  },
-
   bookingDetailLabel: {
-    fontSize: '14px',
+    fontSize: '13px',
     color: COLORS.textMuted,
     fontWeight: '600',
     textTransform: 'uppercase' as const,
-    letterSpacing: '0.5px',
+    letterSpacing: '0.8px',
     marginBottom: '6px',
   },
 
@@ -191,6 +211,7 @@ const styles = {
     fontSize: '18px',
     color: COLORS.textPrimary,
     fontWeight: '600',
+    marginBottom: '0',
   },
 
   // List styling
@@ -209,7 +230,7 @@ const styles = {
     position: 'relative' as const,
   },
 
-  // Footer
+  // Footer with warm background
   footer: {
     marginTop: '48px',
     padding: '40px 32px',
@@ -261,8 +282,9 @@ function EmailLayout({ children }: EmailLayoutProps): React.ReactElement {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
+        <div style={styles.headerDecoration}></div>
         <div style={styles.logo}>Massava</div>
-        <div style={styles.tagline}>Ihre Massage-Buchungsplattform</div>
+        <div style={styles.tagline}>Ihre Wellness-Buchungsplattform</div>
       </div>
       {children}
     </div>
@@ -329,7 +351,7 @@ export function EmailVerificationTemplate({
         </div>
 
         <p style={styles.text}>{t.alternativeText}</p>
-        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '8px' }}>
+        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '12px' }}>
           {verificationUrl}
         </p>
       </div>
@@ -362,7 +384,7 @@ export function WelcomeEmailTemplate({
       greeting: `Hallo ${name}! 🌟`,
       intro: 'Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen in der Massava-Community!',
       whatNext: 'Das können Sie jetzt tun:',
-      step1: '🔍 Massage-Studios in Ihrer Nähe entdecken',
+      step1: '🔍 Wellness-Studios in Ihrer Nähe entdecken',
       step2: '📅 Ihren Wunschtermin schnell und einfach buchen',
       step3: '💆 Ihre Buchungen bequem online verwalten',
       step4: '⭐ Ihre Lieblings-Studios speichern',
@@ -377,7 +399,7 @@ export function WelcomeEmailTemplate({
       greeting: `Hello ${name}! 🌟`,
       intro: 'Your email address has been successfully verified. Welcome to the Massava community!',
       whatNext: 'Here\'s what you can do now:',
-      step1: '🔍 Discover massage studios near you',
+      step1: '🔍 Discover wellness studios near you',
       step2: '📅 Book your preferred appointment quickly and easily',
       step3: '💆 Manage your bookings conveniently online',
       step4: '⭐ Save your favorite studios',
@@ -510,7 +532,7 @@ export function PasswordResetTemplate({
         </div>
 
         <p style={styles.text}>{t.alternativeText}</p>
-        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '8px' }}>
+        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '12px' }}>
           {resetUrl}
         </p>
       </div>
@@ -571,7 +593,7 @@ export function BookingConfirmationTemplate({
       importantTitle: 'Wichtig:',
       importantText: 'Bitte erscheinen Sie pünktlich zu Ihrem Termin. Bei Verspätungen oder Terminänderungen kontaktieren Sie bitte direkt das Studio.',
       ctaText: 'Weitere Studios entdecken',
-      footer: 'Wir wünschen Ihnen eine entspannende Massage! 🧘',
+      footer: 'Wir wünschen Ihnen eine entspannende Zeit! 🧘',
       help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
       copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
     },
@@ -594,7 +616,7 @@ export function BookingConfirmationTemplate({
       importantTitle: 'Important:',
       importantText: 'Please arrive on time for your appointment. For delays or changes, please contact the studio directly.',
       ctaText: 'Discover More Studios',
-      footer: 'We wish you a relaxing massage! 🧘',
+      footer: 'We wish you a relaxing time! 🧘',
       help: 'If you have questions, reach us at support@massava.app',
       copyright: '© 2025 Massava. All rights reserved.',
     },
@@ -632,13 +654,13 @@ export function BookingConfirmationTemplate({
             <p style={styles.bookingDetailValue}>{bookingTime}</p>
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: studioAddress || studioPhone ? '20px' : '0' }}>
             <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
             <p style={styles.bookingDetailValue}>{studioName}</p>
           </div>
 
           {studioAddress && (
-            <div style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: studioPhone ? '20px' : '0' }}>
               <p style={styles.bookingDetailLabel}>{t.addressLabel}</p>
               <p style={{ ...styles.text, marginBottom: '0' }}>{studioAddress}</p>
             </div>
@@ -907,7 +929,7 @@ Hallo ${name}! 🌟
 Ihre E-Mail-Adresse wurde erfolgreich verifiziert. Willkommen in der Massava-Community!
 
 Das können Sie jetzt tun:
-✓ 🔍 Massage-Studios in Ihrer Nähe entdecken
+✓ 🔍 Wellness-Studios in Ihrer Nähe entdecken
 ✓ 📅 Ihren Wunschtermin schnell und einfach buchen
 ✓ 💆 Ihre Buchungen bequem online verwalten
 ✓ ⭐ Ihre Lieblings-Studios speichern
@@ -927,7 +949,7 @@ Hello ${name}! 🌟
 Your email address has been successfully verified. Welcome to the Massava community!
 
 Here's what you can do now:
-✓ 🔍 Discover massage studios near you
+✓ 🔍 Discover wellness studios near you
 ✓ 📅 Book your preferred appointment quickly and easily
 ✓ 💆 Manage your bookings conveniently online
 ✓ ⭐ Save your favorite studios
@@ -1031,7 +1053,7 @@ Was Sie jetzt tun können:
 
 Weitere Studios entdecken: ${studiosUrl}
 
-Wir wünschen Ihnen eine entspannende Massage! 🧘
+Wir wünschen Ihnen eine entspannende Zeit! 🧘
 
 Bei Fragen erreichen Sie uns unter support@massava.app
 
@@ -1064,7 +1086,7 @@ What you can do now:
 
 Discover More Studios: ${studiosUrl}
 
-We wish you a relaxing massage! 🧘
+We wish you a relaxing time! 🧘
 
 If you have questions, reach us at support@massava.app
 
