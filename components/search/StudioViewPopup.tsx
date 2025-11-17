@@ -29,6 +29,8 @@ import { StudioAvatar } from '@/components/ui/studio-avatar';
 import { StudioMap } from '@/components/search/StudioMap';
 import { OpeningHoursDisplay } from '@/components/search/OpeningHoursDisplay';
 import { StudioGallery } from '@/components/search/StudioGallery';
+import { StudioRating } from '@/components/reviews/StudioRating';
+import { ReviewsList } from '@/components/reviews/ReviewsList';
 import {
   PhoneIcon,
   MailIcon,
@@ -49,6 +51,11 @@ export function StudioViewPopup({
   onOpenChange,
 }: StudioViewPopupProps): React.JSX.Element {
   const isDesktop = useMediaQuery('(min-width: 768px)');
+  const [reviewsRef, setReviewsRef] = React.useState<HTMLDivElement | null>(null);
+
+  const scrollToReviews = () => {
+    reviewsRef?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const content = (
     <div className="space-y-6">
@@ -62,6 +69,19 @@ export function StudioViewPopup({
         />
         <div>
           <h2 className="text-2xl font-bold mb-2">{studio.name}</h2>
+
+          {/* Studio Rating - Clickable to scroll to reviews */}
+          {studio.averageRating !== undefined && studio.totalReviews !== undefined && (
+            <div className="mb-2 flex justify-center">
+              <StudioRating
+                rating={studio.averageRating}
+                totalReviews={studio.totalReviews}
+                variant="default"
+                onClick={scrollToReviews}
+              />
+            </div>
+          )}
+
           {studio.description && (
             <p className="text-muted-foreground text-sm leading-relaxed max-w-md">
               {studio.description}
@@ -134,6 +154,12 @@ export function StudioViewPopup({
           <OpeningHoursDisplay openingHours={studio.openingHours} />
         </>
       )}
+
+      {/* Reviews Section */}
+      <Separator />
+      <div ref={setReviewsRef} className="scroll-mt-6">
+        <ReviewsList studioId={studio.id} />
+      </div>
     </div>
   );
 

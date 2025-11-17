@@ -14,6 +14,7 @@ import { BookingCard } from './BookingCard';
 import { BookingDetailsSheet } from './BookingDetailsSheet';
 import { CancelBookingDialog } from './CancelBookingDialog';
 import { RescheduleDialog } from './RescheduleDialog';
+import { ReviewDialog } from './ReviewDialog';
 import { CalendarIcon, ClockIcon } from 'lucide-react';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
@@ -32,6 +33,7 @@ export function CustomerBookingsClient({
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
 
   const handleViewDetails = (booking: BookingWithRelations) => {
     setSelectedBooking(booking);
@@ -57,6 +59,15 @@ export function CustomerBookingsClient({
 
   const handleCloseReschedule = () => {
     setRescheduleDialogOpen(false);
+  };
+
+  const handleOpenReview = (booking: BookingWithRelations) => {
+    setSelectedBooking(booking);
+    setReviewDialogOpen(true);
+  };
+
+  const handleCloseReview = () => {
+    setReviewDialogOpen(false);
   };
 
   return (
@@ -111,6 +122,7 @@ export function CustomerBookingsClient({
                       onViewDetails={handleViewDetails}
                       onCancel={handleOpenCancel}
                       onReschedule={handleOpenReschedule}
+                      onReview={handleOpenReview}
                     />
                   ))}
                 </div>
@@ -137,6 +149,7 @@ export function CustomerBookingsClient({
                       key={booking.id}
                       booking={booking}
                       onViewDetails={handleViewDetails}
+                      onReview={handleOpenReview}
                       isPast={true}
                     />
                   ))}
@@ -151,7 +164,7 @@ export function CustomerBookingsClient({
       {selectedBooking && (
         <BookingDetailsSheet
           booking={selectedBooking}
-          open={!!selectedBooking && !cancelDialogOpen && !rescheduleDialogOpen}
+          open={!!selectedBooking && !cancelDialogOpen && !rescheduleDialogOpen && !reviewDialogOpen}
           onOpenChange={(open) => {
             if (!open) {
               handleCloseDetails();
@@ -183,6 +196,19 @@ export function CustomerBookingsClient({
           onOpenChange={(open) => {
             if (!open) {
               handleCloseReschedule();
+            }
+          }}
+        />
+      )}
+
+      {/* Review Dialog */}
+      {selectedBooking && (
+        <ReviewDialog
+          booking={selectedBooking}
+          open={reviewDialogOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              handleCloseReview();
             }
           }}
         />

@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { StudioAvatar } from '@/components/ui/studio-avatar';
 import { formatPriceLabel } from '@/lib/utils/priceAggregation';
 import { StudioViewPopup } from '@/components/search/StudioViewPopup';
+import { StudioRating } from '@/components/reviews/StudioRating';
 import type { SearchResultStudio } from '@/types/booking';
 
 interface SearchResultsResponse {
@@ -233,10 +234,22 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                     onClick={() => handleViewStudio(result)}
                     className="text-left w-full focus:outline-none focus:ring-2 focus:ring-primary rounded"
                   >
-                    <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden hover:text-primary transition-colors">
+                    <h3 className="font-bold text-base sm:text-lg mb-1 line-clamp-2 break-words overflow-hidden hover:text-primary transition-colors">
                       {name}
                     </h3>
                   </button>
+
+                  {/* Studio Rating */}
+                  {result.averageRating !== undefined && result.totalReviews !== undefined && (
+                    <div className="mb-2">
+                      <StudioRating
+                        rating={result.averageRating}
+                        totalReviews={result.totalReviews}
+                        variant="compact"
+                        onClick={() => handleViewStudio(result)}
+                      />
+                    </div>
+                  )}
 
                   {/* Distance and Price in one row */}
                   <div className="flex items-center justify-between gap-2">

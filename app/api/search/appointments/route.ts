@@ -197,6 +197,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       services: studio.services,
       matchedServices: studio.matchedServices,
       minPrice: studio.minPrice,
+      averageRating: studio.averageRating,
+      totalReviews: studio.totalReviews,
       availableSlots: studio.timeSlots.map((slot) => ({
         id: slot.id,
         startTime: slot.startTime.toISOString(),
