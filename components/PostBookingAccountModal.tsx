@@ -62,8 +62,8 @@ export function PostBookingAccountModal({ customerName, customerEmail, customerP
         throw new Error('Login failed');
       }
 
-      // Redirect to dashboard
-      router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
+      // Redirect to bookings page
+      router.push(getAuthCallbackUrl(`/${locale}/customer/bookings`));
       router.refresh();
       onClose();
     } catch (err) {

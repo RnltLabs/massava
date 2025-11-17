@@ -122,7 +122,7 @@ export function MobileNav({
 
               {/* Authenticated User Actions */}
               <Link
-                href={`/${locale}/customer/dashboard`}
+                href={`/${locale}/customer/bookings`}
                 onClick={() => setOpen(false)}
               >
                 <Button
@@ -135,7 +135,7 @@ export function MobileNav({
               </Link>
 
               <Link
-                href={`/${locale}/dashboard`}
+                href={`/${locale}/customer/profile`}
                 onClick={() => setOpen(false)}
               >
                 <Button

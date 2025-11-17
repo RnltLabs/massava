@@ -34,9 +34,6 @@ export function SignUpForm({
   isLoading = false,
   onSwitchToLogin,
 }: SignUpFormProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const accountTypeValue = accountType; // Reserved for future use
-
   const [formData, setFormData] = useState<SignUpFormData>({
     email: '',
     password: '',
