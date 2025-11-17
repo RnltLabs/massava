@@ -213,7 +213,7 @@ export async function GET(
   } catch (error) {
     logger.error('Availability API error', {
       correlationId,
-      error,
+      error: error instanceof Error ? error : new Error(String(error)),
     });
 
     return NextResponse.json(

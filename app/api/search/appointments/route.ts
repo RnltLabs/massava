@@ -162,7 +162,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             logger.error('Failed to calculate slots for studio', {
               correlationId,
               studioId: studio.id,
-              error: slotsResult.error,
+              errorType: slotsResult.error.type,
             });
             return { ...studio, availableSlots: [] as AvailableSlot[] };
           }
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           logger.error('Error calculating slots for studio', {
             correlationId,
             studioId: studio.id,
-            error,
+            error: error instanceof Error ? error : new Error(String(error)),
           });
           return { ...studio, availableSlots: [] as AvailableSlot[] };
         }
@@ -260,7 +260,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (error) {
     logger.error('Appointment search error', {
       correlationId,
-      error,
+      error: error instanceof Error ? error : new Error(String(error)),
     });
 
     return NextResponse.json(

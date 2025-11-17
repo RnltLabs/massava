@@ -103,7 +103,7 @@ export async function createBooking(
       if (!capacityResult.ok) {
         logger.error('Capacity check failed', {
           correlationId,
-          error: capacityResult.error,
+          errorType: capacityResult.error.type,
           studioId: validated.studioId,
           preferredDate,
           preferredTime,
@@ -255,7 +255,7 @@ export async function createBooking(
       return newBooking
     },
     {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+      isolationLevel: 'Serializable' as const,
       maxWait: 5000,
       timeout: 10000,
     }
@@ -294,7 +294,7 @@ export async function createBooking(
       logger.error('Exception sending booking request received email', {
         correlationId,
         bookingId: booking.id,
-        error: emailError,
+        error: emailError instanceof Error ? emailError : new Error(String(emailError)),
       });
       // Note: We don't fail the entire operation if email fails
     }
@@ -364,7 +364,7 @@ export async function createBooking(
       logger.error('Exception sending new booking notification to owners', {
         correlationId,
         bookingId: booking.id,
-        error: emailError,
+        error: emailError instanceof Error ? emailError : new Error(String(emailError)),
       });
       // Note: We don't fail the entire operation if email fails
     }
@@ -382,7 +382,7 @@ export async function createBooking(
   } catch (error) {
     logger.error("Booking creation failed", {
       correlationId,
-      error,
+      error: error instanceof Error ? error : new Error(String(error)),
     })
 
     // Handle Zod validation errors

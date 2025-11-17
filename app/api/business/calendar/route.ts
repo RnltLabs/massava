@@ -207,7 +207,7 @@ export async function GET(request: Request) {
         } else {
           logger.error('Failed to calculate slots for date', {
             date,
-            error: slotsResult.error,
+            errorType: slotsResult.error.type,
           })
         }
       }
@@ -285,7 +285,7 @@ export async function GET(request: Request) {
         title: `${booking.customerName} - ${booking.service?.name || 'Kein Service'}`,
         customerName: booking.customerName,
         customerEmail: booking.customerEmail,
-        customerPhone: booking.customerPhone,
+        customerPhone: booking.customerPhone ?? undefined,
         serviceName: booking.service?.name,
         serviceId: booking.serviceId,
         status: booking.status,
