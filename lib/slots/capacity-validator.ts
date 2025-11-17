@@ -264,7 +264,7 @@ export async function createBookingWithCapacityCheck(
           correlationId,
           attempt: attempt + 1,
           maxRetries,
-          error: lastError,
+          errorType: lastError.type,
         });
         // Don't retry capacity exceeded errors
         break;
