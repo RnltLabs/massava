@@ -3,15 +3,27 @@
  * All rights reserved.
  *
  * Password Reset Verification Page - Massava Design
+ *
+ * SECURITY FIXES:
+ * - CR-003: Updated password validation to unified schema (min 10 chars + uppercase + number)
+ * - CR-004: Replaced console.error with structured logging
+ *
+ * ACCESSIBILITY FIXES (WCAG 2.1 AA):
+ * - Fix #14: Added ARIA labels to password toggle buttons
+ * - Fix #15: Added focus management on error states
+ * - Fix #16: Fixed color contrast on disabled buttons
+ * - Fix #17: Added loading state announcements for screen readers
  */
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Eye, EyeOff, ArrowLeft, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import { logger, generateCorrelationId } from '@/lib/logger';
+import { BLOB_ANIMATION_DELAY_FAST } from '@/lib/constants/animations';
 
 type VerificationStatus = 'verifying' | 'valid' | 'invalid' | 'expired' | 'updating' | 'success';
 
@@ -29,6 +41,14 @@ export default function ResetPasswordTokenPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // ACCESSIBILITY FIX #15: Focus management on error states
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   // Verify token on mount
   useEffect(() => {
@@ -58,7 +78,12 @@ export default function ResetPasswordTokenPage() {
           setStatus('invalid');
         }
       } catch (err) {
-        console.error('Token verification error:', err);
+        // SECURITY FIX #4: Structured logging instead of console.error
+        logger.error('Token verification error', {
+          action: 'TOKEN_VERIFY_CLIENT_ERROR',
+          correlationId: generateCorrelationId(),
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
         setStatus('invalid');
       }
     };
@@ -66,21 +91,17 @@ export default function ResetPasswordTokenPage() {
     verifyToken();
   }, [token]);
 
+  // SECURITY FIX #3: Use unified password validation (min 10 chars + uppercase + number)
   const validatePassword = (password: string): string => {
-    if (password.length < 8) {
+    if (password.length < 10) {
       return locale === 'de'
-        ? 'Passwort muss mindestens 8 Zeichen lang sein'
-        : 'Password must be at least 8 characters';
+        ? 'Passwort muss mindestens 10 Zeichen lang sein'
+        : 'Password must be at least 10 characters';
     }
     if (!/[A-Z]/.test(password)) {
       return locale === 'de'
         ? 'Passwort muss mindestens einen Großbuchstaben enthalten'
         : 'Password must contain at least one uppercase letter';
-    }
-    if (!/[a-z]/.test(password)) {
-      return locale === 'de'
-        ? 'Passwort muss mindestens einen Kleinbuchstaben enthalten'
-        : 'Password must contain at least one lowercase letter';
     }
     if (!/[0-9]/.test(password)) {
       return locale === 'de'
@@ -132,7 +153,12 @@ export default function ResetPasswordTokenPage() {
         setStatus('valid');
       }
     } catch (err) {
-      console.error('Password update error:', err);
+      // SECURITY FIX #4: Structured logging instead of console.error
+      logger.error('Password update error', {
+        action: 'PASSWORD_UPDATE_CLIENT_ERROR',
+        correlationId: generateCorrelationId(),
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
       setError(locale === 'de' ? 'Ein Fehler ist aufgetreten' : 'An error occurred');
       setStatus('valid');
     }
@@ -160,7 +186,7 @@ export default function ResetPasswordTokenPage() {
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -198,7 +224,7 @@ export default function ResetPasswordTokenPage() {
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -249,7 +275,7 @@ export default function ResetPasswordTokenPage() {
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -300,7 +326,7 @@ export default function ResetPasswordTokenPage() {
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -354,7 +380,7 @@ export default function ResetPasswordTokenPage() {
           background: 'oklch(0.88 0.03 80 / 0.2)',
           bottom: '-100px',
           left: '-100px',
-          animationDelay: '3s',
+          animationDelay: BLOB_ANIMATION_DELAY_FAST,
         }}
       />
 
@@ -391,7 +417,7 @@ export default function ResetPasswordTokenPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   onBlur={() => setTouched({ ...touched, password: true })}
                   className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:border-sage-500 focus:ring-2 focus:ring-sage-200 outline-none transition-all"
-                  placeholder={locale === 'de' ? 'Mindestens 8 Zeichen' : 'At least 8 characters'}
+                  placeholder={locale === 'de' ? 'Mindestens 10 Zeichen' : 'At least 10 characters'}
                   required
                   disabled={status === 'updating'}
                 />
@@ -399,8 +425,13 @@ export default function ResetPasswordTokenPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={
+                    showPassword
+                      ? (locale === 'de' ? 'Passwort verbergen' : 'Hide password')
+                      : (locale === 'de' ? 'Passwort anzeigen' : 'Show password')
+                  }
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
                 </button>
               </div>
               {touched.password && password && validatePassword(password) && (
@@ -428,8 +459,13 @@ export default function ResetPasswordTokenPage() {
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  aria-label={
+                    showConfirmPassword
+                      ? (locale === 'de' ? 'Passwort verbergen' : 'Hide password')
+                      : (locale === 'de' ? 'Passwort anzeigen' : 'Show password')
+                  }
                 >
-                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" aria-hidden="true" /> : <Eye className="h-5 w-5" aria-hidden="true" />}
                 </button>
               </div>
               {touched.confirmPassword && confirmPassword && password !== confirmPassword && (
@@ -440,8 +476,14 @@ export default function ResetPasswordTokenPage() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div
+                ref={errorRef}
+                tabIndex={-1}
+                className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl"
+                role="alert"
+                aria-live="polite"
+              >
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -449,17 +491,19 @@ export default function ResetPasswordTokenPage() {
             <button
               type="submit"
               disabled={status === 'updating' || !password || !confirmPassword}
-              className="w-full px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:text-gray-700 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              aria-live="polite"
+              aria-atomic="true"
             >
               {status === 'updating' ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  {locale === 'de' ? 'Wird aktualisiert...' : 'Updating...'}
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>{locale === 'de' ? 'Wird aktualisiert...' : 'Updating...'}</span>
                 </>
               ) : (
                 <>
-                  <Lock className="h-5 w-5" />
-                  {locale === 'de' ? 'Passwort aktualisieren' : 'Update Password'}
+                  <Lock className="h-5 w-5" aria-hidden="true" />
+                  <span>{locale === 'de' ? 'Passwort aktualisieren' : 'Update Password'}</span>
                 </>
               )}
             </button>

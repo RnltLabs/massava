@@ -7,11 +7,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { z } from 'zod';
+import { BLOB_ANIMATION_DELAY_FAST } from '@/lib/constants/animations';
 
 export default function ResetPasswordPage() {
   const params = useParams();
@@ -22,11 +24,19 @@ export default function ResetPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [touched, setTouched] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
 
+  // ACCESSIBILITY FIX #18: Use Zod for email validation
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return z.string().email().safeParse(email).success;
   };
+
+  // ACCESSIBILITY FIX #15: Focus management on error states
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.focus();
+    }
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,7 +95,7 @@ export default function ResetPasswordPage() {
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -141,7 +151,7 @@ export default function ResetPasswordPage() {
           background: 'oklch(0.88 0.03 80 / 0.2)',
           bottom: '-100px',
           left: '-100px',
-          animationDelay: '3s',
+          animationDelay: BLOB_ANIMATION_DELAY_FAST,
         }}
       />
 
@@ -190,8 +200,14 @@ export default function ResetPasswordPage() {
             </div>
 
             {error && (
-              <div className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div
+                ref={errorRef}
+                tabIndex={-1}
+                className="flex items-start gap-2 p-4 bg-red-50 border border-red-200 rounded-xl"
+                role="alert"
+                aria-live="polite"
+              >
+                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
                 <p className="text-sm text-red-600">{error}</p>
               </div>
             )}
@@ -199,17 +215,19 @@ export default function ResetPasswordPage() {
             <button
               type="submit"
               disabled={isLoading || !email}
-              className="w-full px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full px-6 py-3 bg-black text-white rounded-full font-medium hover:bg-gray-800 transition-colors disabled:bg-gray-400 disabled:text-gray-700 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              aria-live="polite"
+              aria-atomic="true"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  {locale === 'de' ? 'Wird gesendet...' : 'Sending...'}
+                  <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
+                  <span>{locale === 'de' ? 'Wird gesendet...' : 'Sending...'}</span>
                 </>
               ) : (
                 <>
-                  <Mail className="h-5 w-5" />
-                  {locale === 'de' ? 'Link senden' : 'Send Reset Link'}
+                  <Mail className="h-5 w-5" aria-hidden="true" />
+                  <span>{locale === 'de' ? 'Link senden' : 'Send Reset Link'}</span>
                 </>
               )}
             </button>

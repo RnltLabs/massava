@@ -27,9 +27,6 @@ export function LoginForm({
   onSwitchToSignup,
   locale = 'de',
 }: LoginFormProps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const accountTypeValue = accountType; // Reserved for future use
-
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: '',

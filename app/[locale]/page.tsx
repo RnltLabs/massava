@@ -8,6 +8,13 @@ import { Clock, MapPin, TrendingUp } from 'lucide-react';
 import { auth } from '@/auth';
 import { SearchWidget } from '@/components/SearchWidget';
 import { Footer } from '@/components/Footer';
+import {
+  BLOB_ANIMATION_DELAY_FAST,
+  BLOB_ANIMATION_DELAY_MEDIUM,
+  BLOB_ANIMATION_DELAY_SLOW,
+  BLOB_ANIMATION_DELAY_VERY_SLOW,
+  BLOB_ANIMATION_DELAY_SLOWEST,
+} from '@/lib/constants/animations';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -39,7 +46,7 @@ export default async function Home({ params }: Props) {
           background: 'oklch(0.55 0.12 35 / 0.15)',
           top: '40%',
           right: '-150px',
-          animationDelay: '5s',
+          animationDelay: BLOB_ANIMATION_DELAY_MEDIUM,
         }}
       />
       <div
@@ -50,7 +57,7 @@ export default async function Home({ params }: Props) {
           background: 'oklch(0.88 0.03 80 / 0.25)',
           bottom: '-100px',
           left: '20%',
-          animationDelay: '10s',
+          animationDelay: BLOB_ANIMATION_DELAY_VERY_SLOW,
         }}
       />
       {/* Additional decorative shapes */}
@@ -62,7 +69,7 @@ export default async function Home({ params }: Props) {
           background: 'oklch(0.62 0.08 140 / 0.12)',
           top: '15%',
           left: '30%',
-          animationDelay: '3s',
+          animationDelay: BLOB_ANIMATION_DELAY_FAST,
         }}
       />
       <div
@@ -73,7 +80,7 @@ export default async function Home({ params }: Props) {
           background: 'oklch(0.55 0.12 35 / 0.1)',
           bottom: '20%',
           right: '10%',
-          animationDelay: '7s',
+          animationDelay: BLOB_ANIMATION_DELAY_SLOW,
         }}
       />
       <div
@@ -84,7 +91,7 @@ export default async function Home({ params }: Props) {
           background: 'oklch(0.88 0.03 80 / 0.18)',
           top: '60%',
           left: '5%',
-          animationDelay: '12s',
+          animationDelay: BLOB_ANIMATION_DELAY_SLOWEST,
         }}
       />
 
