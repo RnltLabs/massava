@@ -238,6 +238,8 @@ model NewBooking {
   cancelledBy              String?
   cancelledAt              DateTime?
   cancellationReason       String?
+  reminderSent             Boolean       @default(false)
+  reviewRequestSent        Boolean       @default(false)
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   customer                 User?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -253,6 +255,8 @@ model NewBooking {
   @@index([studioId, status])
   @@index([studioId, preferredDate])
   @@index([studioId, status, confirmedAt])
+  @@index([status, reminderSent, preferredDate])
+  @@index([status, reviewRequestSent, preferredDate])
   @@map("new_bookings")
 }
 
