@@ -3,6 +3,7 @@
  * All rights reserved.
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { PrismaClient, UserRole } from '@/app/generated/prisma';
@@ -12,7 +13,6 @@ import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logge
 import { generateEmailVerificationURL } from '@/lib/email-verification';
 import { sendVerificationEmail } from '@/lib/email/send';
 
-const prisma = new PrismaClient();
 
 // GDPR Art. 32 compliant bcrypt cost factor
 const BCRYPT_ROUNDS = 12;

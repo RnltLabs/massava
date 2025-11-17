@@ -19,9 +19,7 @@ import { Package } from 'lucide-react';
 const EXAMPLE_NAMES = [
   'Thai-Massage',
   'Öl-Massage',
-  'Traditionelle Thai-Massage',
   'Aromatherapie-Massage',
-  'Fußreflexzonenmassage',
 ];
 
 interface ServiceNameStepProps {
@@ -96,7 +94,6 @@ export function ServiceNameStep({
           placeholder="z.B. Thai-Massage"
           maxLength={100}
           className="h-12"
-          autoFocus
         />
         <div className="flex items-center justify-between text-xs">
           <span

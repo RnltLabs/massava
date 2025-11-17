@@ -8,7 +8,7 @@
  * Fetch bookings for the authenticated studio owner's studio
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { bookingsQuerySchema } from '@/lib/validations/business'
@@ -63,7 +63,17 @@ export async function GET(request: Request) {
     const query = queryResult.data
 
     // 4. Build where clause
-    const where: any = {
+    interface BookingWhereInput {
+      studioId: string;
+      status?: z.infer<typeof bookingsQuerySchema>['status'];
+      serviceId?: string;
+      createdAt?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    }
+
+    const where: BookingWhereInput = {
       studioId: studio.id,
     }
 

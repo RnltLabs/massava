@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { User, LogOut, ChevronDown, Calendar } from 'lucide-react';
 import { UnifiedAuthDialog } from './auth/UnifiedAuthDialog';
 import LanguageSwitcher from './LanguageSwitcher';
-import { MobileNav } from './MobileNav';
 import { getAuthCallbackUrl } from '@/lib/navigation';
 
 export default function Header() {
@@ -68,11 +67,11 @@ export default function Header() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href={`/${locale}`} className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-primary">Massava</div>
+              <div className="text-xl sm:text-2xl font-bold text-[#B56550]">Massava</div>
             </Link>
 
-            {/* Desktop Navigation - Hidden on Mobile */}
-            <div className="hidden sm:flex items-center gap-3">
+            {/* Navigation - Show on all screen sizes for now */}
+            <div className="flex items-center gap-3">
               <LanguageSwitcher />
 
               {status === 'loading' ? (
@@ -82,12 +81,12 @@ export default function Header() {
                 <div className="relative">
                   <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
+                    className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-foreground bg-accent/20 hover:bg-accent/30 transition-colors rounded-2xl"
                     aria-label="Open user menu"
                   >
                     <User className="h-4 w-4" />
-                    <span className="max-w-[150px] truncate">{getDisplayName()}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
+                    <span className="max-w-[100px] sm:max-w-[150px] truncate hidden sm:inline">{getDisplayName()}</span>
+                    <ChevronDown className={`h-3 w-3 sm:h-4 sm:w-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showUserMenu && (
@@ -134,34 +133,26 @@ export default function Header() {
                     onClick={() =>
                       setAuthDialog({ open: true, tab: 'login' })
                     }
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-accent/20 transition-colors rounded-2xl"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-foreground hover:bg-accent/20 transition-colors rounded-2xl"
                     aria-label="Sign in to your account"
                   >
-                    Anmelden
+                    <span className="hidden sm:inline">Anmelden</span>
+                    <span className="sm:hidden">Login</span>
                   </button>
 
                   <button
                     onClick={() =>
                       setAuthDialog({ open: true, tab: 'signup' })
                     }
-                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 transition-colors rounded-2xl wellness-shadow"
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-primary-foreground bg-[#B56550] hover:bg-[#B56550]/90 transition-colors rounded-2xl wellness-shadow"
                     aria-label="Create a new account"
                   >
-                    Registrieren
+                    <span className="hidden sm:inline">Registrieren</span>
+                    <span className="sm:hidden">Sign Up</span>
                   </button>
                 </>
               )}
             </div>
-
-            {/* Mobile Navigation - Hamburger Menu */}
-            <MobileNav
-              locale={locale}
-              isAuthenticated={!!session}
-              displayName={session ? getDisplayName() : undefined}
-              onLoginClick={() => setAuthDialog({ open: true, tab: 'login' })}
-              onSignupClick={() => setAuthDialog({ open: true, tab: 'signup' })}
-              onLogoutClick={handleLogout}
-            />
           </div>
         </div>
       </header>

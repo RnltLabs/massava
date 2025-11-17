@@ -1337,8 +1337,8 @@ declare type Field = ReadonlyDeep_2<{
     type: string;
     /**
      * Native database type, if specified.
-     * For example, `@db.VarChar(191)` is encoded as `['VarChar', ['191']]`,
-     * `@db.Text` is encoded as `['Text', []]`.
+     * For example, `@prisma.VarChar(191)` is encoded as `['VarChar', ['191']]`,
+     * `@prisma.Text` is encoded as `['Text', []]`.
      */
     nativeType?: [string, string[]] | null;
     dbName?: string | null;

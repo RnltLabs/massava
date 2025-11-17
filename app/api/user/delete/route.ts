@@ -7,12 +7,11 @@
  * STRATEGY.md Section 8.2 - Phase 2
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth-unified';
-import { PrismaClient } from '@/app/generated/prisma';
+import { auth } from '@/auth';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 
-const prisma = new PrismaClient();
 
 export async function DELETE(request: NextRequest) {
   const correlationId = getCorrelationId(request);

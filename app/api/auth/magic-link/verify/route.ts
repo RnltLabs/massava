@@ -6,15 +6,14 @@
  * Verifies magic link token and authenticates user
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@/app/generated/prisma';
 import { verifyMagicLink } from '@/lib/magic-link';
 import { createAuditLog } from '@/lib/audit';
-import { signIn } from '@/auth-unified';
+import { signIn } from '@/auth';
 import { getRedirectUrl } from '@/lib/navigation';
 
-const prisma = new PrismaClient();
 
 // Validation schema
 const verifySchema = z.object({

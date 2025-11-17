@@ -7,11 +7,10 @@
  * MASTER_ORCHESTRATION_PLAN.md Task 1.4: Data Retention & Deletion
  */
 
-import { PrismaClient } from '@/app/generated/prisma';
+import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import { createAuditLog } from '@/lib/audit';
 
-const prisma = new PrismaClient();
 
 /**
  * Data Retention Periods (from GDPR compliance requirements)

@@ -7,12 +7,11 @@
  * STRATEGY.md Section 8.2 - Phase 2
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth-unified';
-import { PrismaClient } from '@/app/generated/prisma';
+import { auth } from '@/auth';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   const correlationId = getCorrelationId(request);
@@ -65,7 +64,7 @@ export async function GET(request: NextRequest) {
             type: true,
           },
         },
-        customerBookings: {
+        newBookings: {
           include: {
             studio: {
               select: {
@@ -123,7 +122,7 @@ export async function GET(request: NextRequest) {
         lastUpdated: user.updatedAt,
         oauthProviders: user.newAccounts.map((acc) => acc.provider),
       },
-      bookings: user.customerBookings.map((booking) => ({
+      bookings: user.newBookings.map((booking) => ({
         id: booking.id,
         studio: booking.studio,
         service: booking.service,

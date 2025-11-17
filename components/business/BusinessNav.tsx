@@ -6,6 +6,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 
 import { Session } from 'next-auth';
 import { signOut } from 'next-auth/react';
@@ -19,15 +20,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserIcon, LogOutIcon, SettingsIcon } from 'lucide-react';
+import { UserIcon, LogOutIcon, SettingsIcon, HelpCircleIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface BusinessNavProps {
   session: Session;
   locale: string;
+  hasStudio?: boolean;
 }
 
-export function BusinessNav({ session, locale }: BusinessNavProps): React.JSX.Element {
+export function BusinessNav({ session, locale, hasStudio = true }: BusinessNavProps): React.JSX.Element {
   const router = useRouter();
 
   const getInitials = (name?: string | null): string => {
@@ -46,11 +48,16 @@ export function BusinessNav({ session, locale }: BusinessNavProps): React.JSX.El
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-6">
-      {/* Breadcrumbs or Title - Can be enhanced later */}
-      <div className="text-lg font-semibold text-neutral-900 md:hidden">Massava</div>
+      {/* Logo - Show on mobile always, and on desktop when no studio (onboarding mode) */}
+      <Link
+        href={`/${locale}/business`}
+        className={`flex items-center ${hasStudio ? 'md:hidden' : ''}`}
+      >
+        <span className="text-xl font-bold text-[#B56550]">Massava</span>
+      </Link>
 
-      {/* User Menu */}
-      <div className="ml-auto">
+      {/* User Menu - Positioned on the right */}
+      <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -73,10 +80,13 @@ export function BusinessNav({ session, locale }: BusinessNavProps): React.JSX.El
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push(`/${locale}/business/settings/profile`)}>
-              <SettingsIcon className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
+            {/* Settings - Only show when user has a studio */}
+            {hasStudio && (
+              <DropdownMenuItem onClick={() => router.push(`/${locale}/business/settings`)}>
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={() => router.push(`/${locale}/account`)}>
               <UserIcon className="mr-2 h-4 w-4" />
               <span>Account</span>

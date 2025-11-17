@@ -7,7 +7,7 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -18,6 +18,7 @@ const updateStudioProfileSchema = z.object({
   description: z.string().min(10).max(500),
   phone: z.string().min(10).optional().nullable(),
   email: z.string().email().optional().nullable(),
+  website: z.string().url().optional().nullable().or(z.literal('')),
   address: z.string().min(5),
   city: z.string().min(2),
   postalCode: z.string().min(3).optional().nullable(),
@@ -107,6 +108,7 @@ export async function updateStudioProfile(
 
     // 5. Revalidate pages
     revalidatePath('/business/settings/profile');
+    revalidatePath('/business/settings/location');
     revalidatePath('/business');
 
     return {
@@ -189,7 +191,9 @@ export async function updateOpeningHours(
     });
 
     // 5. Revalidate pages
+    revalidatePath('/business/settings/hours');
     revalidatePath('/business/settings/profile');
+    revalidatePath('/business/settings/studio');
     revalidatePath('/business');
 
     return {
@@ -205,6 +209,339 @@ export async function updateOpeningHours(
     return {
       success: false,
       error: 'Failed to update opening hours. Please try again.',
+    };
+  }
+}
+
+/**
+ * Update Basic Info Schema (partial update)
+ */
+const updateBasicInfoSchema = z.object({
+  name: z.string().min(3).max(100),
+  description: z.string().min(10).max(500),
+});
+
+export type UpdateBasicInfoInput = z.infer<typeof updateBasicInfoSchema>;
+
+/**
+ * Update studio basic info (name and description only)
+ */
+export async function updateStudioBasicInfo(
+  data: UpdateBasicInfoInput
+): Promise<ProfileActionResult> {
+  try {
+    // 1. Authenticate
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized. Please sign in.',
+      };
+    }
+
+    // 2. Get user's studio
+    const studio = await getUserStudio(session.user.id);
+
+    if (!studio) {
+      return {
+        success: false,
+        error: 'No studio found. Please register a studio first.',
+      };
+    }
+
+    // 3. Validate input
+    const validated = updateBasicInfoSchema.safeParse(data);
+
+    if (!validated.success) {
+      return {
+        success: false,
+        error: 'Invalid data. Please check all fields and try again.',
+      };
+    }
+
+    // 4. Update studio
+    const updatedStudio = await prisma.studio.update({
+      where: { id: studio.id },
+      data: {
+        name: validated.data.name,
+        description: validated.data.description,
+      },
+    });
+
+    // 5. Revalidate pages
+    revalidatePath('/business/settings/profile');
+    revalidatePath('/business/settings/studio');
+    revalidatePath('/business');
+
+    return {
+      success: true,
+      data: {
+        id: updatedStudio.id,
+        name: updatedStudio.name,
+      },
+    };
+  } catch (error) {
+    console.error('Update studio basic info error:', error);
+
+    return {
+      success: false,
+      error: 'Failed to update studio basic info. Please try again.',
+    };
+  }
+}
+
+/**
+ * Update Location & Contact Schema (partial update)
+ */
+const updateLocationContactSchema = z.object({
+  address: z.string().min(5),
+  city: z.string().min(2),
+  postalCode: z.string().min(3),
+  phone: z.string().min(10),
+  email: z.string().email(),
+  website: z.string().url().optional().nullable().or(z.literal('')),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+});
+
+export type UpdateLocationContactInput = z.infer<typeof updateLocationContactSchema>;
+
+/**
+ * Update studio location and contact info
+ */
+export async function updateStudioLocationContact(
+  data: UpdateLocationContactInput
+): Promise<ProfileActionResult> {
+  try {
+    // 1. Authenticate
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized. Please sign in.',
+      };
+    }
+
+    // 2. Get user's studio
+    const studio = await getUserStudio(session.user.id);
+
+    if (!studio) {
+      return {
+        success: false,
+        error: 'No studio found. Please register a studio first.',
+      };
+    }
+
+    // 3. Validate input
+    const validated = updateLocationContactSchema.safeParse(data);
+
+    if (!validated.success) {
+      return {
+        success: false,
+        error: 'Invalid data. Please check all fields and try again.',
+      };
+    }
+
+    // 4. Update studio
+    const updatedStudio = await prisma.studio.update({
+      where: { id: studio.id },
+      data: {
+        address: validated.data.address,
+        city: validated.data.city,
+        postalCode: validated.data.postalCode,
+        phone: validated.data.phone,
+        email: validated.data.email,
+        website: validated.data.website || undefined,
+        latitude: validated.data.latitude || undefined,
+        longitude: validated.data.longitude || undefined,
+      },
+    });
+
+    // 5. Revalidate pages
+    revalidatePath('/business/settings/location');
+    revalidatePath('/business/settings/studio');
+    revalidatePath('/business');
+
+    return {
+      success: true,
+      data: {
+        id: updatedStudio.id,
+        name: updatedStudio.name,
+      },
+    };
+  } catch (error) {
+    console.error('Update studio location/contact error:', error);
+
+    return {
+      success: false,
+      error: 'Failed to update studio location/contact. Please try again.',
+    };
+  }
+}
+
+/**
+ * Update Address Schema (partial update - address only)
+ */
+const updateAddressSchema = z.object({
+  address: z.string().min(5),
+  line2: z.string().optional().nullable(),
+  city: z.string().min(2),
+  postalCode: z.string().min(3),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
+});
+
+export type UpdateAddressInput = z.infer<typeof updateAddressSchema>;
+
+/**
+ * Update studio address only
+ */
+export async function updateStudioAddress(
+  data: UpdateAddressInput
+): Promise<ProfileActionResult> {
+  try {
+    // 1. Authenticate
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized. Please sign in.',
+      };
+    }
+
+    // 2. Get user's studio
+    const studio = await getUserStudio(session.user.id);
+
+    if (!studio) {
+      return {
+        success: false,
+        error: 'No studio found. Please register a studio first.',
+      };
+    }
+
+    // 3. Validate input
+    const validated = updateAddressSchema.safeParse(data);
+
+    if (!validated.success) {
+      return {
+        success: false,
+        error: 'Invalid data. Please check all fields and try again.',
+      };
+    }
+
+    // 4. Update studio
+    const updatedStudio = await prisma.studio.update({
+      where: { id: studio.id },
+      data: {
+        address: validated.data.address,
+        city: validated.data.city,
+        postalCode: validated.data.postalCode,
+        latitude: validated.data.latitude || undefined,
+        longitude: validated.data.longitude || undefined,
+      },
+    });
+
+    // 5. Revalidate pages
+    revalidatePath('/business/settings/location');
+    revalidatePath('/business/settings/studio');
+    revalidatePath('/business');
+
+    return {
+      success: true,
+      data: {
+        id: updatedStudio.id,
+        name: updatedStudio.name,
+      },
+    };
+  } catch (error) {
+    console.error('Update studio address error:', error);
+
+    return {
+      success: false,
+      error: 'Failed to update studio address. Please try again.',
+    };
+  }
+}
+
+/**
+ * Update Contact Schema (partial update - contact only)
+ */
+const updateContactSchema = z.object({
+  phone: z.string().min(10),
+  email: z.string().email(),
+  website: z.string().url().optional().nullable().or(z.literal('')),
+});
+
+export type UpdateContactInput = z.infer<typeof updateContactSchema>;
+
+/**
+ * Update studio contact info only
+ */
+export async function updateStudioContact(
+  data: UpdateContactInput
+): Promise<ProfileActionResult> {
+  try {
+    // 1. Authenticate
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Unauthorized. Please sign in.',
+      };
+    }
+
+    // 2. Get user's studio
+    const studio = await getUserStudio(session.user.id);
+
+    if (!studio) {
+      return {
+        success: false,
+        error: 'No studio found. Please register a studio first.',
+      };
+    }
+
+    // 3. Validate input
+    const validated = updateContactSchema.safeParse(data);
+
+    if (!validated.success) {
+      return {
+        success: false,
+        error: 'Invalid data. Please check all fields and try again.',
+      };
+    }
+
+    // 4. Update studio
+    const updatedStudio = await prisma.studio.update({
+      where: { id: studio.id },
+      data: {
+        phone: validated.data.phone,
+        email: validated.data.email,
+        website: validated.data.website || undefined,
+      },
+    });
+
+    // 5. Revalidate pages
+    revalidatePath('/business/settings/location');
+    revalidatePath('/business/settings/studio');
+    revalidatePath('/business');
+
+    return {
+      success: true,
+      data: {
+        id: updatedStudio.id,
+        name: updatedStudio.name,
+      },
+    };
+  } catch (error) {
+    console.error('Update studio contact error:', error);
+
+    return {
+      success: false,
+      error: 'Failed to update studio contact. Please try again.',
     };
   }
 }

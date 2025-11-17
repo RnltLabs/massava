@@ -10,6 +10,8 @@
 
 import { UserRole } from '@/app/generated/prisma';
 import { Session } from 'next-auth';
+import { Result, ok, err } from '@/lib/result';
+import { AuthError, createAuthError } from './errors';
 
 /**
  * Roles allowed to access the business portal
@@ -19,19 +21,6 @@ export const BUSINESS_PORTAL_ROLES: UserRole[] = [
   UserRole.SUPER_ADMIN, // Super admin has access to everything
 ];
 
-/**
- * Error thrown when user attempts to access business portal without authorization
- */
-export class BusinessPortalAccessDeniedError extends Error {
-  constructor(
-    message: string = 'Access to business portal denied',
-    public readonly userId?: string,
-    public readonly userRole?: UserRole
-  ) {
-    super(message);
-    this.name = 'BusinessPortalAccessDeniedError';
-  }
-}
 
 /**
  * Check if a user has access to the business portal
@@ -75,30 +64,40 @@ export function hasBusinessPortalAccess(session: Session | null): boolean {
 }
 
 /**
- * Require business portal access - throws error if user doesn't have access
- * Use this in Server Actions and API routes to enforce business portal access
+ * Require business portal access - Result-based (no exceptions)
  *
  * @param user - User object from NextAuth session
- * @throws BusinessPortalAccessDeniedError if user doesn't have access
+ * @returns Ok(void) if user has access, Err(AuthError) otherwise
  */
 export function requireBusinessAccess(user?: {
   id?: string;
   primaryRole?: UserRole;
   roles?: UserRole[];
-}): void {
+}): Result<void, AuthError> {
   if (!user) {
-    throw new BusinessPortalAccessDeniedError(
-      'Authentication required to access business portal'
+    return err(
+      createAuthError(
+        'UNAUTHORIZED',
+        'Authentication required to access business portal'
+      )
     );
   }
 
   if (!isBusinessPortalUser(user)) {
-    throw new BusinessPortalAccessDeniedError(
-      'Business portal access restricted to studio owners and staff',
-      user.id,
-      user.primaryRole
+    return err(
+      createAuthError(
+        'FORBIDDEN',
+        'Business portal access restricted to studio owners and staff',
+        {
+          userId: user.id,
+          required: BUSINESS_PORTAL_ROLES.join(', '),
+          actual: user.primaryRole || 'unknown',
+        }
+      )
     );
   }
+
+  return ok(undefined);
 }
 
 /**

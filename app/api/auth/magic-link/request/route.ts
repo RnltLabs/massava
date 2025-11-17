@@ -6,13 +6,12 @@
  * Generates and sends magic link for passwordless authentication
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { PrismaClient } from '@/app/generated/prisma';
 import { generateMagicLink } from '@/lib/magic-link';
 import { createAuditLog } from '@/lib/audit';
-
-const prisma = new PrismaClient();
+import { rateLimitByIP, RATE_LIMIT_CONFIGS } from '@/lib/auth/rate-limit';
 
 // Validation schema
 const requestSchema = z.object({
@@ -25,6 +24,30 @@ const requestSchema = z.object({
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check rate limit FIRST (before any processing)
+    const limitResult = await rateLimitByIP(request, RATE_LIMIT_CONFIGS.MAGIC_LINK);
+
+    if (limitResult.limited) {
+      const minutesRemaining = Math.ceil((limitResult.resetAt - Date.now()) / 60000);
+
+      return NextResponse.json(
+        {
+          error: 'Zu viele Anfragen',
+          message: `Bitte versuchen Sie es in ${minutesRemaining} Minuten erneut`,
+          retryAfter: Math.ceil((limitResult.resetAt - Date.now()) / 1000),
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((limitResult.resetAt - Date.now()) / 1000)),
+            'X-RateLimit-Limit': String(RATE_LIMIT_CONFIGS.MAGIC_LINK.maxRequests),
+            'X-RateLimit-Remaining': String(limitResult.remaining),
+            'X-RateLimit-Reset': String(limitResult.resetAt),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const validatedData = requestSchema.safeParse(body);
 

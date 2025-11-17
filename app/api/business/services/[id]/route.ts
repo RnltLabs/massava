@@ -7,7 +7,7 @@
  * DELETE /api/business/services/[id] - Delete service
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { updateServiceSchema } from '@/lib/validations/business'
@@ -182,7 +182,7 @@ export async function DELETE(
       include: {
         _count: {
           select: {
-            bookings: {
+            newBookings: {
               where: {
                 status: {
                   in: ['PENDING', 'CONFIRMED'],
@@ -210,12 +210,12 @@ export async function DELETE(
     }
 
     // 4. Check for active bookings
-    if (service._count.bookings > 0) {
+    if (service._count.newBookings > 0) {
       return NextResponse.json(
         {
           error:
             'Cannot delete service with active bookings. Please cancel or complete all bookings first.',
-          activeBookings: service._count.bookings,
+          activeBookings: service._count.newBookings,
         },
         { status: 409 }
       )

@@ -4,29 +4,19 @@
  */
 
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { locales, type Locale } from '@/i18n';
-import Header from '@/components/Header';
+import { UnifiedHeader } from '@/components/unified-header';
 import SentryDebug from '@/components/SentryDebug';
 import SessionProvider from '@/components/SessionProvider';
-import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
-import { CookieConsent } from '@/components/CookieConsent';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { Toaster } from '@/components/ui/toaster';
 import "../globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Massava - Spontane Massage-Buchungen",
@@ -63,22 +53,20 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${GeistSans.variable} ${GeistMono.variable} antialiased`}
         suppressHydrationWarning
       >
         <SentryDebug />
         <SessionProvider>
-          <CookieConsentProvider>
-            <GoogleAnalytics />
-            <NextIntlClientProvider messages={messages} locale={locale}>
-              <Header />
-              <main className="pt-16">
-                {children}
-              </main>
-              <CookieConsent />
-              <Toaster />
-            </NextIntlClientProvider>
-          </CookieConsentProvider>
+          <GoogleAnalytics />
+          <NextIntlClientProvider messages={messages} locale={locale}>
+            <UnifiedHeader />
+            <main className="pt-14 md:pt-16">
+              {children}
+            </main>
+            <CookieConsentBanner />
+            <Toaster />
+          </NextIntlClientProvider>
         </SessionProvider>
       </body>
     </html>

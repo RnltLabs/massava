@@ -11,7 +11,6 @@ import {
   isBusinessPortalUser,
   hasBusinessPortalAccess,
   requireBusinessAccess,
-  BusinessPortalAccessDeniedError,
   getBusinessPortalRedirect,
   getUnauthorizedRedirect,
   getBusinessSignInRedirect,
@@ -118,52 +117,55 @@ describe('business-portal-guard', () => {
   });
 
   describe('requireBusinessAccess', () => {
-    it('should not throw for STUDIO_OWNER', () => {
+    it('should return ok for STUDIO_OWNER', () => {
       const user = {
         id: 'user-1',
         primaryRole: UserRole.STUDIO_OWNER,
       };
-      expect(() => requireBusinessAccess(user)).not.toThrow();
+      const result = requireBusinessAccess(user);
+      expect(result.ok).toBe(true);
     });
 
-    it('should not throw for SUPER_ADMIN', () => {
+    it('should return ok for SUPER_ADMIN', () => {
       const user = {
         id: 'user-2',
         primaryRole: UserRole.SUPER_ADMIN,
       };
-      expect(() => requireBusinessAccess(user)).not.toThrow();
+      const result = requireBusinessAccess(user);
+      expect(result.ok).toBe(true);
     });
 
-    it('should throw BusinessPortalAccessDeniedError for CUSTOMER', () => {
+    it('should return error for CUSTOMER', () => {
       const user = {
         id: 'user-3',
         primaryRole: UserRole.CUSTOMER,
       };
-      expect(() => requireBusinessAccess(user)).toThrow(
-        BusinessPortalAccessDeniedError
-      );
+      const result = requireBusinessAccess(user);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('FORBIDDEN');
+      }
     });
 
-    it('should throw BusinessPortalAccessDeniedError when user is undefined', () => {
-      expect(() => requireBusinessAccess(undefined)).toThrow(
-        BusinessPortalAccessDeniedError
-      );
+    it('should return error when user is undefined', () => {
+      const result = requireBusinessAccess(undefined);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('UNAUTHORIZED');
+      }
     });
 
-    it('should include userId and userRole in error', () => {
+    it('should include userId and role in error context', () => {
       const user = {
         id: 'user-4',
         primaryRole: UserRole.CUSTOMER,
       };
 
-      try {
-        requireBusinessAccess(user);
-        expect.fail('Should have thrown error');
-      } catch (error) {
-        expect(error).toBeInstanceOf(BusinessPortalAccessDeniedError);
-        const accessError = error as BusinessPortalAccessDeniedError;
-        expect(accessError.userId).toBe('user-4');
-        expect(accessError.userRole).toBe(UserRole.CUSTOMER);
+      const result = requireBusinessAccess(user);
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('FORBIDDEN');
+        expect(result.error.message).toContain('Business portal access');
       }
     });
   });
@@ -228,31 +230,4 @@ describe('business-portal-guard', () => {
     });
   });
 
-  describe('BusinessPortalAccessDeniedError', () => {
-    it('should create error with default message', () => {
-      const error = new BusinessPortalAccessDeniedError();
-      expect(error.message).toBe('Access to business portal denied');
-      expect(error.name).toBe('BusinessPortalAccessDeniedError');
-    });
-
-    it('should create error with custom message', () => {
-      const error = new BusinessPortalAccessDeniedError('Custom error message');
-      expect(error.message).toBe('Custom error message');
-    });
-
-    it('should store userId and userRole', () => {
-      const error = new BusinessPortalAccessDeniedError(
-        'Access denied',
-        'user-123',
-        UserRole.CUSTOMER
-      );
-      expect(error.userId).toBe('user-123');
-      expect(error.userRole).toBe(UserRole.CUSTOMER);
-    });
-
-    it('should be instance of Error', () => {
-      const error = new BusinessPortalAccessDeniedError();
-      expect(error).toBeInstanceOf(Error);
-    });
-  });
 });

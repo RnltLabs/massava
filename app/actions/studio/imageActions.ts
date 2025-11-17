@@ -8,8 +8,8 @@
 
 'use server';
 
-import { auth } from '@/auth-unified';
-import { db } from '@/lib/db';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { writeFile, mkdir, unlink } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -47,7 +47,7 @@ export async function uploadStudioLogo(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -112,7 +112,7 @@ export async function uploadStudioLogo(
       .toFile(filepath);
 
     // Delete old logo if exists
-    const studio = await db.studio.findUnique({
+    const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: { logoUrl: true },
     });
@@ -130,7 +130,7 @@ export async function uploadStudioLogo(
     const publicUrl = `/uploads/studios/${studioId}/${filename}`;
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { logoUrl: publicUrl },
     });
@@ -169,7 +169,7 @@ export async function uploadGalleryImage(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -208,7 +208,7 @@ export async function uploadGalleryImage(
     }
 
     // Get current gallery images
-    const studio = await db.studio.findUnique({
+    const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: { galleryImages: true },
     });
@@ -262,7 +262,7 @@ export async function uploadGalleryImage(
     const updatedGallery = [...currentGallery, newImage];
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { galleryImages: updatedGallery as any },
     });
@@ -301,7 +301,7 @@ export async function deleteGalleryImage(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -316,7 +316,7 @@ export async function deleteGalleryImage(
     }
 
     // Get current gallery images
-    const studio = await db.studio.findUnique({
+    const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: { galleryImages: true },
     });
@@ -334,7 +334,7 @@ export async function deleteGalleryImage(
     }));
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { galleryImages: reorderedGallery as any },
     });
@@ -380,7 +380,7 @@ export async function reorderGalleryImages(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -402,7 +402,7 @@ export async function reorderGalleryImages(
     }));
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { galleryImages: reorderedImages },
     });
@@ -443,7 +443,7 @@ export async function updateStudioImages(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -458,7 +458,7 @@ export async function updateStudioImages(
     }
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: {
         logoUrl: data.logoUrl,
@@ -496,7 +496,7 @@ export async function deleteStudioLogo(studioId: string): Promise<ImageActionRes
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -511,7 +511,7 @@ export async function deleteStudioLogo(studioId: string): Promise<ImageActionRes
     }
 
     // Get current logo
-    const studio = await db.studio.findUnique({
+    const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: { logoUrl: true },
     });
@@ -527,7 +527,7 @@ export async function deleteStudioLogo(studioId: string): Promise<ImageActionRes
     }
 
     // Update database
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { logoUrl: null },
     });

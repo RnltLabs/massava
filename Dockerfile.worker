@@ -1,0 +1,51 @@
+# Copyright (c) 2025 Roman Reinelt / RNLT Labs
+# All rights reserved.
+
+# Dockerfile for Auth Sync Worker
+# Lightweight container for background job processing
+
+FROM node:20-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+# Build the worker
+FROM base AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build worker TypeScript
+RUN npx tsc --project tsconfig.worker.json
+
+# Production image
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+# Copy built worker and dependencies
+COPY --from=builder --chown=worker:nodejs /app/dist ./dist
+COPY --from=builder --chown=worker:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=worker:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=worker:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=worker:nodejs /app/lib ./lib
+COPY --from=builder --chown=worker:nodejs /app/app/generated ./app/generated
+
+USER worker
+
+# Run the worker
+CMD ["node", "dist/workers/auth-sync-worker.js"]

@@ -2,19 +2,26 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * Middleware Chain
+ * Middleware Chain - Edge Runtime Compatible
  * Implements:
  * 1. Internationalization (next-intl)
  * 2. Business Portal Protection (RBAC)
  *
+ * CRITICAL: Uses auth.config.ts (Edge-safe) NOT auth.ts (Node.js with Prisma)
+ * This prevents Edge Runtime errors when importing Prisma Client
+ *
  * Task 2.1: Middleware Protection (MASTER_ORCHESTRATION_PLAN.md)
+ * Phase 1: Config Split (Security Migration)
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { locales, defaultLocale } from './i18n';
-import { auth } from './auth-unified';
-import { UserRole } from '@/app/generated/prisma';
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+
+// Initialize NextAuth with Edge-safe config (NO Prisma)
+const { auth } = NextAuth(authConfig);
 
 // Create i18n middleware
 const intlMiddleware = createIntlMiddleware({
@@ -23,6 +30,17 @@ const intlMiddleware = createIntlMiddleware({
   localePrefix: 'always',
   localeDetection: true,
 });
+
+/**
+ * Routes that require a registered studio
+ * Users without a studio will be redirected to /business (onboarding)
+ */
+const STUDIO_REQUIRED_ROUTES = [
+  '/business/bookings',
+  '/business/calendar',
+  '/business/settings',
+  '/business/actions',
+];
 
 /**
  * Check if a path is a business portal route
@@ -38,9 +56,21 @@ function isBusinessPortalRoute(pathname: string): boolean {
 }
 
 /**
- * Check if user has business portal access
+ * Check if a path requires a registered studio
  */
-function hasBusinessAccess(session: { user?: { primaryRole?: UserRole; roles?: UserRole[] } } | null): boolean {
+function requiresStudio(pathname: string): boolean {
+  const pathWithoutLocale = pathname.replace(/^\/(de|en|th|zh|vi|pl|ru)/, '');
+
+  return STUDIO_REQUIRED_ROUTES.some((route) =>
+    pathWithoutLocale.startsWith(route)
+  );
+}
+
+/**
+ * Check if user has business portal access
+ * Uses string comparison to avoid type mismatch between Prisma and edge-compatible UserRole enums
+ */
+function hasBusinessAccess(session: { user?: { primaryRole?: string; roles?: string[] } } | null): boolean {
   if (!session?.user?.primaryRole) {
     return false;
   }
@@ -48,12 +78,12 @@ function hasBusinessAccess(session: { user?: { primaryRole?: UserRole; roles?: U
   const primaryRole = session.user.primaryRole;
   const roles = session.user.roles || [];
 
-  // Check if user has STUDIO_OWNER or SUPER_ADMIN role
+  // Check if user has STUDIO_OWNER or SUPER_ADMIN role (string comparison)
   return (
-    primaryRole === UserRole.STUDIO_OWNER ||
-    primaryRole === UserRole.SUPER_ADMIN ||
-    roles.includes(UserRole.STUDIO_OWNER) ||
-    roles.includes(UserRole.SUPER_ADMIN)
+    primaryRole === 'STUDIO_OWNER' ||
+    primaryRole === 'SUPER_ADMIN' ||
+    roles.includes('STUDIO_OWNER') ||
+    roles.includes('SUPER_ADMIN')
   );
 }
 
@@ -83,6 +113,19 @@ export default async function middleware(request: NextRequest) {
       const unauthorizedUrl = new URL('/unauthorized', request.url);
       unauthorizedUrl.searchParams.set('requested', pathname);
       return NextResponse.redirect(unauthorizedUrl);
+    }
+
+    // Check if route requires studio ownership
+    if (requiresStudio(pathname)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hasStudio = (session.user as any)?.hasStudio ?? false;
+
+      if (!hasStudio) {
+        // Extract locale from pathname
+        const locale = pathname.match(/^\/(de|en|th|zh|vi|pl|ru)/)?.[1] || 'en';
+        const onboardingUrl = new URL(`/${locale}/business/onboarding`, request.url);
+        return NextResponse.redirect(onboardingUrl);
+      }
     }
   }
 

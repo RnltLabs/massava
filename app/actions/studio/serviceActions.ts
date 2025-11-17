@@ -8,8 +8,8 @@
 
 'use server';
 
-import { auth } from '@/auth-unified';
-import { db } from '@/lib/db';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 export interface ServiceActionResult {
@@ -43,7 +43,7 @@ export async function createService(
     }
 
     // Verify user owns the studio
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         studioId,
         userId: session.user.id,
@@ -80,7 +80,7 @@ export async function createService(
     }
 
     // Create service
-    const service = await db.service.create({
+    const service = await prisma.service.create({
       data: {
         studioId,
         name: data.name.trim(),
@@ -91,8 +91,8 @@ export async function createService(
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,
@@ -125,7 +125,7 @@ export async function updateService(
     }
 
     // Get service with studio
-    const service = await db.service.findUnique({
+    const service = await prisma.service.findUnique({
       where: { id: serviceId },
       include: {
         studio: {
@@ -191,14 +191,14 @@ export async function updateService(
     if (data.description !== undefined)
       updateData.description = data.description.trim() || undefined;
 
-    await db.service.update({
+    await prisma.service.update({
       where: { id: serviceId },
       data: updateData,
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,
@@ -230,7 +230,7 @@ export async function deleteService(serviceId: string): Promise<ServiceActionRes
     }
 
     // Get service with studio
-    const service = await db.service.findUnique({
+    const service = await prisma.service.findUnique({
       where: { id: serviceId },
       include: {
         studio: {
@@ -280,13 +280,13 @@ export async function deleteService(serviceId: string): Promise<ServiceActionRes
     }
 
     // Hard delete (since deletedAt doesn't exist in schema yet)
-    await db.service.delete({
+    await prisma.service.delete({
       where: { id: serviceId },
     });
 
     // Revalidate pages
-    revalidatePath('/[locale]/dashboard/owner/services');
-    revalidatePath('/[locale]/dashboard/owner');
+    revalidatePath('/[locale]/business/settings/services');
+    revalidatePath('/[locale]/business');
 
     return {
       success: true,

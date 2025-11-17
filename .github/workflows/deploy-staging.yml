@@ -59,6 +59,33 @@ jobs:
             exit 1
           fi
 
+    - name: Seed Test Data (Staging Only)
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          echo "🌱 Seeding test data for staging environment..."
+
+          # Run seed script in a temporary container
+          docker run --rm \
+            --network host \
+            -e DATABASE_URL="${{ secrets.DATABASE_URL_STAGING }}" \
+            ${{ secrets.DOCKER_USERNAME }}/massava:staging \
+            sh -c "npm run seed:clean"
+
+          if [ $? -eq 0 ]; then
+            echo "✅ Test data seeded successfully"
+            echo "👥 Test accounts created:"
+            echo "   - Studio Owners: 6 accounts (password: Test1234!)"
+            echo "   - Customers: 5 accounts (password: Test1234!)"
+            echo "   - Example: maria.schmidt@siamspa-ka.de"
+          else
+            echo "❌ Test data seeding failed"
+            exit 1
+          fi
+
     - name: Deploy to Staging Server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -82,6 +109,7 @@ jobs:
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
             -e RESEND_FROM_EMAIL="noreply@massava.app" \
             -e NEXT_PUBLIC_VERCEL_ENV=staging \
+            -e HEALTH_DATA_ENCRYPTION_KEY="${{ secrets.HEALTH_DATA_ENCRYPTION_KEY_STAGING }}" \
             --name massava-staging \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
