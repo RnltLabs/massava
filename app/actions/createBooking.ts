@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { Prisma } from "@prisma/client"
-import type { TimeSlot } from "@prisma/client"
 import {
   bookingFormSchema,
   type BookingFormData,
@@ -15,6 +14,20 @@ import {
 } from "@/lib/email/send"
 import { createBookingWithCapacityCheck, checkSlotCapacity } from "@/lib/slots"
 import { logger, generateCorrelationId } from "@/lib/logger"
+
+// Type for TimeSlot (using Prisma payload type to avoid import issues during build)
+type TimeSlot = {
+  id: string
+  studioId: string
+  serviceId: string | null
+  startTime: Date
+  endTime: Date
+  isAvailable: boolean
+  isBooked: boolean
+  bookingId: string | null
+  createdAt: Date
+  updatedAt: Date
+}
 
 interface BookingResult {
   success: boolean
