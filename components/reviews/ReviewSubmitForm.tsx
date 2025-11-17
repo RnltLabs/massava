@@ -14,8 +14,7 @@ import { StarRating } from '@/components/reviews/StarRating';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ReviewSubmitFormProps {
   bookingId: string;
@@ -29,20 +28,19 @@ export function ReviewSubmitForm({
   onSuccess,
 }: ReviewSubmitFormProps): React.JSX.Element {
   const router = useRouter();
-  const { toast } = useToast();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setSuccess(false);
 
     if (rating === 0) {
-      toast({
-        title: 'Bewertung erforderlich',
-        description: 'Bitte wähle eine Sternebewertung aus.',
-        variant: 'destructive',
-      });
+      setError('Bitte wähle eine Sternebewertung aus.');
       return;
     }
 
@@ -64,36 +62,28 @@ export function ReviewSubmitForm({
       const data = await response.json();
 
       if (data.success) {
-        toast({
-          title: 'Bewertung erfolgreich',
-          description: 'Vielen Dank für deine Bewertung!',
-        });
+        setSuccess(true);
+        setError(null);
 
         // Reset form
         setRating(0);
         setComment('');
 
-        // Call success callback if provided
-        if (onSuccess) {
-          onSuccess();
-        } else {
-          // Refresh page to show updated booking status
-          router.refresh();
-        }
+        // Call success callback after a short delay
+        setTimeout(() => {
+          if (onSuccess) {
+            onSuccess();
+          } else {
+            // Refresh page to show updated booking status
+            router.refresh();
+          }
+        }, 1500);
       } else {
-        toast({
-          title: 'Fehler beim Absenden',
-          description: data.error || 'Bitte versuche es erneut.',
-          variant: 'destructive',
-        });
+        setError(data.error || 'Bitte versuche es erneut.');
       }
     } catch (error) {
       console.error('Error submitting review:', error);
-      toast({
-        title: 'Fehler',
-        description: 'Ein unerwarteter Fehler ist aufgetreten.',
-        variant: 'destructive',
-      });
+      setError('Ein unerwarteter Fehler ist aufgetreten.');
     } finally {
       setIsSubmitting(false);
     }
@@ -145,16 +135,40 @@ export function ReviewSubmitForm({
         </p>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 text-destructive">
+          <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {success && (
+        <div className="flex items-start gap-2 p-3 rounded-md bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400">
+          <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-sm font-medium">Bewertung erfolgreich!</p>
+            <p className="text-sm">Vielen Dank für deine Bewertung!</p>
+          </div>
+        </div>
+      )}
+
       {/* Submit Button */}
       <Button
         type="submit"
-        disabled={rating === 0 || isSubmitting}
+        disabled={rating === 0 || isSubmitting || success}
         className="w-full"
       >
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Wird gesendet...
+          </>
+        ) : success ? (
+          <>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            Bewertung abgeschickt
           </>
         ) : (
           'Bewertung abschicken'
