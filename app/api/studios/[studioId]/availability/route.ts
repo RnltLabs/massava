@@ -80,12 +80,12 @@ const AvailabilityQuerySchema = z.object({
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { studioId: string } }
+  { params }: { params: Promise<{ studioId: string }> }
 ): Promise<NextResponse> {
   const correlationId = generateCorrelationId()
 
   try {
-    const { studioId } = params;
+    const { studioId } = await params;
 
     // Validate studioId format
     if (!studioId || typeof studioId !== 'string') {
