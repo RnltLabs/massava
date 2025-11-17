@@ -10,7 +10,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { ShieldAlert, Home, LogIn, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';

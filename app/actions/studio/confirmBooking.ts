@@ -8,10 +8,11 @@
 
 'use server';
 
-import { auth } from '@/auth-unified';
-import { db } from '@/lib/db';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { revalidatePath } from 'next/cache';
+import { sendBookingConfirmationEmail, sendBookingCancellationEmail } from '@/lib/email/send';
 
 export interface ActionResult {
   success: boolean;
@@ -32,8 +33,8 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       };
     }
 
-    // Get booking with studio
-    const booking = await db.newBooking.findUnique({
+    // Get booking with studio and service details
+    const booking = await prisma.newBooking.findUnique({
       where: { id: bookingId },
       include: {
         studio: {
@@ -43,6 +44,11 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
                 userId: session.user.id,
               },
             },
+          },
+        },
+        service: {
+          select: {
+            name: true,
           },
         },
       },
@@ -72,7 +78,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
     }
 
     // Update booking status
-    await db.newBooking.update({
+    await prisma.newBooking.update({
       where: { id: bookingId },
       data: {
         status: BookingStatus.CONFIRMED,
@@ -81,9 +87,42 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       },
     });
 
-    // Revalidate dashboard pages
-    revalidatePath('/[locale]/dashboard/owner');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+    // Send confirmation email to customer
+    try {
+      const emailResult = await sendBookingConfirmationEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName || 'Kunde',
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          bookingTime: booking.preferredTime,
+          studioAddress: booking.studio.address || undefined,
+          studioPhone: booking.studio.phone || undefined,
+          message: booking.message || undefined,
+        },
+        'de'
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send confirmation email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending confirmation email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
+    revalidatePath('/[locale]/business/bookings');
 
     return {
       success: true,
@@ -114,8 +153,8 @@ export async function declineBooking(
       };
     }
 
-    // Get booking with studio
-    const booking = await db.newBooking.findUnique({
+    // Get booking with studio and service details
+    const booking = await prisma.newBooking.findUnique({
       where: { id: bookingId },
       include: {
         studio: {
@@ -125,6 +164,11 @@ export async function declineBooking(
                 userId: session.user.id,
               },
             },
+          },
+        },
+        service: {
+          select: {
+            name: true,
           },
         },
       },
@@ -154,21 +198,50 @@ export async function declineBooking(
     }
 
     // Update booking status
-    await db.newBooking.update({
+    await prisma.newBooking.update({
       where: { id: bookingId },
       data: {
         status: BookingStatus.CANCELLED,
         cancelledBy: session.user.id,
         cancelledAt: new Date(),
+        cancellationReason: reason,
       },
     });
 
-    // TODO: Send cancellation email to customer
-    // This would be implemented when email service is ready
+    // Send cancellation email to customer
+    try {
+      const emailResult = await sendBookingCancellationEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName || 'Kunde',
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          bookingTime: booking.preferredTime,
+          cancellationReason: reason,
+        },
+        'de'
+      );
 
-    // Revalidate dashboard pages
-    revalidatePath('/[locale]/dashboard/owner');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+      if (!emailResult.success) {
+        console.error('Failed to send cancellation email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending cancellation email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
+    revalidatePath('/[locale]/business/bookings');
 
     return {
       success: true,

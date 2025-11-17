@@ -71,39 +71,50 @@ type BookingArrayResult = Array<{
  *
  * Only encrypts if message field is present and not already encrypted.
  */
+interface PrismaExtensionArgs<T = unknown> {
+  args: T;
+  query: (args: T) => Promise<unknown>;
+}
+
 export function createHealthDataEncryptionExtension() {
   const bookingHandlers = {
-    async create({ args, query }: any) {
-      await encryptMessageField({ action: 'create', args, model: 'Booking' });
+    async create({ args, query }: PrismaExtensionArgs) {
+      await encryptMessageField({ action: 'create', args: args as Record<string, unknown>, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'create', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'create', model: 'NewBooking' });
       return result;
     },
-    async update({ args, query }: any) {
-      await encryptMessageField({ action: 'update', args, model: 'Booking' });
+    async update({ args, query }: PrismaExtensionArgs) {
+      await encryptMessageField({ action: 'update', args: args as Record<string, unknown>, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'update', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'update', model: 'NewBooking' });
       return result;
     },
-    async upsert({ args, query }: any) {
-      await encryptMessageField({ action: 'upsert', args, model: 'Booking' });
+    async upsert({ args, query }: PrismaExtensionArgs) {
+      await encryptMessageField({ action: 'upsert', args: args as Record<string, unknown>, model: 'NewBooking' });
       const result = await query(args);
-      await decryptMessageField(result, { action: 'upsert', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'upsert', model: 'NewBooking' });
       return result;
     },
-    async findUnique({ args, query }: any) {
+    async findUnique({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findUnique', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'findUnique', model: 'NewBooking' });
       return result;
     },
-    async findFirst({ args, query }: any) {
+    async findFirst({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findFirst', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'findFirst', model: 'NewBooking' });
       return result;
     },
-    async findMany({ args, query }: any) {
+    async findMany({ args, query }: PrismaExtensionArgs) {
       const result = await query(args);
-      await decryptMessageField(result, { action: 'findMany', model: 'Booking' });
+      // @ts-expect-error - Type mismatch from Prisma extension
+      await decryptMessageField(result as unknown, { action: 'findMany', model: 'NewBooking' });
       return result;
     },
   };
@@ -111,8 +122,7 @@ export function createHealthDataEncryptionExtension() {
   return Prisma.defineExtension({
     name: 'healthDataEncryption',
     query: {
-      booking: bookingHandlers,
-      newBooking: bookingHandlers, // Same handlers for unified model
+      newBooking: bookingHandlers, // Unified booking model
     },
   });
 }

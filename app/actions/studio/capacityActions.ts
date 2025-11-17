@@ -8,8 +8,8 @@
 
 'use server';
 
-import { auth } from '@/auth-unified';
-import { db } from '@/lib/db';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 
@@ -46,7 +46,7 @@ export async function updateStudioCapacity(input: UpdateCapacityInput): Promise<
     const { studioId, capacity } = validated.data;
 
     // Verify ownership
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -58,14 +58,14 @@ export async function updateStudioCapacity(input: UpdateCapacityInput): Promise<
     }
 
     // Update capacity
-    await db.studio.update({
+    await prisma.studio.update({
       where: { id: studioId },
       data: { capacity },
     });
 
     // Revalidate relevant pages
-    revalidatePath('/[locale]/dashboard/owner/settings');
-    revalidatePath('/[locale]/dashboard/owner/calendar');
+    revalidatePath('/[locale]/business/settings');
+    revalidatePath('/[locale]/business/calendar');
 
     return { success: true };
   } catch (error) {
@@ -92,7 +92,7 @@ export async function getStudioCapacity(studioId: string): Promise<{
     }
 
     // Verify ownership
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -147,7 +147,7 @@ export async function checkTimeslotCapacity(
     }
 
     // Verify ownership and get capacity
-    const ownership = await db.studioOwnership.findFirst({
+    const ownership = await prisma.studioOwnership.findFirst({
       where: {
         userId: session.user.id,
         studioId: studioId,
@@ -168,7 +168,7 @@ export async function checkTimeslotCapacity(
     const maxCapacity = ownership.studio.capacity;
 
     // Count confirmed bookings for this timeslot
-    const bookings = await db.newBooking.findMany({
+    const bookings = await prisma.newBooking.findMany({
       where: {
         studioId: studioId,
         preferredDate: date,

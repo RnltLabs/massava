@@ -7,13 +7,13 @@
  * MASTER_ORCHESTRATION_PLAN.md Task 1.4: Data Retention & Deletion
  */
 
+import { prisma } from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@/app/generated/prisma';
 import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logger';
 import { createAuditLog, exportUserAuditLogs } from '@/lib/audit';
 import { z } from 'zod';
+import { auth } from '@/auth';
 
-const prisma = new PrismaClient();
 
 // Request validation schema
 const ExportRequestSchema = z.object({
@@ -73,13 +73,35 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { userId, format } = validation.data;
 
-    // TODO: Verify authentication - user can only export their own data
-    // This should be implemented with your authentication system
-    // For now, assuming authentication is handled by middleware
-    // const session = await getServerSession(authOptions);
-    // if (!session || session.user.id !== userId) {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
+    // P0.2 FIX: Verify authentication - user can only export their own data
+    const session = await auth();
+
+    if (!session || !session.user) {
+      logger.warn('Unauthenticated GDPR export attempt', {
+        correlationId,
+        action: 'GDPR_EXPORT_DATA',
+      });
+
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // P0.2 FIX: IDOR Prevention - verify user can only export their own data
+    if (session.user.id !== userId) {
+      logger.warn('Unauthorized GDPR export attempt', {
+        correlationId,
+        sessionUserId: session.user.id,
+        requestedUserId: userId,
+        action: 'GDPR_EXPORT_DATA',
+      });
+
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 403 }
+      );
+    }
 
     // Rate limiting
     if (isRateLimited(userId)) {

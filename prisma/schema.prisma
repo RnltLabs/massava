@@ -1,9 +1,3 @@
-// Copyright (c) 2025 Roman Reinelt / RNLT Labs
-// All rights reserved.
-//
-// Massava - Database Schema
-// Booking platform for massage studios
-
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -14,11 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// NextAuth.js Models - DEPRECATED (Use Phase 3 models below)
-// ============================================
-// Legacy models removed - all authentication now uses unified User model
-
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -28,15 +17,12 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// Email Verification Token
-// For verifying email addresses during registration
 model EmailVerificationToken {
   id        String   @id @default(cuid())
-  token     String   @unique // 64 hex chars (32 bytes)
+  token     String   @unique
   email     String
-  expiresAt DateTime // 24 hours from creation
-  used      Boolean  @default(false) // One-time use
-
+  expiresAt DateTime
+  used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([email])
@@ -45,14 +31,12 @@ model EmailVerificationToken {
   @@map("email_verification_tokens")
 }
 
-// Password Reset Token Model
 model PasswordResetToken {
   id        String   @id @default(cuid())
-  token     String   @unique // 64 hex chars (32 bytes)
+  token     String   @unique
   email     String
-  expiresAt DateTime // 1 hour from creation
-  used      Boolean  @default(false) // One-time use
-
+  expiresAt DateTime
+  used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([email])
@@ -61,136 +45,77 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-// Studio Model
-// Represents a massage/wellness studio
 model Studio {
-  id          String  @id @default(cuid())
-  name        String
-  description String? @db.Text
-
-  // Contact Information
-  address    String
-  city       String
-  postalCode String?
-  phone      String
-  email      String
-
-  // Geolocation for radius-based search
-  latitude  Float?
-  longitude Float?
-
-  // Business Hours (stored as JSON)
-  // Example: {"monday": "09:00-18:00", "tuesday": "09:00-18:00", ...}
-  openingHours Json?
-
-  // Capacity Setting for Parallel Bookings
-  // How many treatment beds/rooms? (1-10, default: 1)
-  // Allows multiple massages to happen simultaneously
-  capacity Int @default(1)
-
-  // Images
-  logoUrl       String? @db.Text // Studio logo URL (S3/Cloudinary)
-  galleryImages Json? // Array of gallery image objects [{url: string, coverPhoto: boolean, order: number}]
-
-  // Relations
-  services     Service[]
-  timeSlots    TimeSlot[] // Available appointment slots
-  blockedTimes BlockedTime[] // Time blocks when studio is unavailable
-
-  // Unified relations (Phase 3)
-  favoritedBy     User[]               @relation("UserFavorites")
-  ownerships      StudioOwnership[] // Multiple owners possible via User model
-  roleAssignments UserRoleAssignment[]
+  id              String               @id @default(cuid())
+  name            String
+  description     String?
+  address         String
+  city            String
+  postalCode      String?
+  phone           String
+  email           String
+  website         String? // Optional website URL
+  openingHours    Json?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  latitude        Float?
+  longitude       Float?
+  capacity        Int                  @default(1)
+  galleryImages   Json?
+  logoUrl         String?
+  blockedTimes    BlockedTime[]
   newBookings     NewBooking[]
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  services        Service[]
+  ownerships      StudioOwnership[]
+  timeSlots       TimeSlot[]
+  roleAssignments UserRoleAssignment[]
+  favoritedBy     User[]               @relation("UserFavorites")
 
   @@index([city])
   @@index([latitude, longitude])
   @@map("studios")
 }
 
-// Service Model
-// Represents a service offered by a studio (e.g., "Thai Massage 60min")
 model Service {
-  id       String @id @default(cuid())
-  studioId String
-
+  id          String       @id @default(cuid())
+  studioId    String
   name        String
-  description String? @db.Text
-  price       Float // Price in EUR
-  duration    Int // Duration in minutes
-
-  // Relations
-  studio      Studio       @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  description String?
+  price       Float
+  duration    Int
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   newBookings NewBooking[]
-  timeSlots   TimeSlot[] // Available time slots for this service
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  studio      Studio       @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  timeSlots   TimeSlot[]
 
   @@index([studioId])
   @@map("services")
 }
 
-// Legacy Booking Model - REMOVED
-// Use NewBooking model below (Phase 3)
-
-// Booking Status Enum
-enum BookingStatus {
-  PENDING // Waiting for studio confirmation
-  CONFIRMED // Studio confirmed the booking
-  CANCELLED // Booking was cancelled
-}
-
-// ============================================
-// Phase 3: Unified User Model + RBAC
-// ============================================
-
-// User Role Enum
-enum UserRole {
-  SUPER_ADMIN
-  STUDIO_OWNER
-  CUSTOMER
-  GUEST
-}
-
-// Unified User Model
-// Replaces separate StudioOwner and Customer tables
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime? // NULL until magic link clicked or OAuth verified
-  password      String? // NULL = passwordless account
-  name          String?
-  phone         String? // Optional, collected progressively
-  image         String?
-
-  // Primary role (users can have multiple via UserRoleAssignment)
-  primaryRole UserRole @default(CUSTOMER)
-
-  // Account status
-  isActive    Boolean @default(true)
-  isSuspended Boolean @default(false)
-
-  // GDPR Data Retention (Art. 17 - Right to Erasure)
-  deletedAt           DateTime? // Soft delete timestamp
-  deletionScheduledAt DateTime? // When deletion warning was sent
-
-  // Relations
-  newAccounts  NewAccount[] // OAuth accounts
-  newSessions  NewSession[] // Active sessions
-  roles        UserRoleAssignment[] // Multiple roles possible
-  ownedStudios StudioOwnership[] // Studio ownership records
-  newBookings  NewBooking[] // All bookings
-  newFavorites Studio[]             @relation("UserFavorites")
-  auditLogs    AuditLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                  String               @id @default(cuid())
+  email               String               @unique
+  emailVerified       DateTime?
+  password            String?
+  name                String?
+  phone               String?
+  image               String?
+  primaryRole         UserRole             @default(CUSTOMER)
+  isActive            Boolean              @default(true)
+  isSuspended         Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  deletedAt           DateTime?
+  deletionScheduledAt DateTime?
+  auditLogs           AuditLog[]
+  newAccounts         NewAccount[]
+  newBookings         NewBooking[]
+  newSessions         NewSession[]
+  refreshTokens       RefreshToken[]
+  ownedStudios        StudioOwnership[]
+  roles               UserRoleAssignment[]
+  newFavorites        Studio[]             @relation("UserFavorites")
 
   @@index([email])
   @@index([primaryRole])
@@ -199,28 +124,25 @@ model User {
   @@map("users")
 }
 
-// OAuth Account for User model (separate from old Account)
 model NewAccount {
   id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("new_accounts")
 }
 
-// Session for User model (separate from old Session)
 model NewSession {
   id           String   @id @default(cuid())
   sessionToken String   @unique
@@ -231,22 +153,16 @@ model NewSession {
   @@map("new_sessions")
 }
 
-// RBAC - Multiple Roles per User
 model UserRoleAssignment {
-  id     String   @id @default(cuid())
-  userId String
-  role   UserRole
-
-  // Optional: Role can be scoped to specific resource
-  studioId String? // If role is scoped to a studio
-
-  // Audit trail
-  grantedBy String? // Who granted this role
+  id        String    @id @default(cuid())
+  userId    String
+  role      UserRole
+  studioId  String?
+  grantedBy String?
   grantedAt DateTime  @default(now())
-  expiresAt DateTime? // Optional: time-limited roles
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studio Studio? @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  expiresAt DateTime?
+  studio    Studio?   @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, role, studioId])
   @@index([userId])
@@ -254,22 +170,16 @@ model UserRoleAssignment {
   @@map("user_role_assignments")
 }
 
-// Studio Ownership - Multiple Owners per Studio
 model StudioOwnership {
-  id       String @id @default(cuid())
-  userId   String
-  studioId String
-
-  // Ownership details
-  canTransfer Boolean @default(false) // Can transfer ownership
-
-  // Team invitation (future)
-  invitedBy  String?
-  invitedAt  DateTime  @default(now())
-  acceptedAt DateTime?
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  studio Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  userId      String
+  studioId    String
+  canTransfer Boolean   @default(false)
+  invitedBy   String?
+  invitedAt   DateTime  @default(now())
+  acceptedAt  DateTime?
+  studio      Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, studioId])
   @@index([userId])
@@ -277,14 +187,12 @@ model StudioOwnership {
   @@map("studio_ownership")
 }
 
-// Magic Link Tokens (Passwordless Auth)
 model MagicLinkToken {
   id        String   @id @default(cuid())
-  token     String   @unique // 64 hex chars (32 bytes)
+  token     String   @unique
   email     String
-  expiresAt DateTime // 15 minutes from creation
-  used      Boolean  @default(false) // One-time use
-
+  expiresAt DateTime
+  used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([email])
@@ -293,45 +201,32 @@ model MagicLinkToken {
   @@map("magic_link_tokens")
 }
 
-// New Booking Model (links to User instead of Customer)
 model NewBooking {
-  id         String  @id @default(cuid())
-  studioId   String
-  serviceId  String?
-  customerId String? // Optional - null for guest bookings
-
-  // Customer info (denormalized for studio convenience)
-  customerName  String
-  customerEmail String
-  customerPhone String? // Optional
-
-  // Booking details
-  preferredDate String
-  preferredTime String
-  message       String? @db.Text
-
-  // GDPR Art. 9 Compliance (Health Data)
-  explicitHealthConsent    Boolean?  @default(false)
+  id                       String        @id @default(cuid())
+  studioId                 String
+  serviceId                String?
+  customerId               String?
+  customerName             String
+  customerEmail            String
+  customerPhone            String?
+  preferredDate            String
+  preferredTime            String
+  message                  String?
+  explicitHealthConsent    Boolean?      @default(false)
   healthConsentGivenAt     DateTime?
-  healthConsentText        String?   @db.Text
+  healthConsentText        String?
   healthConsentWithdrawnAt DateTime?
-
-  // Status
-  status BookingStatus @default(PENDING)
-
-  // Confirmation audit
-  confirmedBy String?
-  confirmedAt DateTime?
-  cancelledBy String?
-  cancelledAt DateTime?
-
-  // Relations with proper cascade deletion
-  studio   Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  service  Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-  customer User?    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status                   BookingStatus @default(PENDING)
+  confirmedBy              String?
+  confirmedAt              DateTime?
+  cancelledBy              String?
+  cancelledAt              DateTime?
+  cancellationReason       String?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  customer                 User?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  service                  Service?      @relation(fields: [serviceId], references: [id])
+  studio                   Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
 
   @@index([studioId])
   @@index([serviceId])
@@ -339,23 +234,23 @@ model NewBooking {
   @@index([customerEmail])
   @@index([status])
   @@index([createdAt])
+  @@index([studioId, status])
+  @@index([studioId, preferredDate])
+  @@index([studioId, status, confirmedAt])
   @@map("new_bookings")
 }
 
-// Audit Log (GDPR Compliance)
 model AuditLog {
-  id         String  @id @default(cuid())
-  userId     String? // Who performed the action
-  action     String // e.g., "BOOKING_CREATE", "STUDIO_UPDATE"
-  resource   String // e.g., "booking", "studio"
-  resourceId String // ID of affected resource
-  metadata   Json? // Additional context
-  ipAddress  String? // Anonymized (hash last octet)
+  id         String   @id @default(cuid())
+  userId     String?
+  action     String
+  resource   String
+  resourceId String
+  metadata   Json?
+  ipAddress  String?
   userAgent  String?
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([resource, resourceId])
@@ -363,31 +258,19 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// TimeSlot Model
-// Represents available appointment time slots for studios/services
 model TimeSlot {
-  id        String  @id @default(cuid())
-  studioId  String
-  serviceId String? // Optional: slot can be for specific service or general availability
-
-  // Time slot details
-  startTime DateTime
-  endTime   DateTime
-
-  // Availability status
-  isAvailable Boolean @default(true) // Can be booked
-  isBooked    Boolean @default(false) // Already booked
-
-  // Optional: linked booking
-  bookingId String? @unique
-
-  // Relations
-  studio  Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  service Service? @relation(fields: [serviceId], references: [id], onDelete: SetNull)
-
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  studioId    String
+  serviceId   String?
+  startTime   DateTime
+  endTime     DateTime
+  isAvailable Boolean  @default(true)
+  isBooked    Boolean  @default(false)
+  bookingId   String?  @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  service     Service? @relation(fields: [serviceId], references: [id])
+  studio      Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
 
   @@index([studioId])
   @@index([serviceId])
@@ -397,25 +280,55 @@ model TimeSlot {
   @@map("time_slots")
 }
 
-// Blocked Time Model
-// Represents time blocks when the studio is unavailable (breaks, holidays, private time)
 model BlockedTime {
   id        String   @id @default(cuid())
   studioId  String
   startTime DateTime
   endTime   DateTime
-  reason    String? // Optional reason: "Mittagspause", "Pause", "Privat"
-  isAllDay  Boolean  @default(false) // Full day block
-
-  // Relations
-  studio Studio @relation(fields: [studioId], references: [id], onDelete: Cascade)
-
-  // Timestamps
+  reason    String?
+  isAllDay  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  studio    Studio   @relation(fields: [studioId], references: [id], onDelete: Cascade)
 
   @@index([studioId])
   @@index([startTime])
   @@index([studioId, startTime])
   @@map("blocked_times")
+}
+
+model RefreshToken {
+  id               String         @id @default(cuid())
+  token            String         @unique
+  userId           String
+  family           String         @default(cuid())
+  parentId         String?
+  expiresAt        DateTime
+  createdAt        DateTime       @default(now())
+  revokedAt        DateTime?
+  revocationReason String?
+  revokedBy        String?
+  parent           RefreshToken?  @relation("TokenChild", fields: [parentId], references: [id])
+  children         RefreshToken[] @relation("TokenChild")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([family])
+  @@index([expiresAt])
+  @@index([parentId])
+  @@index([family, revokedAt])
+  @@map("refresh_tokens")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  STUDIO_OWNER
+  CUSTOMER
+  GUEST
 }

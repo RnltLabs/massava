@@ -5,9 +5,10 @@
 'use server';
 
 import { z } from 'zod';
-import { auth } from '@/auth-unified';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import type { Prisma } from '@/app/generated/prisma';
 
 /**
  * Hours range schema
@@ -103,7 +104,19 @@ export async function updateStudio(
     const { name, description, address, contact, openingHours, capacity } = validated.data;
 
     // Build update data object
-    const updateData: any = {};
+    interface StudioUpdateData {
+      name?: string;
+      description?: string;
+      address?: string;
+      city?: string;
+      postalCode?: string;
+      phone?: string;
+      email?: string;
+      openingHours?: Prisma.InputJsonValue;
+      capacity?: number;
+    }
+
+    const updateData: StudioUpdateData = {};
 
     if (name) updateData.name = name;
     if (description) updateData.description = description;
@@ -123,9 +136,9 @@ export async function updateStudio(
       if (openingHours.mode === 'same' && openingHours.sameHours) {
         updateData.openingHours = {
           everyday: openingHours.sameHours,
-        };
+        } as Prisma.InputJsonValue;
       } else if (openingHours.mode === 'different' && openingHours.differentHours) {
-        updateData.openingHours = openingHours.differentHours;
+        updateData.openingHours = openingHours.differentHours as Prisma.InputJsonValue;
       }
     }
 

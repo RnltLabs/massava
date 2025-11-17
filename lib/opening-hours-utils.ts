@@ -8,17 +8,19 @@
 
 import { format, setHours, setMinutes, startOfDay } from 'date-fns';
 
+type DaySchedule = { open: string; close: string } | null;
+
 export type OpeningHours = {
   mode?: 'same' | 'different';
   everyday?: { open: string; close: string };
-  monday?: { open: string; close: string } | null;
-  tuesday?: { open: string; close: string } | null;
-  wednesday?: { open: string; close: string } | null;
-  thursday?: { open: string; close: string } | null;
-  friday?: { open: string; close: string } | null;
-  saturday?: { open: string; close: string } | null;
-  sunday?: { open: string; close: string } | null;
-  [key: string]: any;
+  monday?: DaySchedule;
+  tuesday?: DaySchedule;
+  wednesday?: DaySchedule;
+  thursday?: DaySchedule;
+  friday?: DaySchedule;
+  saturday?: DaySchedule;
+  sunday?: DaySchedule;
+  [key: string]: DaySchedule | 'same' | 'different' | { open: string; close: string } | undefined;
 };
 
 export type VirtualBlockedTime = {
@@ -53,10 +55,13 @@ export function generateClosedTimeBlocks(
   let dayHours: { open: string; close: string } | null = null;
 
   // Determine hours for this specific day
-  if (openingHours.everyday) {
-    dayHours = openingHours.everyday;
+  if (openingHours.everyday && typeof openingHours.everyday === 'object') {
+    dayHours = openingHours.everyday as { open: string; close: string };
   } else if (openingHours[dayOfWeek] !== undefined) {
-    dayHours = openingHours[dayOfWeek];
+    const hours = openingHours[dayOfWeek];
+    if (typeof hours === 'object' && hours !== null && 'open' in hours && 'close' in hours) {
+      dayHours = hours as { open: string; close: string };
+    }
   }
 
   // If day is closed (null or no hours), block entire day

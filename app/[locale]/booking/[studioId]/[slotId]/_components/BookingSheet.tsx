@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/dialog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ProgressDots } from "./ProgressDots"
-import { AuthNudgeModal, type GuestFormData } from "./AuthNudgeModal"
+import { AuthNudgeModal } from "./AuthNudgeModal"
+import type { GuestFormData } from "./types"
 
 import { StepService } from "./StepService"
 import { StepConfirm } from "./StepConfirm"
@@ -158,14 +159,11 @@ export function BookingSheet({
 
     console.log("✅ User is logged in, creating booking", session.user)
 
-    // Check if user is a customer (accountType === 'customer')
-    // If they're a studio owner, treat as guest (no customerId linking)
-    const isCustomer = session.user.accountType === 'customer'
-
+    // P0.1 FIX: customerId is set server-side from session, not client-side
+    // Server action will handle customerId from authenticated session
     // If logged in, proceed with booking directly
     await createBookingNow({
       ...data,
-      customerId: isCustomer ? session.user.id : null, // Only link if actual customer
       customerName: session.user.name || "",
       customerEmail: session.user.email || "",
       customerPhone: data.customerPhone || "",
@@ -175,13 +173,13 @@ export function BookingSheet({
 
   // Handle guest checkout submission
   const handleGuestSubmit = async (guestData: GuestFormData) => {
+    // P0.1 FIX: customerId removed - set server-side in createBooking()
     const bookingData: BookingFormData = {
       ...form.getValues(),
       customerName: guestData.customerName,
       customerEmail: guestData.customerEmail,
       customerPhone: guestData.customerPhone,
       explicitHealthConsent: guestData.explicitHealthConsent,
-      customerId: null,
     }
 
     await createBookingNow(bookingData)
@@ -293,7 +291,7 @@ export function BookingSheet({
             onViewBooking={handleViewBooking}
             onNewSearch={handleNewSearch}
             bookingStatus={bookingStatus}
-            isGuest={!form.getValues("customerId")}
+            isGuest={!session} // P0.1 FIX: Check session instead of customerId
           />
         )
 
@@ -333,7 +331,7 @@ export function BookingSheet({
         <Sheet open={isOpen} onOpenChange={onClose}>
           <SheetContent
             side="bottom"
-            className="h-[85vh] rounded-t-3xl p-4 flex flex-col"
+            className="h-[80vh] rounded-t-3xl p-4 flex flex-col"
           >
             {/* Drag Handle - Reduced margin: mb-4 (was mb-6) */}
             <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4 flex-shrink-0" />

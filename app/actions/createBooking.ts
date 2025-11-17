@@ -6,6 +6,8 @@ import {
   bookingFormSchema,
   type BookingFormData,
 } from "@/lib/validations/booking"
+import { auth } from "@/auth"
+import { sendBookingRequestReceivedEmail } from "@/lib/email/send"
 
 interface BookingResult {
   success: boolean
@@ -21,6 +23,10 @@ interface BookingResult {
  * and marks the associated time slot as booked.
  * This operation is atomic using Prisma transactions.
  *
+ * SECURITY (P0.1 Fix):
+ * - IDOR Prevention: customerId is taken from session, not user input
+ * - Prevents users from creating bookings for other users
+ *
  * GDPR Compliance:
  * - Stores explicit health consent timestamp
  * - Stores consent text for audit trail
@@ -34,6 +40,9 @@ export async function createBooking(
   data: BookingFormData
 ): Promise<BookingResult> {
   try {
+    // P0.1 FIX: Get authenticated user from session (IDOR prevention)
+    const session = await auth()
+
     // Validate Input (server-side validation)
     const validated = bookingFormSchema.parse(data)
 
@@ -42,7 +51,15 @@ export async function createBooking(
       where: { id: validated.slotId },
     })
 
+    console.log('[createBooking] TimeSlot check:', {
+      slotId: validated.slotId,
+      exists: !!timeSlot,
+      isAvailable: timeSlot?.isAvailable,
+      isBooked: timeSlot?.isBooked,
+    })
+
     if (!timeSlot) {
+      console.log('[createBooking] ERROR: TimeSlot not found')
       return {
         success: false,
         error: "Der ausgewählte Zeitslot existiert nicht mehr",
@@ -50,6 +67,7 @@ export async function createBooking(
     }
 
     if (!timeSlot.isAvailable || timeSlot.isBooked) {
+      console.log('[createBooking] ERROR: TimeSlot not available or already booked')
       return {
         success: false,
         error:
@@ -86,6 +104,10 @@ export async function createBooking(
     const preferredDate = startTime.toISOString().split("T")[0]
     const preferredTime = startTime.toISOString().split("T")[1].slice(0, 5)
 
+    // P0.1 FIX: Use session.user.id for authenticated users (IDOR prevention)
+    // Never trust client-provided customerId - ALWAYS use session
+    const authenticatedUserId = session?.user?.id || null
+
     // Create Booking + Mark TimeSlot as booked (Atomic Transaction)
     const booking = await prisma.$transaction(async (tx) => {
       // Create NewBooking with unified User model
@@ -93,7 +115,7 @@ export async function createBooking(
         data: {
           studioId: validated.studioId,
           serviceId: validated.serviceId,
-          customerId: validated.customerId || null, // User ID or null for guest
+          customerId: authenticatedUserId, // ✅ SECURITY: From session, NOT user input
           customerName: validated.customerName || "",
           customerEmail: validated.customerEmail || "",
           customerPhone: validated.customerPhone || "",
@@ -104,7 +126,7 @@ export async function createBooking(
           healthConsentGivenAt: new Date(),
           healthConsentText:
             "User consented to health data processing via booking form checkbox (GDPR Art. 9)",
-          status: validated.customerId ? "PENDING" : "CONFIRMED",
+          status: authenticatedUserId ? "PENDING" : "CONFIRMED",
         },
         include: {
           studio: true,
@@ -124,12 +146,40 @@ export async function createBooking(
       return newBooking
     })
 
-    // TODO: Send email notification to customer and studio
-    // await sendBookingConfirmationEmail(booking)
+    // Send booking request received email to customer
+    try {
+      const emailResult = await sendBookingRequestReceivedEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName,
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          bookingTime: booking.preferredTime,
+          message: booking.message || undefined,
+        },
+        'de'
+      );
 
-    // Revalidate pages to show updated availability
-    revalidatePath("/search/appointments")
-    revalidatePath(`/studios/${validated.studioId}`)
+      if (!emailResult.success) {
+        console.error('Failed to send booking request received email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending booking request received email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // NOTE: We DON'T call revalidatePath here because it could trigger a page reload
+    // and show the "slot unavailable" error. The search page will be revalidated
+    // when the user navigates back to it naturally.
+    // If you need immediate revalidation, consider doing it client-side after navigation.
 
     return {
       success: true,

@@ -53,17 +53,22 @@ export function SignUpForm({
   const [submitError, setSubmitError] = useState<string>('');
   const [success, setSuccess] = useState(false);
 
-  // Calculate password strength
+  // Calculate password strength - Aligned with server validation
   const getPasswordStrength = (password: string): PasswordStrength => {
     if (!password) {
       return { score: 0, label: '', color: '' };
     }
 
     let score = 0;
-    if (password.length >= 8) score++;
-    if (password.length >= 12) score++;
+    // Basic requirement: 10+ characters
+    if (password.length >= 10) score++;
+    // Additional length bonus
+    if (password.length >= 14) score++;
+    // Required: uppercase + lowercase
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score++;
+    // Required: at least one number
     if (/\d/.test(password)) score++;
+    // Bonus: special character
     if (/[^a-zA-Z0-9]/.test(password)) score++;
 
     const strengthMap = [
@@ -79,7 +84,7 @@ export function SignUpForm({
 
   const passwordStrength = getPasswordStrength(formData.password);
 
-  // Validation
+  // Validation - Aligned with server-side validation (unifiedPasswordSchema)
   const validateField = (name: string, value: string): string => {
     switch (name) {
       case 'email':
@@ -89,7 +94,9 @@ export function SignUpForm({
         return '';
       case 'password':
         if (!value) return 'Passwort ist erforderlich';
-        if (value.length < 8) return 'Mindestens 8 Zeichen erforderlich';
+        if (value.length < 10) return 'Mindestens 10 Zeichen erforderlich';
+        if (!/[A-Z]/.test(value)) return 'Mindestens ein Großbuchstabe erforderlich';
+        if (!/[0-9]/.test(value)) return 'Mindestens eine Zahl erforderlich';
         return '';
       case 'passwordConfirm':
         if (!value) return 'Passwort-Bestätigung ist erforderlich';
@@ -141,7 +148,9 @@ export function SignUpForm({
       formData.firstName.trim() !== '' &&
       formData.lastName.trim() !== '' &&
       formData.email.trim() !== '' &&
-      formData.password.length >= 8 &&
+      formData.password.length >= 10 &&
+      /[A-Z]/.test(formData.password) &&
+      /[0-9]/.test(formData.password) &&
       formData.password === formData.passwordConfirm &&
       formData.termsAccepted &&
       !errors.firstName &&

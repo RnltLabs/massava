@@ -8,11 +8,13 @@
 import React from 'react';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { PlusIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
-import { ServiceDialog } from './ServiceDialog';
+import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
+import { PageHeader } from '@/components/ui/page-header';
 
 interface Service {
   id: string;
@@ -25,23 +27,22 @@ interface Service {
 
 interface ServicesPageClientProps {
   services: Service[];
+  studioId: string;
+  locale: string;
 }
 
-export function ServicesPageClient({ services }: ServicesPageClientProps): React.JSX.Element {
+export function ServicesPageClient({ services, studioId, locale }: ServicesPageClientProps): React.JSX.Element {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
 
   const handleAddService = (): void => {
     setSelectedService(null);
-    setDialogMode('create');
     setIsDialogOpen(true);
   };
 
   const handleEditService = (service: Service): void => {
     setSelectedService(service);
-    setDialogMode('edit');
     setIsDialogOpen(true);
   };
 
@@ -51,22 +52,33 @@ export function ServicesPageClient({ services }: ServicesPageClientProps): React
   };
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-900">Services</h1>
-            <p className="text-muted-foreground mt-1">Manage your studio's service offerings</p>
-          </div>
-          <Button onClick={handleAddService}>
-            <PlusIcon className="mr-2 h-4 w-4" />
-            Add Service
-          </Button>
-        </div>
+    <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
+      {/* Fixed Header Section with backdrop blur - Everything above the divider line */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 backdrop-blur-lg bg-neutral-50/95 sticky top-0 z-10">
+        <PageHeader
+          title="Services verwalten"
+          subtitle="Verwalten Sie Ihre Service-Angebote"
+          breadcrumb="Services"
+          backHref={`/${locale}/business/settings`}
+          backLabel="Einstellungen"
+          showBackButton={true}
+          actionPlacement="stacked"
+          actions={
+            <Button
+              onClick={handleAddService}
+              size="sm"
+              className="w-full md:w-auto h-11 md:h-10"
+            >
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Hinzufügen
+            </Button>
+          }
+        />
+      </div>
 
-        {/* Services List */}
-        {services.length === 0 ? (
+      {/* Scrollable Section - Only service cards list */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
+          {services.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-lg font-medium text-neutral-900 mb-2">No services yet</p>
@@ -82,63 +94,82 @@ export function ServicesPageClient({ services }: ServicesPageClientProps): React
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {services.map((service) => (
-              <Card key={service.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle>{service.name}</CardTitle>
-                      <CardDescription>{service.description}</CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditService(service)}
-                        aria-label={`Edit ${service.name}`}
-                      >
-                        <Edit2Icon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteService(service)}
-                        aria-label={`Delete ${service.name}`}
-                      >
-                        <Trash2Icon className="h-4 w-4" />
-                      </Button>
-                    </div>
+              <div
+                key={service.id}
+                className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                {/* Header: Name + Actions (Edit & Delete) */}
+                <div className="mb-3 flex items-start justify-between gap-4">
+                  <h3 className="text-lg font-semibold text-foreground flex-1">
+                    {service.name}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleEditService(service)}
+                      className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
+                    >
+                      <Edit2Icon className="h-4 w-4 text-primary" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDeleteService(service)}
+                      aria-label={`${service.name} löschen`}
+                      className="h-9 w-9 shrink-0 rounded-full hover:bg-destructive/10"
+                    >
+                      <Trash2Icon className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Price</span>
-                      <span className="font-medium">€{service.price.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Duration</span>
-                      <span className="font-medium">{service.duration} minutes</span>
-                    </div>
-                    {service.category && (
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Category</span>
-                        <span className="font-medium">{service.category}</span>
-                      </div>
-                    )}
+                </div>
+
+                {/* Price/Duration */}
+                <div className="mb-3">
+                  <span className="text-base font-medium text-primary">
+                    €{service.price.toFixed(2)} • {service.duration} Min
+                  </span>
+                </div>
+
+                {/* Description */}
+                {service.description && (
+                  <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
+                    {service.description}
+                  </p>
+                )}
+
+                {/* Footer: Category only */}
+                {service.category && (
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="secondary"
+                      className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
+                    >
+                      {service.category}
+                    </Badge>
                   </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Service Dialog (Create/Edit) */}
-      <ServiceDialog
+      {/* Service Management Dialog (Companion Style - Create/Edit) */}
+      <ServiceManagementDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        service={selectedService}
-        mode={dialogMode}
+        studioId={studioId}
+        editService={selectedService ? {
+          id: selectedService.id,
+          name: selectedService.name,
+          duration: selectedService.duration,
+          price: selectedService.price,
+        } : undefined}
+        onSuccess={() => {
+          setIsDialogOpen(false);
+          // Page will auto-refresh via router.refresh() in the dialog
+        }}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -149,6 +180,6 @@ export function ServicesPageClient({ services }: ServicesPageClientProps): React
           service={selectedService}
         />
       )}
-    </>
+    </div>
   );
 }

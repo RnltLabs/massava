@@ -1,73 +1,177 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * NextAuth Configuration - Node.js Runtime with Prisma
+ *
+ * This file extends auth.config.ts with:
+ * - Prisma adapter (database operations)
+ * - Full JWT callbacks (with database access)
+ * - Authorization logic (with bcrypt)
+ * - Role management
+ *
+ * PRISMA IMPORTS ALLOWED - Node.js runtime only!
+ *
+ * Middleware uses auth.config.ts (Edge-safe)
+ * App routes use this file (Node.js with database access)
  */
 
+import { prisma } from '@/lib/prisma';
 import NextAuth from 'next-auth';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
-import { PrismaClient } from '@/app/generated/prisma';
+import { PrismaClient, UserRole } from '@/app/generated/prisma';
+import { UnifiedUserAdapter } from '@/lib/auth/adapter';
+import { authConfig } from './auth.config';
 
-const prisma = new PrismaClient();
 
-// Detect basePath based on NEXTAUTH_URL or environment
-// Since migration to massava.app: NEXTAUTH_URL=https://staging.massava.app -> basePath=/api/auth
-// Legacy (if URL still has /massava): NEXTAUTH_URL=https://staging.rnltlabs.de/massava -> basePath=/massava/api/auth
-// In dev: NEXTAUTH_URL=http://localhost:3000 -> basePath=/api/auth
-function getServerBasePath(): string {
-  const nextAuthUrl = process.env.NEXTAUTH_URL || '';
-  // Legacy support: if NEXTAUTH_URL contains /massava subpath
-  if (nextAuthUrl.includes('/massava')) {
-    return '/massava/api/auth';
+console.log('[NextAuth] Initializing with basePath:', process.env.NEXTAUTH_BASEPATH || '/api/auth');
+
+/**
+ * Helper function to check if user owns a studio
+ * Used to determine sidebar visibility and route access
+ */
+async function checkStudioOwnership(userId: string): Promise<boolean> {
+  try {
+    const ownership = await prisma.studioOwnership.findFirst({
+      where: {
+        userId,
+      },
+    });
+    return !!ownership;
+  } catch (error) {
+    console.error('[NextAuth] Error checking studio ownership:', error);
+    return false;
   }
-  // Default: standard NextAuth path (for massava.app and localhost)
-  return '/api/auth';
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  basePath: getServerBasePath(),
-  adapter: PrismaAdapter(prisma),
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days (STRATEGY.md Section 8.2 - Phase 2)
-  },
-  pages: {
-    signIn: '/auth/signin',
-  },
+  ...authConfig,
+
+  // Add Prisma adapter (Node.js only)
+  adapter: UnifiedUserAdapter(prisma),
+
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    }),
+    // Include OAuth providers from Edge-safe config
+    ...authConfig.providers,
+
+    // Define Credentials provider directly (NOT via override)
+    // This is required because NextAuth v5 doesn't support provider overriding via spread
     Credentials({
-      id: 'studio-credentials',
-      name: 'Studio Owner Credentials',
+      id: 'credentials',
+      name: 'Email and Password',
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
+        accountType: { label: 'Account Type', type: 'text' },
       },
       async authorize(credentials) {
+        const timestamp = new Date().toISOString();
+        console.log('[auth.ts] ===== AUTHORIZE CALLED AT', timestamp, '=====');
+        console.log('[auth.ts] authorize() called with email:', credentials?.email);
+
         if (!credentials?.email || !credentials?.password) {
+          console.log('[auth.ts] Missing credentials');
           return null;
         }
 
-        const user = await prisma.studioOwner.findUnique({
+        const accountType = credentials.accountType as 'customer' | 'studio' | undefined;
+        console.log('[auth.ts] Account type:', accountType);
+
+        // Database query with Prisma
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
+          include: {
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
         });
 
+        console.log('[auth.ts] User found:', !!user, 'Has password:', !!user?.password);
+
         if (!user || !user.password) {
+          console.log('[auth.ts] No user or no password - returning null');
           return null;
         }
 
+        // Verify password with bcrypt
         const isPasswordValid = await bcrypt.compare(
           credentials.password as string,
           user.password
         );
 
+        console.log('[auth.ts] Password valid:', isPasswordValid);
+
         if (!isPasswordValid) {
+          console.log('[auth.ts] Password mismatch - returning null');
           return null;
+        }
+
+        // Check email verification
+        if (!user.emailVerified) {
+          console.log('[auth.ts] Email not verified');
+          throw new Error('Email not verified');
+        }
+
+        // Check if account is suspended
+        if (user.isSuspended) {
+          console.log('[auth.ts] Account suspended');
+          throw new Error('Account suspended');
+        }
+
+        console.log('[auth.ts] Authorization successful, returning user object');
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+          primaryRole: user.primaryRole,
+          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
+          accountType: accountType || 'customer',
+        };
+      },
+    }),
+
+    // Define Magic Link provider directly (NOT via override)
+    Credentials({
+      id: 'magic-link',
+      name: 'Magic Link',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+          include: {
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        if (user.isSuspended) {
+          throw new Error('Account suspended');
+        }
+
+        // Mark email as verified (magic link implies verification)
+        if (!user.emailVerified) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { emailVerified: new Date() },
+          });
         }
 
         return {
@@ -75,65 +179,109 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.image,
-          userType: 'studioOwner',
-        };
-      },
-    }),
-    Credentials({
-      id: 'customer-credentials',
-      name: 'Customer Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
-
-        const customer = await prisma.customer.findUnique({
-          where: { email: credentials.email as string },
-        });
-
-        if (!customer || !customer.password) {
-          return null;
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password as string,
-          customer.password
-        );
-
-        if (!isPasswordValid) {
-          return null;
-        }
-
-        return {
-          id: customer.id,
-          email: customer.email,
-          name: customer.name,
-          image: customer.image,
-          userType: 'customer',
+          primaryRole: user.primaryRole,
+          roles: [user.primaryRole, ...user.roles.map((r) => r.role)],
         };
       },
     }),
   ],
+
   callbacks: {
-    async jwt({ token, user }) {
+    // Full JWT callback with database access
+    async jwt({ token, user, account, trigger }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        token.userType = (user as any).userType || 'studioOwner'; // Default to studioOwner for Google auth
+        token.primaryRole = (user as any).primaryRole || UserRole.CUSTOMER;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.roles = (user as any).roles || [UserRole.CUSTOMER];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        token.accountType = (user as any).accountType || 'customer';
+
+        // Check studio ownership for progressive onboarding UX
+        token.hasStudio = user.id ? await checkStudioOwnership(user.id) : false;
+
+        // P0.6 FIX: Session versioning
+        token.sessionVersion = 1;
+        token.issuedAt = Date.now();
       }
+
+      // P0.6 FIX: On session update/refresh, verify roles haven't changed
+      if (trigger === 'update' || (!user && !account)) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: {
+            primaryRole: true,
+            isSuspended: true,
+            isActive: true,
+            updatedAt: true,
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (!dbUser || dbUser.isSuspended || !dbUser.isActive) {
+          throw new Error('Session invalid');
+        }
+
+        const currentRoles = [dbUser.primaryRole, ...dbUser.roles.map((r) => r.role)];
+        const rolesChanged = JSON.stringify(token.roles) !== JSON.stringify(currentRoles);
+
+        if (rolesChanged) {
+          token.sessionVersion = ((token.sessionVersion as number) || 1) + 1;
+          token.primaryRole = dbUser.primaryRole;
+          token.roles = currentRoles;
+        }
+
+        // Re-check studio ownership on session update
+        token.hasStudio = await checkStudioOwnership(token.id as string);
+      }
+
+      // OAuth sign in - fetch roles from database
+      if (account && account.provider === 'google') {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          include: {
+            roles: {
+              select: {
+                role: true,
+              },
+            },
+          },
+        });
+
+        if (dbUser) {
+          token.primaryRole = dbUser.primaryRole;
+          token.roles = [
+            dbUser.primaryRole,
+            ...dbUser.roles.map((r) => r.role),
+          ];
+          token.sessionVersion = 1;
+          token.issuedAt = Date.now();
+
+          // Check studio ownership for OAuth users
+          token.hasStudio = await checkStudioOwnership(dbUser.id);
+        }
+      }
+
       return token;
     },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).userType = token.userType;
-      }
-      return session;
+
+    // Use Edge-safe session callback from auth.config.ts
+    session: authConfig.callbacks?.session,
+  },
+
+  events: {
+    async signIn({ user }) {
+      // Update last login time
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { updatedAt: new Date() },
+      });
     },
   },
 });

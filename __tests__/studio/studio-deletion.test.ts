@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { deleteStudio, verifyUserPassword } from '@/app/actions/studio/deleteStudio';
 
 // Mock dependencies
-vi.mock('@/auth-unified', () => ({
+vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }));
 
@@ -53,8 +53,8 @@ vi.mock('fs/promises', () => ({
   },
 }));
 
-import { auth } from '@/auth-unified';
-import { db } from '@/lib/db';
+import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 
@@ -115,7 +115,7 @@ describe('Studio Deletion', () => {
       });
 
       // Mock transaction
-      vi.mocked(db.$transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.$transaction).mockImplementation(async (callback: (tx: any) => Promise<any>) => {
         return callback({
           service: {
             deleteMany: vi.fn().mockResolvedValue({ count: 5 }),
@@ -268,7 +268,7 @@ describe('Studio Deletion', () => {
       });
 
       // Mock transaction
-      vi.mocked(db.$transaction).mockImplementation(async (callback) => {
+      vi.mocked(db.$transaction).mockImplementation(async (callback: (tx: any) => Promise<any>) => {
         return callback({
           service: { deleteMany: vi.fn().mockResolvedValue({ count: 5 }) },
           newBooking: { deleteMany: vi.fn().mockResolvedValue({ count: 10 }) },

@@ -7,6 +7,7 @@
  * MASTER_ORCHESTRATION_PLAN.md Task 1.4: Data Retention & Deletion
  */
 
+import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
 import {
   executeAllRetentionPolicies,
@@ -16,9 +17,7 @@ import {
   sendDeletionWarningEmail,
   sendFinalWarningEmail,
 } from '@/lib/notifications/deletion-notifier';
-import { PrismaClient } from '@/app/generated/prisma';
 
-const prisma = new PrismaClient();
 
 export interface DataRetentionJobResult {
   success: boolean;

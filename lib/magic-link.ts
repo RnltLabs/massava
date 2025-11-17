@@ -6,10 +6,9 @@
  * Implements STRATEGY.md Section 5.2 (Magic Link Security)
  */
 
+import { prisma } from '@/lib/prisma';
 import { randomBytes } from 'crypto';
-import { PrismaClient } from '@/app/generated/prisma';
 
-const prisma = new PrismaClient();
 
 const MAGIC_LINK_EXPIRY = 15 * 60 * 1000; // 15 minutes
 

@@ -32,6 +32,7 @@ import { GuestCheckoutForm } from "./GuestCheckoutForm"
 import type { Service, Studio, TimeSlot } from "@/app/generated/prisma"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
+import type { GuestFormData } from "./types"
 
 interface AuthNudgeModalProps {
   isOpen: boolean
@@ -41,13 +42,6 @@ interface AuthNudgeModalProps {
   timeSlot: TimeSlot
   onGuestSubmit: (data: GuestFormData) => Promise<void>
   message?: string
-}
-
-export interface GuestFormData {
-  customerName: string
-  customerEmail: string
-  customerPhone: string
-  explicitHealthConsent: boolean
 }
 
 /**
@@ -295,7 +289,7 @@ export function AuthNudgeModal({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[90vh] rounded-t-3xl overflow-y-auto"
+          className="h-[80vh] rounded-t-3xl overflow-y-auto"
         >
           {/* Drag Handle */}
           <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />

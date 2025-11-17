@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Roman Reinelt / RNLT Labs
 # All rights reserved.
 
-# Local Development Database
+# Local Development Environment
 # Run with: docker-compose up -d
 
 services:
@@ -23,6 +23,50 @@ services:
       timeout: 5s
       retries: 5
 
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: massava-rabbitmq-dev
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: massava
+      RABBITMQ_DEFAULT_PASS: massava_dev_password
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  auth-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: massava-auth-worker-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://massava:massava_dev_password@postgres:5432/massava_development
+      RABBITMQ_URL: amqp://massava:massava_dev_password@rabbitmq:5672
+      UPSTASH_REDIS_URL: ${UPSTASH_REDIS_URL}
+      UPSTASH_REDIS_TOKEN: ${UPSTASH_REDIS_TOKEN}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f 'node.*auth-sync-worker' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 volumes:
   postgres_data:
     name: massava_postgres_data
+  rabbitmq_data:
+    name: massava_rabbitmq_data

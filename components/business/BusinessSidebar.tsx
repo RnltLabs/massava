@@ -49,7 +49,7 @@ export function BusinessSidebar({ locale }: BusinessSidebarProps): React.JSX.Ele
     },
     {
       label: 'Settings',
-      href: `/${locale}/business/settings/profile`,
+      href: `/${locale}/business/settings`,
       icon: SettingsIcon,
     },
     {
@@ -88,7 +88,7 @@ export function BusinessSidebar({ locale }: BusinessSidebarProps): React.JSX.Ele
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                 active
-                  ? 'bg-neutral-100 text-neutral-900'
+                  ? 'bg-[#D4A89F] text-[#B56550]'
                   : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
               )}
             >

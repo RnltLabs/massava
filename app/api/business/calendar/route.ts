@@ -8,7 +8,7 @@
  * Fetch calendar data (bookings + time slots) for the authenticated studio owner
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { calendarQuerySchema } from '@/lib/validations/business'
@@ -59,7 +59,25 @@ export async function GET(request: Request) {
     }
 
     // 4. Build where clauses for time range
-    const bookingWhere: any = {
+    interface BookingWhereInput {
+      studioId: string;
+      createdAt: {
+        gte: Date;
+        lte: Date;
+      };
+      serviceId?: string;
+    }
+
+    interface SlotWhereInput {
+      studioId: string;
+      startTime: {
+        gte: Date;
+        lte: Date;
+      };
+      serviceId?: string;
+    }
+
+    const bookingWhere: BookingWhereInput = {
       studioId: studio.id,
       createdAt: {
         gte: new Date(startDate),
@@ -67,7 +85,7 @@ export async function GET(request: Request) {
       },
     }
 
-    const slotWhere: any = {
+    const slotWhere: SlotWhereInput = {
       studioId: studio.id,
       startTime: {
         gte: new Date(startDate),

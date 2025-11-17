@@ -7,7 +7,7 @@
  * POST /api/business/services - Create new service
  */
 
-import { auth } from '@/auth-unified'
+import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
 import { prisma } from '@/lib/prisma'
 import { createServiceSchema } from '@/lib/validations/business'
@@ -56,7 +56,7 @@ export async function GET() {
         updatedAt: true,
         _count: {
           select: {
-            bookings: true,
+            newBookings: true,
           },
         },
       },
