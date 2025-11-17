@@ -134,13 +134,13 @@ export function DesktopProfileDropdown({
         ) : (
           <>
             <DropdownMenuItem asChild>
-              <Link href={`/${locale}/customer/dashboard`} className="flex items-center gap-2">
+              <Link href={`/${locale}/customer/bookings`} className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 My Bookings
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/${locale}/dashboard`} className="flex items-center gap-2">
+              <Link href={`/${locale}/customer/profile`} className="flex items-center gap-2">
                 <User className="h-4 w-4" />
                 My Account
               </Link>
