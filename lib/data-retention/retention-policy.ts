@@ -535,6 +535,14 @@ export async function executePermanentDeletion(
     for (const user of usersToDelete) {
       try {
         if (!dryRun) {
+          // TODO: Send account deletion confirmed email BEFORE deleting user
+          // import { sendAccountDeletionConfirmedEmail } from '@/lib/email/send';
+          // await sendAccountDeletionConfirmedEmail(
+          //   user.email,
+          //   user.name || 'User',
+          //   'de' // or user's preferred locale
+          // );
+
           // Delete user completely (CASCADE will handle related records)
           await prisma.user.delete({
             where: { id: user.id },

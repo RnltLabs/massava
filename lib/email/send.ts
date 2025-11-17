@@ -12,15 +12,23 @@ import {
   EmailVerificationTemplate,
   WelcomeEmailTemplate,
   PasswordResetTemplate,
+  EmailChangeVerificationTemplate,
   BookingRequestReceivedTemplate,
   BookingConfirmationTemplate,
   BookingCancellationTemplate,
+  TwoFactorCodeTemplate,
+  AccountDeletionScheduledTemplate,
+  AccountDeletionConfirmedTemplate,
   getPlainTextVerification,
   getPlainTextWelcome,
   getPlainTextPasswordReset,
+  getPlainTextEmailChangeVerification,
   getPlainTextBookingRequestReceived,
   getPlainTextBookingConfirmation,
   getPlainTextBookingCancellation,
+  getPlainTextTwoFactorCode,
+  getPlainTextAccountDeletionScheduled,
+  getPlainTextAccountDeletionConfirmed,
 } from './templates';
 import { logger } from '@/lib/logger';
 
@@ -306,6 +314,112 @@ export async function sendPasswordResetEmail(
     logger.error('Email sending exception', {
       action: 'SEND_PASSWORD_RESET_EMAIL',
       email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send email change verification email
+ * @param email - New email address (recipient)
+ * @param userName - User's name
+ * @param newEmail - New email address
+ * @param verificationUrl - URL with verification token
+ * @param oldEmail - Current email address
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendEmailChangeVerification(
+  email: string,
+  userName: string,
+  newEmail: string,
+  verificationUrl: string,
+  oldEmail: string,
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+        email: newEmail,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      EmailChangeVerificationTemplate({
+        userName,
+        newEmail,
+        verificationUrl,
+        oldEmail,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextEmailChangeVerification(
+      userName,
+      newEmail,
+      verificationUrl,
+      oldEmail,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'E-Mail-Adresse bestätigen - Massava'
+      : 'Confirm Email Address - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'email-change-verification' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+        email: newEmail,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Email change verification email sent successfully', {
+      action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+      email: newEmail,
+      messageId: result.data?.id,
+      locale,
+      oldEmail,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+      email: newEmail,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
@@ -635,6 +749,295 @@ export async function sendBookingCancellationEmail(
   } catch (error) {
     logger.error('Email sending exception', {
       action: 'SEND_BOOKING_CANCELLATION_EMAIL',
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send two-factor authentication code email
+ * @param email - Recipient email address
+ * @param userName - User's name
+ * @param code - 6-digit 2FA code
+ * @param expiresInMinutes - Code expiration time in minutes (default: 5)
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendTwoFactorCodeEmail(
+  email: string,
+  userName: string,
+  code: string,
+  expiresInMinutes: number = 5,
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_TWO_FACTOR_CODE_EMAIL',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      TwoFactorCodeTemplate({
+        userName,
+        code,
+        expiresInMinutes,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextTwoFactorCode(userName, code, expiresInMinutes, locale);
+
+    const subject = locale === 'de'
+      ? 'Ihr Sicherheitscode - Massava'
+      : 'Your Security Code - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'two-factor-code' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_TWO_FACTOR_CODE_EMAIL',
+        email,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Two-factor code email sent successfully', {
+      action: 'SEND_TWO_FACTOR_CODE_EMAIL',
+      email,
+      messageId: result.data?.id,
+      locale,
+      expiresInMinutes,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_TWO_FACTOR_CODE_EMAIL',
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send account deletion scheduled email (30-day grace period)
+ * @param email - Recipient email address
+ * @param userName - User's name
+ * @param deletionDate - Formatted deletion date (e.g., "15. Dezember 2025")
+ * @param cancelUrl - URL to cancel the deletion
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendAccountDeletionScheduledEmail(
+  email: string,
+  userName: string,
+  deletionDate: string,
+  cancelUrl: string,
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_ACCOUNT_DELETION_SCHEDULED_EMAIL',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      AccountDeletionScheduledTemplate({
+        userName,
+        deletionDate,
+        cancelUrl,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextAccountDeletionScheduled(
+      userName,
+      deletionDate,
+      cancelUrl,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'Konto-Löschung geplant - Massava'
+      : 'Account Deletion Scheduled - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'account-deletion-scheduled' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_ACCOUNT_DELETION_SCHEDULED_EMAIL',
+        email,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Account deletion scheduled email sent successfully', {
+      action: 'SEND_ACCOUNT_DELETION_SCHEDULED_EMAIL',
+      email,
+      messageId: result.data?.id,
+      locale,
+      deletionDate,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_ACCOUNT_DELETION_SCHEDULED_EMAIL',
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send account deletion confirmed email (final email after deletion)
+ * @param email - Recipient email address
+ * @param userName - User's name
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendAccountDeletionConfirmedEmail(
+  email: string,
+  userName: string,
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_ACCOUNT_DELETION_CONFIRMED_EMAIL',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      AccountDeletionConfirmedTemplate({
+        userName,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextAccountDeletionConfirmed(userName, locale);
+
+    const subject = locale === 'de'
+      ? 'Konto gelöscht - Massava'
+      : 'Account Deleted - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'account-deletion-confirmed' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_ACCOUNT_DELETION_CONFIRMED_EMAIL',
+        email,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Account deletion confirmed email sent successfully', {
+      action: 'SEND_ACCOUNT_DELETION_CONFIRMED_EMAIL',
+      email,
+      messageId: result.data?.id,
+      locale,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_ACCOUNT_DELETION_CONFIRMED_EMAIL',
       email,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
