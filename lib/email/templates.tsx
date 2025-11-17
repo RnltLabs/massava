@@ -1178,6 +1178,321 @@ export function BookingCancellationTemplate({
 }
 
 // ============================================================================
+// TWO-FACTOR AUTHENTICATION CODE TEMPLATE
+// ============================================================================
+
+interface TwoFactorCodeTemplateProps {
+  userName: string;
+  code: string; // 6-digit code
+  expiresInMinutes: number;
+  locale?: string;
+}
+
+export function TwoFactorCodeTemplate({
+  userName,
+  code,
+  expiresInMinutes,
+  locale = 'de',
+}: TwoFactorCodeTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Ihr Sicherheitscode - Massava',
+      greeting: `Hallo ${userName}! 🔐`,
+      intro: 'Hier ist Ihr Sicherheitscode für die Anmeldung:',
+      codeLabel: 'Ihr Sicherheitscode',
+      expiryTitle: 'Wichtig:',
+      expiryNotice: `⏱ Dieser Code ist ${expiresInMinutes} Minuten gültig.`,
+      securityTitle: 'Sicherheitshinweis:',
+      notRequested: 'Falls Sie sich nicht anmelden wollten, ignorieren Sie diese E-Mail und kontaktieren Sie uns umgehend, wenn Sie verdächtige Aktivitäten bemerken.',
+      footer: 'Geben Sie diesen Code niemals an Dritte weiter.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Your Security Code - Massava',
+      greeting: `Hello ${userName}! 🔐`,
+      intro: 'Here is your security code for login:',
+      codeLabel: 'Your Security Code',
+      expiryTitle: 'Important:',
+      expiryNotice: `⏱ This code is valid for ${expiresInMinutes} minutes.`,
+      securityTitle: 'Security Notice:',
+      notRequested: 'If you did not attempt to log in, please ignore this email and contact us immediately if you notice suspicious activity.',
+      footer: 'Never share this code with anyone.',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.bookingCard}>
+          <p style={styles.bookingDetailLabel}>{t.codeLabel}</p>
+          <div style={{
+            fontSize: '48px',
+            fontWeight: '700',
+            color: COLORS.primary,
+            letterSpacing: '8px',
+            textAlign: 'center' as const,
+            fontFamily: 'Monaco, Consolas, "Courier New", monospace',
+            padding: '24px',
+            margin: '16px 0',
+          }}>
+            {code}
+          </div>
+        </div>
+
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⚠️ {t.expiryTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.expiryNotice}</p>
+        </div>
+
+        <div style={styles.errorBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>🔒 {t.securityTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.notRequested}</p>
+        </div>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
+// ACCOUNT DELETION SCHEDULED TEMPLATE
+// ============================================================================
+
+interface AccountDeletionScheduledTemplateProps {
+  userName: string;
+  deletionDate: string; // formatted date (e.g., "15. Dezember 2025")
+  cancelUrl: string;
+  locale?: string;
+}
+
+export function AccountDeletionScheduledTemplate({
+  userName,
+  deletionDate,
+  cancelUrl,
+  locale = 'de',
+}: AccountDeletionScheduledTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Konto-Löschung geplant - Massava',
+      greeting: `Hallo ${userName}`,
+      intro: 'Sie haben die Löschung Ihres Kontos beantragt. Diese wird in 30 Tagen durchgeführt.',
+      warningTitle: `⚠️ Ihr Konto wird am ${deletionDate} gelöscht.`,
+      detailsTitle: 'Was wird gelöscht?',
+      detail1: '🗑 Alle Ihre persönlichen Daten werden unwiderruflich gelöscht',
+      detail2: '📅 Alle zukünftigen Buchungen werden automatisch storniert',
+      detail3: '🏢 Studio-Zugriffe und Berechtigungen werden entfernt',
+      detail4: '📧 Sie erhalten keine weiteren E-Mails von Massava',
+      cancelTitle: 'Möchten Sie die Löschung abbrechen?',
+      cancelText: 'Falls Sie es sich anders überlegt haben, können Sie die Löschung bis zum {deletionDate} jederzeit abbrechen.',
+      buttonText: 'Löschung abbrechen',
+      continueTitle: 'Nichts tun?',
+      continueText: 'Falls Sie die Löschung durchführen möchten, müssen Sie nichts weiter tun. Ihr Konto wird automatisch gelöscht.',
+      footer: 'Wir bedauern, Sie gehen zu sehen.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Account Deletion Scheduled - Massava',
+      greeting: `Hello ${userName}`,
+      intro: 'You have requested to delete your account. This will be completed in 30 days.',
+      warningTitle: `⚠️ Your account will be deleted on ${deletionDate}.`,
+      detailsTitle: 'What will be deleted?',
+      detail1: '🗑 All your personal data will be permanently deleted',
+      detail2: '📅 All future bookings will be automatically cancelled',
+      detail3: '🏢 Studio access and permissions will be removed',
+      detail4: '📧 You will no longer receive emails from Massava',
+      cancelTitle: 'Want to cancel the deletion?',
+      cancelText: 'If you changed your mind, you can cancel the deletion at any time until {deletionDate}.',
+      buttonText: 'Cancel Deletion',
+      continueTitle: 'Do nothing?',
+      continueText: 'If you want to proceed with the deletion, you don\'t need to do anything. Your account will be deleted automatically.',
+      footer: 'We\'re sorry to see you go.',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '0', fontSize: '18px', textAlign: 'center' as const }}>
+            {t.warningTitle}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <ul style={{ ...styles.list, marginBottom: '0' }}>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>•</span>
+              {t.detail1}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>•</span>
+              {t.detail2}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>•</span>
+              {t.detail3}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>•</span>
+              {t.detail4}
+            </li>
+          </ul>
+        </div>
+
+        <div style={styles.divider}></div>
+
+        <p style={styles.textBold}>{t.cancelTitle}</p>
+        <p style={styles.text}>{t.cancelText.replace('{deletionDate}', deletionDate)}</p>
+
+        <div style={styles.buttonContainer}>
+          <a href={cancelUrl} style={styles.button}>
+            {t.buttonText}
+          </a>
+        </div>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>{t.continueTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.continueText}</p>
+        </div>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
+// ACCOUNT DELETION CONFIRMED TEMPLATE
+// ============================================================================
+
+interface AccountDeletionConfirmedTemplateProps {
+  userName: string;
+  locale?: string;
+}
+
+export function AccountDeletionConfirmedTemplate({
+  userName,
+  locale = 'de',
+}: AccountDeletionConfirmedTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Konto gelöscht - Massava',
+      greeting: `Hallo ${userName}`,
+      intro: '✓ Ihr Massava-Konto wurde erfolgreich gelöscht.',
+      confirmationTitle: 'Was wurde gelöscht?',
+      confirmation1: '✓ Alle Ihre persönlichen Daten wurden gemäß DSGVO unwiderruflich gelöscht',
+      confirmation2: '✓ Alle Buchungen wurden storniert',
+      confirmation3: '✓ Alle Studio-Zugriffe wurden entfernt',
+      confirmation4: '✓ Sie wurden von allen Mailinglisten entfernt',
+      reactivationTitle: 'Möchten Sie wiederkommen?',
+      reactivationText: 'Falls Sie in Zukunft wieder bei Massava buchen möchten, können Sie jederzeit ein neues Konto erstellen. Wir würden uns freuen, Sie wieder bei uns zu sehen!',
+      buttonText: 'Neues Konto erstellen',
+      footer: 'Vielen Dank, dass Sie Teil von Massava waren.',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Account Deleted - Massava',
+      greeting: `Hello ${userName}`,
+      intro: '✓ Your Massava account has been successfully deleted.',
+      confirmationTitle: 'What was deleted?',
+      confirmation1: '✓ All your personal data has been permanently deleted in accordance with GDPR',
+      confirmation2: '✓ All bookings have been cancelled',
+      confirmation3: '✓ All studio access has been removed',
+      confirmation4: '✓ You have been removed from all mailing lists',
+      reactivationTitle: 'Want to come back?',
+      reactivationText: 'If you want to book with Massava in the future, you can create a new account at any time. We would be happy to see you again!',
+      buttonText: 'Create New Account',
+      footer: 'Thank you for being part of Massava.',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const signupUrl = `${appUrl}/${locale}/auth/signup`;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+
+        <div style={styles.successBox}>
+          <p style={{ ...styles.textBold, marginBottom: '0', fontSize: '18px', textAlign: 'center' as const }}>
+            {t.intro}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.confirmationTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <ul style={{ ...styles.list, marginBottom: '0' }}>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.confirmation1}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.confirmation2}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.confirmation3}
+            </li>
+            <li style={styles.listItem}>
+              <span style={{ position: 'absolute', left: '0' }}>✓</span>
+              {t.confirmation4}
+            </li>
+          </ul>
+        </div>
+
+        <div style={styles.divider}></div>
+
+        <p style={styles.textBold}>{t.reactivationTitle}</p>
+        <p style={styles.text}>{t.reactivationText}</p>
+
+        <div style={styles.buttonContainer}>
+          <a href={signupUrl} style={styles.buttonSecondary}>
+            {t.buttonText}
+          </a>
+        </div>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
 // PLAIN TEXT VERSIONS
 // ============================================================================
 
@@ -1632,3 +1947,190 @@ If you have questions, reach us at support@massava.app
 
   return content[locale as keyof typeof content] || content.de;
 }
+
+
+export function getPlainTextTwoFactorCode(
+  userName: string,
+  code: string,
+  expiresInMinutes: number,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${userName}\! 🔐
+
+Hier ist Ihr Sicherheitscode für die Anmeldung:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ${code}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱ Wichtig: Dieser Code ist ${expiresInMinutes} Minuten gültig.
+
+🔒 Sicherheitshinweis:
+Falls Sie sich nicht anmelden wollten, ignorieren Sie diese E-Mail und kontaktieren Sie uns umgehend, wenn Sie verdächtige Aktivitäten bemerken.
+
+Geben Sie diesen Code niemals an Dritte weiter.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${userName}\! 🔐
+
+Here is your security code for login:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ${code}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⏱ Important: This code is valid for ${expiresInMinutes} minutes.
+
+🔒 Security Notice:
+If you did not attempt to log in, please ignore this email and contact us immediately if you notice suspicious activity.
+
+Never share this code with anyone.
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+export function getPlainTextAccountDeletionScheduled(
+  userName: string,
+  deletionDate: string,
+  cancelUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${userName}
+
+Sie haben die Löschung Ihres Kontos beantragt. Diese wird in 30 Tagen durchgeführt.
+
+⚠️ Ihr Konto wird am ${deletionDate} gelöscht.
+
+Was wird gelöscht?
+
+• 🗑 Alle Ihre persönlichen Daten werden unwiderruflich gelöscht
+• 📅 Alle zukünftigen Buchungen werden automatisch storniert
+• 🏢 Studio-Zugriffe und Berechtigungen werden entfernt
+• 📧 Sie erhalten keine weiteren E-Mails von Massava
+
+Möchten Sie die Löschung abbrechen?
+
+Falls Sie es sich anders überlegt haben, können Sie die Löschung bis zum ${deletionDate} jederzeit abbrechen.
+
+Löschung abbrechen: ${cancelUrl}
+
+Nichts tun?
+
+Falls Sie die Löschung durchführen möchten, müssen Sie nichts weiter tun. Ihr Konto wird automatisch gelöscht.
+
+Wir bedauern, Sie gehen zu sehen.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${userName}
+
+You have requested to delete your account. This will be completed in 30 days.
+
+⚠️ Your account will be deleted on ${deletionDate}.
+
+What will be deleted?
+
+• 🗑 All your personal data will be permanently deleted
+• 📅 All future bookings will be automatically cancelled
+• 🏢 Studio access and permissions will be removed
+• 📧 You will no longer receive emails from Massava
+
+Want to cancel the deletion?
+
+If you changed your mind, you can cancel the deletion at any time until ${deletionDate}.
+
+Cancel Deletion: ${cancelUrl}
+
+Do nothing?
+
+If you want to proceed with the deletion, you don't need to do anything. Your account will be deleted automatically.
+
+We're sorry to see you go.
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+export function getPlainTextAccountDeletionConfirmed(
+  userName: string,
+  locale = 'de'
+): string {
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const signupUrl = `${appUrl}/${locale}/auth/signup`;
+
+  const content = {
+    de: `
+Hallo ${userName}
+
+✓ Ihr Massava-Konto wurde erfolgreich gelöscht.
+
+Was wurde gelöscht?
+
+✓ Alle Ihre persönlichen Daten wurden gemäß DSGVO unwiderruflich gelöscht
+✓ Alle Buchungen wurden storniert
+✓ Alle Studio-Zugriffe wurden entfernt
+✓ Sie wurden von allen Mailinglisten entfernt
+
+Möchten Sie wiederkommen?
+
+Falls Sie in Zukunft wieder bei Massava buchen möchten, können Sie jederzeit ein neues Konto erstellen. Wir würden uns freuen, Sie wieder bei uns zu sehen\!
+
+Neues Konto erstellen: ${signupUrl}
+
+Vielen Dank, dass Sie Teil von Massava waren.
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${userName}
+
+✓ Your Massava account has been successfully deleted.
+
+What was deleted?
+
+✓ All your personal data has been permanently deleted in accordance with GDPR
+✓ All bookings have been cancelled
+✓ All studio access has been removed
+✓ You have been removed from all mailing lists
+
+Want to come back?
+
+If you want to book with Massava in the future, you can create a new account at any time. We would be happy to see you again\!
+
+Create New Account: ${signupUrl}
+
+Thank you for being part of Massava.
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
