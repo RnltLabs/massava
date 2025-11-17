@@ -97,7 +97,7 @@ export default function Header() {
                       />
                       <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
                         <Link
-                          href={`/${locale}/customer/dashboard`}
+                          href={`/${locale}/customer/bookings`}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >
@@ -105,7 +105,7 @@ export default function Header() {
                           {t('my_bookings')}
                         </Link>
                         <Link
-                          href={`/${locale}/dashboard`}
+                          href={`/${locale}/customer/profile`}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >

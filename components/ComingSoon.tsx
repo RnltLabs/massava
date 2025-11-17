@@ -6,6 +6,7 @@
 'use client';
 
 import { Clock, Sparkles } from 'lucide-react';
+import { BLOB_ANIMATION_DELAY_MEDIUM, BLOB_ANIMATION_DELAY_VERY_SLOW } from '@/lib/constants/animations';
 
 export default function ComingSoon() {
   return (
@@ -29,7 +30,7 @@ export default function ComingSoon() {
           background: 'oklch(0.55 0.12 35 / 0.15)',
           top: '40%',
           right: '-150px',
-          animationDelay: '5s',
+          animationDelay: BLOB_ANIMATION_DELAY_MEDIUM,
         }}
       />
       <div
@@ -40,7 +41,7 @@ export default function ComingSoon() {
           background: 'oklch(0.88 0.03 80 / 0.25)',
           bottom: '-100px',
           left: '20%',
-          animationDelay: '10s',
+          animationDelay: BLOB_ANIMATION_DELAY_VERY_SLOW,
         }}
       />
 

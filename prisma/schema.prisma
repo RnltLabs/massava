@@ -45,6 +45,22 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+model EmailChangeToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  oldEmail  String
+  newEmail  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_change_tokens")
+}
+
 model Studio {
   id              String               @id @default(cuid())
   name            String
@@ -222,6 +238,8 @@ model NewBooking {
   cancelledBy              String?
   cancelledAt              DateTime?
   cancellationReason       String?
+  reminderSent             Boolean       @default(false)
+  reviewRequestSent        Boolean       @default(false)
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   customer                 User?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
@@ -237,6 +255,8 @@ model NewBooking {
   @@index([studioId, status])
   @@index([studioId, preferredDate])
   @@index([studioId, status, confirmedAt])
+  @@index([status, reminderSent, preferredDate])
+  @@index([status, reviewRequestSent, preferredDate])
   @@map("new_bookings")
 }
 

@@ -3,6 +3,10 @@
  * All rights reserved.
  *
  * Email Verification Client Component - Auto-Login after verification
+ *
+ * ACCESSIBILITY FIXES (WCAG 2.1 AA):
+ * - Fix #17: Added loading state announcements for screen readers
+ * - Fix #4: Replaced console.error with structured logging
  */
 
 'use client';
@@ -11,6 +15,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
+import { logger, generateCorrelationId } from '@/lib/logger';
+import { BLOB_ANIMATION_DELAY_FAST } from '@/lib/constants/animations';
 
 export function VerifyEmailSuccess({
   email,
@@ -32,7 +38,13 @@ export function VerifyEmailSuccess({
           router.push(`/${locale}?openAuth=login&verified=true`);
         }, 2000);
       } catch (err) {
-        console.error('Auto-login failed:', err);
+        // ACCESSIBILITY FIX #4: Structured logging instead of console.error
+        logger.error('Auto-login failed', {
+          action: 'AUTO_LOGIN_FAILED',
+          correlationId: generateCorrelationId(),
+          email,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
         setError('Failed to log you in automatically. Please log in manually.');
       }
     };
@@ -62,7 +74,7 @@ export function VerifyEmailSuccess({
             background: 'oklch(0.88 0.03 120 / 0.25)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -113,7 +125,7 @@ export function VerifyEmailSuccess({
           background: 'oklch(0.88 0.03 120 / 0.25)',
           bottom: '-100px',
           left: '-100px',
-          animationDelay: '3s',
+          animationDelay: BLOB_ANIMATION_DELAY_FAST,
         }}
       />
 
@@ -131,12 +143,14 @@ export function VerifyEmailSuccess({
           <p className="text-gray-600 mb-2">
             Your email address has been successfully verified.
           </p>
-          <p className="text-sm text-gray-500 mb-6">
-            Redirecting you to login...
-          </p>
+          <div role="status" aria-live="polite" aria-atomic="true">
+            <p className="text-sm text-gray-500 mb-6">
+              Redirecting you to login...
+            </p>
+          </div>
 
           {/* Auto-redirect indicator */}
-          <div className="flex items-center justify-center space-x-2 mb-6">
+          <div className="flex items-center justify-center space-x-2 mb-6" aria-hidden="true">
             <div className="h-2 w-2 bg-green-600 rounded-full animate-pulse"></div>
             <div className="h-2 w-2 bg-green-600 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
             <div className="h-2 w-2 bg-green-600 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>

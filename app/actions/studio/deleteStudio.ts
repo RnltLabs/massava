@@ -16,6 +16,7 @@ import bcrypt from 'bcryptjs';
 import fs from 'fs/promises';
 import path from 'path';
 import { checkDeletionRateLimit } from '@/lib/rate-limit';
+import { sendStudioDeletionConfirmedEmail } from '@/lib/email/send';
 
 // Validation schema
 const deleteStudioSchema = z.object({
@@ -86,6 +87,7 @@ export async function deleteStudio(input: DeleteStudioInput): Promise<{
         id: true,
         password: true,
         email: true,
+        name: true,
       },
     });
 
@@ -169,7 +171,29 @@ export async function deleteStudio(input: DeleteStudioInput): Promise<{
       `[AUDIT] User ${userId} (${user.email}) deleted studio ${studioId} (${studioName}) at ${new Date().toISOString()}`
     );
 
-    // 10. Revalidate paths
+    // 10. TASK 3.4: Send studio deletion confirmed email
+    try {
+      const emailResult = await sendStudioDeletionConfirmedEmail(
+        user.email,
+        {
+          studioName,
+          ownerName: user.name || 'Studio Owner',
+        },
+        'de'
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send studio deletion confirmed email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      } else {
+        console.log('Studio deletion confirmed email sent successfully');
+      }
+    } catch (emailError) {
+      console.error('Exception sending studio deletion confirmed email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // 11. Revalidate paths
     revalidatePath('/[locale]/dashboard');
     revalidatePath('/[locale]/dashboard/owner/settings');
 

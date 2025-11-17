@@ -139,13 +139,13 @@ export function MobileProfileSheet({
           ) : (
             <>
               <SheetMenuItem
-                href={`/${locale}/customer/dashboard`}
+                href={`/${locale}/customer/bookings`}
                 icon={Calendar}
                 label="My Bookings"
                 onClick={() => onOpenChange(false)}
               />
               <SheetMenuItem
-                href={`/${locale}/dashboard`}
+                href={`/${locale}/customer/profile`}
                 icon={User}
                 label="My Account"
                 onClick={() => onOpenChange(false)}

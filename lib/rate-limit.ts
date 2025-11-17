@@ -13,6 +13,17 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
+// Rate limiting constants
+const AUTH_RATE_LIMIT_MAX_ATTEMPTS = 5; // Maximum authentication attempts
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+const MAGIC_LINK_RATE_LIMIT_MAX_ATTEMPTS = 3; // Maximum magic link requests
+const MAGIC_LINK_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000; // 15 minutes in milliseconds
+const BOOKING_RATE_LIMIT_MAX_ATTEMPTS = 10; // Maximum bookings per hour
+const BOOKING_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour in milliseconds
+const DELETION_RATE_LIMIT_MAX_ATTEMPTS = 3; // Maximum deletion attempts
+const DELETION_RATE_LIMIT_WINDOW_SECONDS = 60 * 60; // 1 hour in seconds
+const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // Clean up old entries every 5 minutes
+
 // In-memory store for rate limiting (fallback for development)
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
@@ -64,7 +75,7 @@ setInterval(() => {
       deletionAttempts.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}, CLEANUP_INTERVAL_MS);
 
 export interface RateLimitResult {
   success: boolean;
@@ -130,7 +141,7 @@ export function rateLimit(
  * Limits: 5 attempts per 15 minutes
  */
 export function authRateLimit(identifier: string): RateLimitResult {
-  return rateLimit(identifier, 5, 15 * 60 * 1000); // 5 requests per 15 minutes
+  return rateLimit(identifier, AUTH_RATE_LIMIT_MAX_ATTEMPTS, AUTH_RATE_LIMIT_WINDOW_MS);
 }
 
 /**
@@ -138,7 +149,7 @@ export function authRateLimit(identifier: string): RateLimitResult {
  * Limits: 3 attempts per 15 minutes
  */
 export function magicLinkRateLimit(identifier: string): RateLimitResult {
-  return rateLimit(identifier, 3, 15 * 60 * 1000); // 3 requests per 15 minutes
+  return rateLimit(identifier, MAGIC_LINK_RATE_LIMIT_MAX_ATTEMPTS, MAGIC_LINK_RATE_LIMIT_WINDOW_MS);
 }
 
 /**
@@ -146,7 +157,7 @@ export function magicLinkRateLimit(identifier: string): RateLimitResult {
  * Limits: 10 bookings per hour
  */
 export function bookingRateLimit(identifier: string): RateLimitResult {
-  return rateLimit(identifier, 10, 60 * 60 * 1000); // 10 requests per hour
+  return rateLimit(identifier, BOOKING_RATE_LIMIT_MAX_ATTEMPTS, BOOKING_RATE_LIMIT_WINDOW_MS);
 }
 
 /**
@@ -245,14 +256,15 @@ export async function checkDeletionRateLimit(userId: string): Promise<{
   error?: string;
   attemptsLeft?: number;
 }> {
-  const MAX_ATTEMPTS = 3;
-  const WINDOW_SECONDS = 60 * 60; // 1 hour
-
   const redisClient = getRedisClient();
 
   // Fallback to in-memory if Redis not configured
   if (!redisClient) {
-    return checkInMemoryDeletionRateLimit(userId, MAX_ATTEMPTS, WINDOW_SECONDS);
+    return checkInMemoryDeletionRateLimit(
+      userId,
+      DELETION_RATE_LIMIT_MAX_ATTEMPTS,
+      DELETION_RATE_LIMIT_WINDOW_SECONDS
+    );
   }
 
   try {
@@ -263,11 +275,11 @@ export async function checkDeletionRateLimit(userId: string): Promise<{
 
     // Set expiry on first attempt
     if (count === 1) {
-      await redisClient.expire(key, WINDOW_SECONDS);
+      await redisClient.expire(key, DELETION_RATE_LIMIT_WINDOW_SECONDS);
     }
 
     // Check if limit exceeded
-    if (count > MAX_ATTEMPTS) {
+    if (count > DELETION_RATE_LIMIT_MAX_ATTEMPTS) {
       const ttl = await redisClient.ttl(key);
       const minutes = Math.ceil(ttl / 60);
       return {
@@ -278,12 +290,16 @@ export async function checkDeletionRateLimit(userId: string): Promise<{
 
     return {
       allowed: true,
-      attemptsLeft: MAX_ATTEMPTS - count,
+      attemptsLeft: DELETION_RATE_LIMIT_MAX_ATTEMPTS - count,
     };
   } catch (error) {
     console.error('[rate-limit] Redis error, falling back to in-memory:', error);
     // Fallback to in-memory on Redis errors
-    return checkInMemoryDeletionRateLimit(userId, MAX_ATTEMPTS, WINDOW_SECONDS);
+    return checkInMemoryDeletionRateLimit(
+      userId,
+      DELETION_RATE_LIMIT_MAX_ATTEMPTS,
+      DELETION_RATE_LIMIT_WINDOW_SECONDS
+    );
   }
 }
 

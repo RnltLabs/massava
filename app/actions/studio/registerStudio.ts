@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@/app/generated/prisma';
+import { sendStudioRegistrationWelcomeEmail } from '@/lib/email/send';
 
 /**
  * Hours range schema
@@ -144,6 +145,42 @@ export async function registerStudio(
       name: studio.name,
       userId: session.user.id,
     });
+
+    // TASK 3.3: Send studio registration welcome email
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { email: true, name: true },
+      });
+
+      if (user?.email) {
+        const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+        const dashboardUrl = `${appUrl}/de/business/studios`;
+        const onboardingUrl = `${appUrl}/de/business/studios/${studio.id}/onboarding`;
+
+        const emailResult = await sendStudioRegistrationWelcomeEmail(
+          user.email,
+          {
+            studioName: studio.name,
+            ownerName: user.name || 'Studio Owner',
+            studioId: studio.id,
+            dashboardUrl,
+            onboardingUrl,
+          },
+          'de'
+        );
+
+        if (!emailResult.success) {
+          console.error('Failed to send studio registration welcome email:', emailResult.error);
+          // Note: We don't fail the entire operation if email fails
+        } else {
+          console.log('Studio registration welcome email sent successfully');
+        }
+      }
+    } catch (emailError) {
+      console.error('Exception sending studio registration welcome email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
 
     return {
       success: true,
