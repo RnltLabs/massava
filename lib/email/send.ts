@@ -12,12 +12,14 @@ import {
   EmailVerificationTemplate,
   WelcomeEmailTemplate,
   PasswordResetTemplate,
+  EmailChangeVerificationTemplate,
   BookingRequestReceivedTemplate,
   BookingConfirmationTemplate,
   BookingCancellationTemplate,
   getPlainTextVerification,
   getPlainTextWelcome,
   getPlainTextPasswordReset,
+  getPlainTextEmailChangeVerification,
   getPlainTextBookingRequestReceived,
   getPlainTextBookingConfirmation,
   getPlainTextBookingCancellation,
@@ -306,6 +308,112 @@ export async function sendPasswordResetEmail(
     logger.error('Email sending exception', {
       action: 'SEND_PASSWORD_RESET_EMAIL',
       email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send email change verification email
+ * @param email - New email address (recipient)
+ * @param userName - User's name
+ * @param newEmail - New email address
+ * @param verificationUrl - URL with verification token
+ * @param oldEmail - Current email address
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendEmailChangeVerification(
+  email: string,
+  userName: string,
+  newEmail: string,
+  verificationUrl: string,
+  oldEmail: string,
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+        email: newEmail,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      EmailChangeVerificationTemplate({
+        userName,
+        newEmail,
+        verificationUrl,
+        oldEmail,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextEmailChangeVerification(
+      userName,
+      newEmail,
+      verificationUrl,
+      oldEmail,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'E-Mail-Adresse bestätigen - Massava'
+      : 'Confirm Email Address - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'email-change-verification' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+        email: newEmail,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Email change verification email sent successfully', {
+      action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+      email: newEmail,
+      messageId: result.data?.id,
+      locale,
+      oldEmail,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_EMAIL_CHANGE_VERIFICATION',
+      email: newEmail,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });

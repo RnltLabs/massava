@@ -1,6 +1,9 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * Email Change Dialog Component
+ * Updated to use new email change verification flow
  */
 
 'use client';
@@ -18,8 +21,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { requestEmailChange, verifyEmailChange } from '@/app/[locale]/business/actions/account';
-import { Loader2Icon } from 'lucide-react';
+import { Loader2Icon, MailIcon } from 'lucide-react';
 
 interface EmailChangeDialogProps {
   open: boolean;
@@ -32,57 +34,57 @@ export function EmailChangeDialog({
   onOpenChange,
   currentEmail,
 }: EmailChangeDialogProps): React.JSX.Element {
-  const [step, setStep] = useState<'email' | 'verify'>('email');
   const [newEmail, setNewEmail] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const { toast } = useToast();
 
   const handleRequestChange = async () => {
-    setIsLoading(true);
-
-    const result = await requestEmailChange({ newEmail });
-
-    if (result.success) {
+    if (!newEmail || !newEmail.includes('@')) {
       toast({
-        title: 'Bestätigungscode gesendet',
-        description: result.message,
-      });
-      setStep('verify');
-    } else {
-      toast({
-        title: 'Fehler',
-        description: result.error,
+        title: 'Ungültige E-Mail',
+        description: 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
         variant: 'destructive',
       });
+      return;
     }
 
-    setIsLoading(false);
-  };
-
-  const handleVerify = async () => {
     setIsLoading(true);
 
-    const result = await verifyEmailChange({
-      code: verificationCode,
-      newEmail,
-    });
-
-    if (result.success) {
-      toast({
-        title: 'E-Mail geändert',
-        description: result.message,
+    try {
+      const response = await fetch('/api/user/change-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newEmail,
+          locale: 'de',
+        }),
       });
-      onOpenChange(false);
-      setStep('email');
-      setNewEmail('');
-      setVerificationCode('');
-    } else {
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast({
+          title: 'Bestätigungslink gesendet',
+          description: 'Bitte prüfen Sie Ihre neue E-Mail-Adresse und klicken Sie auf den Bestätigungslink.',
+        });
+        setEmailSent(true);
+      } else {
+        toast({
+          title: 'Fehler',
+          description: result.error || 'E-Mail-Änderung fehlgeschlagen',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
       toast({
         title: 'Fehler',
-        description: result.error,
+        description: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
         variant: 'destructive',
       });
+      console.error('Email change error:', error);
     }
 
     setIsLoading(false);
@@ -90,9 +92,8 @@ export function EmailChangeDialog({
 
   const handleClose = () => {
     onOpenChange(false);
-    setStep('email');
     setNewEmail('');
-    setVerificationCode('');
+    setEmailSent(false);
   };
 
   return (
@@ -101,13 +102,13 @@ export function EmailChangeDialog({
         <DialogHeader>
           <DialogTitle>E-Mail-Adresse ändern</DialogTitle>
           <DialogDescription>
-            {step === 'email'
-              ? 'Wir senden einen Bestätigungscode an Ihre aktuelle E-Mail.'
-              : 'Geben Sie den 6-stelligen Code ein, den wir an Ihre aktuelle E-Mail gesendet haben.'}
+            {!emailSent
+              ? 'Geben Sie Ihre neue E-Mail-Adresse ein. Wir senden Ihnen einen Bestätigungslink.'
+              : 'Bestätigungslink wurde gesendet!'}
           </DialogDescription>
         </DialogHeader>
 
-        {step === 'email' ? (
+        {!emailSent ? (
           <div className="space-y-4">
             <div>
               <Label htmlFor="current-email">Aktuelle E-Mail</Label>
@@ -127,23 +128,35 @@ export function EmailChangeDialog({
                 onChange={(e) => setNewEmail(e.target.value)}
                 placeholder="neue@email.de"
                 disabled={isLoading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && newEmail) {
+                    handleRequestChange();
+                  }
+                }}
               />
+              <p className="text-sm text-muted-foreground mt-2">
+                Der Bestätigungslink wird an diese neue Adresse gesendet.
+              </p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="verification-code">Bestätigungscode</Label>
-              <Input
-                id="verification-code"
-                value={verificationCode}
-                onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="123456"
-                maxLength={6}
-                disabled={isLoading}
-              />
-              <p className="text-sm text-gray-500 mt-1">
-                Code an {currentEmail} gesendet
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
+              <MailIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground mb-1">
+                  Bestätigungslink gesendet
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Wir haben einen Bestätigungslink an <strong>{newEmail}</strong> gesendet.
+                  Bitte prüfen Sie Ihr Postfach und klicken Sie auf den Link, um Ihre E-Mail-Änderung zu bestätigen.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+              <p className="text-sm text-yellow-800">
+                <strong>Wichtig:</strong> Der Link ist 24 Stunden gültig. Prüfen Sie auch Ihren Spam-Ordner.
               </p>
             </div>
           </div>
@@ -155,26 +168,18 @@ export function EmailChangeDialog({
             variant="outline"
             onClick={handleClose}
             disabled={isLoading}
+            className="rounded-full"
           >
-            Abbrechen
+            {emailSent ? 'Schließen' : 'Abbrechen'}
           </Button>
-          {step === 'email' ? (
+          {!emailSent && (
             <Button
               onClick={handleRequestChange}
               disabled={isLoading || !newEmail}
-              className="bg-[#B56550] hover:bg-[#A05540] text-white"
+              className="bg-[#B56550] hover:bg-[#A05540] text-white rounded-full"
             >
               {isLoading && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
-              Code senden
-            </Button>
-          ) : (
-            <Button
-              onClick={handleVerify}
-              disabled={isLoading || verificationCode.length !== 6}
-              className="bg-[#B56550] hover:bg-[#A05540] text-white"
-            >
-              {isLoading && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
-              Verifizieren
+              Bestätigungslink senden
             </Button>
           )}
         </DialogFooter>

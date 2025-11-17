@@ -570,6 +570,115 @@ export function PasswordResetTemplate({
 }
 
 // ============================================================================
+// EMAIL CHANGE VERIFICATION TEMPLATE
+// ============================================================================
+
+interface EmailChangeVerificationTemplateProps {
+  userName: string;
+  newEmail: string;
+  verificationUrl: string;
+  oldEmail: string;
+  locale?: string;
+}
+
+export function EmailChangeVerificationTemplate({
+  userName,
+  newEmail,
+  verificationUrl,
+  oldEmail,
+  locale = 'de',
+}: EmailChangeVerificationTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'E-Mail-Adresse bestätigen - Massava',
+      greeting: `Hallo ${userName}! 📧`,
+      intro: 'Sie haben eine Änderung Ihrer E-Mail-Adresse angefordert.',
+      detailsTitle: 'Details der Änderung:',
+      oldEmailLabel: 'Aktuelle E-Mail',
+      newEmailLabel: 'Neue E-Mail',
+      buttonText: 'E-Mail bestätigen',
+      expiryTitle: 'Wichtig:',
+      expiryNotice: 'Bestätigen Sie Ihre neue E-Mail-Adresse innerhalb von 24 Stunden.',
+      securityTitle: 'Sicherheitshinweis:',
+      notRequested: 'Falls Sie diese Änderung nicht vorgenommen haben, ignorieren Sie diese E-Mail und kontaktieren Sie uns umgehend.',
+      alternativeText: 'Alternativ können Sie diesen Link kopieren:',
+      footer: 'Diese E-Mail wurde aus Sicherheitsgründen automatisch versendet.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Confirm Email Address - Massava',
+      greeting: `Hello ${userName}! 📧`,
+      intro: 'You have requested to change your email address.',
+      detailsTitle: 'Change Details:',
+      oldEmailLabel: 'Current Email',
+      newEmailLabel: 'New Email',
+      buttonText: 'Confirm Email',
+      expiryTitle: 'Important:',
+      expiryNotice: 'Please confirm your new email address within 24 hours.',
+      securityTitle: 'Security Notice:',
+      notRequested: 'If you did not make this change, please ignore this email and contact us immediately.',
+      alternativeText: 'Alternatively, you can copy this link:',
+      footer: 'This email was sent automatically for security reasons.',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.oldEmailLabel}</p>
+            <p style={styles.bookingDetailValue}>{oldEmail}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.newEmailLabel}</p>
+            <p style={styles.bookingDetailValue}>{newEmail}</p>
+          </div>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={verificationUrl} style={styles.button}>
+            {t.buttonText}
+          </a>
+        </div>
+
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⚠️ {t.expiryTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.expiryNotice}</p>
+        </div>
+
+        <div style={styles.errorBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>🔒 {t.securityTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.notRequested}</p>
+        </div>
+
+        <p style={styles.text}>{t.alternativeText}</p>
+        <p style={{ ...styles.text, wordBreak: 'break-all' as const, fontSize: '13px', backgroundColor: COLORS.background, padding: '12px', borderRadius: '12px' }}>
+          {verificationUrl}
+        </p>
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+// ============================================================================
 // BOOKING REQUEST RECEIVED TEMPLATE
 // ============================================================================
 
@@ -1192,6 +1301,65 @@ ${resetUrl}
 ⏱ Important: For security reasons, this link is only valid for 1 hour.
 
 🔒 Security Notice: If you didn't request this, you can ignore this email. Your password will remain unchanged.
+
+This email was sent automatically for security reasons.
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+export function getPlainTextEmailChangeVerification(
+  userName: string,
+  newEmail: string,
+  verificationUrl: string,
+  oldEmail: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${userName}! 📧
+
+Sie haben eine Änderung Ihrer E-Mail-Adresse angefordert.
+
+Details der Änderung:
+
+Aktuelle E-Mail: ${oldEmail}
+Neue E-Mail: ${newEmail}
+
+E-Mail bestätigen:
+${verificationUrl}
+
+⚠️ Wichtig: Bestätigen Sie Ihre neue E-Mail-Adresse innerhalb von 24 Stunden.
+
+🔒 Sicherheitshinweis: Falls Sie diese Änderung nicht vorgenommen haben, ignorieren Sie diese E-Mail und kontaktieren Sie uns umgehend.
+
+Diese E-Mail wurde aus Sicherheitsgründen automatisch versendet.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${userName}! 📧
+
+You have requested to change your email address.
+
+Change Details:
+
+Current Email: ${oldEmail}
+New Email: ${newEmail}
+
+Confirm Email:
+${verificationUrl}
+
+⚠️ Important: Please confirm your new email address within 24 hours.
+
+🔒 Security Notice: If you did not make this change, please ignore this email and contact us immediately.
 
 This email was sent automatically for security reasons.
 

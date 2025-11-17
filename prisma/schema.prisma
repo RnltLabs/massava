@@ -45,6 +45,22 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
+model EmailChangeToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  oldEmail  String
+  newEmail  String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("email_change_tokens")
+}
+
 model Studio {
   id              String               @id @default(cuid())
   name            String
