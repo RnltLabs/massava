@@ -179,13 +179,13 @@ async function main() {
       website: 'https://sabai-massage.de',
       latitude: 49.0094,
       longitude: 8.4044,
-      logoUrl: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=400&h=400&fit=crop',
+      logoUrl: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop',
       galleryImages: [
-        'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1596178060810-bbee52168e2c?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&h=600&fit=crop',
         'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1583416750470-965b2707b355?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1591343395902-bce56b7473e0?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
       ],
       openingHours: {
         monday: '09:00-21:00',
