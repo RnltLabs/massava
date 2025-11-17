@@ -2134,3 +2134,957 @@ Thank you for being part of Massava.
   return content[locale as keyof typeof content] || content.de;
 }
 
+// ============================================================================
+// PHASE 3: STUDIO OWNER NOTIFICATIONS
+// ============================================================================
+
+// ============================================================================
+// TASK 3.1: NEW BOOKING NOTIFICATION FOR STUDIO OWNERS
+// ============================================================================
+
+interface NewBookingNotificationTemplateProps {
+  studioName: string;
+  ownerName: string;
+  bookingId: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  message?: string;
+  dashboardUrl: string;
+  locale?: string;
+}
+
+export function NewBookingNotificationTemplate({
+  studioName,
+  ownerName,
+  bookingId,
+  customerName,
+  customerEmail,
+  customerPhone,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  message,
+  dashboardUrl,
+  locale = 'de',
+}: NewBookingNotificationTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: `Neue Buchungsanfrage - ${studioName}`,
+      greeting: `Hallo ${ownerName}! 📅`,
+      intro: `Sie haben eine neue Buchungsanfrage für ${studioName} erhalten.`,
+      successBox: '✓ Neue Buchungsanfrage eingegangen',
+      detailsTitle: 'Buchungsdetails:',
+      bookingNumberLabel: 'Buchungsnummer',
+      customerNameLabel: 'Kunde',
+      customerEmailLabel: 'E-Mail',
+      customerPhoneLabel: 'Telefon',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      messageTitle: 'Nachricht vom Kunden:',
+      actionRequired: '⏰ Bitte bestätigen oder lehnen Sie die Buchung ab.',
+      ctaText: 'Buchung verwalten',
+      footer: 'Vielen Dank für Ihr Engagement! 💼',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: `New Booking Request - ${studioName}`,
+      greeting: `Hello ${ownerName}! 📅`,
+      intro: `You have received a new booking request for ${studioName}.`,
+      successBox: '✓ New booking request received',
+      detailsTitle: 'Booking Details:',
+      bookingNumberLabel: 'Booking Number',
+      customerNameLabel: 'Customer',
+      customerEmailLabel: 'Email',
+      customerPhoneLabel: 'Phone',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      messageTitle: 'Customer Message:',
+      actionRequired: '⏰ Please confirm or decline this booking.',
+      ctaText: 'Manage Booking',
+      footer: 'Thank you for your commitment! 💼',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.success }}>
+            {t.successBox}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.customerNameLabel}</p>
+            <p style={styles.bookingDetailValue}>{customerName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.customerEmailLabel}</p>
+            <p style={styles.bookingDetailValue}>{customerEmail}</p>
+          </div>
+
+          {customerPhone && (
+            <div style={{ marginBottom: '20px' }}>
+              <p style={styles.bookingDetailLabel}>{t.customerPhoneLabel}</p>
+              <p style={styles.bookingDetailValue}>{customerPhone}</p>
+            </div>
+          )}
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+        </div>
+
+        {message && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.textBold, marginBottom: '8px' }}>💬 {t.messageTitle}</p>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{message}</p>
+          </div>
+        )}
+
+        <div style={styles.highlightBox}>
+          <p style={{ ...styles.textBold, marginBottom: '0', color: COLORS.warning }}>
+            {t.actionRequired}
+          </p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={dashboardUrl} style={styles.button}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextNewBookingNotification(
+  studioName: string,
+  ownerName: string,
+  bookingId: string,
+  customerName: string,
+  customerEmail: string,
+  customerPhone: string | undefined,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  message: string | undefined,
+  dashboardUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${ownerName}! 📅
+
+Sie haben eine neue Buchungsanfrage für ${studioName} erhalten.
+
+✓ Neue Buchungsanfrage eingegangen
+
+Buchungsdetails:
+
+Buchungsnummer: ${bookingId}
+Kunde: ${customerName}
+E-Mail: ${customerEmail}
+${customerPhone ? `Telefon: ${customerPhone}` : ''}
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+
+${message ? `💬 Nachricht vom Kunden:\n${message}\n` : ''}
+
+⏰ Bitte bestätigen oder lehnen Sie die Buchung ab.
+
+Buchung verwalten: ${dashboardUrl}
+
+Vielen Dank für Ihr Engagement! 💼
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${ownerName}! 📅
+
+You have received a new booking request for ${studioName}.
+
+✓ New booking request received
+
+Booking Details:
+
+Booking Number: ${bookingId}
+Customer: ${customerName}
+Email: ${customerEmail}
+${customerPhone ? `Phone: ${customerPhone}` : ''}
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+
+${message ? `💬 Customer Message:\n${message}\n` : ''}
+
+⏰ Please confirm or decline this booking.
+
+Manage Booking: ${dashboardUrl}
+
+Thank you for your commitment! 💼
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+// ============================================================================
+// TASK 3.2: BOOKING CANCELLED BY CUSTOMER NOTIFICATION FOR STUDIO OWNERS
+// ============================================================================
+
+interface BookingCancelledByCustomerTemplateProps {
+  studioName: string;
+  ownerName: string;
+  bookingId: string;
+  customerName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  cancellationReason?: string;
+  dashboardUrl: string;
+  locale?: string;
+}
+
+export function BookingCancelledByCustomerTemplate({
+  studioName,
+  ownerName,
+  bookingId,
+  customerName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  cancellationReason,
+  dashboardUrl,
+  locale = 'de',
+}: BookingCancelledByCustomerTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: `Buchung storniert - ${studioName}`,
+      greeting: `Hallo ${ownerName}`,
+      intro: `Ein Kunde hat seine Buchung storniert.`,
+      warningBox: '⚠️ Buchung storniert',
+      detailsTitle: 'Stornierungsdetails:',
+      bookingNumberLabel: 'Buchungsnummer',
+      customerNameLabel: 'Kunde',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      reasonTitle: 'Stornierungsgrund:',
+      ctaText: 'Dashboard öffnen',
+      footer: 'Der Zeitslot ist nun wieder verfügbar. 📅',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: `Booking Cancelled - ${studioName}`,
+      greeting: `Hello ${ownerName}`,
+      intro: `A customer has cancelled their booking.`,
+      warningBox: '⚠️ Booking cancelled',
+      detailsTitle: 'Cancellation Details:',
+      bookingNumberLabel: 'Booking Number',
+      customerNameLabel: 'Customer',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      reasonTitle: 'Cancellation Reason:',
+      ctaText: 'Open Dashboard',
+      footer: 'The time slot is now available again. 📅',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={{ ...styles.infoBox, backgroundColor: '#fff3cd', borderLeft: `4px solid ${COLORS.warning}` }}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.warning }}>
+            {t.warningBox}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.customerNameLabel}</p>
+            <p style={styles.bookingDetailValue}>{customerName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+        </div>
+
+        {cancellationReason && (
+          <div style={styles.infoBox}>
+            <p style={{ ...styles.textBold, marginBottom: '8px' }}>💬 {t.reasonTitle}</p>
+            <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{cancellationReason}</p>
+          </div>
+        )}
+
+        <div style={styles.buttonContainer}>
+          <a href={dashboardUrl} style={styles.buttonSecondary}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextBookingCancelledByCustomer(
+  studioName: string,
+  ownerName: string,
+  bookingId: string,
+  customerName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  cancellationReason: string | undefined,
+  dashboardUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${ownerName}
+
+Ein Kunde hat seine Buchung storniert.
+
+⚠️ Buchung storniert
+
+Stornierungsdetails:
+
+Buchungsnummer: ${bookingId}
+Kunde: ${customerName}
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+
+${cancellationReason ? `💬 Stornierungsgrund:\n${cancellationReason}\n` : ''}
+
+Dashboard öffnen: ${dashboardUrl}
+
+Der Zeitslot ist nun wieder verfügbar. 📅
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${ownerName}
+
+A customer has cancelled their booking.
+
+⚠️ Booking cancelled
+
+Cancellation Details:
+
+Booking Number: ${bookingId}
+Customer: ${customerName}
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+
+${cancellationReason ? `💬 Cancellation Reason:\n${cancellationReason}\n` : ''}
+
+Open Dashboard: ${dashboardUrl}
+
+The time slot is now available again. 📅
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+// ============================================================================
+// TASK 3.3: STUDIO REGISTRATION WELCOME
+// ============================================================================
+
+interface StudioRegistrationWelcomeTemplateProps {
+  studioName: string;
+  ownerName: string;
+  studioId: string;
+  dashboardUrl: string;
+  onboardingUrl: string;
+  locale?: string;
+}
+
+export function StudioRegistrationWelcomeTemplate({
+  studioName,
+  ownerName,
+  studioId,
+  dashboardUrl,
+  onboardingUrl,
+  locale = 'de',
+}: StudioRegistrationWelcomeTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: `Willkommen bei Massava - ${studioName}`,
+      greeting: `Hallo ${ownerName}! 🎉`,
+      intro: `Herzlich willkommen! Ihr Studio ${studioName} wurde erfolgreich registriert.`,
+      successBox: '✓ Studio-Registrierung abgeschlossen',
+      nextStepsTitle: 'Nächste Schritte:',
+      step1: '📋 Studio-Profil vervollständigen',
+      step2: '💆 Services hinzufügen',
+      step3: '📅 Öffnungszeiten eintragen',
+      step4: '🖼️ Galerie-Bilder hochladen',
+      studioIdLabel: 'Ihre Studio-ID',
+      ctaPrimary: 'Onboarding starten',
+      ctaSecondary: 'Dashboard öffnen',
+      footer: 'Viel Erfolg mit Ihrem Studio! 🌟',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: `Welcome to Massava - ${studioName}`,
+      greeting: `Hello ${ownerName}! 🎉`,
+      intro: `Welcome! Your studio ${studioName} has been successfully registered.`,
+      successBox: '✓ Studio registration completed',
+      nextStepsTitle: 'Next Steps:',
+      step1: '📋 Complete studio profile',
+      step2: '💆 Add services',
+      step3: '📅 Set opening hours',
+      step4: '🖼️ Upload gallery images',
+      studioIdLabel: 'Your Studio ID',
+      ctaPrimary: 'Start Onboarding',
+      ctaSecondary: 'Open Dashboard',
+      footer: 'Good luck with your studio! 🌟',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.success }}>
+            {t.successBox}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.nextStepsTitle}</p>
+
+        <div style={styles.list}>
+          <p style={styles.listItem}>{t.step1}</p>
+          <p style={styles.listItem}>{t.step2}</p>
+          <p style={styles.listItem}>{t.step3}</p>
+          <p style={styles.listItem}>{t.step4}</p>
+        </div>
+
+        <div style={styles.highlightBox}>
+          <p style={{ ...styles.text, marginBottom: '4px', fontSize: '14px', color: COLORS.textMuted }}>
+            {t.studioIdLabel}
+          </p>
+          <p style={{ ...styles.textBold, marginBottom: '0', fontFamily: 'monospace', fontSize: '16px' }}>
+            {studioId}
+          </p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={onboardingUrl} style={styles.button}>
+            {t.ctaPrimary}
+          </a>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={dashboardUrl} style={styles.buttonSecondary}>
+            {t.ctaSecondary}
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextStudioRegistrationWelcome(
+  studioName: string,
+  ownerName: string,
+  studioId: string,
+  dashboardUrl: string,
+  onboardingUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${ownerName}! 🎉
+
+Herzlich willkommen! Ihr Studio ${studioName} wurde erfolgreich registriert.
+
+✓ Studio-Registrierung abgeschlossen
+
+Nächste Schritte:
+
+📋 Studio-Profil vervollständigen
+💆 Services hinzufügen
+📅 Öffnungszeiten eintragen
+🖼️ Galerie-Bilder hochladen
+
+Ihre Studio-ID: ${studioId}
+
+Onboarding starten: ${onboardingUrl}
+
+Dashboard öffnen: ${dashboardUrl}
+
+Viel Erfolg mit Ihrem Studio! 🌟
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${ownerName}! 🎉
+
+Welcome! Your studio ${studioName} has been successfully registered.
+
+✓ Studio registration completed
+
+Next Steps:
+
+📋 Complete studio profile
+💆 Add services
+📅 Set opening hours
+🖼️ Upload gallery images
+
+Your Studio ID: ${studioId}
+
+Start Onboarding: ${onboardingUrl}
+
+Open Dashboard: ${dashboardUrl}
+
+Good luck with your studio! 🌟
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+// ============================================================================
+// TASK 3.4: STUDIO DELETION WORKFLOW
+// ============================================================================
+
+interface StudioDeletionWarningTemplateProps {
+  studioName: string;
+  ownerName: string;
+  deletionDate: string;
+  cancelUrl: string;
+  locale?: string;
+}
+
+export function StudioDeletionWarningTemplate({
+  studioName,
+  ownerName,
+  deletionDate,
+  cancelUrl,
+  locale = 'de',
+}: StudioDeletionWarningTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: `Studio-Löschung geplant - ${studioName}`,
+      greeting: `Hallo ${ownerName}`,
+      intro: `Ihr Studio ${studioName} wird am ${deletionDate} gelöscht.`,
+      warningBox: '⚠️ Studio-Löschung geplant',
+      gracePeriodTitle: 'Wichtige Information:',
+      gracePeriodText: 'Sie haben 30 Tage Zeit, um diese Löschung abzubrechen. Nach Ablauf dieser Frist werden alle Daten unwiderruflich gelöscht.',
+      whatWillBeDeleted: 'Was wird gelöscht?',
+      deleteItem1: '✓ Alle Studio-Informationen (Name, Adresse, Beschreibung)',
+      deleteItem2: '✓ Alle Services und Preise',
+      deleteItem3: '✓ Alle Buchungen (vergangene und zukünftige)',
+      deleteItem4: '✓ Alle Öffnungszeiten und Zeitslots',
+      deleteItem5: '✓ Alle Galerie-Bilder und Logos',
+      ctaText: 'Löschung abbrechen',
+      footer: 'Wenn Sie diese E-Mail ignorieren, wird Ihr Studio am angegebenen Datum gelöscht.',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: `Studio Deletion Scheduled - ${studioName}`,
+      greeting: `Hello ${ownerName}`,
+      intro: `Your studio ${studioName} will be deleted on ${deletionDate}.`,
+      warningBox: '⚠️ Studio deletion scheduled',
+      gracePeriodTitle: 'Important Information:',
+      gracePeriodText: 'You have 30 days to cancel this deletion. After this period, all data will be permanently deleted.',
+      whatWillBeDeleted: 'What will be deleted?',
+      deleteItem1: '✓ All studio information (name, address, description)',
+      deleteItem2: '✓ All services and prices',
+      deleteItem3: '✓ All bookings (past and future)',
+      deleteItem4: '✓ All opening hours and time slots',
+      deleteItem5: '✓ All gallery images and logos',
+      ctaText: 'Cancel Deletion',
+      footer: 'If you ignore this email, your studio will be deleted on the specified date.',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={{ ...styles.infoBox, backgroundColor: '#fff3cd', borderLeft: `4px solid ${COLORS.warning}` }}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.warning }}>
+            {t.warningBox}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.gracePeriodTitle}</p>
+        <p style={styles.text}>{t.gracePeriodText}</p>
+
+        <p style={styles.textBold}>{t.whatWillBeDeleted}</p>
+
+        <div style={styles.list}>
+          <p style={styles.listItem}>{t.deleteItem1}</p>
+          <p style={styles.listItem}>{t.deleteItem2}</p>
+          <p style={styles.listItem}>{t.deleteItem3}</p>
+          <p style={styles.listItem}>{t.deleteItem4}</p>
+          <p style={styles.listItem}>{t.deleteItem5}</p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={cancelUrl} style={styles.button}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <div style={styles.highlightBox}>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '14px' }}>
+            {t.footer}
+          </p>
+        </div>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextStudioDeletionWarning(
+  studioName: string,
+  ownerName: string,
+  deletionDate: string,
+  cancelUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${ownerName}
+
+Ihr Studio ${studioName} wird am ${deletionDate} gelöscht.
+
+⚠️ Studio-Löschung geplant
+
+Wichtige Information:
+
+Sie haben 30 Tage Zeit, um diese Löschung abzubrechen. Nach Ablauf dieser Frist werden alle Daten unwiderruflich gelöscht.
+
+Was wird gelöscht?
+
+✓ Alle Studio-Informationen (Name, Adresse, Beschreibung)
+✓ Alle Services und Preise
+✓ Alle Buchungen (vergangene und zukünftige)
+✓ Alle Öffnungszeiten und Zeitslots
+✓ Alle Galerie-Bilder und Logos
+
+Löschung abbrechen: ${cancelUrl}
+
+Wenn Sie diese E-Mail ignorieren, wird Ihr Studio am angegebenen Datum gelöscht.
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${ownerName}
+
+Your studio ${studioName} will be deleted on ${deletionDate}.
+
+⚠️ Studio deletion scheduled
+
+Important Information:
+
+You have 30 days to cancel this deletion. After this period, all data will be permanently deleted.
+
+What will be deleted?
+
+✓ All studio information (name, address, description)
+✓ All services and prices
+✓ All bookings (past and future)
+✓ All opening hours and time slots
+✓ All gallery images and logos
+
+Cancel Deletion: ${cancelUrl}
+
+If you ignore this email, your studio will be deleted on the specified date.
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+interface StudioDeletionConfirmedTemplateProps {
+  studioName: string;
+  ownerName: string;
+  locale?: string;
+}
+
+export function StudioDeletionConfirmedTemplate({
+  studioName,
+  ownerName,
+  locale = 'de',
+}: StudioDeletionConfirmedTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: `Studio gelöscht - ${studioName}`,
+      greeting: `Hallo ${ownerName}`,
+      intro: `Ihr Studio ${studioName} wurde erfolgreich gelöscht.`,
+      successBox: '✓ Studio wurde gelöscht',
+      deletedTitle: 'Was wurde gelöscht?',
+      deletedItem1: '✓ Alle Studio-Informationen wurden gemäß DSGVO unwiderruflich gelöscht',
+      deletedItem2: '✓ Alle Services und Preise wurden entfernt',
+      deletedItem3: '✓ Alle Buchungen wurden storniert',
+      deletedItem4: '✓ Alle Öffnungszeiten und Zeitslots wurden gelöscht',
+      deletedItem5: '✓ Alle Galerie-Bilder und Logos wurden entfernt',
+      comebackTitle: 'Möchten Sie ein neues Studio erstellen?',
+      comebackText: 'Falls Sie in Zukunft wieder ein Studio bei Massava betreiben möchten, können Sie jederzeit ein neues Studio registrieren. Wir würden uns freuen, Sie wieder bei uns zu sehen!',
+      footer: 'Vielen Dank, dass Sie Teil von Massava waren. 🙏',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: `Studio Deleted - ${studioName}`,
+      greeting: `Hello ${ownerName}`,
+      intro: `Your studio ${studioName} has been successfully deleted.`,
+      successBox: '✓ Studio deleted',
+      deletedTitle: 'What was deleted?',
+      deletedItem1: '✓ All studio information has been permanently deleted in accordance with GDPR',
+      deletedItem2: '✓ All services and prices have been removed',
+      deletedItem3: '✓ All bookings have been cancelled',
+      deletedItem4: '✓ All opening hours and time slots have been deleted',
+      deletedItem5: '✓ All gallery images and logos have been removed',
+      comebackTitle: 'Want to create a new studio?',
+      comebackText: 'If you want to operate a studio with Massava in the future, you can register a new studio at any time. We would be happy to see you again!',
+      footer: 'Thank you for being part of Massava. 🙏',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const dashboardUrl = `${appUrl}/de/dashboard`;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.success }}>
+            {t.successBox}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.deletedTitle}</p>
+
+        <div style={styles.list}>
+          <p style={styles.listItem}>{t.deletedItem1}</p>
+          <p style={styles.listItem}>{t.deletedItem2}</p>
+          <p style={styles.listItem}>{t.deletedItem3}</p>
+          <p style={styles.listItem}>{t.deletedItem4}</p>
+          <p style={styles.listItem}>{t.deletedItem5}</p>
+        </div>
+
+        <p style={styles.textBold}>{t.comebackTitle}</p>
+        <p style={styles.text}>{t.comebackText}</p>
+
+        <div style={styles.buttonContainer}>
+          <a href={dashboardUrl} style={styles.buttonSecondary}>
+            Neues Studio registrieren
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextStudioDeletionConfirmed(
+  studioName: string,
+  ownerName: string,
+  locale = 'de'
+): string {
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+  const dashboardUrl = `${appUrl}/de/dashboard`;
+
+  const content = {
+    de: `
+Hallo ${ownerName}
+
+✓ Ihr Studio ${studioName} wurde erfolgreich gelöscht.
+
+Was wurde gelöscht?
+
+✓ Alle Studio-Informationen wurden gemäß DSGVO unwiderruflich gelöscht
+✓ Alle Services und Preise wurden entfernt
+✓ Alle Buchungen wurden storniert
+✓ Alle Öffnungszeiten und Zeitslots wurden gelöscht
+✓ Alle Galerie-Bilder und Logos wurden entfernt
+
+Möchten Sie ein neues Studio erstellen?
+
+Falls Sie in Zukunft wieder ein Studio bei Massava betreiben möchten, können Sie jederzeit ein neues Studio registrieren. Wir würden uns freuen, Sie wieder bei uns zu sehen!
+
+Neues Studio registrieren: ${dashboardUrl}
+
+Vielen Dank, dass Sie Teil von Massava waren. 🙏
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${ownerName}
+
+✓ Your studio ${studioName} has been successfully deleted.
+
+What was deleted?
+
+✓ All studio information has been permanently deleted in accordance with GDPR
+✓ All services and prices have been removed
+✓ All bookings have been cancelled
+✓ All opening hours and time slots have been deleted
+✓ All gallery images and logos have been removed
+
+Want to create a new studio?
+
+If you want to operate a studio with Massava in the future, you can register a new studio at any time. We would be happy to see you again!
+
+Register New Studio: ${dashboardUrl}
+
+Thank you for being part of Massava. 🙏
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+

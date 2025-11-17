@@ -7,7 +7,10 @@ import {
   type BookingFormData,
 } from "@/lib/validations/booking"
 import { auth } from "@/auth"
-import { sendBookingRequestReceivedEmail } from "@/lib/email/send"
+import {
+  sendBookingRequestReceivedEmail,
+  sendNewBookingNotificationToOwner,
+} from "@/lib/email/send"
 
 interface BookingResult {
   success: boolean
@@ -173,6 +176,63 @@ export async function createBooking(
       }
     } catch (emailError) {
       console.error('Exception sending booking request received email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // TASK 3.1: Send new booking notification to all studio owners
+    try {
+      // Get all studio owners
+      const studioOwnerships = await prisma.studioOwnership.findMany({
+        where: { studioId: validated.studioId },
+        include: {
+          user: {
+            select: {
+              email: true,
+              name: true,
+            },
+          },
+        },
+      });
+
+      // Send notification to each owner
+      const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+      const dashboardUrl = `${appUrl}/de/business/calendar`;
+
+      for (const ownership of studioOwnerships) {
+        if (ownership.user.email) {
+          const ownerEmailResult = await sendNewBookingNotificationToOwner(
+            ownership.user.email,
+            {
+              studioName: booking.studio.name,
+              ownerName: ownership.user.name || 'Studio Owner',
+              bookingId: booking.id,
+              customerName: booking.customerName,
+              customerEmail: booking.customerEmail,
+              customerPhone: booking.customerPhone || undefined,
+              serviceName: booking.service?.name || 'Massage',
+              bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              }),
+              bookingTime: booking.preferredTime,
+              message: booking.message || undefined,
+              dashboardUrl,
+            },
+            'de'
+          );
+
+          if (!ownerEmailResult.success) {
+            console.error('Failed to send new booking notification to owner:', ownerEmailResult.error);
+            // Note: We don't fail the entire operation if email fails
+          } else {
+            console.log(`New booking notification sent to studio owner: ${ownership.user.email}`);
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error('Exception sending new booking notification to owners:', emailError);
       // Note: We don't fail the entire operation if email fails
     }
 
