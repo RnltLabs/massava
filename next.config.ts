@@ -131,6 +131,40 @@ const nextConfig: NextConfig = {
       },
 
       /**
+       * SECURITY: Auth API Routes - Enhanced Security Headers
+       * Applies to /api/auth/* endpoints for additional security
+       * - X-Frame-Options: Prevents clickjacking attacks
+       * - X-Content-Type-Options: Prevents MIME sniffing
+       * - Referrer-Policy: Controls referrer information leakage
+       * - X-XSS-Protection: Legacy XSS protection (defense in depth)
+       */
+      {
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, must-revalidate",
+          },
+        ],
+      },
+
+      /**
        * PHASE 3: Auth Routes - No Caching (Security)
        * Cache-Control: no-store, must-revalidate
        * - Never cache sensitive auth data
