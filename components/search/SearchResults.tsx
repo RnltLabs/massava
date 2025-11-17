@@ -9,12 +9,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StudioAvatar } from '@/components/ui/studio-avatar';
 import { formatPriceLabel } from '@/lib/utils/priceAggregation';
+import { StudioViewPopup } from '@/components/search/StudioViewPopup';
 import type { SearchResultStudio } from '@/types/booking';
 
 interface SearchResultsResponse {
@@ -84,6 +85,8 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
   const [results, setResults] = useState<SearchResultStudio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedStudio, setSelectedStudio] = useState<SearchResultStudio | null>(null);
+  const [isStudioPopupOpen, setIsStudioPopupOpen] = useState(false);
 
   useEffect(() => {
     const fetchResults = async (): Promise<void> => {
@@ -125,6 +128,14 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
    */
   const handleBookSlot = (studioId: string, slotId: string): void => {
     router.push(`/booking/${studioId}/${slotId}`);
+  };
+
+  /**
+   * Handle view studio click - open studio details popup
+   */
+  const handleViewStudio = (studio: SearchResultStudio): void => {
+    setSelectedStudio(studio);
+    setIsStudioPopupOpen(true);
   };
 
   /**
@@ -180,94 +191,132 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
   // Results Grid (Responsive: 1/2/3 columns)
   return (
-    <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
-      {results.map((result) => {
-        const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
-        const logoUrl = result.logoUrl || null;
+    <>
+      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
+        {results.map((result) => {
+          const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
+          const logoUrl = result.logoUrl || null;
 
-        // Filter out past slots (client-side safety check)
-        const now = new Date();
-        const futureSlots = availableSlots.filter((slot) => {
-          const slotTime = new Date(slot.startTime);
-          return slotTime > now;
-        });
+          // Filter out past slots (client-side safety check)
+          const now = new Date();
+          const futureSlots = availableSlots.filter((slot) => {
+            const slotTime = new Date(slot.startTime);
+            return slotTime > now;
+          });
 
-        return (
-          <Card
-            key={id}
-            className="wellness-shadow p-3 sm:p-6 hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
-          >
-            {/* Header: Avatar + Studio Info */}
-            <div className="flex items-start gap-4 mb-0.5 sm:mb-4">
-              {/* Studio Avatar */}
-              <StudioAvatar
-                logoUrl={logoUrl}
-                studioName={name}
-                studioId={id}
-                size={64}
-                className="shrink-0"
-              />
+          return (
+            <Card
+              key={id}
+              className="wellness-shadow p-3 sm:p-6 hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
+            >
+              {/* Header: Avatar + Studio Info */}
+              <div className="flex items-start gap-4 mb-0.5 sm:mb-4">
+                {/* Studio Avatar - Clickable */}
+                <button
+                  onClick={() => handleViewStudio(result)}
+                  className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full shrink-0"
+                  aria-label={`${name} Studio-Details anzeigen`}
+                >
+                  <StudioAvatar
+                    logoUrl={logoUrl}
+                    studioName={name}
+                    studioId={id}
+                    size={64}
+                    className="hover:opacity-80 transition-opacity cursor-pointer"
+                  />
+                </button>
 
-              {/* Studio Name + Distance & Price */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden">{name}</h3>
-
-                {/* Distance and Price in one row */}
-                <div className="flex items-center justify-between gap-2">
-                  <Badge variant="secondary" className="shrink-0">
-                    {distance.toFixed(1)} km entfernt
-                  </Badge>
-                  <span className="text-lg sm:text-xl font-bold text-primary shrink-0">
-                    {formatPriceLabel(minPrice)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Matched Services */}
-            {matchedServices.length > 0 && (
-              <div className="mb-1.5 sm:mb-3">
-                <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
-                  {matchedServices.map((service) => service.name).join(' • ')}
-                </p>
-              </div>
-            )}
-
-            {/* Available TimeSlots (Klickbar!) */}
-            {futureSlots.length > 0 && (
-              <div className="mt-auto">
-                <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 mb-3">
-                  {futureSlots.slice(0, 3).map((slot) => (
-                    <Button
-                      key={slot.id}
-                      variant="outline"
-                      size="sm"
-                      className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-10 sm:h-12 w-full text-sm font-medium"
-                      onClick={() => handleBookSlot(id, slot.id)}
-                      aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
-                    >
-                      {formatTime(slot.startTime)}
-                    </Button>
-                  ))}
-                </div>
-
-                {/* View More Link */}
-                {futureSlots.length > 3 && (
-                  <Button
-                    variant="link"
-                    size="sm"
-                    className="w-full justify-center gap-2 text-primary hover:text-primary/80"
-                    onClick={() => router.push(`/studios/${id}`)}
+                {/* Studio Name + Distance & Price */}
+                <div className="flex-1 min-w-0">
+                  {/* Studio Name - Clickable */}
+                  <button
+                    onClick={() => handleViewStudio(result)}
+                    className="text-left w-full focus:outline-none focus:ring-2 focus:ring-primary rounded"
                   >
-                    Alle Termine anzeigen
-                    <ArrowRight className="size-4" />
-                  </Button>
-                )}
+                    <h3 className="font-bold text-base sm:text-lg mb-2 line-clamp-2 break-words overflow-hidden hover:text-primary transition-colors">
+                      {name}
+                    </h3>
+                  </button>
+
+                  {/* Distance and Price in one row */}
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="secondary" className="shrink-0">
+                      {distance.toFixed(1)} km entfernt
+                    </Badge>
+                    <span className="text-lg sm:text-xl font-bold text-primary shrink-0">
+                      {formatPriceLabel(minPrice)}
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
-          </Card>
-        );
-      })}
-    </div>
+
+              {/* Matched Services */}
+              {matchedServices.length > 0 && (
+                <div className="mb-1.5 sm:mb-3">
+                  <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
+                    {matchedServices.map((service) => service.name).join(' • ')}
+                  </p>
+                </div>
+              )}
+
+              {/* Available TimeSlots (Klickbar!) */}
+              {futureSlots.length > 0 && (
+                <div className="mt-auto">
+                  <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 mb-3">
+                    {futureSlots.slice(0, 3).map((slot) => (
+                      <Button
+                        key={slot.id}
+                        variant="outline"
+                        size="sm"
+                        className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-10 sm:h-12 w-full text-sm font-medium"
+                        onClick={() => handleBookSlot(id, slot.id)}
+                        aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
+                      >
+                        {formatTime(slot.startTime)}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {/* View More Link */}
+                  {futureSlots.length > 3 && (
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="w-full justify-center gap-2 text-primary hover:text-primary/80"
+                      onClick={() => router.push(`/studios/${id}`)}
+                    >
+                      Alle Termine anzeigen
+                      <ArrowRight className="size-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {/* View Studio Button */}
+              <div className="mt-3 pt-3 border-t border-border">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-center gap-2 text-muted-foreground hover:text-primary"
+                  onClick={() => handleViewStudio(result)}
+                >
+                  <Info className="size-4" />
+                  Studio-Informationen
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Studio View Popup */}
+      {selectedStudio && (
+        <StudioViewPopup
+          studio={selectedStudio}
+          open={isStudioPopupOpen}
+          onOpenChange={setIsStudioPopupOpen}
+        />
+      )}
+    </>
   );
 }

@@ -30,11 +30,16 @@ export interface SearchResultStudio {
   name: string;
   description: string | null;
   logoUrl: string | null;
+  galleryImages?: unknown | null;
   address: string;
   city: string;
   postalCode: string | null;
   phone: string;
   email: string;
+  website?: string | null;
+  openingHours?: unknown | null;
+  latitude?: number | null;
+  longitude?: number | null;
   distance: number;
   services: Service[];
   matchedServices: Service[];
