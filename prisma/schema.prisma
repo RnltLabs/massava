@@ -92,6 +92,7 @@ model Studio {
 
   @@index([city])
   @@index([latitude, longitude])
+  @@index([city, latitude, longitude])
   @@index([averageRating])
   @@map("studios")
 }
@@ -263,6 +264,7 @@ model NewBooking {
   @@index([studioId, status, confirmedAt])
   @@index([status, reminderSent, preferredDate])
   @@index([status, reviewRequestSent, preferredDate])
+  @@index([studioId, preferredDate, preferredTime, status])
   @@map("new_bookings")
 }
 

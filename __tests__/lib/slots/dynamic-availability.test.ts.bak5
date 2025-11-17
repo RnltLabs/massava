@@ -1,0 +1,457 @@
+/**
+ * Copyright (c) 2025 Roman Reinelt / RNLT Labs
+ * All rights reserved.
+ *
+ * Dynamic Availability Calculator Tests
+ */
+
+
+import { calculateAvailableSlots } from '@/lib/slots/dynamic-availability';
+import { prisma } from '@/lib/prisma';
+
+// Mock Prisma
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    studio: {
+      findUnique: jest.fn(),
+    },
+    newBooking: {
+      findMany: jest.fn(),
+    },
+    blockedTime: {
+      findMany: jest.fn(),
+    },
+  },
+}));
+
+// Mock logger
+jest.mock('@/lib/logger', () => ({
+  logger: {
+    info: jest.fn(),
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  },
+}));
+
+describe('Dynamic Availability Calculator', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('calculateAvailableSlots', () => {
+    it('should return error for invalid date format', async () => {
+      const result = await calculateAvailableSlots('studio-1', 'invalid-date');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('INVALID_DATE');
+      }
+    });
+
+    it('should return error for studio not found', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue(null);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-15');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('STUDIO_NOT_FOUND');
+      }
+    });
+
+    it('should return empty array when studio is closed', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      // Monday 2025-01-13
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value).toEqual([]);
+      }
+    });
+
+    it('should return unavailable slots when studio is closed with includeUnavailable', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: false, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      // Monday 2025-01-13
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13', undefined, {
+        includeUnavailable: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.length).toBe(96); // All day slots
+        expect(result.value.every(s => !s.available && s.reason === 'outside_hours')).toBe(true);
+      }
+    });
+
+    it('should calculate available slots with no bookings', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      // Monday 2025-01-13
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // 09:00 to 17:00 = 8 hours = 32 slots (15min intervals)
+        expect(result.value.length).toBe(33);
+        expect(result.value.every(s => s.available)).toBe(true);
+        expect(result.value.every(s => s.remainingCapacity === 2)).toBe(true);
+        expect(result.value[0].startTime).toBe('09:00');
+        expect(result.value[result.value.length - 1].startTime).toBe('16:45');
+      }
+    });
+
+    it('should reduce capacity based on existing bookings', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      // One booking at 09:00
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([
+        { preferredTime: '09:00' },
+      ] as any);
+
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const slot900 = result.value.find(s => s.startTime === '09:00');
+        expect(slot900?.available).toBe(true);
+        expect(slot900?.remainingCapacity).toBe(1);
+
+        const slot915 = result.value.find(s => s.startTime === '09:15');
+        expect(slot915?.available).toBe(true);
+        expect(slot915?.remainingCapacity).toBe(2);
+      }
+    });
+
+    it('should mark slot unavailable when at capacity', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      // Two bookings at 09:00 (capacity = 2)
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([
+        { preferredTime: '09:00' },
+        { preferredTime: '09:00' },
+      ] as any);
+
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13', undefined, {
+        includeUnavailable: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const slot900 = result.value.find(s => s.startTime === '09:00');
+        expect(slot900?.available).toBe(false);
+        expect(slot900?.remainingCapacity).toBe(0);
+        expect(slot900?.reason).toBe('at_capacity');
+      }
+    });
+
+    it('should respect break times', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: {
+            isOpen: true,
+            openTime: '09:00',
+            closeTime: '17:00',
+            breakStart: '12:00',
+            breakEnd: '13:00',
+          },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13', undefined, {
+        includeUnavailable: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // Check break time slots are unavailable
+        const slot1200 = result.value.find(s => s.startTime === '12:00');
+        expect(slot1200?.available).toBe(false);
+        expect(slot1200?.reason).toBe('in_break');
+
+        const slot1215 = result.value.find(s => s.startTime === '12:15');
+        expect(slot1215?.available).toBe(false);
+        expect(slot1215?.reason).toBe('in_break');
+
+        const slot1245 = result.value.find(s => s.startTime === '12:45');
+        expect(slot1245?.available).toBe(false);
+        expect(slot1245?.reason).toBe('in_break');
+
+        // 13:00 should be available (after break)
+        const slot1300 = result.value.find(s => s.startTime === '13:00');
+        expect(slot1300?.available).toBe(true);
+      }
+    });
+
+    it('should handle blocked times', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+
+      // Block 10:00-11:00
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([
+        {
+          startTime: new Date('2025-01-13T10:00:00.000Z'),
+          endTime: new Date('2025-01-13T11:00:00.000Z'),
+          isAllDay: false,
+        },
+      ] as any);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13', undefined, {
+        includeUnavailable: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // 10:00 and 10:45 should be blocked
+        const slot1000 = result.value.find(s => s.startTime === '10:00');
+        expect(slot1000?.available).toBe(false);
+        expect(slot1000?.reason).toBe('blocked');
+
+        const slot1045 = result.value.find(s => s.startTime === '10:45');
+        expect(slot1045?.available).toBe(false);
+        expect(slot1045?.reason).toBe('blocked');
+
+        // 11:00 should be available
+        const slot1100 = result.value.find(s => s.startTime === '11:00');
+        expect(slot1100?.available).toBe(true);
+      }
+    });
+
+    it('should handle all-day blocked times', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+
+      // All-day block
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([
+        {
+          startTime: new Date('2025-01-13T00:00:00.000Z'),
+          endTime: new Date('2025-01-13T23:59:59.999Z'),
+          isAllDay: true,
+        },
+      ] as any);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        // Should return no available slots
+        expect(result.value.length).toBe(0);
+      }
+    });
+
+    it('should apply minimum capacity filter', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 3,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '10:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      // One booking at 09:00 (capacity 3 - 1 = 2 remaining)
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([
+        { preferredTime: '09:00' },
+      ] as any);
+
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13', undefined, {
+        minCapacity: 3,
+        includeUnavailable: true,
+      });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        const slot900 = result.value.find(s => s.startTime === '09:00');
+        expect(slot900?.available).toBe(false); // Needs 3, has only 2
+        expect(slot900?.remainingCapacity).toBe(2);
+      }
+    });
+
+    it('should only count CONFIRMED and PENDING bookings', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          tuesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          wednesday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          thursday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          friday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          saturday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          sunday: { isOpen: true, openTime: '09:00', closeTime: '17:00' },
+        },
+      } as any);
+
+      // Verify query includes status filter
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(prisma.newBooking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: { in: ['CONFIRMED', 'PENDING'] },
+          }),
+        })
+      );
+    });
+
+    it('should handle database errors gracefully', async () => {
+      jest.mocked(prisma.studio.findUnique).mockRejectedValue(new Error('Database error'));
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe('DATABASE_ERROR');
+      }
+    });
+
+    it('should support old opening hours format (open/close)', async () => {
+      jest.mocked(prisma.studio.findUnique).mockResolvedValue({
+        id: 'studio-1',
+        capacity: 2,
+        openingHours: {
+          monday: { open: '09:00', close: '17:00' },
+          tuesday: { open: '09:00', close: '17:00' },
+          wednesday: { open: '09:00', close: '17:00' },
+          thursday: { open: '09:00', close: '17:00' },
+          friday: { open: '09:00', close: '17:00' },
+          saturday: { open: '09:00', close: '17:00' },
+          sunday: { open: '09:00', close: '17:00' },
+        },
+      } as any);
+
+      jest.mocked(prisma.newBooking.findMany).mockResolvedValue([]);
+      jest.mocked(prisma.blockedTime.findMany).mockResolvedValue([]);
+
+      const result = await calculateAvailableSlots('studio-1', '2025-01-13');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.length).toBeGreaterThan(0);
+      }
+    });
+  });
+});

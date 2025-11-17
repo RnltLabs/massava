@@ -12,11 +12,32 @@ import { z } from "zod"
  * - explicitHealthConsent required only when provided via guest form
  * - healthConsentGivenAt and healthConsentText stored for audit trail
  * - message field is optional (may contain health-related data)
+ *
+ * Dynamic Slots (Phase 3):
+ * - slotId is now OPTIONAL (backward compatibility during migration)
+ * - preferredDate and preferredTime now REQUIRED for dynamic slots
+ * - preferredTime must be on 15-minute grid
  */
 export const bookingFormSchema = z.object({
   studioId: z.string().cuid("Ungültige Studio-ID"),
-  slotId: z.string().cuid("Ungültige Zeitslot-ID"),
+  slotId: z.string().cuid("Ungültige Zeitslot-ID").optional(), // Optional for dynamic slots
   serviceId: z.string().cuid("Bitte wählen Sie eine Leistung aus"),
+
+  // Dynamic slots fields (Phase 3)
+  preferredDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ungültiges Datumsformat (YYYY-MM-DD)")
+    .refine((date) => {
+      const d = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return d >= today;
+    }, "Datum darf nicht in der Vergangenheit liegen")
+    .optional(), // Optional for backward compatibility
+  preferredTime: z
+    .string()
+    .regex(/^\d{2}:(00|15|30|45)$/, "Zeit muss auf 15-Minuten-Raster liegen (z.B. 10:00, 10:15, 10:30, 10:45)")
+    .optional(), // Optional for backward compatibility
 
   // Optional now - filled via guest form or session
   customerName: z
@@ -53,6 +74,17 @@ export const bookingFormSchema = z.object({
 
   // P0.1 FIX: customerId REMOVED - NEVER accept from client (IDOR prevention)
   // customerId is ALWAYS retrieved from server-side session in createBooking()
-})
+}).refine(
+  (data) => {
+    // Either slotId OR (preferredDate AND preferredTime) must be provided
+    const hasSlotId = !!data.slotId;
+    const hasDynamicSlot = !!data.preferredDate && !!data.preferredTime;
+    return hasSlotId || hasDynamicSlot;
+  },
+  {
+    message: "Entweder slotId oder (preferredDate und preferredTime) muss angegeben werden",
+    path: ["slotId"],
+  }
+)
 
 export type BookingFormData = z.infer<typeof bookingFormSchema>
