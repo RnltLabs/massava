@@ -1948,6 +1948,240 @@ If you have questions, reach us at support@massava.app
   return content[locale as keyof typeof content] || content.de;
 }
 
+// ============================================================================
+// BOOKING REMINDER TEMPLATE
+// ============================================================================
+
+interface BookingReminderTemplateProps {
+  bookingId: string;
+  customerName: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  studioAddress?: string;
+  studioPhone?: string;
+  locale?: string;
+}
+
+export function BookingReminderTemplate({
+  bookingId,
+  customerName,
+  studioName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  studioAddress,
+  studioPhone,
+  locale = 'de',
+}: BookingReminderTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Erinnerung: Ihr Termin morgen - Massava',
+      greeting: `Hallo ${customerName}! 📅`,
+      intro: 'Dies ist eine Erinnerung an Ihren Termin morgen.',
+      reminderTitle: '⏰ Termin in 24 Stunden',
+      detailsTitle: 'Ihre Termindetails:',
+      bookingNumberLabel: 'Buchungsnummer',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      studioLabel: 'Studio',
+      addressLabel: 'Adresse',
+      phoneLabel: 'Telefon',
+      importantTitle: 'Wichtig:',
+      importantText: 'Bitte erscheinen Sie pünktlich zu Ihrem Termin. Bei Verspätung oder Absage kontaktieren Sie bitte direkt das Studio.',
+      contactTitle: 'Studio-Kontakt:',
+      contactText: 'Bei Fragen oder Änderungen können Sie das Studio direkt kontaktieren:',
+      footer: 'Wir freuen uns auf Ihren Besuch! 🧘',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Reminder: Your Appointment Tomorrow - Massava',
+      greeting: `Hello ${customerName}! 📅`,
+      intro: 'This is a reminder about your appointment tomorrow.',
+      reminderTitle: '⏰ Appointment in 24 Hours',
+      detailsTitle: 'Your Appointment Details:',
+      bookingNumberLabel: 'Booking Number',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      studioLabel: 'Studio',
+      addressLabel: 'Address',
+      phoneLabel: 'Phone',
+      importantTitle: 'Important:',
+      importantText: 'Please arrive on time for your appointment. For delays or cancellations, please contact the studio directly.',
+      contactTitle: 'Studio Contact:',
+      contactText: 'If you have questions or need changes, you can contact the studio directly:',
+      footer: 'We look forward to your visit! 🧘',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', color: COLORS.accent }}>
+            {t.reminderTitle}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+
+          <div style={{ marginBottom: '0' }}>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+        </div>
+
+        <div style={styles.warningBox}>
+          <p style={{ ...styles.textBold, marginBottom: '8px' }}>⚠️ {t.importantTitle}</p>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>{t.importantText}</p>
+        </div>
+
+        {(studioAddress || studioPhone) && (
+          <div>
+            <p style={styles.textBold}>{t.contactTitle}</p>
+            <p style={styles.text}>{t.contactText}</p>
+
+            <div style={styles.infoBox}>
+              {studioAddress && (
+                <div style={{ marginBottom: studioPhone ? '16px' : '0' }}>
+                  <p style={styles.bookingDetailLabel}>{t.addressLabel}</p>
+                  <p style={{ ...styles.text, marginBottom: '0' }}>{studioAddress}</p>
+                </div>
+              )}
+
+              {studioPhone && (
+                <div>
+                  <p style={styles.bookingDetailLabel}>{t.phoneLabel}</p>
+                  <p style={{ ...styles.text, marginBottom: '0' }}>
+                    <a href={`tel:${studioPhone}`} style={styles.link}>{studioPhone}</a>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div style={styles.footer}>
+        <p style={styles.footerText}>{t.footer}</p>
+        <p style={styles.footerText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextBookingReminder(
+  bookingId: string,
+  customerName: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  studioAddress?: string,
+  studioPhone?: string,
+  locale = 'de'
+): string {
+  const contactSection = studioAddress || studioPhone ? `
+Studio-Kontakt:
+
+Bei Fragen oder Änderungen können Sie das Studio direkt kontaktieren:
+${studioAddress ? `Adresse: ${studioAddress}` : ''}
+${studioPhone ? `Telefon: ${studioPhone}` : ''}
+` : '';
+
+  const contactSectionEn = studioAddress || studioPhone ? `
+Studio Contact:
+
+If you have questions or need changes, you can contact the studio directly:
+${studioAddress ? `Address: ${studioAddress}` : ''}
+${studioPhone ? `Phone: ${studioPhone}` : ''}
+` : '';
+
+  const content = {
+    de: `
+Hallo ${customerName}! 📅
+
+Dies ist eine Erinnerung an Ihren Termin morgen.
+
+⏰ Termin in 24 Stunden
+
+Ihre Termindetails:
+
+Buchungsnummer: ${bookingId}
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+Studio: ${studioName}
+
+⚠️ Wichtig: Bitte erscheinen Sie pünktlich zu Ihrem Termin. Bei Verspätung oder Absage kontaktieren Sie bitte direkt das Studio.
+${contactSection}
+Wir freuen uns auf Ihren Besuch! 🧘
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}! 📅
+
+This is a reminder about your appointment tomorrow.
+
+⏰ Appointment in 24 Hours
+
+Your Appointment Details:
+
+Booking Number: ${bookingId}
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+Studio: ${studioName}
+
+⚠️ Important: Please arrive on time for your appointment. For delays or cancellations, please contact the studio directly.
+${contactSectionEn}
+We look forward to your visit! 🧘
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
 
 export function getPlainTextTwoFactorCode(
   userName: string,
@@ -3088,3 +3322,388 @@ If you have questions, reach us at support@massava.app
   return content[locale as keyof typeof content] || content.de;
 }
 
+
+// ============================================================================
+// REVIEW REQUEST TEMPLATE (Task 4.2)
+// ============================================================================
+
+interface ReviewRequestTemplateProps {
+  customerName: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  reviewUrl: string;
+  locale?: string;
+}
+
+export function ReviewRequestTemplate({
+  customerName,
+  studioName,
+  serviceName,
+  bookingDate,
+  reviewUrl,
+  locale = 'de',
+}: ReviewRequestTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Wie war Ihr Termin? - Massava',
+      greeting: `Hallo ${customerName}! ⭐`,
+      intro: `Wir hoffen, Sie hatten einen entspannenden Termin bei ${studioName}.`,
+      question: `Wie zufrieden waren Sie mit Ihrer ${serviceName}?`,
+      ctaText: 'Jetzt bewerten',
+      incentive: 'Ihre Bewertung hilft anderen Kunden und unterstützt lokale Studios.',
+      bookingDetailsTitle: 'Ihr Termin:',
+      studioLabel: 'Studio',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      whyReview: 'Warum Ihre Bewertung wichtig ist:',
+      reason1: '⭐ Hilft anderen Kunden bei der Entscheidung',
+      reason2: '💪 Unterstützt lokale Wellness-Studios',
+      reason3: '📈 Verbessert die Qualität der Services',
+      footer: 'Vielen Dank für Ihre Unterstützung! 🙏',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'How was your appointment? - Massava',
+      greeting: `Hello ${customerName}! ⭐`,
+      intro: `We hope you had a relaxing appointment at ${studioName}.`,
+      question: `How satisfied were you with your ${serviceName}?`,
+      ctaText: 'Leave a Review',
+      incentive: 'Your review helps other customers and supports local studios.',
+      bookingDetailsTitle: 'Your Appointment:',
+      studioLabel: 'Studio',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      whyReview: 'Why your review matters:',
+      reason1: '⭐ Helps other customers make decisions',
+      reason2: '💪 Supports local wellness studios',
+      reason3: '📈 Improves service quality',
+      footer: 'Thank you for your support! 🙏',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+        <p style={styles.text}>{t.intro}</p>
+
+        <div style={styles.highlightBox}>
+          <p style={{ ...styles.textBold, marginBottom: '4px', fontSize: '18px', color: COLORS.primary }}>
+            {t.question}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.bookingDetailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={reviewUrl} style={styles.button}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px', textAlign: 'center' as const }}>
+            ✨ {t.incentive}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.whyReview}</p>
+
+        <div style={styles.list}>
+          <p style={styles.listItem}>{t.reason1}</p>
+          <p style={styles.listItem}>{t.reason2}</p>
+          <p style={styles.listItem}>{t.reason3}</p>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextReviewRequest(
+  customerName: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  reviewUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${customerName}! ⭐
+
+Wir hoffen, Sie hatten einen entspannenden Termin bei ${studioName}.
+
+Wie zufrieden waren Sie mit Ihrer ${serviceName}?
+
+Ihr Termin:
+
+Studio: ${studioName}
+Service: ${serviceName}
+Datum: ${bookingDate}
+
+Jetzt bewerten: ${reviewUrl}
+
+✨ Ihre Bewertung hilft anderen Kunden und unterstützt lokale Studios.
+
+Warum Ihre Bewertung wichtig ist:
+
+⭐ Hilft anderen Kunden bei der Entscheidung
+💪 Unterstützt lokale Wellness-Studios
+📈 Verbessert die Qualität der Services
+
+Vielen Dank für Ihre Unterstützung! 🙏
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}! ⭐
+
+We hope you had a relaxing appointment at ${studioName}.
+
+How satisfied were you with your ${serviceName}?
+
+Your Appointment:
+
+Studio: ${studioName}
+Service: ${serviceName}
+Date: ${bookingDate}
+
+Leave a Review: ${reviewUrl}
+
+✨ Your review helps other customers and supports local studios.
+
+Why your review matters:
+
+⭐ Helps other customers make decisions
+💪 Supports local wellness studios
+📈 Improves service quality
+
+Thank you for your support! 🙏
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}
+
+// ============================================================================
+// CUSTOMER CANCELLATION CONFIRMATION (Task 4.3)
+// ============================================================================
+
+interface CustomerCancellationConfirmationTemplateProps {
+  customerName: string;
+  bookingId: string;
+  studioName: string;
+  serviceName: string;
+  bookingDate: string;
+  bookingTime: string;
+  rebookUrl: string;
+  locale?: string;
+}
+
+export function CustomerCancellationConfirmationTemplate({
+  customerName,
+  bookingId,
+  studioName,
+  serviceName,
+  bookingDate,
+  bookingTime,
+  rebookUrl,
+  locale = 'de',
+}: CustomerCancellationConfirmationTemplateProps): React.ReactElement {
+  const content = {
+    de: {
+      subject: 'Buchung storniert - Massava',
+      greeting: `Hallo ${customerName}`,
+      confirmation: '✓ Ihre Buchung wurde erfolgreich storniert.',
+      detailsTitle: 'Stornierte Buchung:',
+      bookingNumberLabel: 'Buchungsnummer',
+      serviceLabel: 'Service',
+      dateLabel: 'Datum',
+      timeLabel: 'Uhrzeit',
+      studioLabel: 'Studio',
+      info: 'Sie können jederzeit einen neuen Termin buchen.',
+      ctaText: 'Neuen Termin buchen',
+      footer: 'Wir freuen uns, Sie bald wieder zu sehen! 🙏',
+      help: 'Bei Fragen erreichen Sie uns unter support@massava.app',
+      copyright: '© 2025 Massava. Alle Rechte vorbehalten.',
+    },
+    en: {
+      subject: 'Booking Cancelled - Massava',
+      greeting: `Hello ${customerName}`,
+      confirmation: '✓ Your booking has been successfully cancelled.',
+      detailsTitle: 'Cancelled Booking:',
+      bookingNumberLabel: 'Booking Number',
+      serviceLabel: 'Service',
+      dateLabel: 'Date',
+      timeLabel: 'Time',
+      studioLabel: 'Studio',
+      info: 'You can book a new appointment anytime.',
+      ctaText: 'Book New Appointment',
+      footer: 'We look forward to seeing you again soon! 🙏',
+      help: 'If you have questions, reach us at support@massava.app',
+      copyright: '© 2025 Massava. All rights reserved.',
+    },
+  };
+
+  const t = content[locale as keyof typeof content] || content.de;
+
+  return (
+    <EmailLayout>
+      <div style={styles.content}>
+        <h1 style={styles.greeting}>{t.greeting}</h1>
+
+        <div style={styles.successBox}>
+          <p style={{ ...styles.textBold, marginBottom: '0', color: COLORS.success }}>
+            {t.confirmation}
+          </p>
+        </div>
+
+        <p style={styles.textBold}>{t.detailsTitle}</p>
+
+        <div style={styles.bookingCard}>
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.bookingNumberLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingId}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.serviceLabel}</p>
+            <p style={styles.bookingDetailValue}>{serviceName}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.dateLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingDate}</p>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+            <p style={styles.bookingDetailLabel}>{t.timeLabel}</p>
+            <p style={styles.bookingDetailValue}>{bookingTime}</p>
+          </div>
+
+          <div>
+            <p style={styles.bookingDetailLabel}>{t.studioLabel}</p>
+            <p style={styles.bookingDetailValue}>{studioName}</p>
+          </div>
+        </div>
+
+        <div style={styles.infoBox}>
+          <p style={{ ...styles.text, marginBottom: '0', fontSize: '15px' }}>
+            {t.info}
+          </p>
+        </div>
+
+        <div style={styles.buttonContainer}>
+          <a href={rebookUrl} style={styles.button}>
+            {t.ctaText}
+          </a>
+        </div>
+
+        <p style={styles.footer}>{t.footer}</p>
+      </div>
+
+      <div style={styles.footerSection}>
+        <p style={styles.helpText}>{t.help}</p>
+        <p style={styles.copyright}>{t.copyright}</p>
+      </div>
+    </EmailLayout>
+  );
+}
+
+export function getPlainTextCustomerCancellationConfirmation(
+  customerName: string,
+  bookingId: string,
+  studioName: string,
+  serviceName: string,
+  bookingDate: string,
+  bookingTime: string,
+  rebookUrl: string,
+  locale = 'de'
+): string {
+  const content = {
+    de: `
+Hallo ${customerName}
+
+✓ Ihre Buchung wurde erfolgreich storniert.
+
+Stornierte Buchung:
+
+Buchungsnummer: ${bookingId}
+Service: ${serviceName}
+Datum: ${bookingDate}
+Uhrzeit: ${bookingTime}
+Studio: ${studioName}
+
+Sie können jederzeit einen neuen Termin buchen.
+
+Neuen Termin buchen: ${rebookUrl}
+
+Wir freuen uns, Sie bald wieder zu sehen! 🙏
+
+Bei Fragen erreichen Sie uns unter support@massava.app
+
+© 2025 Massava. Alle Rechte vorbehalten.
+    `.trim(),
+    en: `
+Hello ${customerName}
+
+✓ Your booking has been successfully cancelled.
+
+Cancelled Booking:
+
+Booking Number: ${bookingId}
+Service: ${serviceName}
+Date: ${bookingDate}
+Time: ${bookingTime}
+Studio: ${studioName}
+
+You can book a new appointment anytime.
+
+Book New Appointment: ${rebookUrl}
+
+We look forward to seeing you again soon! 🙏
+
+If you have questions, reach us at support@massava.app
+
+© 2025 Massava. All rights reserved.
+    `.trim(),
+  };
+
+  return content[locale as keyof typeof content] || content.de;
+}

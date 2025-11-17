@@ -16,6 +16,7 @@ import {
   BookingRequestReceivedTemplate,
   BookingConfirmationTemplate,
   BookingCancellationTemplate,
+  BookingReminderTemplate,
   TwoFactorCodeTemplate,
   AccountDeletionScheduledTemplate,
   AccountDeletionConfirmedTemplate,
@@ -24,6 +25,7 @@ import {
   StudioRegistrationWelcomeTemplate,
   StudioDeletionWarningTemplate,
   StudioDeletionConfirmedTemplate,
+  ReviewRequestTemplate,
   getPlainTextVerification,
   getPlainTextWelcome,
   getPlainTextPasswordReset,
@@ -31,6 +33,7 @@ import {
   getPlainTextBookingRequestReceived,
   getPlainTextBookingConfirmation,
   getPlainTextBookingCancellation,
+  getPlainTextBookingReminder,
   getPlainTextTwoFactorCode,
   getPlainTextAccountDeletionScheduled,
   getPlainTextAccountDeletionConfirmed,
@@ -39,6 +42,9 @@ import {
   getPlainTextStudioRegistrationWelcome,
   getPlainTextStudioDeletionWarning,
   getPlainTextStudioDeletionConfirmed,
+  getPlainTextReviewRequest,
+  CustomerCancellationConfirmationTemplate,
+  getPlainTextCustomerCancellationConfirmation,
 } from './templates';
 import { logger } from '@/lib/logger';
 
@@ -759,6 +765,118 @@ export async function sendBookingCancellationEmail(
   } catch (error) {
     logger.error('Email sending exception', {
       action: 'SEND_BOOKING_CANCELLATION_EMAIL',
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send booking reminder email (24 hours before appointment)
+ * @param email - Recipient email address
+ * @param bookingDetails - Booking details
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendBookingReminderEmail(
+  email: string,
+  bookingDetails: {
+    bookingId: string;
+    customerName: string;
+    studioName: string;
+    serviceName: string;
+    bookingDate: string;
+    bookingTime: string;
+    studioAddress?: string;
+    studioPhone?: string;
+  },
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_BOOKING_REMINDER_EMAIL',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      BookingReminderTemplate({
+        ...bookingDetails,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextBookingReminder(
+      bookingDetails.bookingId,
+      bookingDetails.customerName,
+      bookingDetails.studioName,
+      bookingDetails.serviceName,
+      bookingDetails.bookingDate,
+      bookingDetails.bookingTime,
+      bookingDetails.studioAddress,
+      bookingDetails.studioPhone,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'Erinnerung: Ihr Termin morgen - Massava'
+      : 'Reminder: Your Appointment Tomorrow - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'booking-reminder' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_BOOKING_REMINDER_EMAIL',
+        email,
+        error: result.error.message,
+        bookingId: bookingDetails.bookingId,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Booking reminder email sent successfully', {
+      action: 'SEND_BOOKING_REMINDER_EMAIL',
+      email,
+      messageId: result.data?.id,
+      locale,
+      bookingId: bookingDetails.bookingId,
+      studioName: bookingDetails.studioName,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_BOOKING_REMINDER_EMAIL',
       email,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
@@ -1607,6 +1725,219 @@ export async function sendStudioDeletionConfirmedEmail(
     logger.error('Email sending exception', {
       action: 'SEND_STUDIO_DELETION_CONFIRMED_EMAIL',
       ownerEmail,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send review request email (24 hours after appointment)
+ * @param email - Customer email address
+ * @param reviewDetails - Review request details
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendReviewRequestEmail(
+  email: string,
+  reviewDetails: {
+    customerName: string;
+    studioName: string;
+    serviceName: string;
+    bookingDate: string;
+    reviewUrl: string;
+  },
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_REVIEW_REQUEST_EMAIL',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      ReviewRequestTemplate({
+        ...reviewDetails,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextReviewRequest(
+      reviewDetails.customerName,
+      reviewDetails.studioName,
+      reviewDetails.serviceName,
+      reviewDetails.bookingDate,
+      reviewDetails.reviewUrl,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'Wie war Ihr Termin? - Massava'
+      : 'How was your appointment? - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'review-request' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_REVIEW_REQUEST_EMAIL',
+        email,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Review request email sent successfully', {
+      action: 'SEND_REVIEW_REQUEST_EMAIL',
+      email,
+      messageId: result.data?.id,
+      locale,
+      studioName: reviewDetails.studioName,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_REVIEW_REQUEST_EMAIL',
+      email,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Send customer cancellation confirmation email (Task 4.3)
+ * @param email - Customer email address
+ * @param cancellationData - Cancellation details
+ * @param locale - Language locale (de/en)
+ * @returns Result object with success status
+ */
+export async function sendCustomerCancellationConfirmation(
+  email: string,
+  cancellationData: {
+    customerName: string;
+    bookingId: string;
+    studioName: string;
+    serviceName: string;
+    bookingDate: string;
+    bookingTime: string;
+    rebookUrl: string;
+  },
+  locale: string = 'de'
+): Promise<SendEmailResult> {
+  try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      logger.error('Email sending failed: RESEND_API_KEY not configured', {
+        action: 'SEND_CUSTOMER_CANCELLATION_CONFIRMATION',
+        email,
+      });
+      return {
+        success: false,
+        error: 'Email service not configured',
+      };
+    }
+
+    // Render email template
+    const htmlContent = await render(
+      CustomerCancellationConfirmationTemplate({
+        ...cancellationData,
+        locale,
+      })
+    );
+
+    const textContent = getPlainTextCustomerCancellationConfirmation(
+      cancellationData.customerName,
+      cancellationData.bookingId,
+      cancellationData.studioName,
+      cancellationData.serviceName,
+      cancellationData.bookingDate,
+      cancellationData.bookingTime,
+      cancellationData.rebookUrl,
+      locale
+    );
+
+    const subject = locale === 'de'
+      ? 'Buchung storniert - Massava'
+      : 'Booking Cancelled - Massava';
+
+    // Send email via Resend
+    const result = await getResendClient().emails.send({
+      from: `Massava <${FROM_EMAIL}>`,
+      to: email,
+      subject,
+      html: htmlContent,
+      text: textContent,
+      tags: [
+        { name: 'type', value: 'customer-cancellation-confirmation' },
+        { name: 'locale', value: locale },
+      ],
+    });
+
+    if (result.error) {
+      logger.error('Email sending failed', {
+        action: 'SEND_CUSTOMER_CANCELLATION_CONFIRMATION',
+        email,
+        error: result.error.message,
+      });
+      return {
+        success: false,
+        error: result.error.message,
+      };
+    }
+
+    logger.info('Customer cancellation confirmation email sent successfully', {
+      action: 'SEND_CUSTOMER_CANCELLATION_CONFIRMATION',
+      email,
+      messageId: result.data?.id,
+      locale,
+      bookingId: cancellationData.bookingId,
+      studioName: cancellationData.studioName,
+    });
+
+    return {
+      success: true,
+      messageId: result.data?.id,
+    };
+  } catch (error) {
+    logger.error('Email sending exception', {
+      action: 'SEND_CUSTOMER_CANCELLATION_CONFIRMATION',
+      email,
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
     });
