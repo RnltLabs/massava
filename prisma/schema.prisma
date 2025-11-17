@@ -79,8 +79,11 @@ model Studio {
   capacity        Int                  @default(1)
   galleryImages   Json?
   logoUrl         String?
+  averageRating   Float?
+  totalReviews    Int                  @default(0)
   blockedTimes    BlockedTime[]
   newBookings     NewBooking[]
+  reviews         Review[]
   services        Service[]
   ownerships      StudioOwnership[]
   timeSlots       TimeSlot[]
@@ -89,6 +92,7 @@ model Studio {
 
   @@index([city])
   @@index([latitude, longitude])
+  @@index([averageRating])
   @@map("studios")
 }
 
@@ -129,6 +133,7 @@ model User {
   newBookings         NewBooking[]
   newSessions         NewSession[]
   refreshTokens       RefreshToken[]
+  reviews             Review[]
   ownedStudios        StudioOwnership[]
   roles               UserRoleAssignment[]
   newFavorites        Studio[]             @relation("UserFavorites")
@@ -243,6 +248,7 @@ model NewBooking {
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
   customer                 User?         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  review                   Review?
   service                  Service?      @relation(fields: [serviceId], references: [id])
   studio                   Studio        @relation(fields: [studioId], references: [id], onDelete: Cascade)
 
@@ -338,6 +344,32 @@ model RefreshToken {
   @@index([parentId])
   @@index([family, revokedAt])
   @@map("refresh_tokens")
+}
+
+model Review {
+  id           String    @id @default(cuid())
+  studioId     String
+  userId       String
+  bookingId    String    @unique
+  rating       Int
+  comment      String?
+  isVisible    Boolean   @default(true)
+  response     String?
+  respondedAt  DateTime?
+  respondedBy  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  booking      NewBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  studio       Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([studioId])
+  @@index([userId])
+  @@index([bookingId])
+  @@index([studioId, isVisible])
+  @@index([studioId, createdAt])
+  @@index([rating])
+  @@map("reviews")
 }
 
 enum BookingStatus {

@@ -18,6 +18,7 @@ import {
   XIcon,
   Edit2Icon,
   EyeIcon,
+  StarIcon,
 } from 'lucide-react';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
@@ -26,6 +27,7 @@ interface BookingCardProps {
   onViewDetails: (booking: BookingWithRelations) => void;
   onCancel?: (booking: BookingWithRelations) => void;
   onReschedule?: (booking: BookingWithRelations) => void;
+  onReview?: (booking: BookingWithRelations) => void;
   isPast?: boolean;
 }
 
@@ -34,10 +36,14 @@ export function BookingCard({
   onViewDetails,
   onCancel,
   onReschedule,
+  onReview,
   isPast = false,
 }: BookingCardProps): React.JSX.Element {
   const canCancel = !isPast && (booking.status === 'PENDING' || booking.status === 'CONFIRMED');
   const canReschedule = !isPast && (booking.status === 'PENDING' || booking.status === 'CONFIRMED');
+
+  // Can review if: past, confirmed, and no review yet
+  const canReview = isPast && booking.status === 'CONFIRMED' && !booking.review;
 
   const getStatusBadge = () => {
     switch (booking.status) {
@@ -140,6 +146,7 @@ export function BookingCard({
           )}
         </div>
 
+        {/* Action Buttons */}
         {!isPast && (canCancel || canReschedule) && (
           <div className="flex gap-2 pt-2 border-t">
             <Button
@@ -181,6 +188,31 @@ export function BookingCard({
                 <XIcon className="h-4 w-4" />
               </Button>
             )}
+          </div>
+        )}
+
+        {/* Review Button or Status */}
+        {isPast && (
+          <div className="flex gap-2 pt-2 border-t">
+            {booking.review ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <span>Bewertung abgegeben ({booking.review.rating} Sterne)</span>
+              </div>
+            ) : canReview && onReview ? (
+              <Button
+                variant="default"
+                size="sm"
+                className="flex-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReview(booking);
+                }}
+              >
+                <StarIcon className="h-4 w-4 mr-2" />
+                Bewerten
+              </Button>
+            ) : null}
           </div>
         )}
       </CardContent>

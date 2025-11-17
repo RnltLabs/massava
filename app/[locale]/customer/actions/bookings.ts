@@ -35,6 +35,7 @@ export type BookingWithRelations = {
   confirmedAt: Date | null;
   cancelledAt: Date | null;
   cancellationReason: string | null;
+  reviewRequestSent: boolean;
   createdAt: Date;
   updatedAt: Date;
   studio: {
@@ -48,6 +49,12 @@ export type BookingWithRelations = {
     name: string;
     price: number;
     duration: number;
+  } | null;
+  review: {
+    id: string;
+    rating: number;
+    comment: string | null;
+    createdAt: Date;
   } | null;
 };
 
@@ -155,6 +162,14 @@ export async function getCustomerBookings(): Promise<BookingsListResult> {
             duration: true,
           },
         },
+        review: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -247,6 +262,14 @@ export async function getBookingDetails(
             name: true,
             price: true,
             duration: true,
+          },
+        },
+        review: {
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
           },
         },
       },

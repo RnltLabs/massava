@@ -45,6 +45,8 @@ export interface SearchResultStudio {
   matchedServices: Service[];
   minPrice: number;
   availableSlots: TimeSlotWithService[];
+  averageRating?: number | null;
+  totalReviews?: number;
 }
 
 /**
