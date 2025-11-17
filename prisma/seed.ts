@@ -636,6 +636,60 @@ async function main() {
     [studio3.name]: `${studio3AvgRating.toFixed(2)} (${studio3Reviews.length} reviews)`,
   });
 
+  // Create TimeSlots for the next 14 days
+  console.log('⏰ Creating time slots for next 14 days...');
+
+  const timeSlots: any[] = [];
+  const studios = [
+    { studio: studio1, services: studio1Services, hours: { start: 10, end: 20 } },
+    { studio: studio2, services: studio2Services, hours: { start: 9, end: 21 } },
+    { studio: studio3, services: studio3Services, hours: { start: 10, end: 22 } },
+  ];
+
+  // Generate slots for next 14 days
+  for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+    const date = new Date();
+    date.setDate(date.getDate() + dayOffset);
+    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+
+    // Skip if it's Sunday for Studio 1 (closed on Sundays)
+    for (const { studio, services, hours } of studios) {
+      // Studio 1 closed on Sunday
+      if (studio.id === studio1.id && dayOfWeek === 0) continue;
+
+      // Create slots for each service
+      for (const service of services) {
+        // Create hourly slots
+        for (let hour = hours.start; hour < hours.end; hour++) {
+          const startTime = new Date(date);
+          startTime.setHours(hour, 0, 0, 0);
+
+          const endTime = new Date(startTime);
+          endTime.setMinutes(service.duration);
+
+          // Only create slots if endTime is within business hours
+          if (endTime.getHours() <= hours.end) {
+            timeSlots.push({
+              studioId: studio.id,
+              serviceId: service.id,
+              startTime,
+              endTime,
+              isAvailable: true,
+              isBooked: false,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  // Batch create time slots
+  await prisma.timeSlot.createMany({
+    data: timeSlots,
+  });
+
+  console.log('✅ Created time slots:', timeSlots.length);
+
   console.log('🎉 Seeding completed!');
   console.log('');
   console.log('📊 Summary:');
@@ -643,6 +697,7 @@ async function main() {
   console.log(`   - Studios: 3 (with images and coordinates)`);
   console.log(`   - Bookings: ${bookings.length}`);
   console.log(`   - Reviews: ${reviews.length}`);
+  console.log(`   - TimeSlots: ${timeSlots.length} (next 14 days)`);
   console.log('');
   console.log('🔐 Test Credentials:');
   console.log('   Owner: owner@example.com / test123');
