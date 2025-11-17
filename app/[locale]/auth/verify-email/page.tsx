@@ -128,10 +128,23 @@ async function VerifyEmailContent({
   }
 
   // Update unified User model with email verification
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { email },
     data: { emailVerified: new Date() },
   });
+
+  // Send welcome email after successful verification
+  try {
+    const { sendWelcomeEmail } = await import('@/lib/email/send');
+    await sendWelcomeEmail(
+      user.email,
+      user.name || 'Nutzer',
+      locale === 'en' ? 'en' : 'de'
+    );
+  } catch (emailError) {
+    // Don't fail verification if welcome email fails - just log
+    console.error('Failed to send welcome email:', emailError);
+  }
 
   // Success - Use client component for auto-redirect to login
   return <VerifyEmailSuccess email={email} locale={locale} />;
