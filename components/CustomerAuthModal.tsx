@@ -156,7 +156,7 @@ export function CustomerAuthModal({ onClose, locale, prefillData }: Props) {
       }
 
       console.log('✅ Sign in successful');
-      router.push(getAuthCallbackUrl(`/${locale}/customer/dashboard`));
+      router.push(getAuthCallbackUrl(`/${locale}/customer/bookings`));
       router.refresh();
       onClose();
     } catch (err) {
