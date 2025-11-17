@@ -40,6 +40,13 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000, // 1 year (images are immutable)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
   },
 
   /**
