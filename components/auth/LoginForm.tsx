@@ -11,6 +11,7 @@ interface LoginFormProps {
   onSubmit: (data: LoginFormData) => Promise<void>;
   isLoading?: boolean;
   onSwitchToSignup?: () => void;
+  locale?: string;
 }
 
 interface LoginFormData {
@@ -24,6 +25,7 @@ export function LoginForm({
   onSubmit,
   isLoading = false,
   onSwitchToSignup,
+  locale = 'de',
 }: LoginFormProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const accountTypeValue = accountType; // Reserved for future use
@@ -258,7 +260,7 @@ export function LoginForm({
       {/* Forgot Password */}
       <div className="text-center">
         <Link
-          href="/auth/forgot-password"
+          href={`/${locale}/auth/reset-password`}
           className="text-sm text-sage-700 hover:text-sage-800 font-medium transition-colors"
         >
           Passwort vergessen?
