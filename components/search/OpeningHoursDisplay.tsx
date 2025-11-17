@@ -17,14 +17,16 @@ interface DaySchedule {
   closed?: boolean;
 }
 
+type DayValue = DaySchedule | string;
+
 interface OpeningHoursData {
-  monday?: DaySchedule;
-  tuesday?: DaySchedule;
-  wednesday?: DaySchedule;
-  thursday?: DaySchedule;
-  friday?: DaySchedule;
-  saturday?: DaySchedule;
-  sunday?: DaySchedule;
+  monday?: DayValue;
+  tuesday?: DayValue;
+  wednesday?: DayValue;
+  thursday?: DayValue;
+  friday?: DayValue;
+  saturday?: DayValue;
+  sunday?: DayValue;
 }
 
 interface OpeningHoursDisplayProps {
@@ -54,6 +56,48 @@ const formatTime = (time: string): string => {
     return `${parts[0]}:${parts[1]}`;
   }
   return time;
+};
+
+/**
+ * Parses opening hours string format (e.g., "09:00-21:00") to DaySchedule
+ */
+const parseTimeString = (value: string): DaySchedule | null => {
+  if (!value || typeof value !== 'string') return null;
+
+  // Check if closed
+  if (value.toLowerCase().includes('geschlossen') || value.toLowerCase().includes('closed')) {
+    return { closed: true };
+  }
+
+  // Parse "HH:mm-HH:mm" format
+  const match = value.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})/);
+  if (match) {
+    return {
+      open: match[1],
+      close: match[2],
+    };
+  }
+
+  return null;
+};
+
+/**
+ * Normalizes day value to DaySchedule format
+ */
+const normalizeDayValue = (value: DayValue | undefined): DaySchedule | null => {
+  if (!value) return null;
+
+  // Already in object format
+  if (typeof value === 'object') {
+    return value as DaySchedule;
+  }
+
+  // String format - parse it
+  if (typeof value === 'string') {
+    return parseTimeString(value);
+  }
+
+  return null;
 };
 
 /**
@@ -91,7 +135,8 @@ export function OpeningHoursDisplay({ openingHours }: OpeningHoursDisplayProps):
       <div className="space-y-1">
         {DAY_ORDER.map((dayKey) => {
           const dayName = DAY_NAMES[dayKey];
-          const schedule = hours[dayKey as keyof OpeningHoursData];
+          const rawValue = hours[dayKey as keyof OpeningHoursData];
+          const schedule = normalizeDayValue(rawValue);
 
           if (!schedule) {
             return (
