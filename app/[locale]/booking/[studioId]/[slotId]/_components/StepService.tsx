@@ -4,12 +4,18 @@ import { useState } from "react"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { X, ChevronRight, Search, Calendar, Clock, MapPin } from "lucide-react"
-import type { Service, Studio, TimeSlot } from "@/app/generated/prisma"
+import type { Service, Studio } from "@/app/generated/prisma"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { RadioGroup } from "@/components/ui/radio-group"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ServiceCard } from "./ServiceCard"
+
+// Simplified TimeSlot type for dynamic slots (no DB record)
+interface DynamicTimeSlot {
+  startTime: Date
+  endTime: Date
+}
 
 interface StepServiceProps {
   services: Service[]
@@ -17,7 +23,7 @@ interface StepServiceProps {
   onServiceSelect: (serviceId: string) => void
   onContinue: () => void
   onCancel: () => void
-  timeSlot: TimeSlot
+  timeSlot: DynamicTimeSlot // Simplified type for dynamic slots
   studio: Studio
 }
 

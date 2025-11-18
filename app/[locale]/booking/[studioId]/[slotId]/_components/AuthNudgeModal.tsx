@@ -29,17 +29,23 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { GuestCheckoutForm } from "./GuestCheckoutForm"
-import type { Service, Studio, TimeSlot } from "@/app/generated/prisma"
+import type { Service, Studio } from "@/app/generated/prisma"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import type { GuestFormData } from "./types"
+
+// Simplified TimeSlot type for dynamic slots (no DB record)
+interface DynamicTimeSlot {
+  startTime: Date
+  endTime: Date
+}
 
 interface AuthNudgeModalProps {
   isOpen: boolean
   onClose: () => void
   studio: Studio
   selectedService: Service
-  timeSlot: TimeSlot
+  timeSlot: DynamicTimeSlot // Simplified type for dynamic slots
   onGuestSubmit: (data: GuestFormData) => Promise<void>
   message?: string
 }
