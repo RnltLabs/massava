@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSession } from "next-auth/react"
-import type { Studio, Service, TimeSlot, BookingStatus } from "@/app/generated/prisma"
+import type { Studio, Service, BookingStatus } from "@/app/generated/prisma"
 import {
   bookingFormSchema,
   type BookingFormData,
@@ -34,12 +34,19 @@ import { StepService } from "./StepService"
 import { StepConfirm } from "./StepConfirm"
 import { SuccessState } from "./SuccessState"
 
+// Simplified TimeSlot type for dynamic slots (no DB record)
+interface DynamicTimeSlot {
+  startTime: Date
+  endTime: Date
+}
+
 interface BookingSheetProps {
   studio: Studio
   services: Service[]
-  timeSlot: TimeSlot
+  timeSlot: DynamicTimeSlot // Simplified type for dynamic slots
   studioId: string
   slotId: string
+  preferredDateTime: string // ISO DateTime string for dynamic slots
   isOpen: boolean
   onClose: () => void
 }
@@ -86,6 +93,7 @@ export function BookingSheet({
   timeSlot,
   studioId,
   slotId,
+  preferredDateTime,
   isOpen,
   onClose,
 }: BookingSheetProps) {
@@ -108,7 +116,7 @@ export function BookingSheet({
     resolver: zodResolver(bookingFormSchema),
     defaultValues: {
       studioId,
-      slotId,
+      preferredDateTime, // Use ISO DateTime instead of slotId for dynamic slots
       serviceId: selectedServiceId || "",
       customerName: "",
       customerEmail: "",
@@ -191,7 +199,10 @@ export function BookingSheet({
     setIsSubmitting(true)
 
     try {
-      const result = await createBooking(data)
+      // Remove slotId from data (we're using preferredDateTime instead)
+      // This prevents validation errors when slotId contains invalid CUID format
+      const { slotId: _removed, ...bookingData } = data
+      const result = await createBooking(bookingData)
 
       if (result.success && result.bookingId) {
         // Generate booking number for display
