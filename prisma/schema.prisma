@@ -72,6 +72,7 @@ model Studio {
   email           String
   website         String? // Optional website URL
   openingHours    Json?
+  timezone        String               @default("Europe/Berlin") // IANA timezone identifier
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
   latitude        Float?
@@ -231,8 +232,7 @@ model NewBooking {
   customerName             String
   customerEmail            String
   customerPhone            String?
-  preferredDate            String
-  preferredTime            String
+  preferredDateTime        DateTime      @db.Timestamptz
   message                  String?
   explicitHealthConsent    Boolean?      @default(false)
   healthConsentGivenAt     DateTime?
@@ -260,11 +260,11 @@ model NewBooking {
   @@index([status])
   @@index([createdAt])
   @@index([studioId, status])
-  @@index([studioId, preferredDate])
+  @@index([studioId, preferredDateTime])
   @@index([studioId, status, confirmedAt])
-  @@index([status, reminderSent, preferredDate])
-  @@index([status, reviewRequestSent, preferredDate])
-  @@index([studioId, preferredDate, preferredTime, status])
+  @@index([status, reminderSent, preferredDateTime])
+  @@index([status, reviewRequestSent, preferredDateTime])
+  @@index([studioId, status, preferredDateTime], name: "new_bookings_capacity_check_idx")
   @@map("new_bookings")
 }
 
@@ -349,21 +349,21 @@ model RefreshToken {
 }
 
 model Review {
-  id           String    @id @default(cuid())
-  studioId     String
-  userId       String
-  bookingId    String    @unique
-  rating       Int
-  comment      String?
-  isVisible    Boolean   @default(true)
-  response     String?
-  respondedAt  DateTime?
-  respondedBy  String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  booking      NewBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  studio       Studio    @relation(fields: [studioId], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String     @id @default(cuid())
+  studioId    String
+  userId      String
+  bookingId   String     @unique
+  rating      Int
+  comment     String?
+  isVisible   Boolean    @default(true)
+  response    String?
+  respondedAt DateTime?
+  respondedBy String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  booking     NewBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  studio      Studio     @relation(fields: [studioId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([studioId])
   @@index([userId])

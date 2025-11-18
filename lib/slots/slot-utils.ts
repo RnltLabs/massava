@@ -6,7 +6,14 @@
  *
  * Handles 15-minute time grid normalization and validation.
  * All booking times must align to 00, 15, 30, 45 minute marks.
+ *
+ * Supports both:
+ * - String-based time slots (legacy, HH:mm format)
+ * - DateTime-based slots (new, timezone-aware)
  */
+
+import { isSameMinute, isAfter, isBefore } from 'date-fns';
+import { formatInTimezone } from '@/lib/timezone';
 
 /**
  * Valid minute values for time grid (00, 15, 30, 45)
@@ -284,4 +291,117 @@ export function addMinutes(time: string, minutesToAdd: number): string {
   const minutes = totalMinutes % 60;
 
   return formatTime(hours, minutes);
+}
+
+/* ============================================================
+ * DateTime-based Utility Functions (NEW)
+ * ============================================================ */
+
+/**
+ * Check if a DateTime slot is available (not booked, not in past)
+ *
+ * @param slot - Slot DateTime to check
+ * @param bookedSlots - Array of booked DateTime slots
+ * @param studioTimezone - Studio's IANA timezone
+ * @returns true if slot is available
+ */
+export function isSlotAvailable(
+  slot: Date,
+  bookedSlots: Date[],
+  studioTimezone: string
+): boolean {
+  const now = new Date();
+
+  // Slot must be in future
+  if (!isAfter(slot, now)) {
+    return false;
+  }
+
+  // Slot must not be booked (check if same minute)
+  return !bookedSlots.some((bookedSlot) => isSameMinute(bookedSlot, slot));
+}
+
+/**
+ * Filter DateTime slots to only show available ones
+ *
+ * @param allSlots - All potential slot DateTimes
+ * @param bookedSlots - Already booked DateTime slots
+ * @param studioTimezone - Studio's IANA timezone
+ * @returns Filtered array of available DateTime slots
+ */
+export function filterAvailableSlots(
+  allSlots: Date[],
+  bookedSlots: Date[],
+  studioTimezone: string
+): Date[] {
+  return allSlots.filter((slot) => isSlotAvailable(slot, bookedSlots, studioTimezone));
+}
+
+/**
+ * Format a DateTime slot for display in studio's timezone
+ *
+ * @param slot - DateTime slot
+ * @param studioTimezone - Studio's IANA timezone
+ * @returns Formatted time string (HH:mm)
+ */
+export function formatSlotForDisplay(slot: Date, studioTimezone: string): string {
+  return formatInTimezone(slot, studioTimezone, 'HH:mm');
+}
+
+/**
+ * Group DateTime slots by date in studio's timezone
+ *
+ * @param slots - Array of DateTime slots
+ * @param studioTimezone - Studio's IANA timezone
+ * @returns Record mapping date strings (yyyy-MM-dd) to DateTime arrays
+ */
+export function groupSlotsByDate(
+  slots: Date[],
+  studioTimezone: string
+): Record<string, Date[]> {
+  const grouped: Record<string, Date[]> = {};
+
+  for (const slot of slots) {
+    const dateKey = formatInTimezone(slot, studioTimezone, 'yyyy-MM-dd');
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push(slot);
+  }
+
+  return grouped;
+}
+
+/**
+ * Round a DateTime to the nearest 15-minute slot boundary (floor)
+ *
+ * @param date - DateTime to round
+ * @returns Rounded DateTime
+ */
+export function roundDateToSlotGrid(date: Date): Date {
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.floor(minutes / GRID_INTERVAL_MINUTES) * GRID_INTERVAL_MINUTES;
+  const rounded = new Date(date);
+  rounded.setMinutes(roundedMinutes);
+  rounded.setSeconds(0);
+  rounded.setMilliseconds(0);
+  return rounded;
+}
+
+/**
+ * Check if a DateTime is on the 15-minute grid
+ *
+ * @param date - DateTime to check
+ * @returns true if on grid (00, 15, 30, 45 minutes)
+ */
+export function isDateOnSlotGrid(date: Date): boolean {
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
+  const milliseconds = date.getMilliseconds();
+
+  return (
+    VALID_MINUTES.includes(minutes as typeof VALID_MINUTES[number]) &&
+    seconds === 0 &&
+    milliseconds === 0
+  );
 }

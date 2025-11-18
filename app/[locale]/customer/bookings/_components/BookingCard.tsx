@@ -20,6 +20,8 @@ import {
   EyeIcon,
   StarIcon,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
 interface BookingCardProps {
@@ -70,18 +72,13 @@ export function BookingCard({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('de-DE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
+  // DateTime formatting using date-fns (Phase 4 migration)
+  const formatDateTime = (date: Date) => {
+    return format(date, 'EEEE, d. MMMM yyyy', { locale: de });
+  };
+
+  const formatTime = (date: Date) => {
+    return format(date, 'HH:mm');
   };
 
   const formatPrice = (price: number) => {
@@ -121,13 +118,13 @@ export function BookingCard({
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-2 text-sm">
             <CalendarIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <span className="font-medium">{formatDate(booking.preferredDate)}</span>
+            <span className="font-medium">{formatDateTime(booking.preferredDateTime)}</span>
           </div>
 
           <div className="flex items-center gap-2 text-sm">
             <ClockIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
             <div className="flex items-center gap-3 flex-1">
-              <span>{booking.preferredTime}</span>
+              <span>{formatTime(booking.preferredDateTime)}</span>
               {booking.service && (
                 <span className="text-muted-foreground">
                   ({booking.service.duration} Min.)

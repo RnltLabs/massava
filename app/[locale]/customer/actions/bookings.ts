@@ -10,6 +10,7 @@
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { parseISO } from 'date-fns';
 import {
   cancelBookingSchema,
   rescheduleBookingSchema,
@@ -28,8 +29,7 @@ export type BookingWithRelations = {
   customerName: string;
   customerEmail: string;
   customerPhone: string | null;
-  preferredDate: string;
-  preferredTime: string;
+  preferredDateTime: Date;
   message: string | null;
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED';
   confirmedAt: Date | null;
@@ -111,14 +111,12 @@ async function getAuthenticatedUser() {
 }
 
 /**
- * Check if a date is in the past
+ * Check if a DateTime is in the past
  */
-function isDateInPast(dateString: string): boolean {
+function isDateInPast(date: Date): boolean {
   try {
-    const bookingDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return bookingDate < today;
+    const now = new Date();
+    return date < now;
   } catch {
     return false;
   }
@@ -185,7 +183,7 @@ export async function getCustomerBookings(): Promise<BookingsListResult> {
 
     for (const booking of bookings) {
       const isPast =
-        isDateInPast(booking.preferredDate) || booking.status === 'CANCELLED';
+        isDateInPast(booking.preferredDateTime) || booking.status === 'CANCELLED';
 
       const bookingData: BookingWithRelations = {
         ...booking,
@@ -370,7 +368,7 @@ export async function cancelBooking(
     }
 
     // 7. Check if booking is in the past
-    if (isDateInPast(booking.preferredDate)) {
+    if (isDateInPast(booking.preferredDateTime)) {
       return {
         success: false,
         error: 'Vergangene Buchungen können nicht storniert werden.',
@@ -444,8 +442,10 @@ export async function rescheduleBooking(
       };
     }
 
-    // 3. Validate new date is not in the past
-    if (isDateInPast(validated.data.newDate)) {
+    // 3. Parse and validate new DateTime
+    const newDateTime = parseISO(`${validated.data.newDate}T${validated.data.newTime}:00`);
+
+    if (isDateInPast(newDateTime)) {
       return {
         success: false,
         error: 'Das neue Datum darf nicht in der Vergangenheit liegen.',
@@ -491,14 +491,13 @@ export async function rescheduleBooking(
       };
     }
 
-    // 9. Update booking with new date and time
+    // 9. Update booking with new DateTime
     await prisma.newBooking.update({
       where: {
         id: validated.data.bookingId,
       },
       data: {
-        preferredDate: validated.data.newDate,
-        preferredTime: validated.data.newTime,
+        preferredDateTime: newDateTime,
         // Reset confirmation if booking was already confirmed
         ...(booking.status === 'CONFIRMED' && {
           status: 'PENDING',

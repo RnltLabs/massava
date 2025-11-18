@@ -81,21 +81,21 @@ export async function GET(request: Request) {
       },
     })
 
-    // 5. Build booking where clause
+    // 5. Build booking where clause (Phase 4: Use DateTime)
     interface BookingWhereInput {
       studioId: string
-      preferredDate: {
-        gte: string
-        lte: string
+      preferredDateTime: {
+        gte: Date
+        lte: Date
       }
       serviceId?: string
     }
 
     const bookingWhere: BookingWhereInput = {
       studioId: studio.id,
-      preferredDate: {
-        gte: startDate,
-        lte: endDate,
+      preferredDateTime: {
+        gte: new Date(startDate),
+        lte: new Date(endDate + 'T23:59:59Z'), // Include full end date
       },
     }
 
@@ -123,7 +123,7 @@ export async function GET(request: Request) {
         },
       },
       orderBy: {
-        preferredDate: 'asc',
+        preferredDateTime: 'asc',
       },
     })
 
@@ -144,8 +144,7 @@ export async function GET(request: Request) {
       serviceName?: string
       serviceId?: string | null
       status?: string
-      preferredDate?: string
-      preferredTime?: string
+      preferredDateTime?: string
       message?: string | null
     }> = []
 
@@ -191,8 +190,8 @@ export async function GET(request: Request) {
                 ? `Verfügbar (${slot.remainingCapacity} Plätze)`
                 : `Nicht verfügbar${slot.reason ? `: ${getReasonText(slot.reason)}` : ''}`,
               date,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
+              startTime: typeof slot.startTime === 'string' ? slot.startTime : slot.startTime.toISOString(),
+              endTime: typeof slot.endTime === 'string' ? slot.endTime : slot.endTime.toISOString(),
               available: slot.available,
               remainingCapacity: slot.remainingCapacity,
               reason: slot.reason,
@@ -277,7 +276,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // 8. Add bookings as events
+    // 8. Add bookings as events (Phase 4: Use DateTime)
     for (const booking of bookings) {
       calendarEvents.push({
         id: booking.id,
@@ -290,8 +289,7 @@ export async function GET(request: Request) {
         serviceId: booking.serviceId,
         status: booking.status,
         date: booking.createdAt.toISOString(),
-        preferredDate: booking.preferredDate,
-        preferredTime: booking.preferredTime,
+        preferredDateTime: booking.preferredDateTime.toISOString(), // Phase 4: DateTime field
         message: booking.message,
       })
     }
@@ -341,7 +339,7 @@ export async function GET(request: Request) {
  * Get German text for unavailability reason
  */
 function getReasonText(
-  reason: 'outside_hours' | 'at_capacity' | 'blocked' | 'in_break'
+  reason: 'outside_hours' | 'at_capacity' | 'blocked' | 'in_break' | 'in_past'
 ): string {
   switch (reason) {
     case 'outside_hours':
@@ -352,6 +350,8 @@ function getReasonText(
       return 'Blockiert'
     case 'in_break':
       return 'Pausenzeit'
+    case 'in_past':
+      return 'In der Vergangenheit'
     default:
       return 'Nicht verfügbar'
   }

@@ -59,10 +59,8 @@ export default async function ConfirmationPage({
     notFound()
   }
 
-  // Construct appointment date/time
-  const appointmentDate = new Date(
-    `${booking.preferredDate}T${booking.preferredTime}:00`
-  )
+  // Construct appointment date/time (already a Date object)
+  const appointmentDate = booking.preferredDateTime
 
   return (
     <div className="container mx-auto py-12 px-4 max-w-3xl">

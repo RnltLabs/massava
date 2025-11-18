@@ -14,6 +14,9 @@ import { Result, ok, err } from '@/lib/result';
 import { Prisma } from '@/app/generated/prisma';
 import type { BookingStatus } from '@/app/generated/prisma';
 import { normalizeToGrid } from './slot-utils';
+import { format, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { validateTimezoneOrThrow } from '@/lib/timezone';
 
 /**
  * Booking data for creation with capacity check
@@ -25,8 +28,7 @@ export interface BookingData {
   customerName: string;
   customerEmail: string;
   customerPhone?: string;
-  preferredDate: string;
-  preferredTime: string;
+  preferredDateTime: Date;
   message?: string;
   explicitHealthConsent?: boolean;
   healthConsentGivenAt?: Date;
@@ -88,12 +90,13 @@ export async function checkSlotCapacity(
   const client = tx || prisma;
 
   try {
-    // Fetch studio capacity
+    // Fetch studio capacity and timezone (P0 Fix #2)
     const studio = await client.studio.findUnique({
       where: { id: studioId },
       select: {
         id: true,
         capacity: true,
+        timezone: true,
       },
     });
 
@@ -102,12 +105,33 @@ export async function checkSlotCapacity(
       return err({ type: 'STUDIO_NOT_FOUND', studioId });
     }
 
+    // Validate studio timezone (SECURITY)
+    try {
+      validateTimezoneOrThrow(studio.timezone);
+    } catch (tzError) {
+      logger.error('Invalid studio timezone in capacity check', {
+        correlationId,
+        studioId,
+        timezone: studio.timezone,
+      });
+      return err({
+        type: 'DATABASE_ERROR',
+        message: 'Invalid studio timezone configuration',
+      });
+    }
+
     // Count existing bookings at this slot (CONFIRMED and PENDING)
+    // Parse date and time in studio's timezone (P0 Fix #2)
+    const dateTimeStr = `${date}T${normalizedTime}:00`;
+    // Parse as local time in studio's timezone
+    const localDate = parseISO(dateTimeStr);
+    // Convert from studio's local time to UTC
+    const slotDateTime = fromZonedTime(localDate, studio.timezone);
+
     const bookingCount = await client.newBooking.count({
       where: {
         studioId,
-        preferredDate: date,
-        preferredTime: normalizedTime,
+        preferredDateTime: slotDateTime,
         status: {
           in: ['CONFIRMED', 'PENDING'] as BookingStatus[],
         },
@@ -165,21 +189,25 @@ export async function createBookingWithCapacityCheck(
   maxRetries: number = 3
 ): Promise<Result<{ id: string }, CapacityError>> {
   const correlationId = `create-booking-${Date.now()}`;
-  const normalizedTime = normalizeToGrid(bookingData.preferredTime);
+
+  // Extract date and time from DateTime object
+  const date = format(bookingData.preferredDateTime, 'yyyy-MM-dd');
+  const time = format(bookingData.preferredDateTime, 'HH:mm');
+  const normalizedTime = normalizeToGrid(time);
 
   logger.info('Creating booking with capacity check', {
     correlationId,
     studioId: bookingData.studioId,
-    date: bookingData.preferredDate,
+    date,
     time: normalizedTime,
     customerEmail: bookingData.customerEmail,
   });
 
   // Warn if time is not on grid
-  if (normalizedTime !== bookingData.preferredTime) {
+  if (normalizedTime !== time) {
     logger.warn('Time normalized to grid', {
       correlationId,
-      originalTime: bookingData.preferredTime,
+      originalTime: time,
       normalizedTime,
     });
   }
@@ -194,7 +222,7 @@ export async function createBookingWithCapacityCheck(
           // 1. Check capacity within transaction
           const capacityCheck = await checkSlotCapacity(
             bookingData.studioId,
-            bookingData.preferredDate,
+            date,
             normalizedTime,
             tx
           );
@@ -207,7 +235,7 @@ export async function createBookingWithCapacityCheck(
             const capacityError: CapacityError = {
               type: 'CAPACITY_EXCEEDED',
               studioId: bookingData.studioId,
-              date: bookingData.preferredDate,
+              date,
               time: normalizedTime,
               capacity: capacityCheck.value.capacity,
               currentBookings: capacityCheck.value.currentBookings,
@@ -215,7 +243,9 @@ export async function createBookingWithCapacityCheck(
             throw new CapacityValidationError(capacityError);
           }
 
-          // 2. Create booking
+          // 2. Create booking with normalized DateTime
+          const normalizedDateTime = parseISO(`${date}T${normalizedTime}:00`);
+
           const booking = await tx.newBooking.create({
             data: {
               studioId: bookingData.studioId,
@@ -224,8 +254,7 @@ export async function createBookingWithCapacityCheck(
               customerName: bookingData.customerName,
               customerEmail: bookingData.customerEmail,
               customerPhone: bookingData.customerPhone,
-              preferredDate: bookingData.preferredDate,
-              preferredTime: normalizedTime,
+              preferredDateTime: normalizedDateTime,
               message: bookingData.message,
               explicitHealthConsent: bookingData.explicitHealthConsent,
               healthConsentGivenAt: bookingData.healthConsentGivenAt,
@@ -241,7 +270,7 @@ export async function createBookingWithCapacityCheck(
             correlationId,
             bookingId: booking.id,
             studioId: bookingData.studioId,
-            date: bookingData.preferredDate,
+            date,
             time: normalizedTime,
           });
 
@@ -356,12 +385,13 @@ export async function batchCheckCapacity(
   const normalizedTimes = times.map(t => normalizeToGrid(t));
 
   try {
-    // Fetch studio capacity once
+    // Fetch studio capacity and timezone once (P0 Fix #2)
     const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: {
         id: true,
         capacity: true,
+        timezone: true,
       },
     });
 
@@ -373,28 +403,51 @@ export async function batchCheckCapacity(
       return results;
     }
 
+    // Validate studio timezone (SECURITY)
+    try {
+      validateTimezoneOrThrow(studio.timezone);
+    } catch (tzError) {
+      const error: CapacityError = {
+        type: 'DATABASE_ERROR',
+        message: 'Invalid studio timezone configuration',
+      };
+      for (const time of times) {
+        results.set(time, err(error));
+      }
+      return results;
+    }
+
     // Fetch all bookings for the date at once
+    // Parse date in studio's timezone (P0 Fix #2)
+    const dateStr = `${date}T00:00:00`;
+    const localDate = parseISO(dateStr);
+    const startDate = fromZonedTime(startOfDay(localDate), studio.timezone);
+    const endDate = fromZonedTime(endOfDay(localDate), studio.timezone);
+
     const bookings = await prisma.newBooking.findMany({
       where: {
         studioId,
-        preferredDate: date,
-        preferredTime: {
-          in: normalizedTimes,
+        preferredDateTime: {
+          gte: startDate,
+          lte: endDate,
         },
         status: {
           in: ['CONFIRMED', 'PENDING'] as BookingStatus[],
         },
       },
       select: {
-        preferredTime: true,
+        preferredDateTime: true,
       },
     });
 
-    // Count bookings per time slot
+    // Count bookings per time slot (convert to studio's local timezone)
     const bookingCounts = new Map<string, number>();
     for (const booking of bookings) {
-      const count = bookingCounts.get(booking.preferredTime) || 0;
-      bookingCounts.set(booking.preferredTime, count + 1);
+      // Convert booking time from UTC to studio's local timezone
+      const localBookingTime = toZonedTime(booking.preferredDateTime, studio.timezone);
+      const timeStr = format(localBookingTime, 'HH:mm');
+      const count = bookingCounts.get(timeStr) || 0;
+      bookingCounts.set(timeStr, count + 1);
     }
 
     // Build results for each time

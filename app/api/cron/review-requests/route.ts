@@ -11,6 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendReviewRequestEmail } from '@/lib/email/send';
 import { logger } from '@/lib/logger';
+import { format, startOfDay, endOfDay, subDays } from 'date-fns';
+import { de, enUS } from 'date-fns/locale';
 
 /**
  * Vercel Cron Job Endpoint
@@ -57,17 +59,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       action: 'CRON_REVIEW_REQUESTS',
     });
 
-    // Calculate yesterday's date (24 hours ago)
+    // Calculate yesterday's date range (24 hours ago)
     const now = new Date();
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Format as YYYY-MM-DD to match preferredDate format in database
-    const yesterdayDate = yesterday.toISOString().split('T')[0];
+    const yesterday = subDays(now, 1);
+    const yesterdayStart = startOfDay(yesterday);
+    const yesterdayEnd = endOfDay(yesterday);
+    const yesterdayDate = format(yesterday, 'yyyy-MM-dd');
 
     logger.info('Searching for bookings to request reviews', {
       action: 'CRON_REVIEW_REQUESTS',
-      targetDate: yesterdayDate,
+      targetDateRange: {
+        start: yesterdayStart.toISOString(),
+        end: yesterdayEnd.toISOString(),
+      },
     });
 
     // Find all confirmed bookings from yesterday that haven't received a review request
@@ -75,7 +79,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       where: {
         status: 'CONFIRMED',
         reviewRequestSent: false,
-        preferredDate: yesterdayDate,
+        preferredDateTime: {
+          gte: yesterdayStart,
+          lte: yesterdayEnd,
+        },
       },
       include: {
         studio: {
@@ -122,13 +129,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         const reviewUrl = `${appUrl}/${locale}/studio/${booking.studio.id}/review?bookingId=${booking.id}`;
 
         // Format booking date for display
-        const bookingDate = new Date(booking.preferredDate).toLocaleDateString(
-          locale === 'de' ? 'de-DE' : 'en-US',
-          {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }
+        const bookingDate = format(
+          booking.preferredDateTime,
+          'PPPP',
+          { locale: locale === 'de' ? de : enUS }
         );
 
         // Send review request email

@@ -22,10 +22,10 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash('test123', 10);
 
-  // Create studio owner
-  const owner = await prisma.user.create({
+  // Create studio owners (one per studio for MVP)
+  const owner1 = await prisma.user.create({
     data: {
-      email: 'owner@example.com',
+      email: 'maria.schmidt@thai-wellness-oase.de',
       name: 'Maria Schmidt',
       password: hashedPassword,
       primaryRole: 'STUDIO_OWNER',
@@ -33,7 +33,31 @@ async function main() {
     },
   });
 
-  console.log('✅ Created studio owner:', owner.email);
+  const owner2 = await prisma.user.create({
+    data: {
+      email: 'sabine.meyer@sabai-massage.de',
+      name: 'Sabine Meyer',
+      password: hashedPassword,
+      primaryRole: 'STUDIO_OWNER',
+      emailVerified: new Date(),
+    },
+  });
+
+  const owner3 = await prisma.user.create({
+    data: {
+      email: 'petra.wagner@lotus-spa.de',
+      name: 'Petra Wagner',
+      password: hashedPassword,
+      primaryRole: 'STUDIO_OWNER',
+      emailVerified: new Date(),
+    },
+  });
+
+  console.log('✅ Created studio owners:', {
+    owner1: owner1.email,
+    owner2: owner2.email,
+    owner3: owner3.email,
+  });
 
   // Create customer accounts
   const customers = await Promise.all([
@@ -134,13 +158,13 @@ async function main() {
         'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&h=600&fit=crop',
       ],
       openingHours: {
-        monday: '10:00-20:00',
-        tuesday: '10:00-20:00',
-        wednesday: '10:00-20:00',
-        thursday: '10:00-20:00',
-        friday: '10:00-20:00',
-        saturday: '11:00-19:00',
-        sunday: 'Geschlossen',
+        monday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        tuesday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        wednesday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        thursday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        friday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        saturday: { isOpen: true, openTime: '11:00', closeTime: '19:00' },
+        sunday: { isOpen: false },
       },
       services: {
         create: [
@@ -188,13 +212,13 @@ async function main() {
         'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
       ],
       openingHours: {
-        monday: '09:00-21:00',
-        tuesday: '09:00-21:00',
-        wednesday: '09:00-21:00',
-        thursday: '09:00-21:00',
-        friday: '09:00-21:00',
-        saturday: '10:00-20:00',
-        sunday: '10:00-18:00',
+        monday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        tuesday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        wednesday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        thursday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        friday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        saturday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        sunday: { isOpen: true, openTime: '10:00', closeTime: '18:00' },
       },
       services: {
         create: [
@@ -247,13 +271,13 @@ async function main() {
         'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
       ],
       openingHours: {
-        monday: '10:00-22:00',
-        tuesday: '10:00-22:00',
-        wednesday: '10:00-22:00',
-        thursday: '10:00-22:00',
-        friday: '10:00-22:00',
-        saturday: '11:00-21:00',
-        sunday: '12:00-20:00',
+        monday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        tuesday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        wednesday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        thursday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        friday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        saturday: { isOpen: true, openTime: '11:00', closeTime: '21:00' },
+        sunday: { isOpen: true, openTime: '12:00', closeTime: '20:00' },
       },
       services: {
         create: [
@@ -286,11 +310,11 @@ async function main() {
     studio3: studio3.name,
   });
 
-  // Create studio ownerships
+  // Create studio ownerships (1:1 mapping for MVP)
   await Promise.all([
     prisma.studioOwnership.create({
       data: {
-        userId: owner.id,
+        userId: owner1.id,
         studioId: studio1.id,
         canTransfer: true,
         acceptedAt: new Date(),
@@ -298,7 +322,7 @@ async function main() {
     }),
     prisma.studioOwnership.create({
       data: {
-        userId: owner.id,
+        userId: owner2.id,
         studioId: studio2.id,
         canTransfer: true,
         acceptedAt: new Date(),
@@ -306,7 +330,7 @@ async function main() {
     }),
     prisma.studioOwnership.create({
       data: {
-        userId: owner.id,
+        userId: owner3.id,
         studioId: studio3.id,
         canTransfer: true,
         acceptedAt: new Date(),
@@ -333,6 +357,14 @@ async function main() {
   const pastDate5 = new Date();
   pastDate5.setDate(pastDate5.getDate() - 25);
 
+  // Create future bookings (for testing availability)
+  const futureDate1 = new Date();
+  futureDate1.setDate(futureDate1.getDate() + 1); // Tomorrow
+  const futureDate2 = new Date();
+  futureDate2.setDate(futureDate2.getDate() + 2); // 2 days from now
+  const futureDate3 = new Date();
+  futureDate3.setDate(futureDate3.getDate() + 3); // 3 days from now
+
   const bookings = await Promise.all([
     // Studio 1 bookings
     prisma.newBooking.create({
@@ -342,8 +374,7 @@ async function main() {
         customerId: customers[0].id,
         customerName: customers[0].name!,
         customerEmail: customers[0].email,
-        preferredDate: pastDate1.toISOString().split('T')[0],
-        preferredTime: '14:00',
+        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T14:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate1,
         reviewRequestSent: true,
@@ -356,8 +387,7 @@ async function main() {
         customerId: customers[1].id,
         customerName: customers[1].name!,
         customerEmail: customers[1].email,
-        preferredDate: pastDate2.toISOString().split('T')[0],
-        preferredTime: '16:00',
+        preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T16:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate2,
         reviewRequestSent: true,
@@ -370,8 +400,7 @@ async function main() {
         customerId: customers[2].id,
         customerName: customers[2].name!,
         customerEmail: customers[2].email,
-        preferredDate: pastDate3.toISOString().split('T')[0],
-        preferredTime: '11:00',
+        preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T11:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate3,
         reviewRequestSent: true,
@@ -385,8 +414,7 @@ async function main() {
         customerId: customers[3].id,
         customerName: customers[3].name!,
         customerEmail: customers[3].email,
-        preferredDate: pastDate1.toISOString().split('T')[0],
-        preferredTime: '15:00',
+        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T15:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate1,
         reviewRequestSent: true,
@@ -399,8 +427,7 @@ async function main() {
         customerId: customers[4].id,
         customerName: customers[4].name!,
         customerEmail: customers[4].email,
-        preferredDate: pastDate2.toISOString().split('T')[0],
-        preferredTime: '10:00',
+        preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T10:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate2,
         reviewRequestSent: true,
@@ -413,8 +440,7 @@ async function main() {
         customerId: customers[5].id,
         customerName: customers[5].name!,
         customerEmail: customers[5].email,
-        preferredDate: pastDate4.toISOString().split('T')[0],
-        preferredTime: '17:00',
+        preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T17:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate4,
         reviewRequestSent: true,
@@ -427,8 +453,7 @@ async function main() {
         customerId: customers[6].id,
         customerName: customers[6].name!,
         customerEmail: customers[6].email,
-        preferredDate: pastDate5.toISOString().split('T')[0],
-        preferredTime: '13:00',
+        preferredDateTime: new Date(pastDate5.toISOString().split('T')[0] + 'T13:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate5,
         reviewRequestSent: true,
@@ -442,8 +467,7 @@ async function main() {
         customerId: customers[7].id,
         customerName: customers[7].name!,
         customerEmail: customers[7].email,
-        preferredDate: pastDate1.toISOString().split('T')[0],
-        preferredTime: '18:00',
+        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T18:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate1,
         reviewRequestSent: true,
@@ -456,8 +480,7 @@ async function main() {
         customerId: customers[0].id,
         customerName: customers[0].name!,
         customerEmail: customers[0].email,
-        preferredDate: pastDate3.toISOString().split('T')[0],
-        preferredTime: '14:00',
+        preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T14:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate3,
         reviewRequestSent: true,
@@ -470,11 +493,49 @@ async function main() {
         customerId: customers[1].id,
         customerName: customers[1].name!,
         customerEmail: customers[1].email,
-        preferredDate: pastDate4.toISOString().split('T')[0],
-        preferredTime: '19:00',
+        preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T19:00:00'),
         status: 'CONFIRMED',
         confirmedAt: pastDate4,
         reviewRequestSent: true,
+      },
+    }),
+    // FUTURE BOOKINGS (for testing availability)
+    // Tomorrow - Studio 1
+    prisma.newBooking.create({
+      data: {
+        studioId: studio1.id,
+        serviceId: studio1Services[0].id,
+        customerId: customers[2].id,
+        customerName: customers[2].name!,
+        customerEmail: customers[2].email,
+        preferredDateTime: new Date(futureDate1.toISOString().split('T')[0] + 'T14:00:00'),
+        status: 'CONFIRMED',
+        confirmedAt: new Date(),
+      },
+    }),
+    // 2 days from now - Studio 2
+    prisma.newBooking.create({
+      data: {
+        studioId: studio2.id,
+        serviceId: studio2Services[1].id,
+        customerId: customers[3].id,
+        customerName: customers[3].name!,
+        customerEmail: customers[3].email,
+        preferredDateTime: new Date(futureDate2.toISOString().split('T')[0] + 'T11:30:00'),
+        status: 'PENDING',
+      },
+    }),
+    // 3 days from now - Studio 3
+    prisma.newBooking.create({
+      data: {
+        studioId: studio3.id,
+        serviceId: studio3Services[2].id,
+        customerId: customers[4].id,
+        customerName: customers[4].name!,
+        customerEmail: customers[4].email,
+        preferredDateTime: new Date(futureDate3.toISOString().split('T')[0] + 'T16:45:00'),
+        status: 'CONFIRMED',
+        confirmedAt: new Date(),
       },
     }),
   ]);
@@ -535,7 +596,7 @@ async function main() {
         isVisible: true,
         response: 'Vielen Dank für Ihre positive Bewertung! Es freut uns sehr, dass Sie sich bei uns wohl gefühlt haben. Wir freuen uns auf Ihren nächsten Besuch!',
         respondedAt: new Date(),
-        respondedBy: owner.id,
+        respondedBy: owner2.id, // Studio 2 owner response
       },
     }),
     prisma.review.create({
@@ -579,7 +640,7 @@ async function main() {
         isVisible: true,
         response: 'Vielen Dank für Ihr Feedback! Wir legen großen Wert auf Qualität und Premium-Service. Wir hoffen, Sie bald wiederzusehen!',
         respondedAt: new Date(),
-        respondedBy: owner.id,
+        respondedBy: owner3.id, // Studio 3 owner response
       },
     }),
     prisma.review.create({
@@ -703,14 +764,16 @@ async function main() {
   console.log('🎉 Seeding completed!');
   console.log('');
   console.log('📊 Summary:');
-  console.log(`   - Users: ${customers.length + 1} (1 owner, ${customers.length} customers)`);
+  console.log(`   - Users: ${customers.length + 3} (3 owners, ${customers.length} customers)`);
   console.log(`   - Studios: 3 (with images and coordinates)`);
   console.log(`   - Bookings: ${bookings.length}`);
   console.log(`   - Reviews: ${reviews.length}`);
   console.log(`   - TimeSlots: 0 (using dynamic slot calculation)`);
   console.log('');
   console.log('🔐 Test Credentials:');
-  console.log('   Owner: owner@example.com / test123');
+  console.log('   Owner 1 (Thai Wellness Oase): maria.schmidt@thai-wellness-oase.de / test123');
+  console.log('   Owner 2 (Sabai Massage): sabine.meyer@sabai-massage.de / test123');
+  console.log('   Owner 3 (Lotus Spa): petra.wagner@lotus-spa.de / test123');
   console.log('   Customer: anna.mueller@example.com / test123');
   console.log('');
   console.log('ℹ️  Dynamic Slots: Enabled by default');

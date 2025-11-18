@@ -13,6 +13,8 @@ import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { revalidatePath } from 'next/cache';
 import { sendBookingConfirmationEmail, sendBookingCancellationEmail } from '@/lib/email/send';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 export interface ActionResult {
   success: boolean;
@@ -96,13 +98,8 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          bookingTime: booking.preferredTime,
+          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
           studioAddress: booking.studio.address || undefined,
           studioPhone: booking.studio.phone || undefined,
           message: booking.message || undefined,
@@ -217,13 +214,8 @@ export async function declineBooking(
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          bookingTime: booking.preferredTime,
+          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
           cancellationReason: reason,
         },
         'de'

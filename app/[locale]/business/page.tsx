@@ -8,6 +8,7 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
+import { format } from 'date-fns';
 import { TodayDashboard } from '@/components/business/TodayDashboard';
 import { BookingStatus } from '@/app/generated/prisma';
 import { OnboardingScreen } from './_components/OnboardingScreen';
@@ -133,13 +134,13 @@ async function getDashboardData(userEmail: string) {
   // Calculate revenue using constant
   const todayRevenue = todayConfirmed.length * AVERAGE_SERVICE_PRICE;
 
-  // Map bookings to appointment format
+  // Map bookings to appointment format (Phase 4: DateTime migration)
   const mapBookingToAppointment = (booking: typeof allTodayBookings[0]) => ({
     id: booking.id,
     customerName: booking.customerName,
     serviceName: booking.service?.name ?? 'Kein Service',
-    time: booking.preferredTime,
-    date: booking.preferredDate,
+    time: format(booking.preferredDateTime, 'HH:mm'),
+    date: format(booking.preferredDateTime, 'yyyy-MM-dd'),
     status: booking.status,
   });
 

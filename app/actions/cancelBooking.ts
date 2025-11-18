@@ -1,6 +1,7 @@
 /**
  * Customer Booking Cancellation Action
  * Task 4.3: Customer Cancellation Confirmation Integration
+ * Phase 4: DateTime-based formatting with timezone support
  */
 
 "use server"
@@ -8,6 +9,7 @@
 import { prisma } from '@/lib/prisma';
 import { sendBookingCancelledByCustomerToOwner, sendCustomerCancellationConfirmation } from '@/lib/email/send';
 import { logger } from '@/lib/logger';
+import { formatInTimezone } from '@/lib/timezone';
 
 interface CancellationResult {
   success: boolean;
@@ -77,13 +79,17 @@ export async function cancelBooking(
       customerId: booking.customerId,
     });
 
-    // Format date and time for emails
-    const bookingDate = new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-    const bookingTime = booking.preferredTime;
+    // Phase 4: Format date and time for emails using studio timezone
+    const bookingDate = formatInTimezone(
+      booking.preferredDateTime,
+      booking.studio.timezone,
+      'EEEE, d. MMMM yyyy'
+    );
+    const bookingTime = formatInTimezone(
+      booking.preferredDateTime,
+      booking.studio.timezone,
+      'HH:mm'
+    );
 
     // Get app URL for links
     const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';

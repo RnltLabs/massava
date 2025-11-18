@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import { format } from 'date-fns';
 import { calculateAvailableSlots } from '@/lib/slots';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
@@ -179,10 +180,14 @@ export async function GET(
     // Apply time range filters if provided
     if (startTime || endTime) {
       slots = slots.filter((slot) => {
-        if (startTime && slot.startTime < startTime) {
+        const slotTimeStr = typeof slot.startTime === 'string'
+          ? slot.startTime
+          : format(slot.startTime, 'HH:mm');
+
+        if (startTime && slotTimeStr < startTime) {
           return false;
         }
-        if (endTime && slot.startTime > endTime) {
+        if (endTime && slotTimeStr > endTime) {
           return false;
         }
         return true;

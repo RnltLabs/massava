@@ -2,7 +2,7 @@
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
  *
- * Dynamic Availability Calculator
+ * Dynamic Availability Calculator (DateTime-based)
  *
  * Calculates available time slots for a studio on a given date,
  * accounting for:
@@ -10,6 +10,8 @@
  * - Existing bookings (CONFIRMED and PENDING)
  * - Blocked times
  * - Studio capacity limits
+ * - Minimum booking window (MIN_BOOKING_HOURS_AHEAD)
+ * - Timezone-aware DateTime handling
  */
 
 import { prisma } from '@/lib/prisma';
@@ -17,26 +19,34 @@ import { logger } from '@/lib/logger';
 import { Result, ok, err } from '@/lib/result';
 import type { OpeningHours, DayOfWeek } from '@/lib/types/opening-hours';
 import {
-  generateDayTimeSlots,
-  isTimeInRange,
-  getTimeDifferenceMinutes,
-  normalizeToGrid,
-} from './slot-utils';
+  formatInTimezone,
+  toStudioLocalTime,
+  toUTC,
+  validateTimezoneOrThrow,
+  isWithinBusinessHours,
+} from '@/lib/timezone';
+import { addMinutes, addHours, startOfDay, setHours, setMinutes, isAfter, isBefore } from 'date-fns';
+import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { MIN_BOOKING_HOURS_AHEAD } from '@/lib/timezone/constants';
 
 /**
- * Available slot information
+ * Available slot information (DateTime-based)
  */
 export interface AvailableSlot {
-  /** Slot start time in HH:mm format */
-  startTime: string;
-  /** Slot end time in HH:mm format (startTime + 15 minutes) */
-  endTime: string;
+  /** Slot start time as Date object (UTC) */
+  startTime: Date;
+  /** Slot end time as Date object (UTC) */
+  endTime: Date;
+  /** Formatted start time in studio's timezone (HH:mm) */
+  startTimeFormatted: string;
+  /** Formatted end time in studio's timezone (HH:mm) */
+  endTimeFormatted: string;
   /** Whether the slot is available for booking */
   available: boolean;
   /** Number of remaining capacity slots */
   remainingCapacity: number;
   /** Reason why slot is unavailable (if applicable) */
-  reason?: 'outside_hours' | 'at_capacity' | 'blocked' | 'in_break';
+  reason?: 'outside_hours' | 'at_capacity' | 'blocked' | 'in_break' | 'in_past'; // 'in_past' includes slots within MIN_BOOKING_HOURS_AHEAD window
 }
 
 /**
@@ -59,17 +69,17 @@ export type SlotCalculationError =
   | { type: 'DATABASE_ERROR'; message: string };
 
 /**
- * Calculate available slots for a studio on a given date
+ * Calculate available slots for a studio on a given date (DateTime-based)
  *
  * @param studioId - Studio ID
- * @param date - Date in YYYY-MM-DD format
+ * @param date - Date in YYYY-MM-DD format or Date object
  * @param serviceId - Optional service ID filter
  * @param options - Calculation options
- * @returns Result with available slots or error
+ * @returns Result with available slots (as DateTime objects) or error
  */
 export async function calculateAvailableSlots(
   studioId: string,
-  date: string,
+  date: string | Date,
   serviceId?: string,
   options: SlotCalculationOptions = {}
 ): Promise<Result<AvailableSlot[], SlotCalculationError>> {
@@ -77,26 +87,33 @@ export async function calculateAvailableSlots(
   logger.info('Calculating available slots', {
     correlationId,
     studioId,
-    date,
+    date: typeof date === 'string' ? date : date.toISOString(),
     serviceId,
     options,
   });
 
   try {
-    // Validate date format
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) {
-      logger.warn('Invalid date format', { correlationId, date });
-      return err({ type: 'INVALID_DATE', date });
+    // Parse date input
+    let targetDate: Date;
+    if (typeof date === 'string') {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(date)) {
+        logger.warn('Invalid date format', { correlationId, date });
+        return err({ type: 'INVALID_DATE', date });
+      }
+      targetDate = new Date(date + 'T00:00:00.000Z');
+    } else {
+      targetDate = date;
     }
 
-    // Fetch studio with capacity
+    // Fetch studio with capacity and timezone
     const studio = await prisma.studio.findUnique({
       where: { id: studioId },
       select: {
         id: true,
         capacity: true,
         openingHours: true,
+        timezone: true,
       },
     });
 
@@ -105,24 +122,40 @@ export async function calculateAvailableSlots(
       return err({ type: 'STUDIO_NOT_FOUND', studioId });
     }
 
+    // Validate studio timezone
+    validateTimezoneOrThrow(studio.timezone);
+
+    // Convert target date to studio's timezone
+    const studioDate = toZonedTime(targetDate, studio.timezone);
+    const dayOfWeek = formatInTimezone(studioDate, studio.timezone, 'EEEE').toLowerCase() as DayOfWeek;
+
     // Parse opening hours for the day of week
-    const dayOfWeek = getDayOfWeek(date);
     const dayHours = parseOpeningHours(studio.openingHours, dayOfWeek);
 
+    logger.debug('Parsed opening hours', {
+      correlationId,
+      studioId,
+      dayOfWeek,
+      dayHours,
+      rawOpeningHours: studio.openingHours,
+    });
+
     if (!dayHours) {
-      logger.warn('Invalid opening hours', { correlationId, studioId });
+      logger.warn('Invalid opening hours', { correlationId, studioId, dayOfWeek, rawOpeningHours: studio.openingHours });
       return err({ type: 'INVALID_OPENING_HOURS', studioId });
     }
 
     // If studio is closed, return empty slots or all unavailable
     if (!dayHours.isOpen) {
-      logger.info('Studio is closed on this day', { correlationId, date, dayOfWeek });
+      logger.info('Studio is closed on this day', { correlationId, date: formatInTimezone(studioDate, studio.timezone, 'yyyy-MM-dd'), dayOfWeek });
 
       if (options.includeUnavailable) {
-        const allSlots = generateDayTimeSlots();
-        return ok(allSlots.map(time => ({
-          startTime: time,
-          endTime: addMinutesToTime(time, 15),
+        const allSlots = generateDayTimeSlots(studioDate, studio.timezone, dayHours);
+        return ok(allSlots.map(slotDate => ({
+          startTime: slotDate,
+          endTime: addMinutes(slotDate, 15),
+          startTimeFormatted: formatInTimezone(slotDate, studio.timezone, 'HH:mm'),
+          endTimeFormatted: formatInTimezone(addMinutes(slotDate, 15), studio.timezone, 'HH:mm'),
           available: false,
           remainingCapacity: 0,
           reason: 'outside_hours' as const,
@@ -132,29 +165,45 @@ export async function calculateAvailableSlots(
       return ok([]);
     }
 
-    // Generate time grid for the day
-    const allTimeSlots = generateDayTimeSlots();
+    // Generate time slots for the day (in studio's timezone, returns UTC Date objects)
+    const allTimeSlots = generateDayTimeSlots(studioDate, studio.timezone, dayHours);
+
+    logger.debug('Generated time slots', {
+      correlationId,
+      studioId,
+      totalSlots: allTimeSlots.length,
+      openTime: dayHours.openTime,
+      closeTime: dayHours.closeTime,
+    });
+
+    // Get start and end of day in studio's timezone (for DB query)
+    const dayStart = fromZonedTime(startOfDay(studioDate), studio.timezone);
+    const dayEnd = fromZonedTime(addMinutes(startOfDay(studioDate), 24 * 60), studio.timezone);
 
     // Fetch existing bookings for the date (CONFIRMED and PENDING only)
     const bookings = await prisma.newBooking.findMany({
       where: {
         studioId,
-        preferredDate: date,
+        preferredDateTime: {
+          gte: dayStart,
+          lt: dayEnd,
+        },
         status: {
           in: ['CONFIRMED', 'PENDING'],
         },
         ...(serviceId && { serviceId }),
       },
       select: {
-        preferredTime: true,
+        preferredDateTime: true,
       },
     });
 
-    // Count bookings per time slot
-    const bookingCounts = new Map<string, number>();
+    // Count bookings per time slot (round to 15-minute grid)
+    const bookingCounts = new Map<number, number>();
     for (const booking of bookings) {
-      const normalizedTime = normalizeToGrid(booking.preferredTime);
-      bookingCounts.set(normalizedTime, (bookingCounts.get(normalizedTime) || 0) + 1);
+      // Round to nearest 15-minute slot
+      const slotTimestamp = roundToSlotBoundary(booking.preferredDateTime).getTime();
+      bookingCounts.set(slotTimestamp, (bookingCounts.get(slotTimestamp) || 0) + 1);
     }
 
     // Fetch blocked times for the date
@@ -166,18 +215,20 @@ export async function calculateAvailableSlots(
           {
             isAllDay: true,
             startTime: {
-              lte: new Date(`${date}T23:59:59.999Z`),
+              lte: dayEnd,
             },
             endTime: {
-              gte: new Date(`${date}T00:00:00.000Z`),
+              gte: dayStart,
             },
           },
           // Specific time blocks
           {
             isAllDay: false,
             startTime: {
-              gte: new Date(`${date}T00:00:00.000Z`),
-              lt: new Date(`${date}T23:59:59.999Z`),
+              lt: dayEnd,
+            },
+            endTime: {
+              gt: dayStart,
             },
           },
         ],
@@ -198,15 +249,17 @@ export async function calculateAvailableSlots(
 
     // Calculate availability for each slot
     const slots: AvailableSlot[] = [];
+    const now = new Date();
 
-    for (const time of allTimeSlots) {
+    for (const slotStart of allTimeSlots) {
       const slot = calculateSlotAvailability(
-        time,
+        slotStart,
         studio.capacity,
+        studio.timezone,
         dayHours,
         bookingCounts,
         blockedTimes,
-        date
+        now
       );
 
       // Apply minimum capacity filter
@@ -236,7 +289,7 @@ export async function calculateAvailableSlots(
       correlationId,
       error: error instanceof Error ? error.message : 'Unknown error',
       studioId,
-      date,
+      date: typeof date === 'string' ? date : date.toISOString(),
     });
 
     return err({
@@ -247,44 +300,101 @@ export async function calculateAvailableSlots(
 }
 
 /**
- * Calculate availability for a single time slot
+ * Generate time slots for a specific day (returns UTC Date objects)
+ */
+function generateDayTimeSlots(
+  date: Date,
+  timezone: string,
+  dayHours: { openTime: string; closeTime: string }
+): Date[] {
+  const slots: Date[] = [];
+
+  // Parse opening and closing times
+  const [openHour, openMin] = dayHours.openTime.split(':').map(Number);
+  const [closeHour, closeMin] = dayHours.closeTime.split(':').map(Number);
+
+  // Create dates in studio's local timezone
+  const dayStart = startOfDay(toZonedTime(date, timezone));
+  let currentSlot = setMinutes(setHours(dayStart, openHour), openMin);
+  const closeTime = setMinutes(setHours(dayStart, closeHour), closeMin);
+
+  // Generate 15-minute slots
+  while (isBefore(currentSlot, closeTime)) {
+    // Convert to UTC before storing
+    slots.push(fromZonedTime(currentSlot, timezone));
+    currentSlot = addMinutes(currentSlot, 15);
+  }
+
+  return slots;
+}
+
+/**
+ * Round a DateTime to the nearest 15-minute slot boundary (floor)
+ */
+function roundToSlotBoundary(date: Date): Date {
+  const minutes = date.getMinutes();
+  const roundedMinutes = Math.floor(minutes / 15) * 15;
+  const rounded = new Date(date);
+  rounded.setMinutes(roundedMinutes);
+  rounded.setSeconds(0);
+  rounded.setMilliseconds(0);
+  return rounded;
+}
+
+/**
+ * Calculate availability for a single time slot (DateTime-based)
  */
 function calculateSlotAvailability(
-  time: string,
+  slotStart: Date,
   capacity: number,
+  studioTimezone: string,
   dayHours: { openTime: string; closeTime: string; breakStart?: string; breakEnd?: string },
-  bookingCounts: Map<string, number>,
+  bookingCounts: Map<number, number>,
   blockedTimes: Array<{ startTime: Date; endTime: Date; isAllDay: boolean }>,
-  date: string
+  now: Date
 ): AvailableSlot {
-  const endTime = addMinutesToTime(time, 15);
-  const bookingCount = bookingCounts.get(time) || 0;
+  const slotEnd = addMinutes(slotStart, 15);
+  const slotTimestamp = roundToSlotBoundary(slotStart).getTime();
+  const bookingCount = bookingCounts.get(slotTimestamp) || 0;
   const remainingCapacity = capacity - bookingCount;
 
-  // Check if slot is within opening hours
-  const isWithinHours = isTimeInRange(time, dayHours.openTime, dayHours.closeTime);
-  if (!isWithinHours) {
+  // Format times for display
+  const startTimeFormatted = formatInTimezone(slotStart, studioTimezone, 'HH:mm');
+  const endTimeFormatted = formatInTimezone(slotEnd, studioTimezone, 'HH:mm');
+
+  // Check if slot is in the past or too close to book (less than MIN_BOOKING_HOURS_AHEAD)
+  const minBookingTime = addHours(now, MIN_BOOKING_HOURS_AHEAD);
+  if (isBefore(slotStart, minBookingTime)) {
     return {
-      startTime: time,
-      endTime,
+      startTime: slotStart,
+      endTime: slotEnd,
+      startTimeFormatted,
+      endTimeFormatted,
       available: false,
       remainingCapacity: 0,
-      reason: 'outside_hours',
+      reason: 'in_past',
     };
   }
 
   // Check if slot is during break time
   if (dayHours.breakStart && dayHours.breakEnd) {
-    // Break time is inclusive of start, exclusive of end
-    const timeMinutes = parseInt(time.split(':')[0]) * 60 + parseInt(time.split(':')[1]);
-    const breakStartMinutes = parseInt(dayHours.breakStart.split(':')[0]) * 60 + parseInt(dayHours.breakStart.split(':')[1]);
-    const breakEndMinutes = parseInt(dayHours.breakEnd.split(':')[0]) * 60 + parseInt(dayHours.breakEnd.split(':')[1]);
+    const slotLocalTime = toZonedTime(slotStart, studioTimezone);
+    const timeStr = formatInTimezone(slotLocalTime, studioTimezone, 'HH:mm');
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const timeMinutes = hours * 60 + minutes;
 
-    const isInBreak = timeMinutes >= breakStartMinutes && timeMinutes < breakEndMinutes;
-    if (isInBreak) {
+    const [breakStartHour, breakStartMin] = dayHours.breakStart.split(':').map(Number);
+    const breakStartMinutes = breakStartHour * 60 + breakStartMin;
+
+    const [breakEndHour, breakEndMin] = dayHours.breakEnd.split(':').map(Number);
+    const breakEndMinutes = breakEndHour * 60 + breakEndMin;
+
+    if (timeMinutes >= breakStartMinutes && timeMinutes < breakEndMinutes) {
       return {
-        startTime: time,
-        endTime,
+        startTime: slotStart,
+        endTime: slotEnd,
+        startTimeFormatted,
+        endTimeFormatted,
         available: false,
         remainingCapacity: 0,
         reason: 'in_break',
@@ -293,14 +403,13 @@ function calculateSlotAvailability(
   }
 
   // Check if slot is blocked
-  const slotStart = new Date(`${date}T${time}:00.000Z`);
-  const slotEnd = new Date(`${date}T${endTime}:00.000Z`);
-
   for (const blocked of blockedTimes) {
     if (blocked.isAllDay) {
       return {
-        startTime: time,
-        endTime,
+        startTime: slotStart,
+        endTime: slotEnd,
+        startTimeFormatted,
+        endTimeFormatted,
         available: false,
         remainingCapacity: 0,
         reason: 'blocked',
@@ -308,11 +417,13 @@ function calculateSlotAvailability(
     }
 
     // Check if slot overlaps with blocked time
-    const isBlocked = slotStart < blocked.endTime && slotEnd > blocked.startTime;
+    const isBlocked = isBefore(slotStart, blocked.endTime) && isAfter(slotEnd, blocked.startTime);
     if (isBlocked) {
       return {
-        startTime: time,
-        endTime,
+        startTime: slotStart,
+        endTime: slotEnd,
+        startTimeFormatted,
+        endTimeFormatted,
         available: false,
         remainingCapacity: 0,
         reason: 'blocked',
@@ -323,8 +434,10 @@ function calculateSlotAvailability(
   // Check capacity
   if (remainingCapacity <= 0) {
     return {
-      startTime: time,
-      endTime,
+      startTime: slotStart,
+      endTime: slotEnd,
+      startTimeFormatted,
+      endTimeFormatted,
       available: false,
       remainingCapacity: 0,
       reason: 'at_capacity',
@@ -333,20 +446,13 @@ function calculateSlotAvailability(
 
   // Slot is available
   return {
-    startTime: time,
-    endTime,
+    startTime: slotStart,
+    endTime: slotEnd,
+    startTimeFormatted,
+    endTimeFormatted,
     available: true,
     remainingCapacity,
   };
-}
-
-/**
- * Get day of week from date string
- */
-function getDayOfWeek(date: string): DayOfWeek {
-  const d = new Date(date + 'T12:00:00.000Z'); // Noon UTC to avoid timezone issues
-  const days: DayOfWeek[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[d.getUTCDay()];
 }
 
 /**
@@ -399,16 +505,4 @@ function parseOpeningHours(
   }
 
   return result;
-}
-
-/**
- * Add minutes to time string (simple helper)
- */
-function addMinutesToTime(time: string, minutes: number): string {
-  const [h, m] = time.split(':').map(Number);
-  let totalMinutes = h * 60 + m + minutes;
-  totalMinutes = totalMinutes % (24 * 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const mins = totalMinutes % 60;
-  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
 }

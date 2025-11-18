@@ -6,7 +6,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { ArrowRight, Info } from 'lucide-react';
@@ -17,6 +17,7 @@ import { StudioAvatar } from '@/components/ui/studio-avatar';
 import { formatPriceLabel } from '@/lib/utils/priceAggregation';
 import { StudioViewPopup } from '@/components/search/StudioViewPopup';
 import { StudioRating } from '@/components/reviews/StudioRating';
+import { TimeSlotButton } from '@/components/booking/TimeSlotButton';
 import type { SearchResultStudio } from '@/types/booking';
 
 interface SearchResultsResponse {
@@ -83,6 +84,8 @@ function SkeletonCard(): React.JSX.Element {
 
 export function SearchResults({ searchParams }: SearchResultsProps) {
   const router = useRouter();
+  const params = useParams();
+  const locale = (params?.locale as string) || 'de';
   const [results, setResults] = useState<SearchResultStudio[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,9 +129,10 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
 
   /**
    * Handle booking slot click - navigate to booking page
+   * Note: With dynamic slots, slotId is the ISO datetime string (startTime)
    */
   const handleBookSlot = (studioId: string, slotId: string): void => {
-    router.push(`/booking/${studioId}/${slotId}`);
+    router.push(`/${locale}/booking/${studioId}/${encodeURIComponent(slotId)}`);
   };
 
   /**
@@ -272,21 +276,19 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
                 </div>
               )}
 
-              {/* Available TimeSlots (Klickbar!) */}
+              {/* Available TimeSlots (Klickbar!) - Now with Timezone Awareness */}
               {futureSlots.length > 0 && (
                 <div className="mt-auto">
                   <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 mb-3">
                     {futureSlots.slice(0, 3).map((slot) => (
-                      <Button
-                        key={slot.id}
-                        variant="outline"
+                      <TimeSlotButton
+                        key={slot.startTime}
+                        startTime={slot.startTime}
+                        studioTimezone={result.timezone}
+                        onClick={() => handleBookSlot(id, slot.startTime)}
                         size="sm"
-                        className="justify-center hover:bg-primary hover:text-primary-foreground transition-colors h-10 sm:h-12 w-full text-sm font-medium"
-                        onClick={() => handleBookSlot(id, slot.id)}
-                        aria-label={`Termin buchen um ${formatTime(slot.startTime)} Uhr`}
-                      >
-                        {formatTime(slot.startTime)}
-                      </Button>
+                        showUserTime={true}
+                      />
                     ))}
                   </div>
 
