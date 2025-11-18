@@ -130,9 +130,23 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
   /**
    * Handle booking slot click - navigate to booking page
    * Note: With dynamic slots, slotId is the ISO datetime string (startTime)
+   * Preserves search parameters so user can return to same search results
    */
   const handleBookSlot = (studioId: string, slotId: string): void => {
-    router.push(`/${locale}/booking/${studioId}/${encodeURIComponent(slotId)}`);
+    // Build query string from current search params to preserve search context
+    const params = new URLSearchParams();
+    if (searchParams.location) params.set('location', searchParams.location);
+    if (searchParams.lat) params.set('lat', searchParams.lat);
+    if (searchParams.lng) params.set('lng', searchParams.lng);
+    if (searchParams.radius) params.set('radius', searchParams.radius);
+    if (searchParams.datetime) params.set('datetime', searchParams.datetime);
+    if (searchParams.serviceType) params.set('serviceType', searchParams.serviceType);
+    if (searchParams.minPrice) params.set('minPrice', searchParams.minPrice);
+    if (searchParams.maxPrice) params.set('maxPrice', searchParams.maxPrice);
+
+    const queryString = params.toString();
+    const bookingUrl = `/${locale}/booking/${studioId}/${encodeURIComponent(slotId)}${queryString ? `?${queryString}` : ''}`;
+    router.push(bookingUrl);
   };
 
   /**

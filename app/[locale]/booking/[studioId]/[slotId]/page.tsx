@@ -206,6 +206,8 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
       studioId={studioId}
       slotId={slotId}
       preferredDateTime={selectedSlot.startTime.toISOString()} // ISO DateTime for booking creation
+      locale={locale}
+      searchParams={search}
     />
   )
 }
