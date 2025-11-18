@@ -3,7 +3,7 @@
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
 import { ArrowLeft, ArrowRight, Calendar, Clock, Info, Loader2, ChevronDown } from "lucide-react"
-import type { Studio, Service, TimeSlot } from "@/app/generated/prisma"
+import type { Studio, Service } from "@/app/generated/prisma"
 import { UseFormReturn } from "react-hook-form"
 import type { BookingFormData } from "@/lib/validations/booking"
 import { Button } from "@/components/ui/button"
@@ -15,9 +15,15 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 
+// Simplified TimeSlot type for dynamic slots (no DB record)
+interface DynamicTimeSlot {
+  startTime: Date
+  endTime: Date
+}
+
 interface StepConfirmProps {
   studio: Studio
-  timeSlot: TimeSlot
+  timeSlot: DynamicTimeSlot // Simplified type for dynamic slots
   selectedService: Service
   form: UseFormReturn<BookingFormData>
   isSubmitting: boolean
