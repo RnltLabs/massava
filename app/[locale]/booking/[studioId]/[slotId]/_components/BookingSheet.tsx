@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -129,6 +129,26 @@ export function BookingSheet({
       explicitHealthConsent: false,
     },
   })
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      // Try to find and scroll the mobile container
+      const mobileContainer = document.querySelector('.overflow-y-auto')
+      if (mobileContainer) {
+        mobileContainer.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+
+      // Try to find and scroll the desktop ScrollArea viewport
+      const desktopViewport = document.querySelector('[data-slot="scroll-area-viewport"]')
+      if (desktopViewport) {
+        desktopViewport.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }, 50)
+
+    return () => clearTimeout(timer)
+  }, [currentStep])
 
   // Get current step number for progress indicator
   const getStepNumber = (step: BookingStep): number => {
@@ -299,6 +319,7 @@ export function BookingSheet({
       case "service":
         return (
           <StepService
+            key="service-step" // Force remount on step change to reset scroll
             services={services}
             selectedServiceId={selectedServiceId}
             onServiceSelect={handleServiceSelect}
@@ -317,6 +338,7 @@ export function BookingSheet({
         }
         return (
           <StepConfirm
+            key="confirm-step" // Force remount on step change to reset scroll
             studio={studio}
             timeSlot={timeSlot}
             selectedService={selectedService}
