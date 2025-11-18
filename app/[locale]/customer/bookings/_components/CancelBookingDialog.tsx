@@ -31,6 +31,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertTriangle } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { cancelBooking } from '@/app/[locale]/customer/actions/bookings';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
@@ -97,18 +99,9 @@ export function CancelBookingDialog({
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('de-DE', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
+  // Phase 4: DateTime formatting
+  const formatDate = (date: Date) => {
+    return format(date, 'EEEE, d. MMMM yyyy', { locale: de });
   };
 
   const content = (
@@ -142,7 +135,7 @@ export function CancelBookingDialog({
         <div>
           <p className="text-sm text-muted-foreground">Termin</p>
           <p className="font-medium">
-            {formatDate(booking.preferredDate)} um {booking.preferredTime}
+            {formatDate(booking.preferredDateTime)} um {format(booking.preferredDateTime, 'HH:mm')}
           </p>
         </div>
       </div>

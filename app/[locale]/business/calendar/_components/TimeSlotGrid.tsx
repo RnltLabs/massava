@@ -9,6 +9,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { format } from 'date-fns';
 import { getBusinessHours, formatTimeSlot } from '@/lib/calendar-utils';
 import { BookingBlock } from './BookingBlock';
 import { BlockedTimeBlock } from './BlockedTimeBlock';
@@ -66,9 +67,12 @@ export function TimeSlotGrid({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Count bookings per timeslot
+  // Count bookings per timeslot (Phase 4: DateTime migration)
   const getBookingCountForTime = (timeSlot: string): number => {
-    return bookings.filter((b) => b.preferredTime === timeSlot && b.status === 'CONFIRMED').length;
+    return bookings.filter((b) => {
+      const bookingTime = format(b.preferredDateTime, 'HH:mm');
+      return bookingTime === timeSlot && b.status === 'CONFIRMED';
+    }).length;
   };
 
   // Handle long press start

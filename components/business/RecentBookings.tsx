@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
 import { NewBooking, BookingStatus } from '@/app/generated/prisma';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface RecentBookingsProps {
   userEmail: string;
@@ -88,7 +90,8 @@ export async function RecentBookings({ userEmail }: RecentBookingsProps): Promis
                     {booking.service?.name ?? 'No service selected'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {booking.preferredDate} at {booking.preferredTime}
+                    {format(booking.preferredDateTime, 'dd.MM.yyyy', { locale: de })} at{' '}
+                    {format(booking.preferredDateTime, 'HH:mm')}
                   </p>
                 </div>
                 <BookingStatusBadge status={booking.status} />

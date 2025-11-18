@@ -27,8 +27,8 @@ interface BookingBlockProps {
 }
 
 export function BookingBlock({ booking, onClick }: BookingBlockProps): React.JSX.Element {
-  // Parse booking times
-  const startTime = createDateTime(booking.preferredDate, booking.preferredTime);
+  // Parse booking times (preferredDateTime is already a Date object)
+  const startTime = booking.preferredDateTime;
   const durationMinutes = booking.service?.duration || 60;
   const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
 

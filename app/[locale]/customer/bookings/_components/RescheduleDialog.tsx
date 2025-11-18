@@ -31,6 +31,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { InfoIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { rescheduleBooking } from '@/app/[locale]/customer/actions/bookings';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
@@ -45,8 +47,8 @@ export function RescheduleDialog({
   open,
   onOpenChange,
 }: RescheduleDialogProps): React.JSX.Element {
-  const [newDate, setNewDate] = useState(booking.preferredDate);
-  const [newTime, setNewTime] = useState(booking.preferredTime);
+  const [newDate, setNewDate] = useState(format(booking.preferredDateTime, 'yyyy-MM-dd'));
+  const [newTime, setNewTime] = useState(format(booking.preferredDateTime, 'HH:mm'));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -92,24 +94,24 @@ export function RescheduleDialog({
 
   const handleClose = () => {
     if (!isLoading) {
-      setNewDate(booking.preferredDate);
-      setNewTime(booking.preferredTime);
+      setNewDate(format(booking.preferredDateTime, 'yyyy-MM-dd'));
+      setNewTime(format(booking.preferredDateTime, 'HH:mm'));
       setError(null);
       onOpenChange(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (date: Date | string) => {
     try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('de-DE', {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleDateString('de-DE', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
       });
     } catch {
-      return dateString;
+      return String(date);
     }
   };
 
@@ -122,7 +124,9 @@ export function RescheduleDialog({
 
   const isFormValid = () => {
     if (!newDate || !newTime) return false;
-    if (newDate === booking.preferredDate && newTime === booking.preferredTime) return false;
+    const currentDate = format(booking.preferredDateTime, 'yyyy-MM-dd');
+    const currentTime = format(booking.preferredDateTime, 'HH:mm');
+    if (newDate === currentDate && newTime === currentTime) return false;
     return true;
   };
 
@@ -161,7 +165,7 @@ export function RescheduleDialog({
         <div>
           <p className="text-sm text-muted-foreground">Datum & Uhrzeit</p>
           <p className="font-medium">
-            {formatDate(booking.preferredDate)} um {booking.preferredTime}
+            {formatDate(booking.preferredDateTime)} um {format(booking.preferredDateTime, 'HH:mm')}
           </p>
         </div>
       </div>

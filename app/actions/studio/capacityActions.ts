@@ -12,6 +12,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { parseISO } from 'date-fns';
 
 // Validation schema
 const updateCapacitySchema = z.object({
@@ -167,12 +168,14 @@ export async function checkTimeslotCapacity(
 
     const maxCapacity = ownership.studio.capacity;
 
+    // Combine date and time into DateTime
+    const preferredDateTime = parseISO(`${date}T${time}:00`);
+
     // Count confirmed bookings for this timeslot
     const bookings = await prisma.newBooking.findMany({
       where: {
         studioId: studioId,
-        preferredDate: date,
-        preferredTime: time,
+        preferredDateTime: preferredDateTime,
         status: 'CONFIRMED',
       },
       include: {

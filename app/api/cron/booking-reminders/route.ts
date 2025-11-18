@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendBookingReminderEmail } from '@/lib/email/send';
 import { logger } from '@/lib/logger';
+import { format, startOfDay, endOfDay, addDays } from 'date-fns';
 
 /**
  * Vercel Cron Job Endpoint
@@ -57,17 +58,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       action: 'CRON_BOOKING_REMINDERS',
     });
 
-    // Calculate tomorrow's date (24 hours from now)
+    // Calculate tomorrow's date range (24 hours from now)
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Format as YYYY-MM-DD to match preferredDate format in database
-    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    const tomorrow = addDays(now, 1);
+    const tomorrowStart = startOfDay(tomorrow);
+    const tomorrowEnd = endOfDay(tomorrow);
+    const tomorrowDate = format(tomorrow, 'yyyy-MM-dd');
 
     logger.info('Searching for bookings to remind', {
       action: 'CRON_BOOKING_REMINDERS',
-      targetDate: tomorrowDate,
+      targetDateRange: {
+        start: tomorrowStart.toISOString(),
+        end: tomorrowEnd.toISOString(),
+      },
     });
 
     // Find all confirmed bookings for tomorrow that haven't received a reminder
@@ -75,7 +78,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       where: {
         status: 'CONFIRMED',
         reminderSent: false,
-        preferredDate: tomorrowDate,
+        preferredDateTime: {
+          gte: tomorrowStart,
+          lte: tomorrowEnd,
+        },
       },
       include: {
         studio: {
@@ -126,8 +132,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             customerName: booking.customerName,
             studioName: booking.studio.name,
             serviceName: booking.service?.name || 'Service',
-            bookingDate: booking.preferredDate,
-            bookingTime: booking.preferredTime,
+            bookingDate: format(booking.preferredDateTime, 'yyyy-MM-dd'),
+            bookingTime: format(booking.preferredDateTime, 'HH:mm'),
             studioAddress: booking.studio.address || undefined,
             studioPhone: booking.studio.phone || undefined,
           },

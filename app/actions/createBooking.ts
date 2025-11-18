@@ -14,6 +14,13 @@ import {
 } from "@/lib/email/send"
 import { createBookingWithCapacityCheck, checkSlotCapacity } from "@/lib/slots"
 import { logger, generateCorrelationId } from "@/lib/logger"
+import { parseISO } from 'date-fns'
+import {
+  validateBookingDateTime,
+  validateTimezoneOrThrow,
+  formatInTimezone,
+  isWithinBusinessHours
+} from '@/lib/timezone'
 
 // Type for TimeSlot (using Prisma payload type to avoid import issues during build)
 type TimeSlot = {
@@ -34,6 +41,13 @@ interface BookingResult {
   bookingId?: string
   status?: string
   error?: string
+  booking?: {
+    id: string
+    preferredDateTime: string
+    studioTimezone: string
+    studioLocalTime: string
+    userLocalTime?: string
+  }
 }
 
 /**
@@ -74,72 +88,34 @@ export async function createBooking(
     // Validate Input (server-side validation)
     const validated = bookingFormSchema.parse(data)
 
-    // Determine booking mode: legacy (slotId) or dynamic (preferredDate/preferredTime)
-    const isDynamicSlot = !!validated.preferredDate && !!validated.preferredTime
+    // Determine booking mode: legacy (slotId) or DateTime (preferredDateTime)
+    const isDateTimeMode = !!validated.preferredDateTime
 
-    let preferredDate: string
-    let preferredTime: string
+    let preferredDateTime: Date
     let timeSlot: TimeSlot | null = null
 
-    if (isDynamicSlot) {
-      // Dynamic slot mode (Phase 3)
-      preferredDate = validated.preferredDate!
-      preferredTime = validated.preferredTime!
+    if (isDateTimeMode) {
+      // DateTime mode (Phase 4) - uses atomic capacity check
+      preferredDateTime = parseISO(validated.preferredDateTime!)
 
-      logger.info('Dynamic slot mode booking', {
+      logger.info('DateTime mode booking', {
         correlationId,
         studioId: validated.studioId,
-        preferredDate,
-        preferredTime,
+        preferredDateTime: preferredDateTime.toISOString(),
       })
 
-      // Check capacity dynamically
-      const capacityResult = await checkSlotCapacity(
-        validated.studioId,
-        preferredDate,
-        preferredTime
-      )
-
-      if (!capacityResult.ok) {
-        logger.error('Capacity check failed', {
+      // DateTime validation already done in schema, but double-check business rules
+      const validation = validateBookingDateTime(preferredDateTime);
+      if (!validation.valid) {
+        logger.error('DateTime validation failed', {
           correlationId,
-          errorType: capacityResult.error.type,
-          studioId: validated.studioId,
-          preferredDate,
-          preferredTime,
-        })
-
-        if (capacityResult.error.type === 'STUDIO_NOT_FOUND') {
-          return {
-            success: false,
-            error: "Das ausgewählte Studio existiert nicht mehr",
-          }
-        }
-
-        return {
-          success: false,
-          error: "Fehler bei der Kapazitätsprüfung. Bitte versuchen Sie es erneut.",
-        }
-      }
-
-      if (!capacityResult.value.available) {
-        logger.warn('No capacity available', {
-          correlationId,
-          studioId: validated.studioId,
-          preferredDate,
-          preferredTime,
-          remainingCapacity: capacityResult.value.remainingCapacity,
+          error: validation.error,
         })
         return {
           success: false,
-          error: "Dieser Zeitslot ist nicht mehr verfügbar. Bitte wählen Sie einen anderen Termin.",
+          error: validation.error || "Ungültiges Buchungsdatum/-zeit",
         }
       }
-
-      logger.info('Capacity check passed', {
-        correlationId,
-        remainingCapacity: capacityResult.value.remainingCapacity,
-      })
     } else {
       // Legacy slot mode (backward compatibility)
       // Check if TimeSlot is still available
@@ -180,21 +156,62 @@ export async function createBooking(
         }
       }
 
-      // Extract date and time from timeSlot.startTime
-      const startTime = new Date(timeSlot.startTime)
-      preferredDate = startTime.toISOString().split("T")[0]
-      preferredTime = startTime.toISOString().split("T")[1].slice(0, 5)
+      // Extract DateTime from timeSlot.startTime
+      preferredDateTime = timeSlot.startTime
     }
 
-    // Check if studio exists
+    // Check if studio exists and get timezone + opening hours
     const studio = await prisma.studio.findUnique({
       where: { id: validated.studioId },
+      select: {
+        id: true,
+        name: true,
+        timezone: true,
+        openingHours: true,
+      },
     })
 
     if (!studio) {
       return {
         success: false,
         error: "Das ausgewählte Studio existiert nicht mehr",
+      }
+    }
+
+    // Validate studio timezone (P0 Fix #4)
+    try {
+      validateTimezoneOrThrow(studio.timezone)
+    } catch (error) {
+      logger.error('Invalid studio timezone', {
+        correlationId,
+        studioId: validated.studioId,
+        timezone: studio.timezone,
+      })
+      return {
+        success: false,
+        error: "Systemfehler: Ungültige Studio-Zeitzone.",
+      }
+    }
+
+    // Phase 4: Check if DateTime is within business hours
+    if (isDateTimeMode) {
+      const withinHours = isWithinBusinessHours(
+        preferredDateTime,
+        studio.openingHours as any, // Cast to OpeningHours type
+        studio.timezone
+      );
+
+      if (!withinHours) {
+        logger.warn('Booking time outside business hours', {
+          correlationId,
+          studioId: validated.studioId,
+          preferredDateTime: preferredDateTime.toISOString(),
+          studioTimezone: studio.timezone,
+        })
+        return {
+          success: false,
+          error: `Der gewählte Zeitpunkt liegt außerhalb der Öffnungszeiten von ${studio.name}`,
+        }
       }
     }
 
@@ -214,55 +231,154 @@ export async function createBooking(
     // Never trust client-provided customerId - ALWAYS use session
     const authenticatedUserId = session?.user?.id || null
 
-    // Create Booking + Mark TimeSlot as booked (Atomic Transaction)
-    const booking = await prisma.$transaction(
-      async (tx) => {
-        // Create NewBooking with unified User model
-        const newBooking = await tx.newBooking.create({
-        data: {
-          studioId: validated.studioId,
-          serviceId: validated.serviceId,
-          customerId: authenticatedUserId, // ✅ SECURITY: From session, NOT user input
-          customerName: validated.customerName || "",
-          customerEmail: validated.customerEmail || "",
-          customerPhone: validated.customerPhone || "",
-          preferredDate,
-          preferredTime,
-          message: validated.message || null,
-          explicitHealthConsent: validated.explicitHealthConsent || false,
-          healthConsentGivenAt: new Date(),
-          healthConsentText:
-            "User consented to health data processing via booking form checkbox (GDPR Art. 9)",
-          status: authenticatedUserId ? "PENDING" : "CONFIRMED",
-        },
-        include: {
-          studio: true,
-          service: true,
-        },
-      })
+    // Prepare booking data
+    const bookingData = {
+      studioId: validated.studioId,
+      serviceId: validated.serviceId,
+      customerId: authenticatedUserId || undefined, // ✅ SECURITY: From session, NOT user input
+      customerName: validated.customerName || "",
+      customerEmail: validated.customerEmail || "",
+      customerPhone: validated.customerPhone || "",
+      preferredDateTime: preferredDateTime,
+      message: validated.message || undefined,
+      explicitHealthConsent: validated.explicitHealthConsent || false,
+      healthConsentGivenAt: new Date(),
+      healthConsentText:
+        "User consented to health data processing via booking form checkbox (GDPR Art. 9)",
+    }
 
-      // Mark TimeSlot as booked (ONLY if using legacy slot mode for backward compatibility)
-      if (!isDynamicSlot && validated.slotId) {
-        await tx.timeSlot.update({
-          where: { id: validated.slotId },
-          data: {
-            isBooked: true,
-            isAvailable: false,
-          },
+    let bookingId: string
+
+    if (isDateTimeMode) {
+      // DateTime mode: Use atomic capacity check + booking creation
+      // This prevents race conditions by doing capacity check + booking inside a Serializable transaction
+      const capacityResult = await createBookingWithCapacityCheck(bookingData)
+
+      if (!capacityResult.ok) {
+        logger.error('Booking creation with capacity check failed', {
+          correlationId,
+          errorType: capacityResult.error.type,
+          studioId: validated.studioId,
+          preferredDateTime: preferredDateTime.toISOString(),
         })
+
+        // Map capacity errors to user-friendly messages
+        switch (capacityResult.error.type) {
+          case 'STUDIO_NOT_FOUND':
+            return {
+              success: false,
+              error: "Das ausgewählte Studio existiert nicht mehr",
+            }
+          case 'CAPACITY_EXCEEDED':
+            return {
+              success: false,
+              error: "Dieser Zeitslot ist bereits ausgebucht. Bitte wählen Sie einen anderen Termin.",
+            }
+          case 'CONCURRENT_BOOKING_CONFLICT':
+            return {
+              success: false,
+              error: "Dieser Zeitslot wurde gerade von jemand anderem gebucht. Bitte versuchen Sie es erneut.",
+            }
+          case 'INVALID_TIME_GRID':
+            return {
+              success: false,
+              error: "Die gewählte Zeit liegt nicht auf dem 15-Minuten-Raster.",
+            }
+          case 'DATABASE_ERROR':
+            return {
+              success: false,
+              error: "Datenbankfehler. Bitte versuchen Sie es erneut oder kontaktieren Sie uns.",
+            }
+          default:
+            return {
+              success: false,
+              error: "Buchung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+            }
+        }
       }
 
-      return newBooking
-    },
-    {
-      isolationLevel: 'Serializable' as const,
-      maxWait: 5000,
-      timeout: 10000,
+      bookingId = capacityResult.value.id
+      logger.info('Booking created successfully with capacity check', {
+        correlationId,
+        bookingId,
+      })
+    } else {
+      // Legacy slot mode: Use original transaction-based approach
+      const booking = await prisma.$transaction(
+        async (tx) => {
+          // Create NewBooking with DateTime (Phase 4)
+          const newBooking = await tx.newBooking.create({
+            data: {
+              ...bookingData,
+              status: authenticatedUserId ? "PENDING" : "CONFIRMED",
+            },
+            select: {
+              id: true,
+            },
+          })
+
+          // Mark TimeSlot as booked (legacy mode only)
+          if (validated.slotId) {
+            await tx.timeSlot.update({
+              where: { id: validated.slotId },
+              data: {
+                isBooked: true,
+                isAvailable: false,
+              },
+            })
+          }
+
+          return newBooking
+        },
+        {
+          isolationLevel: 'Serializable' as const,
+          maxWait: 5000,
+          timeout: 10000,
+        }
+      )
+      bookingId = booking.id
     }
-  )
+
+    // Fetch complete booking with relations for email sending
+    const booking = await prisma.newBooking.findUnique({
+      where: { id: bookingId },
+      include: {
+        studio: {
+          select: {
+            id: true,
+            name: true,
+            timezone: true,
+          },
+        },
+        service: true,
+      },
+    })
+
+    if (!booking) {
+      logger.error('Failed to fetch created booking', {
+        correlationId,
+        bookingId,
+      })
+      return {
+        success: false,
+        error: "Buchung wurde erstellt, aber Daten konnten nicht abgerufen werden.",
+      }
+    }
 
     // Send booking request received email to customer
     try {
+      // Phase 4: Format DateTime in studio's timezone for email
+      const studioLocalDate = formatInTimezone(
+        booking.preferredDateTime,
+        booking.studio.timezone,
+        'EEEE, d. MMMM yyyy'
+      );
+      const studioLocalTime = formatInTimezone(
+        booking.preferredDateTime,
+        booking.studio.timezone,
+        'HH:mm'
+      );
+
       const emailResult = await sendBookingRequestReceivedEmail(
         booking.customerEmail,
         {
@@ -270,13 +386,8 @@ export async function createBooking(
           customerName: booking.customerName,
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          bookingTime: booking.preferredTime,
+          bookingDate: studioLocalDate,
+          bookingTime: studioLocalTime,
           message: booking.message || undefined,
         },
         'de'
@@ -318,6 +429,18 @@ export async function createBooking(
       const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
       const dashboardUrl = `${appUrl}/de/business/calendar`;
 
+      // Phase 4: Format DateTime in studio's timezone for owner emails
+      const studioLocalDate = formatInTimezone(
+        booking.preferredDateTime,
+        booking.studio.timezone,
+        'EEEE, d. MMMM yyyy'
+      );
+      const studioLocalTime = formatInTimezone(
+        booking.preferredDateTime,
+        booking.studio.timezone,
+        'HH:mm'
+      );
+
       for (const ownership of studioOwnerships) {
         if (ownership.user.email) {
           const ownerEmailResult = await sendNewBookingNotificationToOwner(
@@ -330,13 +453,8 @@ export async function createBooking(
               customerEmail: booking.customerEmail,
               customerPhone: booking.customerPhone || undefined,
               serviceName: booking.service?.name || 'Massage',
-              bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              }),
-              bookingTime: booking.preferredTime,
+              bookingDate: studioLocalDate,
+              bookingTime: studioLocalTime,
               message: booking.message || undefined,
               dashboardUrl,
             },
@@ -374,10 +492,30 @@ export async function createBooking(
     // when the user navigates back to it naturally.
     // If you need immediate revalidation, consider doing it client-side after navigation.
 
+    // Phase 4: Return booking with timezone info
     return {
       success: true,
       bookingId: booking.id,
       status: booking.status,
+      // Include timezone-aware time formatting for display
+      booking: {
+        id: booking.id,
+        preferredDateTime: booking.preferredDateTime.toISOString(), // ISO 8601 with offset
+        studioTimezone: booking.studio.timezone,
+        studioLocalTime: formatInTimezone(
+          booking.preferredDateTime,
+          booking.studio.timezone,
+          'yyyy-MM-dd HH:mm'
+        ),
+        // If user provided timezone, include their local time too
+        ...(validated.userTimezone && {
+          userLocalTime: formatInTimezone(
+            booking.preferredDateTime,
+            validated.userTimezone,
+            'yyyy-MM-dd HH:mm'
+          ),
+        }),
+      },
     }
   } catch (error) {
     logger.error("Booking creation failed", {

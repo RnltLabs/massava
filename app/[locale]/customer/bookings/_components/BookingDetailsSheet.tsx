@@ -36,6 +36,8 @@ import {
   MessageSquareIcon,
   DollarSignIcon,
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
 interface BookingDetailsSheetProps {
@@ -194,12 +196,12 @@ export function BookingDetailsSheet({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <CalendarIcon className="h-4 w-4 text-gray-600" />
-            <span className="font-medium">{formatDate(booking.preferredDate)}</span>
+            <span className="font-medium">{format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de })}</span>
           </div>
 
           <div className="flex items-center gap-2">
             <ClockIcon className="h-4 w-4 text-gray-600" />
-            <span className="font-medium">{booking.preferredTime}</span>
+            <span className="font-medium">{format(booking.preferredDateTime, 'HH:mm')}</span>
           </div>
         </div>
       </div>

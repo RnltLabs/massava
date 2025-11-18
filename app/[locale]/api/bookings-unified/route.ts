@@ -15,6 +15,7 @@ import { logger, getCorrelationId, getClientIP, getUserAgent } from '@/lib/logge
 import { createAuditLog } from '@/lib/audit';
 import { getCurrentUser } from '@/lib/auth/permissions';
 import { generateMagicLink } from '@/lib/magic-link';
+import { parseISO } from 'date-fns';
 
 
 // Art. 9 GDPR - Health consent text
@@ -80,8 +81,7 @@ export async function POST(request: NextRequest) {
       customerName,
       customerEmail,
       customerPhone,
-      preferredDate,
-      preferredTime,
+      preferredDateTime,
       message,
       explicitHealthConsent,
     } = validation.data;
@@ -159,6 +159,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Create booking with GDPR-compliant health data handling
+    // Parse the ISO datetime string to Date object
+    const preferredDateTimeObj = parseISO(preferredDateTime);
+
     const booking = await prisma.newBooking.create({
       data: {
         studioId,
@@ -167,8 +170,7 @@ export async function POST(request: NextRequest) {
         customerName,
         customerEmail,
         customerPhone: customerPhone || null,
-        preferredDate,
-        preferredTime,
+        preferredDateTime: preferredDateTimeObj,
         message: message || null,
         status: 'PENDING',
         // Art. 9 GDPR compliance fields

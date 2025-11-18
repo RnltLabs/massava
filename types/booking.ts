@@ -40,6 +40,7 @@ export interface SearchResultStudio {
   openingHours?: unknown | null;
   latitude?: number | null;
   longitude?: number | null;
+  timezone: string;
   distance: number;
   services: Service[];
   matchedServices: Service[];

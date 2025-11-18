@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { BookingActions } from '@/components/business/BookingActions';
 import { CalendarIcon, ClockIcon, MailIcon, PhoneIcon, MessageSquareIcon } from 'lucide-react';
 import { NewBooking, BookingStatus } from '@/app/generated/prisma';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface BookingsListProps {
   userEmail: string;
@@ -140,12 +142,16 @@ export async function BookingsList({
                   <div className="flex items-center gap-2 text-sm">
                     <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Datum:</span>
-                    <span className="text-muted-foreground">{booking.preferredDate}</span>
+                    <span className="text-muted-foreground">
+                      {format(booking.preferredDateTime, 'dd.MM.yyyy', { locale: de })}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
                     <ClockIcon className="h-4 w-4 text-muted-foreground" />
                     <span className="font-medium">Uhrzeit:</span>
-                    <span className="text-muted-foreground">{booking.preferredTime}</span>
+                    <span className="text-muted-foreground">
+                      {format(booking.preferredDateTime, 'HH:mm')} Uhr
+                    </span>
                   </div>
                 </div>
 

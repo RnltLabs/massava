@@ -41,8 +41,7 @@ export async function checkReviewEligibility(
   }
 
   // Check if booking date is in the past
-  const bookingDate = new Date(`${booking.preferredDate}T${booking.preferredTime}`);
-  if (bookingDate > new Date()) {
+  if (booking.preferredDateTime > new Date()) {
     return { eligible: false, reason: 'Booking date must be in the past' };
   }
 

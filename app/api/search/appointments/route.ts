@@ -151,6 +151,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const studiosWithSlotsResults = await Promise.all(
       studiosWithDistance.map(async (studio) => {
         try {
+          logger.info('Calculating slots for studio', {
+            correlationId,
+            studioId: studio.id,
+            studioName: studio.name,
+            searchDate,
+            timezone: studio.timezone,
+          });
+
           const slotsResult = await calculateAvailableSlots(
             studio.id,
             searchDate,
@@ -162,10 +170,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             logger.error('Failed to calculate slots for studio', {
               correlationId,
               studioId: studio.id,
+              studioName: studio.name,
               errorType: slotsResult.error.type,
             });
             return { ...studio, availableSlots: [] as AvailableSlot[] };
           }
+
+          logger.info('Slot calculation succeeded for studio', {
+            correlationId,
+            studioId: studio.id,
+            studioName: studio.name,
+            totalSlots: slotsResult.value.length,
+            availableSlots: slotsResult.value.filter(s => s.available).length,
+          });
 
           // Limit to 10 slots per studio for performance
           const limitedSlots = slotsResult.value.slice(0, 10);
@@ -174,6 +191,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           logger.error('Error calculating slots for studio', {
             correlationId,
             studioId: studio.id,
+            studioName: studio.name,
             error: error instanceof Error ? error : new Error(String(error)),
           });
           return { ...studio, availableSlots: [] as AvailableSlot[] };
@@ -185,6 +203,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const studiosWithAvailableSlots = studiosWithSlotsResults.filter(
       (studio) => studio.availableSlots.length > 0
     );
+
+    logger.info('Filtered studios with available slots', {
+      correlationId,
+      totalStudiosInRadius: studiosWithDistance.length,
+      studiosWithSlots: studiosWithAvailableSlots.length,
+      studiosFiltered: studiosWithDistance.length - studiosWithAvailableSlots.length,
+    });
 
     // Apply service type and price filters
     const filteredStudios = studiosWithAvailableSlots
@@ -227,6 +252,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       openingHours: studio.openingHours,
       latitude: studio.latitude,
       longitude: studio.longitude,
+      timezone: studio.timezone, // CRITICAL: Required for slot time formatting
       distance: Math.round(studio.distance * 10) / 10, // Round to 1 decimal
       services: studio.services,
       matchedServices: studio.matchedServices,
@@ -234,14 +260,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       averageRating: studio.averageRating,
       totalReviews: studio.totalReviews,
       availableSlots: studio.availableSlots.map((slot) => ({
-        // Dynamic slots format (backward compatible)
-        startTime: `${searchDate}T${slot.startTime}:00.000Z`,
-        endTime: `${searchDate}T${slot.endTime}:00.000Z`,
+        // Dynamic slots format (DateTime-based API returns Date objects)
+        startTime: typeof slot.startTime === 'string'
+          ? `${searchDate}T${slot.startTime}:00.000Z`
+          : slot.startTime.toISOString(),
+        endTime: typeof slot.endTime === 'string'
+          ? `${searchDate}T${slot.endTime}:00.000Z`
+          : slot.endTime.toISOString(),
         remainingCapacity: slot.remainingCapacity,
         // Note: id and service are not available in dynamic slots
         // Frontend should handle booking without slotId
       })),
     }));
+
+    logger.info('Search appointments completed', {
+      correlationId,
+      resultsCount: results.length,
+      totalSlotsReturned: results.reduce((sum, r) => sum + r.availableSlots.length, 0),
+    });
 
     return NextResponse.json({
       success: true,

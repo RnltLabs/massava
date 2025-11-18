@@ -39,7 +39,7 @@ export function BookingDetailSheet({
     return <></>;
   }
 
-  const startTime = createDateTime(booking.preferredDate, booking.preferredTime);
+  const startTime = booking.preferredDateTime;
   const durationMinutes = booking.service?.duration || 60;
   const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
 

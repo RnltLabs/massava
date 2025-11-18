@@ -148,7 +148,7 @@ export function CalendarClient({
 
   // Filter bookings based on view
   const displayBookings = view === 'day'
-    ? initialBookings.filter((booking) => booking.preferredDate === format(selectedDate, 'yyyy-MM-dd'))
+    ? initialBookings.filter((booking) => format(booking.preferredDateTime, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd'))
     : initialBookings; // Week view shows all bookings (filtered by WeekView component)
 
   // Filter blocked times based on view
