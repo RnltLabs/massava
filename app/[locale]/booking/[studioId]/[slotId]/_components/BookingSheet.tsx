@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -49,6 +49,8 @@ interface BookingSheetProps {
   preferredDateTime: string // ISO DateTime string for dynamic slots
   isOpen: boolean
   onClose: () => void
+  locale: string
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 type BookingStep = "service" | "confirm" | "success"
@@ -96,6 +98,8 @@ export function BookingSheet({
   preferredDateTime,
   isOpen,
   onClose,
+  locale,
+  searchParams,
 }: BookingSheetProps) {
   const router = useRouter()
   const { toast } = useToast()
@@ -125,6 +129,26 @@ export function BookingSheet({
       explicitHealthConsent: false,
     },
   })
+
+  // Scroll to top when step changes
+  useEffect(() => {
+    // Small delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      // Try to find and scroll the mobile container
+      const mobileContainer = document.querySelector('.overflow-y-auto')
+      if (mobileContainer) {
+        mobileContainer.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+
+      // Try to find and scroll the desktop ScrollArea viewport
+      const desktopViewport = document.querySelector('[data-slot="scroll-area-viewport"]')
+      if (desktopViewport) {
+        desktopViewport.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }, 50)
+
+    return () => clearTimeout(timer)
+  }, [currentStep])
 
   // Get current step number for progress indicator
   const getStepNumber = (step: BookingStep): number => {
@@ -250,11 +274,40 @@ export function BookingSheet({
 
   // Handle success actions
   const handleViewBooking = () => {
-    router.push(`/booking/confirmation/${bookingNumber}`)
+    router.push(`/${locale}/booking/confirmation/${bookingNumber}`)
   }
 
   const handleNewSearch = () => {
-    router.push("/search/appointments")
+    // Build query string from search params to preserve search context
+    const params = new URLSearchParams()
+    if (searchParams.location && typeof searchParams.location === 'string') {
+      params.set('location', searchParams.location)
+    }
+    if (searchParams.lat && typeof searchParams.lat === 'string') {
+      params.set('lat', searchParams.lat)
+    }
+    if (searchParams.lng && typeof searchParams.lng === 'string') {
+      params.set('lng', searchParams.lng)
+    }
+    if (searchParams.radius && typeof searchParams.radius === 'string') {
+      params.set('radius', searchParams.radius)
+    }
+    if (searchParams.datetime && typeof searchParams.datetime === 'string') {
+      params.set('datetime', searchParams.datetime)
+    }
+    if (searchParams.serviceType && typeof searchParams.serviceType === 'string') {
+      params.set('serviceType', searchParams.serviceType)
+    }
+    if (searchParams.minPrice && typeof searchParams.minPrice === 'string') {
+      params.set('minPrice', searchParams.minPrice)
+    }
+    if (searchParams.maxPrice && typeof searchParams.maxPrice === 'string') {
+      params.set('maxPrice', searchParams.maxPrice)
+    }
+
+    const queryString = params.toString()
+    const searchUrl = `/${locale}/search/appointments${queryString ? `?${queryString}` : ''}`
+    router.push(searchUrl)
   }
 
   // Get selected service object
@@ -266,6 +319,7 @@ export function BookingSheet({
       case "service":
         return (
           <StepService
+            key="service-step" // Force remount on step change to reset scroll
             services={services}
             selectedServiceId={selectedServiceId}
             onServiceSelect={handleServiceSelect}
@@ -284,6 +338,7 @@ export function BookingSheet({
         }
         return (
           <StepConfirm
+            key="confirm-step" // Force remount on step change to reset scroll
             studio={studio}
             timeSlot={timeSlot}
             selectedService={selectedService}
