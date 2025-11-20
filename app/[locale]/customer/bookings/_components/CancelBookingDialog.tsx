@@ -30,9 +30,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { AlertTriangle } from 'lucide-react';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
+import { AlertCircle } from 'lucide-react';
 import { cancelBooking } from '@/app/[locale]/customer/actions/bookings';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
 
@@ -99,65 +97,29 @@ export function CancelBookingDialog({
     }
   };
 
-  // Phase 4: DateTime formatting
-  const formatDate = (date: Date) => {
-    return format(date, 'EEEE, d. MMMM yyyy', { locale: de });
-  };
-
   const content = (
     <div className="space-y-6">
-      {/* Warning Message */}
-      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-        <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <h4 className="font-semibold text-yellow-900 mb-1">
-            Achtung: Buchung stornieren
-          </h4>
-          <p className="text-sm text-yellow-800">
-            Diese Aktion kann nicht rückgängig gemacht werden. Das Studio wird über die
-            Stornierung benachrichtigt.
-          </p>
-        </div>
-      </div>
-
-      {/* Booking Details */}
-      <div className="space-y-2 p-4 bg-gray-50 rounded-lg">
-        <div>
-          <p className="text-sm text-muted-foreground">Studio</p>
-          <p className="font-semibold">{booking.studio.name}</p>
-        </div>
-        {booking.service && (
-          <div>
-            <p className="text-sm text-muted-foreground">Service</p>
-            <p className="font-medium">{booking.service.name}</p>
-          </div>
-        )}
-        <div>
-          <p className="text-sm text-muted-foreground">Termin</p>
-          <p className="font-medium">
-            {formatDate(booking.preferredDateTime)} um {format(booking.preferredDateTime, 'HH:mm')}
-          </p>
-        </div>
+      {/* Simple Warning */}
+      <div className="flex items-start gap-3 text-sm text-muted-foreground">
+        <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+        <p>Das Studio wird benachrichtigt.</p>
       </div>
 
       {/* Cancellation Reason */}
       <div className="space-y-2">
-        <Label htmlFor="reason">
-          Grund für die Stornierung <span className="text-muted-foreground">(optional)</span>
+        <Label htmlFor="reason" className="text-sm">
+          Stornierungsgrund <span className="text-muted-foreground">(optional)</span>
         </Label>
         <Textarea
           id="reason"
-          placeholder="Warum möchtest du diese Buchung stornieren? (optional)"
+          placeholder="Grund angeben..."
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          rows={4}
+          rows={3}
           maxLength={500}
           disabled={isLoading}
           className="resize-none"
         />
-        <p className="text-xs text-muted-foreground text-right">
-          {reason.length}/500 Zeichen
-        </p>
       </div>
 
       {/* Error Message */}
@@ -170,22 +132,22 @@ export function CancelBookingDialog({
   );
 
   const footer = (
-    <div className="flex gap-3 flex-col sm:flex-row">
+    <div className="space-y-3">
+      <Button
+        onClick={handleCancel}
+        disabled={isLoading}
+        style={{ backgroundColor: '#B56550' }}
+        className="w-full h-12 text-white font-semibold rounded-xl transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] hover:opacity-90 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none"
+      >
+        {isLoading ? 'Wird storniert...' : 'Stornieren'}
+      </Button>
       <Button
         variant="outline"
         onClick={handleClose}
         disabled={isLoading}
-        className="flex-1"
+        className="w-full h-12 font-semibold rounded-xl transition-all duration-200 hover:bg-gray-100 active:scale-[0.98]"
       >
         Abbrechen
-      </Button>
-      <Button
-        variant="destructive"
-        onClick={handleCancel}
-        disabled={isLoading}
-        className="flex-1"
-      >
-        {isLoading ? 'Wird storniert...' : 'Buchung stornieren'}
       </Button>
     </div>
   );
@@ -193,11 +155,14 @@ export function CancelBookingDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
+        <DialogContent
+          style={{ backgroundColor: '#F4EDE8' }}
+          className="sm:max-w-[425px]"
+        >
+          <DialogHeader className="mb-4">
             <DialogTitle>Buchung stornieren</DialogTitle>
             <DialogDescription>
-              Bist du sicher, dass du diese Buchung stornieren möchtest?
+              Möchtest du diese Buchung wirklich stornieren?
             </DialogDescription>
           </DialogHeader>
           {content}
@@ -211,15 +176,16 @@ export function CancelBookingDialog({
     <Sheet open={open} onOpenChange={handleClose}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[90vh] overflow-y-auto rounded-t-[2rem]"
+        style={{ backgroundColor: '#F4EDE8' }}
+        className="h-[80vh] rounded-t-3xl p-6 overflow-y-auto"
       >
-        <SheetHeader>
+        <SheetHeader className="mb-4">
           <SheetTitle>Buchung stornieren</SheetTitle>
           <SheetDescription>
-            Bist du sicher, dass du diese Buchung stornieren möchtest?
+            Möchtest du diese Buchung wirklich stornieren?
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-6">{content}</div>
+        {content}
         <SheetFooter className="mt-6">{footer}</SheetFooter>
       </SheetContent>
     </Sheet>
