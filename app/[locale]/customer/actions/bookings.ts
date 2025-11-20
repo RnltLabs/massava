@@ -41,8 +41,19 @@ export type BookingWithRelations = {
   studio: {
     id: string;
     name: string;
+    description: string | null;
+    logoUrl: string | null;
+    galleryImages: unknown | null;
     address: string | null;
     city: string | null;
+    postalCode: string | null;
+    phone: string;
+    email: string;
+    website: string | null;
+    openingHours: unknown | null;
+    latitude: number | null;
+    longitude: number | null;
+    timezone: string;
   };
   service: {
     id: string;
@@ -148,8 +159,19 @@ export async function getCustomerBookings(): Promise<BookingsListResult> {
           select: {
             id: true,
             name: true,
+            description: true,
+            logoUrl: true,
+            galleryImages: true,
             address: true,
             city: true,
+            postalCode: true,
+            phone: true,
+            email: true,
+            website: true,
+            openingHours: true,
+            latitude: true,
+            longitude: true,
+            timezone: true,
           },
         },
         service: {
@@ -250,8 +272,19 @@ export async function getBookingDetails(
           select: {
             id: true,
             name: true,
+            description: true,
+            logoUrl: true,
+            galleryImages: true,
             address: true,
             city: true,
+            postalCode: true,
+            phone: true,
+            email: true,
+            website: true,
+            openingHours: true,
+            latitude: true,
+            longitude: true,
+            timezone: true,
           },
         },
         service: {

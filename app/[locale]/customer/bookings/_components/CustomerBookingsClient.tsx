@@ -11,9 +11,6 @@ import React, { useState } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookingCard } from './BookingCard';
-import { BookingDetailsSheet } from './BookingDetailsSheet';
-import { CancelBookingDialog } from './CancelBookingDialog';
-import { RescheduleDialog } from './RescheduleDialog';
 import { ReviewDialog } from './ReviewDialog';
 import { CalendarIcon, ClockIcon } from 'lucide-react';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
@@ -31,35 +28,7 @@ export function CustomerBookingsClient({
   locale,
 }: CustomerBookingsClientProps): React.JSX.Element {
   const [selectedBooking, setSelectedBooking] = useState<BookingWithRelations | null>(null);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-
-  const handleViewDetails = (booking: BookingWithRelations) => {
-    setSelectedBooking(booking);
-  };
-
-  const handleCloseDetails = () => {
-    setSelectedBooking(null);
-  };
-
-  const handleOpenCancel = (booking: BookingWithRelations) => {
-    setSelectedBooking(booking);
-    setCancelDialogOpen(true);
-  };
-
-  const handleCloseCancel = () => {
-    setCancelDialogOpen(false);
-  };
-
-  const handleOpenReschedule = (booking: BookingWithRelations) => {
-    setSelectedBooking(booking);
-    setRescheduleDialogOpen(true);
-  };
-
-  const handleCloseReschedule = () => {
-    setRescheduleDialogOpen(false);
-  };
 
   const handleOpenReview = (booking: BookingWithRelations) => {
     setSelectedBooking(booking);
@@ -119,9 +88,6 @@ export function CustomerBookingsClient({
                     <BookingCard
                       key={booking.id}
                       booking={booking}
-                      onViewDetails={handleViewDetails}
-                      onCancel={handleOpenCancel}
-                      onReschedule={handleOpenReschedule}
                       onReview={handleOpenReview}
                     />
                   ))}
@@ -148,7 +114,6 @@ export function CustomerBookingsClient({
                     <BookingCard
                       key={booking.id}
                       booking={booking}
-                      onViewDetails={handleViewDetails}
                       onReview={handleOpenReview}
                       isPast={true}
                     />
@@ -159,47 +124,6 @@ export function CustomerBookingsClient({
           </Tabs>
         </div>
       </div>
-
-      {/* Booking Details Sheet */}
-      {selectedBooking && (
-        <BookingDetailsSheet
-          booking={selectedBooking}
-          open={!!selectedBooking && !cancelDialogOpen && !rescheduleDialogOpen && !reviewDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseDetails();
-            }
-          }}
-          onCancel={handleOpenCancel}
-          onReschedule={handleOpenReschedule}
-        />
-      )}
-
-      {/* Cancel Booking Dialog */}
-      {selectedBooking && (
-        <CancelBookingDialog
-          booking={selectedBooking}
-          open={cancelDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseCancel();
-            }
-          }}
-        />
-      )}
-
-      {/* Reschedule Dialog */}
-      {selectedBooking && (
-        <RescheduleDialog
-          booking={selectedBooking}
-          open={rescheduleDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCloseReschedule();
-            }
-          }}
-        />
-      )}
 
       {/* Review Dialog */}
       {selectedBooking && (
