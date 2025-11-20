@@ -1,20 +1,35 @@
+/**
+ * @fileoverview Success state component for booking confirmation
+ * @module app/[locale]/booking/[studioId]/[slotId]/_components/SuccessState
+ */
+
 "use client"
 
-import { useEffect, useState } from "react"
-import { CheckCircle2, Calendar, MapPin, Search, Check, Info } from "lucide-react"
+import { useEffect, useState, useCallback } from "react"
+import type { JSX } from "react"
+import { useRouter } from "next/navigation"
+import { CheckCircle2, Calendar, Search, Check, Info } from "lucide-react"
 import type { BookingStatus } from "@/app/generated/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
+import { generateBookingIcs, downloadIcs, ICSGenerationError, type BookingDetails, type StudioDetails } from "@/lib/ical/generateBookingIcs"
+import { logger, generateCorrelationId } from "@/lib/logger"
+
+// Constants
+const ANIMATION_DURATION_MS = 400;
 
 interface SuccessStateProps {
   bookingNumber: string
   customerEmail: string
-  onViewBooking: () => void
   onNewSearch: () => void
   bookingStatus: BookingStatus | null
   isGuest: boolean
+  locale: string
+  bookingDetails: BookingDetails
+  studioDetails: StudioDetails
 }
 
 /**
@@ -39,58 +54,141 @@ interface SuccessStateProps {
  * - Green for CONFIRMED, Amber for PENDING
  *
  * Accessibility:
- * - Success message announced to screen readers
- * - Clear action labels
+ * - Success message announced to screen readers via ARIA live regions
+ * - Clear action labels with context
  * - Keyboard navigation support
+ * - Focus management for screen readers
+ *
+ * @param props - Component properties
+ * @returns Success state JSX element
  */
 export function SuccessState({
   bookingNumber,
   customerEmail,
-  onViewBooking,
   onNewSearch,
   bookingStatus,
   isGuest,
-}: SuccessStateProps) {
+  locale,
+  bookingDetails,
+  studioDetails,
+}: SuccessStateProps): JSX.Element {
+  const router = useRouter()
+  const { toast } = useToast()
   const [isAnimating, setIsAnimating] = useState(true)
 
   useEffect(() => {
     // Trigger animation
-    const timer = setTimeout(() => setIsAnimating(false), 400)
+    const timer = setTimeout(() => setIsAnimating(false), ANIMATION_DURATION_MS)
     return () => clearTimeout(timer)
   }, [])
 
   const isPending = bookingStatus === 'PENDING'
 
-  // Generate calendar link (generic ICS format)
-  const handleAddToCalendar = () => {
-    // This would generate an ICS file or use calendar APIs
-    // For now, just a placeholder
-    alert("Kalenderfunktion wird noch implementiert")
-  }
+  /**
+   * Generate and download iCal file for booking
+   * Handles all error cases with specific error messages
+   */
+  const handleAddToCalendar = useCallback((): void => {
+    const correlationId = generateCorrelationId();
 
-  const handleShowDirections = () => {
-    // This would open maps with studio location
-    alert("Routenfunktion wird noch implementiert")
-  }
+    try {
+      // Generate ICS content
+      const icsContent = generateBookingIcs(bookingDetails, studioDetails)
+
+      if (!icsContent) {
+        logger.error("ICS content generation returned null", {
+          correlationId,
+          bookingNumber
+        });
+        toast({
+          title: "Fehler",
+          description: "Kalendereintrag konnte nicht erstellt werden",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Trigger download
+      downloadIcs(icsContent, bookingNumber)
+
+      logger.info("Calendar download triggered successfully", {
+        correlationId,
+        bookingNumber
+      });
+
+      toast({
+        title: "Kalendereintrag erstellt",
+        description: "Die .ics Datei wurde heruntergeladen",
+      })
+    } catch (error) {
+      let errorMessage = "Download fehlgeschlagen";
+
+      if (error instanceof ICSGenerationError) {
+        logger.error("Calendar export failed with known error", {
+          correlationId: error.correlationId,
+          code: error.code,
+          bookingNumber,
+          error: error.message
+        });
+
+        // Provide specific error messages based on error code
+        if (error.code === 'VALIDATION_FAILED') {
+          errorMessage = "Ungültige Buchungsdaten";
+        } else if (error.message.includes("Speicherplatz")) {
+          errorMessage = error.message;
+        } else if (error.message.includes("Browser")) {
+          errorMessage = error.message;
+        }
+      } else {
+        logger.error("Calendar export failed with unexpected error", {
+          correlationId,
+          bookingNumber,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+
+      toast({
+        title: "Fehler",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    }
+  }, [bookingDetails, studioDetails, bookingNumber, toast]);
+
+  /**
+   * Navigate to customer bookings page
+   */
+  const handleViewBookings = useCallback((): void => {
+    router.push(`/${locale}/customer/bookings`)
+  }, [router, locale]);
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
-      {/* Animated Success Checkmark */}
+      {/* Screen reader announcement for success state */}
+      <div className="sr-only" role="status" aria-live="polite">
+        {isPending
+          ? `Buchungsanfrage erhalten. Buchungsnummer: ${bookingNumber}`
+          : `Buchung erfolgreich bestätigt. Buchungsnummer: ${bookingNumber}`
+        }
+      </div>
+
+      {/* Animated Success Checkmark - Enhanced: Larger, Greener, More Prominent */}
       <div
         className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center mb-6 transition-all duration-400",
+          "w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-400",
           isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100",
-          isPending ? "bg-amber-100" : "bg-green-100"
+          isPending ? "bg-amber-100" : "bg-green-600"
         )}
         role="img"
         aria-label={isPending ? "Buchungsanfrage erhalten" : "Buchung erfolgreich"}
       >
         <Check
           className={cn(
-            "w-10 h-10",
-            isPending ? "text-amber-600" : "text-green-600"
+            "w-12 h-12",
+            isPending ? "text-amber-600" : "text-white"
           )}
-          strokeWidth={2}
+          strokeWidth={3}
+          aria-hidden="true"
         />
       </div>
 
@@ -159,57 +257,52 @@ export function SuccessState({
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
               <span>Alle Termine an einem Ort</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
               <span>Automatische Erinnerungen</span>
             </div>
             <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
               <span>Schnellere zukünftige Buchungen</span>
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" variant="outline">
+            <Button
+              className="w-full"
+              variant="outline"
+              aria-label="Kostenloses Konto erstellen um Buchungen zu verwalten"
+            >
               Jetzt kostenloses Konto erstellen
             </Button>
           </CardFooter>
         </Card>
       )}
 
-      {/* Action Buttons */}
+      {/* Action Buttons - Streamlined: 3 buttons instead of 4 */}
       <div className="w-full max-w-md space-y-3">
-        {/* Add to Calendar */}
+        {/* Add to Calendar - Now Functional */}
         <Button
           size="lg"
           variant="outline"
           className="w-full h-12"
           onClick={handleAddToCalendar}
+          aria-label={`Buchung ${bookingNumber} zum Kalender hinzufügen`}
         >
-          <Calendar className="mr-2 h-5 w-5" />
+          <Calendar className="mr-2 h-5 w-5" aria-hidden="true" />
           Zum Kalender hinzufügen
         </Button>
 
-        {/* Show Directions */}
-        <Button
-          size="lg"
-          variant="outline"
-          className="w-full h-12"
-          onClick={handleShowDirections}
-        >
-          <MapPin className="mr-2 h-5 w-5" />
-          Route anzeigen
-        </Button>
-
-        {/* View Booking Details */}
+        {/* View All Bookings - Renamed and Redirects to /customer/bookings */}
         <Button
           size="lg"
           className="w-full h-12 bg-primary hover:bg-primary/90"
-          onClick={onViewBooking}
+          onClick={handleViewBookings}
+          aria-label="Alle meine Buchungen anzeigen"
         >
-          Buchung anzeigen
+          Meine Buchungen
         </Button>
 
         {/* New Search (Secondary) */}
@@ -218,8 +311,9 @@ export function SuccessState({
           variant="ghost"
           className="w-full h-12"
           onClick={onNewSearch}
+          aria-label="Nach weiteren verfügbaren Terminen suchen"
         >
-          <Search className="mr-2 h-5 w-5" />
+          <Search className="mr-2 h-5 w-5" aria-hidden="true" />
           Weitere Termine suchen
         </Button>
       </div>
