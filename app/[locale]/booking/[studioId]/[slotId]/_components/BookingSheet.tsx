@@ -327,14 +327,14 @@ export function BookingSheet({
    */
   const handleCancel = useCallback((): void => {
     if (currentStep === "success") {
-      // Don't show confirmation on success screen
-      onClose()
+      // On success screen, redirect to My Bookings instead of closing
+      router.push(`/${locale}/customer/bookings`)
       return
     }
 
     // TODO: Show confirmation dialog if form is partially filled
     onClose()
-  }, [currentStep, onClose])
+  }, [currentStep, onClose, router, locale])
 
   /**
    * Handle new search after successful booking
