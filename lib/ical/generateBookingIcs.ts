@@ -79,24 +79,22 @@ function sanitizeICalText(text: string): string {
 }
 
 /**
- * Convert Date to UTC DateArray format required by ics library
- * @param date - Date to convert (in local timezone)
- * @param timezone - Timezone string (e.g., 'Europe/Berlin')
- * @returns DateArray in UTC format: [year, month, day, hour, minute]
+ * Convert Date to DateArray format for ics library in local timezone
+ * The date should already be in the correct timezone (Europe/Berlin)
+ * We use it as-is without UTC conversion to preserve the local time
+ *
+ * @param date - Date object in local timezone (Europe/Berlin)
+ * @returns DateArray: [year, month, day, hour, minute]
  */
-function dateToUTCArray(date: Date, timezone: string): DateArray {
-  // Convert to the specified timezone
-  const zonedDate = toZonedTime(date, timezone);
-
-  // Get UTC values
-  const utcDate = new Date(zonedDate.toLocaleString('en-US', { timeZone: 'UTC' }));
-
+function dateToLocalArray(date: Date): DateArray {
+  // Use the date as-is (should already be in Europe/Berlin timezone)
+  // Don't convert to UTC - we want to preserve the local time
   return [
-    utcDate.getUTCFullYear(),
-    utcDate.getUTCMonth() + 1, // Month is 0-indexed in JS, 1-indexed in ics
-    utcDate.getUTCDate(),
-    utcDate.getUTCHours(),
-    utcDate.getUTCMinutes(),
+    date.getFullYear(),
+    date.getMonth() + 1, // Month is 0-indexed in JS, 1-indexed in ics
+    date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
   ];
 }
 
@@ -174,12 +172,12 @@ export function generateBookingIcs(
 
     const description = descriptionLines.join("\\n"); // Use escaped newline for iCal
 
-    // Create event attributes with UTC times
+    // Create event attributes with local timezone times (Europe/Berlin)
     const event: EventAttributes = {
-      start: dateToUTCArray(validatedBooking.startDateTime, timezone),
-      startInputType: 'utc',
-      end: dateToUTCArray(validatedBooking.endDateTime, timezone),
-      endInputType: 'utc',
+      start: dateToLocalArray(validatedBooking.startDateTime),
+      startInputType: 'local',
+      end: dateToLocalArray(validatedBooking.endDateTime),
+      endInputType: 'local',
       title: sanitizedBooking.serviceName,
       description,
       location,

@@ -172,21 +172,17 @@ export function SuccessState({
         }
       </div>
 
-      {/* Animated Success Checkmark - Enhanced: Larger, Greener, More Prominent */}
+      {/* Animated Success Checkmark - Always Green for Success */}
       <div
         className={cn(
-          "w-24 h-24 rounded-full flex items-center justify-center mb-6 transition-all duration-400",
-          isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100",
-          isPending ? "bg-amber-100" : "bg-green-600"
+          "w-24 h-24 rounded-full bg-green-600 flex items-center justify-center mb-6 transition-all duration-400",
+          isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100"
         )}
         role="img"
         aria-label={isPending ? "Buchungsanfrage erhalten" : "Buchung erfolgreich"}
       >
         <Check
-          className={cn(
-            "w-12 h-12",
-            isPending ? "text-amber-600" : "text-white"
-          )}
+          className="w-12 h-12 text-white"
           strokeWidth={3}
           aria-hidden="true"
         />
