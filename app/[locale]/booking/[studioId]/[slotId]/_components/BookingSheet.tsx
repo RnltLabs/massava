@@ -337,6 +337,17 @@ export function BookingSheet({
   }, [currentStep, onClose, router, locale])
 
   /**
+   * Handle open/close state change from Sheet/Dialog
+   * onOpenChange receives a boolean parameter (open/closed)
+   */
+  const handleOpenChange = useCallback((open: boolean): void => {
+    if (!open) {
+      // User is closing the dialog
+      handleCancel()
+    }
+  }, [handleCancel])
+
+  /**
    * Handle new search after successful booking
    */
   const handleNewSearch = useCallback((): void => {
@@ -498,7 +509,7 @@ export function BookingSheet({
   if (isMobile) {
     return (
       <>
-        <Sheet open={isOpen} onOpenChange={onClose}>
+        <Sheet open={isOpen} onOpenChange={handleOpenChange}>
           <SheetContent
             side="bottom"
             className="h-[80vh] rounded-t-3xl p-4 flex flex-col"
@@ -546,7 +557,7 @@ export function BookingSheet({
   // Desktop: Dialog
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
         <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 flex flex-col">
           <ScrollArea className="flex-1 pr-6 -mr-6">
             {content}
