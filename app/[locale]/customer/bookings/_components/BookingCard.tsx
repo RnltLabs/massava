@@ -3,216 +3,247 @@
  * All rights reserved.
  *
  * Booking Card Component
+ * Redesigned to match AppointmentCard styling exactly
  */
 
 'use client';
 
-import React from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  CalendarIcon,
-  ClockIcon,
-  MapPinIcon,
-  XIcon,
-  Edit2Icon,
-  EyeIcon,
-  StarIcon,
-} from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { ClockIcon, CalendarIcon, StarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { StudioViewPopup } from '@/components/search/StudioViewPopup';
+import { CancelBookingDialog } from './CancelBookingDialog';
 import type { BookingWithRelations } from '@/app/[locale]/customer/actions/bookings';
+import type { SearchResultStudio } from '@/types/booking';
 
 interface BookingCardProps {
   booking: BookingWithRelations;
-  onViewDetails: (booking: BookingWithRelations) => void;
-  onCancel?: (booking: BookingWithRelations) => void;
-  onReschedule?: (booking: BookingWithRelations) => void;
   onReview?: (booking: BookingWithRelations) => void;
   isPast?: boolean;
 }
 
+// Status configuration - matches AppointmentCard exactly
+const STATUS_COLORS: Record<'PENDING' | 'CONFIRMED' | 'CANCELLED', string> = {
+  PENDING: 'bg-amber-100 text-amber-800',
+  CONFIRMED: 'bg-green-100 text-green-800',
+  CANCELLED: 'bg-red-100 text-red-800',
+};
+
+const STATUS_LABELS: Record<'PENDING' | 'CONFIRMED' | 'CANCELLED', string> = {
+  PENDING: 'Ausstehend',
+  CONFIRMED: 'Bestätigt',
+  CANCELLED: 'Storniert',
+};
+
 export function BookingCard({
   booking,
-  onViewDetails,
-  onCancel,
-  onReschedule,
   onReview,
   isPast = false,
 }: BookingCardProps): React.JSX.Element {
-  const canCancel = !isPast && (booking.status === 'PENDING' || booking.status === 'CONFIRMED');
-  const canReschedule = !isPast && (booking.status === 'PENDING' || booking.status === 'CONFIRMED');
+  const [showStudioInfo, setShowStudioInfo] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Determine if booking can be cancelled (not past, not already cancelled)
+  const canCancel = useMemo(
+    () => !isPast && (booking.status === 'PENDING' || booking.status === 'CONFIRMED'),
+    [isPast, booking.status]
+  );
 
   // Can review if: past, confirmed, and no review yet
-  const canReview = isPast && booking.status === 'CONFIRMED' && !booking.review;
+  const canReview = useMemo(
+    () => isPast && booking.status === 'CONFIRMED' && !booking.review,
+    [isPast, booking.status, booking.review]
+  );
 
-  const getStatusBadge = () => {
-    switch (booking.status) {
-      case 'PENDING':
-        return (
-          <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">
-            Ausstehend
-          </Badge>
-        );
-      case 'CONFIRMED':
-        return (
-          <Badge variant="outline" className="bg-green-100 text-green-800 border-green-200">
-            Bestätigt
-          </Badge>
-        );
-      case 'CANCELLED':
-        return (
-          <Badge variant="outline" className="bg-red-100 text-red-800 border-red-200">
-            Storniert
-          </Badge>
-        );
-      default:
-        return null;
+  // Status label
+  const statusLabel = useMemo(() => STATUS_LABELS[booking.status], [booking.status]);
+
+  // Memoize event handlers
+  const handleStudioInfoClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowStudioInfo(true);
+  }, []);
+
+  const handleCancelClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowCancelDialog(true);
+  }, []);
+
+  const handleReviewClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onReview) {
+      onReview(booking);
     }
-  };
+  }, [booking, onReview]);
 
-  // DateTime formatting using date-fns (Phase 4 migration)
-  const formatDateTime = (date: Date) => {
-    return format(date, 'EEEE, d. MMMM yyyy', { locale: de });
-  };
+  // DateTime formatting
+  const formatDate = useCallback((date: Date) => {
+    return format(date, 'd. MMMM yyyy', { locale: de });
+  }, []);
 
-  const formatTime = (date: Date) => {
-    return format(date, 'HH:mm');
-  };
+  const formatTime = useCallback((date: Date) => {
+    return format(date, 'HH:mm', { locale: de });
+  }, []);
 
-  const formatPrice = (price: number) => {
+  const formatPrice = useCallback((price: number) => {
     return new Intl.NumberFormat('de-DE', {
       style: 'currency',
       currency: 'EUR',
     }).format(price);
-  };
+  }, []);
+
+  // Convert booking studio to SearchResultStudio for StudioViewPopup
+  const studioForPopup: SearchResultStudio = useMemo(
+    () => ({
+      id: booking.studio.id,
+      name: booking.studio.name,
+      description: booking.studio.description,
+      logoUrl: booking.studio.logoUrl,
+      galleryImages: booking.studio.galleryImages,
+      address: booking.studio.address || '',
+      city: booking.studio.city || '',
+      postalCode: booking.studio.postalCode,
+      phone: booking.studio.phone,
+      email: booking.studio.email,
+      website: booking.studio.website,
+      openingHours: booking.studio.openingHours,
+      latitude: booking.studio.latitude,
+      longitude: booking.studio.longitude,
+      timezone: booking.studio.timezone,
+      distance: 0,
+      services: [],
+      matchedServices: [],
+      minPrice: 0,
+      availableSlots: [],
+      averageRating: undefined,
+      totalReviews: undefined,
+    }),
+    [booking.studio]
+  );
 
   return (
-    <Card
-      className="group relative overflow-hidden rounded-[1.5rem] border border-border bg-background transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer"
-      onClick={() => onViewDetails(booking)}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-base mb-1">{booking.studio.name}</h3>
-            {booking.service && (
-              <p className="text-sm text-muted-foreground">{booking.service.name}</p>
-            )}
-          </div>
-          {getStatusBadge()}
-        </div>
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <MapPinIcon className="h-4 w-4 flex-shrink-0" />
-          <span className="truncate">
-            {booking.studio.address && booking.studio.city
-              ? `${booking.studio.address}, ${booking.studio.city}`
-              : booking.studio.city || 'Keine Adresse'}
-          </span>
-        </div>
-      </CardHeader>
-
-      <CardContent className="pt-0">
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center gap-2 text-sm">
-            <CalendarIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <span className="font-medium">{formatDateTime(booking.preferredDateTime)}</span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm">
-            <ClockIcon className="h-4 w-4 text-gray-600 flex-shrink-0" />
-            <div className="flex items-center gap-3 flex-1">
-              <span>{formatTime(booking.preferredDateTime)}</span>
+    <>
+      <article
+        className={cn(
+          'bg-white border border-gray-200 rounded-xl p-4 shadow-sm',
+          'transition-all duration-200 hover:shadow-md'
+        )}
+        aria-label={`Booking: ${booking.studio.name}, ${booking.service?.name || 'Service'}, ${formatDate(booking.preferredDateTime)} at ${formatTime(booking.preferredDateTime)}`}
+      >
+        {/* Header with Icon and Status - EXACT match to AppointmentCard */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-[#D4A89F] flex items-center justify-center" aria-hidden="true">
+              <ClockIcon className="h-6 w-6 text-[#B56550]" />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-gray-900">{booking.studio.name}</p>
               {booking.service && (
-                <span className="text-muted-foreground">
-                  ({booking.service.duration} Min.)
-                </span>
+                <p className="text-sm text-gray-600">{booking.service.name}</p>
               )}
             </div>
           </div>
+          <span
+            className={cn(
+              'px-3 py-1 rounded-full text-xs font-medium',
+              STATUS_COLORS[booking.status]
+            )}
+            role="status"
+            aria-label={`Status: ${statusLabel}`}
+          >
+            {statusLabel}
+          </span>
+        </div>
 
-          {booking.service && booking.service.price > 0 && (
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className="text-sm font-semibold">Preis:</span>
-              <span className="text-base font-bold text-primary">
+        {/* Date and Time - EXACT match to AppointmentCard */}
+        <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            <span>{formatDate(booking.preferredDateTime)}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <ClockIcon className="h-4 w-4 text-gray-400" aria-hidden="true" />
+            <span>{formatTime(booking.preferredDateTime)}</span>
+          </div>
+        </div>
+
+        {/* Service Details (Duration and Price) */}
+        {booking.service && (
+          <div className="flex items-center justify-between text-sm mt-3 pt-3 border-t border-gray-100">
+            <span className="text-gray-600">
+              {booking.service.duration} Min.
+            </span>
+            {booking.service.price > 0 && (
+              <span className="font-semibold text-gray-900">
                 {formatPrice(booking.service.price)}
               </span>
-            </div>
-          )}
+            )}
+          </div>
+        )}
+
+        {/* Studio Info Link */}
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <button
+            onClick={handleStudioInfoClick}
+            className="text-sm text-[#B56550] hover:text-[#9a4a3d] hover:underline transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-offset-2 rounded"
+            aria-label={`View ${booking.studio.name} information`}
+          >
+            Studio-Informationen
+          </button>
         </div>
 
         {/* Action Buttons */}
-        {!isPast && (canCancel || canReschedule) && (
-          <div className="flex gap-2 pt-2 border-t">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails(booking);
-              }}
-            >
-              <EyeIcon className="h-4 w-4 mr-2" />
-              Details
-            </Button>
-
-            {canReschedule && onReschedule && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReschedule(booking);
-                }}
+        {(canCancel || canReview) && (
+          <div className="flex gap-2 mt-4" role="group" aria-label="Booking actions">
+            {/* Cancel Button - Only for upcoming, non-cancelled bookings */}
+            {canCancel && (
+              <button
+                onClick={handleCancelClick}
+                className="flex-1 min-h-[44px] bg-gray-100 text-gray-700 text-sm font-medium rounded-xl transition-all duration-200 hover:bg-gray-200 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+                aria-label={`Cancel booking for ${booking.studio.name}`}
               >
-                <Edit2Icon className="h-4 w-4" />
-              </Button>
+                Stornieren
+              </button>
             )}
 
-            {canCancel && onCancel && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onCancel(booking);
-                }}
-                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            {/* Review Button - Only for past confirmed bookings without review */}
+            {canReview && onReview && (
+              <button
+                onClick={handleReviewClick}
+                style={{ backgroundColor: '#B56550' }}
+                className="flex-1 min-h-[44px] text-white text-sm font-medium rounded-xl transition-all duration-200 shadow-md hover:shadow-lg hover:opacity-90 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-offset-2"
+                aria-label={`Review ${booking.studio.name}`}
               >
-                <XIcon className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Review Button or Status */}
-        {isPast && (
-          <div className="flex gap-2 pt-2 border-t">
-            {booking.review ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span>Bewertung abgegeben ({booking.review.rating} Sterne)</span>
-              </div>
-            ) : canReview && onReview ? (
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-1"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onReview(booking);
-                }}
-              >
-                <StarIcon className="h-4 w-4 mr-2" />
                 Bewerten
-              </Button>
-            ) : null}
+              </button>
+            )}
           </div>
         )}
-      </CardContent>
-    </Card>
+
+        {/* Review Status - If already reviewed */}
+        {isPast && booking.review && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 mt-3 pt-3 border-t border-gray-100">
+            <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" aria-hidden="true" />
+            <span>Bewertung abgegeben ({booking.review.rating} Sterne)</span>
+          </div>
+        )}
+      </article>
+
+      {/* Studio Info Popup */}
+      <StudioViewPopup
+        studio={studioForPopup}
+        open={showStudioInfo}
+        onOpenChange={setShowStudioInfo}
+      />
+
+      {/* Cancel Booking Dialog */}
+      <CancelBookingDialog
+        booking={booking}
+        open={showCancelDialog}
+        onOpenChange={setShowCancelDialog}
+      />
+    </>
   );
 }
