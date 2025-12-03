@@ -446,6 +446,13 @@
         },
         "cta": "Enable Notifications",
         "skip": "Set up later"
+      },
+      "noChannelWarning": {
+        "title": "No channel active",
+        "description": "Enable push or email to receive notifications.",
+        "enablePush": "Enable push",
+        "enableEmail": "Enable email",
+        "inactive": "inactive"
       }
     }
   }
