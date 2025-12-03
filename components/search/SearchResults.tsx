@@ -7,17 +7,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { format } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { ArrowRight, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { StudioAvatar } from '@/components/ui/studio-avatar';
-import { formatPriceLabel } from '@/lib/utils/priceAggregation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SearchResultCard } from '@/components/search/SearchResultCard';
+import { SearchEmptyState } from '@/components/search/SearchEmptyState';
 import { StudioViewPopup } from '@/components/search/StudioViewPopup';
-import { StudioRating } from '@/components/reviews/StudioRating';
-import { TimeSlotButton } from '@/components/booking/TimeSlotButton';
 import type { SearchResultStudio } from '@/types/booking';
 
 interface SearchResultsResponse {
@@ -44,45 +38,34 @@ interface SearchResultsProps {
 }
 
 /**
- * Helper function to format time from datetime string or Date object
- */
-const formatTime = (datetime: string | Date): string => {
-  const date = typeof datetime === 'string' ? new Date(datetime) : datetime;
-  return format(date, 'HH:mm', { locale: de });
-};
-
-/**
  * Skeleton Card Component for Loading State
+ * Consistent with BookingsList skeleton design
  */
 function SkeletonCard(): React.JSX.Element {
   return (
-    <Card className="wellness-shadow p-4 sm:p-6 animate-pulse overflow-hidden">
-      <div className="flex items-start gap-4">
-        {/* Avatar skeleton */}
-        <div className="size-16 rounded-full bg-muted shrink-0" />
-
-        {/* Content skeleton */}
+    <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <Skeleton className="w-12 h-12 rounded-full" />
         <div className="flex-1 space-y-2">
-          <div className="h-6 bg-muted rounded w-2/3" />
-          <div className="h-4 bg-muted rounded w-1/3" />
-          <div className="h-5 bg-muted rounded w-1/4" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-48" />
         </div>
+        <Skeleton className="h-6 w-16" />
       </div>
-
-      {/* Services skeleton */}
-      <div className="mt-4 h-4 bg-muted rounded w-full" />
-
-      {/* TimeSlots skeleton */}
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-12 bg-muted rounded" />
-        ))}
+      <div className="flex gap-1.5 mt-3">
+        <Skeleton className="h-6 w-16 rounded-full" />
+        <Skeleton className="h-6 w-20 rounded-full" />
       </div>
-    </Card>
+      <div className="flex gap-1.5 mt-3 pt-3 border-t border-gray-100">
+        <Skeleton className="h-8 w-14 rounded-lg" />
+        <Skeleton className="h-8 w-14 rounded-lg" />
+        <Skeleton className="h-8 w-14 rounded-lg" />
+      </div>
+    </div>
   );
 }
 
-export function SearchResults({ searchParams }: SearchResultsProps) {
+export function SearchResults({ searchParams }: SearchResultsProps): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
   const locale = (params?.locale as string) || 'de';
@@ -99,17 +82,17 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
         setError(null);
 
         // Build query string
-        const params = new URLSearchParams();
-        if (searchParams.location) params.set('location', searchParams.location);
-        if (searchParams.lat) params.set('lat', searchParams.lat);
-        if (searchParams.lng) params.set('lng', searchParams.lng);
-        if (searchParams.radius) params.set('radius', searchParams.radius);
-        if (searchParams.datetime) params.set('datetime', searchParams.datetime);
-        if (searchParams.serviceType) params.set('serviceType', searchParams.serviceType);
-        if (searchParams.minPrice) params.set('minPrice', searchParams.minPrice);
-        if (searchParams.maxPrice) params.set('maxPrice', searchParams.maxPrice);
+        const queryParams = new URLSearchParams();
+        if (searchParams.location) queryParams.set('location', searchParams.location);
+        if (searchParams.lat) queryParams.set('lat', searchParams.lat);
+        if (searchParams.lng) queryParams.set('lng', searchParams.lng);
+        if (searchParams.radius) queryParams.set('radius', searchParams.radius);
+        if (searchParams.datetime) queryParams.set('datetime', searchParams.datetime);
+        if (searchParams.serviceType) queryParams.set('serviceType', searchParams.serviceType);
+        if (searchParams.minPrice) queryParams.set('minPrice', searchParams.minPrice);
+        if (searchParams.maxPrice) queryParams.set('maxPrice', searchParams.maxPrice);
 
-        const response = await fetch(`/api/search/appointments?${params.toString()}`);
+        const response = await fetch(`/api/search/appointments?${queryParams.toString()}`);
 
         if (!response.ok) {
           throw new Error('Failed to fetch search results');
@@ -134,17 +117,17 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
    */
   const handleBookSlot = (studioId: string, slotId: string): void => {
     // Build query string from current search params to preserve search context
-    const params = new URLSearchParams();
-    if (searchParams.location) params.set('location', searchParams.location);
-    if (searchParams.lat) params.set('lat', searchParams.lat);
-    if (searchParams.lng) params.set('lng', searchParams.lng);
-    if (searchParams.radius) params.set('radius', searchParams.radius);
-    if (searchParams.datetime) params.set('datetime', searchParams.datetime);
-    if (searchParams.serviceType) params.set('serviceType', searchParams.serviceType);
-    if (searchParams.minPrice) params.set('minPrice', searchParams.minPrice);
-    if (searchParams.maxPrice) params.set('maxPrice', searchParams.maxPrice);
+    const queryParams = new URLSearchParams();
+    if (searchParams.location) queryParams.set('location', searchParams.location);
+    if (searchParams.lat) queryParams.set('lat', searchParams.lat);
+    if (searchParams.lng) queryParams.set('lng', searchParams.lng);
+    if (searchParams.radius) queryParams.set('radius', searchParams.radius);
+    if (searchParams.datetime) queryParams.set('datetime', searchParams.datetime);
+    if (searchParams.serviceType) queryParams.set('serviceType', searchParams.serviceType);
+    if (searchParams.minPrice) queryParams.set('minPrice', searchParams.minPrice);
+    if (searchParams.maxPrice) queryParams.set('maxPrice', searchParams.maxPrice);
 
-    const queryString = params.toString();
+    const queryString = queryParams.toString();
     const bookingUrl = `/${locale}/booking/${studioId}/${encodeURIComponent(slotId)}${queryString ? `?${queryString}` : ''}`;
     router.push(bookingUrl);
   };
@@ -164,11 +147,23 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
     router.back();
   };
 
-  // Loading State
+  /**
+   * Clear filters but keep location parameters
+   */
+  const handleClearFilters = (): void => {
+    const queryParams = new URLSearchParams();
+    if (searchParams.location) queryParams.set('location', searchParams.location);
+    if (searchParams.lat) queryParams.set('lat', searchParams.lat);
+    if (searchParams.lng) queryParams.set('lng', searchParams.lng);
+    if (searchParams.radius) queryParams.set('radius', searchParams.radius);
+    router.push(`?${queryParams.toString()}`);
+  };
+
+  // Loading State - Vertical list layout
   if (isLoading) {
     return (
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
-        {[1, 2, 3].map((i) => (
+      <div className="space-y-3">
+        {[1, 2, 3, 4, 5].map((i) => (
           <SkeletonCard key={i} />
         ))}
       </div>
@@ -178,7 +173,7 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
   // Error State
   if (error) {
     return (
-      <Card className="wellness-shadow p-8 text-center">
+      <div className="bg-white border border-gray-200 rounded-xl p-8 text-center shadow-sm">
         <p className="text-destructive font-semibold mb-2">
           Fehler beim Laden der Ergebnisse
         </p>
@@ -186,156 +181,37 @@ export function SearchResults({ searchParams }: SearchResultsProps) {
         <Button variant="outline" onClick={handleBackToSearch}>
           Zurück zur Suche
         </Button>
-      </Card>
+      </div>
     );
   }
 
   // Empty State
   if (results.length === 0) {
+    const hasFilters = Boolean(
+      searchParams.serviceType ||
+      searchParams.minPrice ||
+      searchParams.maxPrice
+    );
     return (
-      <Card className="wellness-shadow p-12 text-center">
-        <div className="max-w-md mx-auto">
-          <h3 className="text-xl font-bold mb-2">Keine verfügbaren Termine gefunden</h3>
-          <p className="text-muted-foreground mb-6">
-            Leider konnten wir keine Studios mit verfügbaren Terminen in Ihrer Nähe finden.
-            Versuchen Sie es mit einem größeren Suchradius oder einem anderen Zeitpunkt.
-          </p>
-          <Button variant="outline" onClick={handleBackToSearch}>
-            Suche anpassen
-          </Button>
-        </div>
-      </Card>
+      <SearchEmptyState
+        hasFilters={hasFilters}
+        onClearFilters={handleClearFilters}
+      />
     );
   }
 
-  // Results Grid (Responsive: 1/2/3 columns)
+  // Results - Vertical list layout
   return (
     <>
-      <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 overflow-x-hidden">
-        {results.map((result) => {
-          const { id, name, distance, minPrice, matchedServices, availableSlots } = result;
-          const logoUrl = result.logoUrl || null;
-
-          // Filter out past slots (client-side safety check)
-          const now = new Date();
-          const futureSlots = availableSlots.filter((slot) => {
-            const slotTime = new Date(slot.startTime);
-            return slotTime > now;
-          });
-
-          return (
-            <Card
-              key={id}
-              className="wellness-shadow p-3 sm:p-6 hover:shadow-lg transition-shadow flex flex-col overflow-hidden"
-            >
-              {/* Header: Avatar + Studio Info */}
-              <div className="flex items-start gap-4 mb-0.5 sm:mb-4">
-                {/* Studio Avatar - Clickable */}
-                <button
-                  onClick={() => handleViewStudio(result)}
-                  className="focus:outline-none focus:ring-2 focus:ring-primary rounded-full shrink-0"
-                  aria-label={`${name} Studio-Details anzeigen`}
-                >
-                  <StudioAvatar
-                    logoUrl={logoUrl}
-                    studioName={name}
-                    studioId={id}
-                    size={64}
-                    className="hover:opacity-80 transition-opacity cursor-pointer"
-                  />
-                </button>
-
-                {/* Studio Name + Distance & Price */}
-                <div className="flex-1 min-w-0">
-                  {/* Studio Name - Clickable */}
-                  <button
-                    onClick={() => handleViewStudio(result)}
-                    className="text-left w-full focus:outline-none focus:ring-2 focus:ring-primary rounded"
-                  >
-                    <h3 className="font-bold text-base sm:text-lg mb-1 line-clamp-2 break-words overflow-hidden hover:text-primary transition-colors">
-                      {name}
-                    </h3>
-                  </button>
-
-                  {/* Studio Rating */}
-                  {result.averageRating !== undefined && result.totalReviews !== undefined && (
-                    <div className="mb-2">
-                      <StudioRating
-                        rating={result.averageRating}
-                        totalReviews={result.totalReviews}
-                        variant="compact"
-                        onClick={() => handleViewStudio(result)}
-                      />
-                    </div>
-                  )}
-
-                  {/* Distance and Price in one row */}
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant="secondary" className="shrink-0">
-                      {distance.toFixed(1)} km entfernt
-                    </Badge>
-                    <span className="text-lg sm:text-xl font-bold text-primary shrink-0">
-                      {formatPriceLabel(minPrice)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Matched Services */}
-              {matchedServices.length > 0 && (
-                <div className="mb-1.5 sm:mb-3">
-                  <p className="text-sm text-muted-foreground line-clamp-2 break-words overflow-hidden">
-                    {matchedServices.map((service) => service.name).join(' • ')}
-                  </p>
-                </div>
-              )}
-
-              {/* Available TimeSlots (Klickbar!) - Now with Timezone Awareness */}
-              {futureSlots.length > 0 && (
-                <div className="mt-auto">
-                  <div className="grid grid-cols-3 sm:grid-cols-2 gap-2 mb-3">
-                    {futureSlots.slice(0, 3).map((slot) => (
-                      <TimeSlotButton
-                        key={slot.startTime}
-                        startTime={slot.startTime}
-                        studioTimezone={result.timezone}
-                        onClick={() => handleBookSlot(id, slot.startTime)}
-                        size="sm"
-                        showUserTime={true}
-                      />
-                    ))}
-                  </div>
-
-                  {/* View More Link */}
-                  {futureSlots.length > 3 && (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="w-full justify-center gap-2 text-primary hover:text-primary/80"
-                      onClick={() => router.push(`/studios/${id}`)}
-                    >
-                      Alle Termine anzeigen
-                      <ArrowRight className="size-4" />
-                    </Button>
-                  )}
-                </div>
-              )}
-
-              {/* View Studio Button */}
-              <div className="mt-3 pt-3 border-t border-border">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-center gap-2 text-muted-foreground hover:text-primary"
-                  onClick={() => handleViewStudio(result)}
-                >
-                  <Info className="size-4" />
-                  Studio-Informationen
-                </Button>
-              </div>
-            </Card>
-          );
-        })}
+      <div className="space-y-3">
+        {results.map((result) => (
+          <SearchResultCard
+            key={result.id}
+            studio={result}
+            onBookSlot={handleBookSlot}
+            onViewStudio={() => handleViewStudio(result)}
+          />
+        ))}
       </div>
 
       {/* Studio View Popup */}
