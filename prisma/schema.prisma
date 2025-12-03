@@ -116,29 +116,32 @@ model Service {
 }
 
 model User {
-  id                  String               @id @default(cuid())
-  email               String               @unique
-  emailVerified       DateTime?
-  password            String?
-  name                String?
-  phone               String?
-  image               String?
-  primaryRole         UserRole             @default(CUSTOMER)
-  isActive            Boolean              @default(true)
-  isSuspended         Boolean              @default(false)
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  deletedAt           DateTime?
-  deletionScheduledAt DateTime?
-  auditLogs           AuditLog[]
-  newAccounts         NewAccount[]
-  newBookings         NewBooking[]
-  newSessions         NewSession[]
-  refreshTokens       RefreshToken[]
-  reviews             Review[]
-  ownedStudios        StudioOwnership[]
-  roles               UserRoleAssignment[]
-  newFavorites        Studio[]             @relation("UserFavorites")
+  id                     String                  @id @default(cuid())
+  email                  String                  @unique
+  emailVerified          DateTime?
+  password               String?
+  name                   String?
+  phone                  String?
+  image                  String?
+  primaryRole            UserRole                @default(CUSTOMER)
+  isActive               Boolean                 @default(true)
+  isSuspended            Boolean                 @default(false)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  deletedAt              DateTime?
+  deletionScheduledAt    DateTime?
+  auditLogs              AuditLog[]
+  newAccounts            NewAccount[]
+  newBookings            NewBooking[]
+  newSessions            NewSession[]
+  refreshTokens          RefreshToken[]
+  reviews                Review[]
+  ownedStudios           StudioOwnership[]
+  roles                  UserRoleAssignment[]
+  newFavorites           Studio[]                @relation("UserFavorites")
+  notifications          Notification[]
+  notificationPreference NotificationPreference?
+  deviceTokens           DeviceToken[]
 
   @@index([email])
   @@index([primaryRole])
@@ -374,6 +377,125 @@ model Review {
   @@map("reviews")
 }
 
+model Notification {
+  id                String              @id @default(cuid())
+  userId            String
+  type              NotificationType
+  title             String
+  body              String
+  metadata          Json?
+
+  idempotencyKey    String?             @unique
+
+  status            NotificationStatus  @default(PENDING)
+  statusHistory     Json?
+
+  channels          NotificationChannel[]
+  pushDeliveredAt   DateTime?
+  pushReadAt        DateTime?
+  pushFailedAt      DateTime?
+  pushError         String?
+  emailSentAt       DateTime?
+  emailOpenedAt     DateTime?
+  emailFailedAt     DateTime?
+  emailError        String?
+  inAppSeenAt       DateTime?
+
+  retryCount        Int                 @default(0)
+  maxRetries        Int                 @default(3)
+  lastRetryAt       DateTime?
+  nextRetryAt       DateTime?
+
+  scheduledFor      DateTime?
+  expiresAt         DateTime?
+
+  priority          NotificationPriority @default(NORMAL)
+
+  actionUrl         String?
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId         String?
+  studioId          String?
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([userId, type])
+  @@index([scheduledFor])
+  @@index([idempotencyKey])
+  @@index([status, nextRetryAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id                  String            @id @default(cuid())
+  userId              String            @unique
+
+  pushEnabled         Boolean           @default(true)
+  emailEnabled        Boolean           @default(true)
+  inAppEnabled        Boolean           @default(true)
+
+  // Granular push notification preferences
+  pushBookings        Boolean           @default(true)
+  pushCancellations   Boolean           @default(true)
+  pushReminders       Boolean           @default(true)
+  pushMarketing       Boolean           @default(false)
+
+  // Granular email notification preferences
+  emailBookings       Boolean           @default(true)
+  emailCancellations  Boolean           @default(true)
+  emailReminders      Boolean           @default(true)
+  emailMarketing      Boolean           @default(false)
+
+  typePreferences     Json              @default("{}")
+
+  emailDigestEnabled  Boolean           @default(false)
+  digestFrequency     DigestFrequency   @default(DAILY)
+  digestTime          String?           @default("09:00")
+
+  language            String            @default("de")
+
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@map("notification_preferences")
+}
+
+model DeviceToken {
+  id                String            @id @default(cuid())
+  userId            String
+  token             String            @unique
+  platform          DevicePlatform
+
+  deviceName        String?
+  deviceModel       String?
+  appVersion        String?
+  osVersion         String?
+
+  isActive          Boolean           @default(true)
+  lastUsedAt        DateTime          @default(now())
+
+  failureCount      Int               @default(0)
+  lastFailureAt     DateTime?
+  lastFailureReason String?
+
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([userId, isActive])
+  @@index([platform])
+  @@index([lastUsedAt])
+  @@map("device_tokens")
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -385,4 +507,75 @@ enum UserRole {
   STUDIO_OWNER
   CUSTOMER
   GUEST
+}
+
+enum NotificationType {
+  // Studio Owner
+  BOOKING_REQUEST_RECEIVED
+  BOOKING_CANCELLED_BY_CUSTOMER
+  BOOKING_REMINDER_STUDIO
+  PAYMENT_RECEIVED
+  REVIEW_POSTED
+  LOW_AVAILABILITY_ALERT
+
+  // Customer
+  BOOKING_CONFIRMED
+  BOOKING_REJECTED
+  BOOKING_REMINDER_CUSTOMER
+  BOOKING_CANCELLED_BY_STUDIO
+  REVIEW_REQUEST
+  STUDIO_PROMOTION
+
+  // Security
+  ACCOUNT_LOGIN_NEW_DEVICE
+  ACCOUNT_PASSWORD_CHANGED
+  ACCOUNT_EMAIL_CHANGED
+  ACCOUNT_TWO_FACTOR_ENABLED
+  ACCOUNT_DELETION_SCHEDULED
+  ACCOUNT_DELETION_CANCELLED
+
+  // System
+  SYSTEM_MAINTENANCE
+  FEATURE_ANNOUNCEMENT
+  TERMS_UPDATE
+  WELCOME
+  ONBOARDING_REMINDER
+  SUBSCRIPTION_EXPIRING
+  SUBSCRIPTION_EXPIRED
+}
+
+enum NotificationStatus {
+  PENDING
+  QUEUED
+  SENDING
+  DELIVERED
+  PARTIALLY_DELIVERED
+  READ
+  FAILED
+  EXPIRED
+  CANCELLED
+}
+
+enum NotificationPriority {
+  URGENT
+  HIGH
+  NORMAL
+  LOW
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  IN_APP
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+enum DigestFrequency {
+  DAILY
+  WEEKLY
 }

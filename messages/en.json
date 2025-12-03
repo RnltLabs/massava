@@ -19,5 +19,70 @@
     "signOut": "Sign Out",
     "language": "Language",
     "appVersion": "Version {version}"
+  },
+  "business": {
+    "notifications": {
+      "title": "Notifications",
+      "save": "Save",
+      "cancel": "Cancel",
+      "saved": "Settings saved",
+      "savedDescription": "Your notification settings have been updated",
+      "errorLoading": "Could not load settings",
+      "errorSaving": "Could not save settings",
+      "push": {
+        "title": "Push Notifications",
+        "notSupported": "Not supported",
+        "permissionDenied": "Permission denied",
+        "permissionDeniedDescription": "Please enable notifications in your browser settings"
+      },
+      "email": {
+        "title": "Email Notifications"
+      },
+      "essential": {
+        "title": "Important Notifications",
+        "badge": "Always active",
+        "bookingConfirmed": "Booking Confirmations",
+        "bookingConfirmedDesc": "When a new booking is received",
+        "bookingCancelled": "Cancellations",
+        "bookingCancelledDesc": "When a customer cancels a booking"
+      },
+      "reminders": {
+        "title": "Reminders",
+        "headline": "Arrive relaxed",
+        "body": "We'll remind you 24 hours before – so you can look forward to your time off instead of checking your calendar.",
+        "socialProof": "94% of our guests use this reminder.",
+        "toggle": "24 hours before appointment",
+        "toggleDesc": "Reminder before your appointment"
+      },
+      "marketing": {
+        "title": "Marketing & Tips",
+        "headline": "Exclusive for you",
+        "incentive": "10% off your next massage",
+        "benefits": {
+          "earlyAccess": "Early access to available appointments",
+          "wellnessTips": "Wellness tips from our therapists",
+          "exclusiveOffers": "Exclusive offers (newsletter only)"
+        },
+        "frequency": "1-2x per month",
+        "toggle": "Receive marketing & tips"
+      },
+      "prePermission": {
+        "headline": "Can Massava remind you?",
+        "body": "Your browser will ask if we can send you notifications.",
+        "whatYouGet": "What you get",
+        "whatYouGetItems": {
+          "reminder": "Reminder 24h before your appointment",
+          "changes": "Updates about appointment changes",
+          "availability": "Notification when your preferred time becomes available"
+        },
+        "whatYouDontGet": "What you DON'T get",
+        "whatYouDontGetItems": {
+          "noAds": "No advertising without your consent",
+          "maxFrequency": "Maximum 2 messages per week"
+        },
+        "cta": "Yes, allow notifications",
+        "decline": "Maybe later"
+      }
+    }
   }
 }

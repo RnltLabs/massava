@@ -112,6 +112,43 @@ export async function requestPushPermission(): Promise<string | null> {
       '/firebase-messaging-sw.js'
     );
 
+    // Wait for the service worker to be ready (active state)
+    if (registration.installing) {
+      logger.info('[Firebase Client] Service worker installing, waiting for activation...');
+      await new Promise<void>((resolve) => {
+        const sw = registration.installing;
+        if (!sw) {
+          resolve();
+          return;
+        }
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'activated') {
+            logger.info('[Firebase Client] Service worker activated');
+            resolve();
+          }
+        });
+      });
+    } else if (registration.waiting) {
+      logger.info('[Firebase Client] Service worker waiting, waiting for activation...');
+      await new Promise<void>((resolve) => {
+        const sw = registration.waiting;
+        if (!sw) {
+          resolve();
+          return;
+        }
+        sw.addEventListener('statechange', () => {
+          if (sw.state === 'activated') {
+            logger.info('[Firebase Client] Service worker activated');
+            resolve();
+          }
+        });
+      });
+    }
+
+    // Ensure service worker is active
+    await navigator.serviceWorker.ready;
+    logger.info('[Firebase Client] Service worker ready');
+
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration: registration,

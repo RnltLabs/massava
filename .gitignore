@@ -43,6 +43,15 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Firebase (sensitive credentials)
+*-firebase-adminsdk*.json
+GoogleService-Info.plist
+google-services.json
+
+# Capacitor build outputs (native platforms)
+ios/
+android/
+
 # RNLT Labs Config (symlinked, private)
 .rnlt/
 .claude/

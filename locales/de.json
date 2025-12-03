@@ -372,6 +372,88 @@
       "accountDescription": "E-Mail, Passwort & Einstellungen",
       "help": "Hilfe & Support",
       "signOut": "Abmelden"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "subtitle": {
+        "business": "Für dein Studio"
+      },
+      "errorLoading": "Einstellungen konnten nicht geladen werden",
+      "errorSaving": "Einstellungen konnten nicht gespeichert werden",
+      "autoSaveInfo": "Änderungen werden automatisch gespeichert",
+      "channels": {
+        "title": "Kanäle"
+      },
+      "categories": {
+        "title": "Benachrichtigungstypen",
+        "sectionTitleBusiness": "Business-Benachrichtigungen",
+        "studioOwner": {
+          "bookingRequests": {
+            "title": "Neue Buchungsanfragen",
+            "description": "Sofortige Benachrichtigung bei neuen Anfragen"
+          },
+          "cancellations": {
+            "title": "Stornierungen",
+            "description": "Wenn ein Kunde seine Buchung absagt"
+          },
+          "reviews": {
+            "title": "Kundenbewertungen",
+            "description": "Neue Bewertungen von Kunden"
+          },
+          "reminders": {
+            "title": "Terminerinnerungen",
+            "description": "1 Stunde vor dem Termin"
+          }
+        },
+        "customer": {
+          "confirmations": {
+            "title": "Buchungsbestätigungen",
+            "description": "Bestätigung deiner Buchung"
+          },
+          "reminders": {
+            "title": "Terminerinnerungen",
+            "description": "24 Stunden vor dem Termin"
+          },
+          "studioCancellations": {
+            "title": "Studio-Stornierungen",
+            "description": "Wenn das Studio einen Termin absagt"
+          },
+          "reviewRequests": {
+            "title": "Bewertungsanfragen",
+            "description": "Bitte um Feedback nach dem Besuch"
+          }
+        }
+      },
+      "push": {
+        "title": "Push-Benachrichtigungen",
+        "notSupported": "Nicht unterstützt",
+        "permissionDenied": "Berechtigung verweigert",
+        "permissionDeniedDescription": "Bitte aktiviere Benachrichtigungen in deinen Browser-Einstellungen"
+      },
+      "email": {
+        "title": "E-Mail-Benachrichtigungen"
+      },
+      "reminders": {
+        "toggle": "Terminerinnerungen",
+        "toggleDesc": "24 Stunden vor deinen Terminen"
+      },
+      "marketing": {
+        "toggle": "Neuigkeiten",
+        "toggleDesc": "Neue Studios in deiner Nähe"
+      },
+      "prePermission": {
+        "headline": "Verpasse keinen Termin",
+        "body": "Aktiviere Benachrichtigungen, um rechtzeitig an deine Buchungen erinnert zu werden.",
+        "benefits": {
+          "reminder": "Erinnerung 24h vor deinem Termin",
+          "changes": "Sofortige Info bei Terminänderungen",
+          "newStudios": "Neue Studios in deiner Nähe entdecken",
+          "bookingRequests": "Sofort über neue Buchungsanfragen informiert",
+          "cancellations": "Stornierungen durch Kunden nicht verpassen"
+        },
+        "cta": "Benachrichtigungen aktivieren",
+        "skip": "Später einrichten"
+      }
     }
   }
 }

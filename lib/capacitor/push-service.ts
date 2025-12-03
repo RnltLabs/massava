@@ -1,11 +1,36 @@
+/**
+ * Capacitor Push Notification Service
+ *
+ * Manages native push notifications on iOS and Android via Capacitor framework.
+ * Handles permission requests, token registration, foreground notifications, and user interactions.
+ *
+ * On web, registration is skipped silently. Use firebase-client for web push instead.
+ *
+ * @module lib/capacitor/push-service
+ */
+
 import { Capacitor } from '@capacitor/core';
 import { PushNotifications, type Token, type PushNotificationSchema, type ActionPerformed } from '@capacitor/push-notifications';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Badge } from '@capawesome/capacitor-badge';
 import { logger } from '@/lib/logger';
 
+/**
+ * Device platform type
+ *
+ * @typedef {'IOS' | 'ANDROID' | 'WEB'} DevicePlatform
+ */
 export type DevicePlatform = 'IOS' | 'ANDROID' | 'WEB';
 
+/**
+ * Callback configuration for push notification events
+ *
+ * @interface PushServiceConfig
+ * @property {(token: string) => void} [onTokenReceived] - Called when device token is obtained
+ * @property {(notification: PushNotificationSchema) => void} [onNotificationReceived] - Called when push received in foreground
+ * @property {(action: ActionPerformed) => void} [onNotificationAction] - Called when user taps notification
+ * @property {(error: Error) => void} [onError] - Called on registration errors
+ */
 interface PushServiceConfig {
   onTokenReceived?: (token: string) => void;
   onNotificationReceived?: (notification: PushNotificationSchema) => void;
@@ -13,10 +38,55 @@ interface PushServiceConfig {
   onError?: (error: Error) => void;
 }
 
+/**
+ * Capacitor push notification service for native iOS/Android apps
+ *
+ * Manages the complete native push notification lifecycle:
+ * - Requests user permission for notifications
+ * - Registers device with APNS (iOS) or FCM (Android)
+ * - Stores registration token on backend
+ * - Handles foreground notifications with haptic feedback
+ * - Triggers haptic feedback based on notification priority
+ * - Updates app badge count
+ * - Handles notification taps and navigation
+ *
+ * @class CapacitorPushService
+ */
 class CapacitorPushService {
   private isInitialized = false;
   private config: PushServiceConfig = {};
 
+  /**
+   * Initialize the push notification service
+   *
+   * Sets up all listeners and handlers for Capacitor push notifications.
+   * On non-native platforms (web), returns false silently.
+   *
+   * Steps:
+   * 1. Requests notification permission from user
+   * 2. Registers device with APNS/FCM
+   * 3. Sets up listeners for token reception
+   * 4. Sets up listeners for incoming notifications (foreground)
+   * 5. Sets up listeners for notification taps
+   * 6. Sets up error handling
+   *
+   * @param {PushServiceConfig} [config={}] - Event callback handlers
+   *
+   * @returns {Promise<boolean>} True if initialized successfully, false if web platform or permission denied
+   *
+   * @example
+   * ```typescript
+   * const success = await capacitorPushService.initialize({
+   *   onTokenReceived: (token) => console.log('Token:', token),
+   *   onNotificationReceived: (notif) => console.log('Received:', notif),
+   *   onNotificationAction: (action) => {
+   *     console.log('User tapped notification');
+   *     navigateTo(action.notification.data.actionUrl);
+   *   },
+   *   onError: (error) => console.error('Push error:', error),
+   * });
+   * ```
+   */
   async initialize(config: PushServiceConfig = {}): Promise<boolean> {
     if (!Capacitor.isNativePlatform() || this.isInitialized) {
       return false;
@@ -86,6 +156,20 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Register device token with backend server
+   *
+   * Sends the device's push token to the backend API so notifications can be routed to this device.
+   * Called automatically when APNS/FCM registration succeeds.
+   *
+   * @param {string} token - Push notification token from APNS/FCM
+   *
+   * @returns {Promise<void>}
+   *
+   * @throws {Error} If registration API call fails
+   *
+   * @private
+   */
   private async registerToken(token: string): Promise<void> {
     try {
       const platform = this.getPlatform();
@@ -113,6 +197,12 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Detect current platform (iOS, Android, or web)
+   *
+   * @returns {DevicePlatform} The current platform
+   * @private
+   */
   private getPlatform(): DevicePlatform {
     const platform = Capacitor.getPlatform();
     if (platform === 'ios') return 'IOS';
@@ -120,6 +210,22 @@ class CapacitorPushService {
     return 'WEB';
   }
 
+  /**
+   * Trigger haptic feedback based on notification priority
+   *
+   * Provides tactile feedback to users when notifications arrive in foreground:
+   * - URGENT: Double heavy impact (high attention)
+   * - HIGH: Single medium impact
+   * - NORMAL/LOW: Single light impact
+   *
+   * On non-native platforms, does nothing silently.
+   *
+   * @param {string} [priority] - Notification priority level
+   *
+   * @returns {Promise<void>}
+   *
+   * @private
+   */
   private async triggerHaptic(priority?: string): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -143,6 +249,14 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Update app badge count to show unread notification count
+   *
+   * Fetches current unread count from backend and updates the native app badge.
+   * On non-native platforms, does nothing silently.
+   *
+   * @returns {Promise<void>}
+   */
   async updateBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -159,6 +273,13 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Clear app badge count (set to 0)
+   *
+   * On non-native platforms, does nothing silently.
+   *
+   * @returns {Promise<void>}
+   */
   async clearBadge(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -171,6 +292,13 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Set app badge count to specific number
+   *
+   * @param {number} count - Badge count to display
+   *
+   * @returns {Promise<void>}
+   */
   async setBadge(count: number): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -183,6 +311,16 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Handle notification tap/action
+   *
+   * Navigates to the action URL if provided in notification data.
+   * Called when user taps a notification.
+   *
+   * @param {ActionPerformed} action - The action that was performed
+   *
+   * @private
+   */
   private handleNotificationAction(action: ActionPerformed): void {
     const data = action.notification.data;
 
@@ -192,12 +330,30 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Get device name/identifier
+   *
+   * Returns a user-friendly name for the device. Can be enhanced with
+   * the @capacitor/device plugin for more detailed info.
+   *
+   * @returns {Promise<string>} Device name
+   *
+   * @private
+   */
   private async getDeviceName(): Promise<string> {
     // Basic device info - can be enhanced with Device plugin
     const platform = Capacitor.getPlatform();
     return `${platform.charAt(0).toUpperCase() + platform.slice(1)} Device`;
   }
 
+  /**
+   * Unregister and cleanup push notification service
+   *
+   * Removes all listeners and resets initialization state.
+   * Call when user logs out or uninstalls the app.
+   *
+   * @returns {Promise<void>}
+   */
   async unregister(): Promise<void> {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -211,10 +367,20 @@ class CapacitorPushService {
     }
   }
 
+  /**
+   * Check if running on native platform (iOS/Android)
+   *
+   * @returns {boolean} True if native app, false if web
+   */
   isNative(): boolean {
     return Capacitor.isNativePlatform();
   }
 
+  /**
+   * Check if push service is initialized
+   *
+   * @returns {boolean} True if initialization completed successfully
+   */
   getInitialized(): boolean {
     return this.isInitialized;
   }
