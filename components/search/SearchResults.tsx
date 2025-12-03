@@ -32,8 +32,7 @@ interface SearchResultsProps {
     radius?: string;
     datetime?: string;
     serviceType?: string;
-    minPrice?: string;
-    maxPrice?: string;
+    sort?: string;
   };
 }
 
@@ -89,8 +88,7 @@ export function SearchResults({ searchParams }: SearchResultsProps): React.JSX.E
         if (searchParams.radius) queryParams.set('radius', searchParams.radius);
         if (searchParams.datetime) queryParams.set('datetime', searchParams.datetime);
         if (searchParams.serviceType) queryParams.set('serviceType', searchParams.serviceType);
-        if (searchParams.minPrice) queryParams.set('minPrice', searchParams.minPrice);
-        if (searchParams.maxPrice) queryParams.set('maxPrice', searchParams.maxPrice);
+        if (searchParams.sort) queryParams.set('sort', searchParams.sort);
 
         const response = await fetch(`/api/search/appointments?${queryParams.toString()}`);
 
@@ -124,8 +122,6 @@ export function SearchResults({ searchParams }: SearchResultsProps): React.JSX.E
     if (searchParams.radius) queryParams.set('radius', searchParams.radius);
     if (searchParams.datetime) queryParams.set('datetime', searchParams.datetime);
     if (searchParams.serviceType) queryParams.set('serviceType', searchParams.serviceType);
-    if (searchParams.minPrice) queryParams.set('minPrice', searchParams.minPrice);
-    if (searchParams.maxPrice) queryParams.set('maxPrice', searchParams.maxPrice);
 
     const queryString = queryParams.toString();
     const bookingUrl = `/${locale}/booking/${studioId}/${encodeURIComponent(slotId)}${queryString ? `?${queryString}` : ''}`;
@@ -187,11 +183,7 @@ export function SearchResults({ searchParams }: SearchResultsProps): React.JSX.E
 
   // Empty State
   if (results.length === 0) {
-    const hasFilters = Boolean(
-      searchParams.serviceType ||
-      searchParams.minPrice ||
-      searchParams.maxPrice
-    );
+    const hasFilters = Boolean(searchParams.serviceType);
     return (
       <SearchEmptyState
         hasFilters={hasFilters}

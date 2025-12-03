@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { calculateHaversineDistance } from '@/lib/geo/haversine';
 import { getBoundingBox } from '@/lib/geo/bounding-box';
 import { filterServicesByType } from '@/lib/utils/serviceMatching';
-import { getMinPrice, filterServicesByPrice } from '@/lib/utils/priceAggregation';
+import { getMinPrice } from '@/lib/utils/priceAggregation';
 import type { ServiceType } from '@/lib/constants/serviceTypes';
 import { calculateAvailableSlots, type AvailableSlot } from '@/lib/slots';
 import { logger, generateCorrelationId } from '@/lib/logger';
@@ -24,8 +24,7 @@ const SearchQuerySchema = z.object({
   radius: z.string().transform(Number).pipe(z.number().min(1).max(100)),
   datetime: z.string().optional(), // Accept ISO string, will be validated when parsing to Date
   serviceType: z.string().optional(), // Accept any string, validation happens in filterServicesByType
-  minPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
-  maxPrice: z.string().transform(Number).pipe(z.number().min(0)).optional(),
+  sort: z.enum(['distance', 'price', 'rating']).optional().default('distance'),
 });
 
 export type SearchQuery = z.infer<typeof SearchQuerySchema>;
@@ -43,8 +42,7 @@ export type SearchQuery = z.infer<typeof SearchQuerySchema>;
  * - radius: number (search radius in km)
  * - datetime: string (optional, ISO datetime)
  * - serviceType: string (optional, e.g., "Thai-Massage")
- * - minPrice: number (optional, minimum price filter in EUR)
- * - maxPrice: number (optional, maximum price filter in EUR)
+ * - sort: string (optional, 'distance' | 'price' | 'rating', default: 'distance')
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const correlationId = generateCorrelationId()
@@ -59,8 +57,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       radius: searchParams.get('radius') ?? undefined,
       datetime: searchParams.get('datetime') ?? undefined,
       serviceType: searchParams.get('serviceType') ?? undefined,
-      minPrice: searchParams.get('minPrice') ?? undefined,
-      maxPrice: searchParams.get('maxPrice') ?? undefined,
+      sort: searchParams.get('sort') ?? undefined,
     };
 
     const validationResult = SearchQuerySchema.safeParse(queryData);
@@ -75,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { lat, lng, radius, datetime, serviceType, minPrice, maxPrice } = validationResult.data;
+    const { lat, lng, radius, datetime, serviceType, sort } = validationResult.data;
 
     // Validate that datetime is in the future (if provided)
     if (datetime) {
@@ -211,33 +208,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       studiosFiltered: studiosWithDistance.length - studiosWithAvailableSlots.length,
     });
 
-    // Apply service type and price filters
+    // Apply service type filter
     const filteredStudios = studiosWithAvailableSlots
       .map((studio) => {
         // Filter services by type (if specified)
         const matchedServices = filterServicesByType(studio.services, serviceType as ServiceType | undefined);
 
-        // Filter services by price range (if specified)
-        const priceFilteredServices = filterServicesByPrice(
-          matchedServices,
-          minPrice,
-          maxPrice
-        );
-
         // Calculate minimum price from matched services
-        const studioMinPrice = getMinPrice(priceFilteredServices);
+        const studioMinPrice = getMinPrice(matchedServices);
 
         return {
           ...studio,
-          matchedServices: priceFilteredServices,
+          matchedServices,
           minPrice: studioMinPrice,
         };
       })
       // Filter out studios with no matching services
       .filter((studio) => studio.matchedServices.length > 0);
 
+    // Apply sorting based on sort parameter
+    const sortedStudios = [...filteredStudios].sort((a, b) => {
+      switch (sort) {
+        case 'price':
+          // Sort by minimum price (lowest first), null prices go last
+          const priceA = a.minPrice ?? Infinity;
+          const priceB = b.minPrice ?? Infinity;
+          return priceA - priceB;
+        case 'rating':
+          // Sort by rating (highest first), null ratings go last
+          const ratingA = a.averageRating ?? 0;
+          const ratingB = b.averageRating ?? 0;
+          return ratingB - ratingA;
+        case 'distance':
+        default:
+          // Sort by distance (closest first) - already sorted
+          return a.distance - b.distance;
+      }
+    });
+
     // Format response with dynamic slots
-    const results = filteredStudios.map((studio) => ({
+    const results = sortedStudios.map((studio) => ({
       id: studio.id,
       name: studio.name,
       description: studio.description,
@@ -286,10 +296,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         total: results.length,
         radius,
         center: { lat, lng },
+        sort,
         filters: {
           ...(serviceType && { serviceType }),
-          ...(minPrice !== undefined && { minPrice }),
-          ...(maxPrice !== undefined && { maxPrice }),
         },
       },
     });

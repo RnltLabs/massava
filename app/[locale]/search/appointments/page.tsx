@@ -17,8 +17,7 @@ type Props = {
     radius?: string;
     datetime?: string;
     serviceType?: string;
-    minPrice?: string;
-    maxPrice?: string;
+    sort?: string;
   }>;
 };
 
