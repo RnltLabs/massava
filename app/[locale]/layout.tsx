@@ -16,6 +16,8 @@ import SessionProvider from '@/components/SessionProvider';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { Toaster } from '@/components/ui/toaster';
+import { MobileCustomerNavWrapper } from '@/components/customer';
+import { MainContentWrapper } from '@/components/layout';
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -68,9 +70,10 @@ export default async function LocaleLayout({
           <GoogleAnalytics />
           <NextIntlClientProvider messages={messages} locale={locale}>
             <UnifiedHeader />
-            <main className="pt-14 md:pt-16">
+            <MainContentWrapper>
               {children}
-            </main>
+            </MainContentWrapper>
+            <MobileCustomerNavWrapper />
             <CookieConsentBanner />
             <Toaster />
           </NextIntlClientProvider>

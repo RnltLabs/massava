@@ -1,0 +1,125 @@
+/**
+ * Copyright (c) 2025 Roman Reinelt / RNLT Labs
+ * All rights reserved.
+ */
+
+'use client';
+
+import React, { useCallback, useMemo } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import { cn } from '@/lib/utils';
+import {
+  SearchIcon,
+  CalendarDaysIcon,
+  UserIcon,
+} from 'lucide-react';
+
+interface MobileCustomerNavProps {
+  locale: string;
+}
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+// Memoized Nav Item component
+const NavItemComponent = React.memo(({
+  item,
+  isActive,
+}: {
+  item: NavItem;
+  isActive: boolean;
+}) => {
+  const Icon = item.icon;
+
+  return (
+    <Link
+      href={item.href}
+      className="flex flex-col items-center justify-center gap-1 px-3 min-w-[64px] h-full focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-inset rounded-lg"
+      aria-label={item.label}
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <div className="relative">
+        <Icon
+          className={cn(
+            'h-6 w-6 transition-colors',
+            isActive ? 'text-[#B56550]' : 'text-gray-600'
+          )}
+          aria-hidden="true"
+        />
+      </div>
+      <span
+        className={cn(
+          'text-xs font-medium transition-colors',
+          isActive ? 'text-[#B56550]' : 'text-gray-600'
+        )}
+      >
+        {item.label}
+      </span>
+    </Link>
+  );
+});
+NavItemComponent.displayName = 'CustomerNavItem';
+
+function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.JSX.Element {
+  const pathname = usePathname();
+  const t = useTranslations('customer.nav');
+
+  // Memoize nav items configuration
+  const navItems = useMemo<NavItem[]>(
+    () => [
+      {
+        label: t('discover'),
+        href: `/${locale}/search`,
+        icon: SearchIcon,
+      },
+      {
+        label: t('bookings'),
+        href: `/${locale}/customer/bookings`,
+        icon: CalendarDaysIcon,
+      },
+      {
+        label: t('profile'),
+        href: `/${locale}/customer/profile`,
+        icon: UserIcon,
+      },
+    ],
+    [locale, t]
+  );
+
+  const isActive = useCallback(
+    (href: string): boolean => {
+      if (href === `/${locale}/search`) {
+        // Search is active on search page and landing when logged in
+        return pathname === href || pathname === `/${locale}`;
+      }
+      return pathname?.startsWith(href) ?? false;
+    },
+    [locale, pathname]
+  );
+
+  return (
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg md:hidden"
+      aria-label="Mobile navigation"
+      role="navigation"
+    >
+      <div className="flex items-center justify-around h-16">
+        {navItems.map((item) => (
+          <NavItemComponent
+            key={item.href}
+            item={item}
+            isActive={isActive(item.href)}
+          />
+        ))}
+      </div>
+    </nav>
+  );
+}
+
+// Memoized export for performance
+export const MobileCustomerNav = React.memo(MobileCustomerNavComponent);
