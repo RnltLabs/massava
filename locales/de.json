@@ -4,10 +4,17 @@
     "hero_title": "Deine Massage",
     "hero_subtitle": "heute noch buchen",
     "hero_description": "Spontan entspannen – finde Studios in deiner Nähe und buche direkt. Ohne Provisionen, transparent, unkompliziert.",
+    "welcome_back": "Willkommen zurück, {name}! Finde deine nächste Massage",
     "search_location_placeholder": "Stadt oder PLZ eingeben...",
     "search_radius": "Umkreis",
     "search_button": "Suchen",
 
+    "trust_commission_free": "100% provisionsfrei",
+    "trust_instant_booking": "Sofortige Buchung",
+    "trust_local_studios": "Nur lokale Studios",
+
+    "features_label": "Warum Massava",
+    "features_title": "Buche mit Vertrauen",
     "feature1_title": "Heute noch entspannen",
     "feature1_description": "Spontane Buchungen möglich. Sieh sofort, welche Studios heute noch Termine frei haben.",
     "feature2_title": "Alle Infos auf einen Blick",
@@ -15,6 +22,7 @@
     "feature3_title": "Lokale Studios unterstützen",
     "feature3_description": "100% der Einnahmen gehen direkt an die Studios. Keine Provision, keine Zwischenhändler.",
 
+    "how_it_works_label": "Einfacher Ablauf",
     "how_it_works_title": "So funktioniert's",
     "step1_title": "Standort eingeben",
     "step1_description": "Gib deine Stadt oder PLZ ein und wähle deinen Wunsch-Radius.",
@@ -22,6 +30,11 @@
     "step2_description": "Sieh dir verfügbare Termine, Preise und Bewertungen an.",
     "step3_title": "Termin buchen",
     "step3_description": "Buche direkt online – schnell, einfach, ohne Umwege.",
+
+    "studio_cta_badge": "Für Massage-Therapeuten",
+    "studio_cta_title": "Du bist Massage-Therapeut?",
+    "studio_cta_description": "Erreiche neue Kunden und steigere deine Auslastung. Komplett kostenlos, ohne Provisionen.",
+    "studio_cta_button": "Studio registrieren",
 
     "cta_title": "Bereit für deine Auszeit?",
     "cta_description": "Spontan entspannen – finde Studios in deiner Nähe und buche heute noch",
