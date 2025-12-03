@@ -1,4 +1,11 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Discover",
+      "bookings": "Bookings",
+      "profile": "Profile"
+    }
+  },
   "home": {
     "badge": "Available today",
     "hero_title": "Your massage",

@@ -1,4 +1,11 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Entdecken",
+      "bookings": "Buchungen",
+      "profile": "Profil"
+    }
+  },
   "home": {
     "badge": "Heute noch verfügbar",
     "hero_title": "Deine Massage",
