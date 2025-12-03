@@ -7,7 +7,7 @@
 
 import React, { useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { MapPin, ChevronDown, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronDown, ArrowUpDown } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -121,12 +121,11 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
           <button
             type="button"
             onClick={() => setIsSearchSheetOpen(true)}
-            className="flex items-center gap-2 py-2 -my-2 rounded-lg hover:bg-black/5 active:bg-black/10 transition-colors group flex-1 min-w-0"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group flex-1 min-w-0"
             aria-label="Suchparameter anpassen"
           >
-            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-            <span className="text-sm font-medium text-gray-900 truncate">{displayLocation}</span>
-            <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+            <Search className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
+            <span className="text-sm text-gray-600 truncate">{displayLocation}</span>
           </button>
 
           {/* Sort Dropdown */}
@@ -134,11 +133,11 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0 ml-2"
                 aria-label="Sortierung ändern"
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{currentSortLabel}</span>
+                {currentSortLabel}
                 <ChevronDown className="h-3 w-3 opacity-60" />
               </button>
             </DropdownMenuTrigger>
