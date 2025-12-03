@@ -116,12 +116,12 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
       {/* Sticky Header - Always visible */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 px-4 py-3 mb-4">
         {/* Location Row with Sort Dropdown */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 mb-3">
           {/* Location - Clickable to open search sheet */}
           <button
             type="button"
             onClick={() => setIsSearchSheetOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group flex-1 min-w-0"
+            className="flex items-center gap-2 px-3 py-2 w-48 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
             aria-label="Suchparameter anpassen"
           >
             <Search className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
@@ -133,7 +133,7 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors flex-shrink-0 ml-2"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
                 aria-label="Sortierung ändern"
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
