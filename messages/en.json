@@ -21,6 +21,59 @@
     "appVersion": "Version {version}"
   },
   "business": {
+    "nav": {
+      "today": "Today",
+      "week": "Calendar",
+      "new": "New",
+      "requests": "Requests",
+      "more": "More"
+    },
+    "dashboard": {
+      "greeting": "Good {timeOfDay}, {name}",
+      "greetingMorning": "Morning",
+      "greetingAfternoon": "Afternoon",
+      "greetingEvening": "Evening",
+      "todayOverview": "Today's overview",
+      "appointments": "Appointments",
+      "open": "Open",
+      "revenue": "Revenue",
+      "cancelled": "Cancelled",
+      "nextAppointment": "Next appointment",
+      "todayAppointments": "Today's appointments",
+      "openRequests": "Open requests",
+      "noAppointments": "No appointments today",
+      "noRequests": "No open requests",
+      "confirmed": "Confirmed",
+      "pending": "Pending",
+      "contact": "Contact",
+      "details": "Details",
+      "confirm": "Confirm",
+      "decline": "Decline"
+    },
+    "booking": {
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "cancelled": "Cancelled"
+      },
+      "noService": "No service",
+      "confirmBooking": "Confirm booking",
+      "declineBooking": "Decline booking",
+      "contactCustomer": "Contact customer"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "subtitle": "Manage your appointments",
+      "total": "Total",
+      "pending": "Open",
+      "today": "Today",
+      "emptyTitle": "No bookings found",
+      "emptyWithFilters": "Try adjusting your filters or search.",
+      "emptyNoFilters": "New bookings will appear here automatically when customers book.",
+      "dateGroupToday": "TODAY",
+      "dateGroupTomorrow": "TOMORROW",
+      "dateGroupOlder": "OLDER REQUESTS"
+    },
     "notifications": {
       "title": "Notifications",
       "save": "Save",
