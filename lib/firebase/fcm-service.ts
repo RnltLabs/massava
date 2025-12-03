@@ -1,7 +1,10 @@
 /**
- * Firebase Cloud Messaging Service
+ * Firebase Cloud Messaging (FCM) Push Service
  *
- * Handles sending push notifications via FCM.
+ * Handles sending push notifications to users' devices via Firebase Cloud Messaging.
+ * Supports multi-platform delivery (iOS via APNS, Android native, and web browsers).
+ *
+ * @module lib/firebase/fcm-service
  */
 
 import type { messaging } from 'firebase-admin';
@@ -10,6 +13,19 @@ import { getMessaging, isFirebaseAdminAvailable } from './firebase-admin';
 import { prisma } from '@/lib/prisma';
 import type { NotificationType, NotificationPriority } from '@/app/generated/prisma';
 
+/**
+ * Push notification payload to send
+ *
+ * @interface PushNotificationPayload
+ * @property {string} userId - ID of user to notify
+ * @property {string} id - Notification ID for tracking
+ * @property {string} title - Notification title
+ * @property {string} body - Notification body text
+ * @property {NotificationType} type - Type of notification
+ * @property {NotificationPriority} priority - Priority level (affects delivery)
+ * @property {string} [actionUrl] - URL to open on notification tap
+ * @property {Record<string, unknown>} [metadata] - Additional data for client
+ */
 interface PushNotificationPayload {
   userId: string;
   id: string;
@@ -21,15 +37,58 @@ interface PushNotificationPayload {
   metadata?: Record<string, unknown>;
 }
 
+/**
+ * Result of sending push notifications
+ *
+ * @interface SendResult
+ * @property {number} sent - Number of successful sends
+ * @property {number} failed - Number of failed sends
+ * @property {string[]} invalidTokens - Tokens that are no longer valid
+ */
 interface SendResult {
   sent: number;
   failed: number;
   invalidTokens: string[];
 }
 
+/**
+ * Firebase Cloud Messaging service for push notifications
+ *
+ * Manages sending push notifications to user devices via Firebase Cloud Messaging.
+ * Handles multi-platform delivery with platform-specific configurations (Android, iOS, Web).
+ * Automatically tracks and removes invalid device tokens.
+ *
+ * @class PushService
+ */
 class PushService {
   /**
-   * Send push notification to a user's devices
+   * Send push notification to all active devices of a user
+   *
+   * Retrieves user's active device tokens from database and sends push notification
+   * to all of them using Firebase Cloud Messaging. Automatically marks invalid tokens
+   * as inactive and updates their failure count.
+   *
+   * @param {PushNotificationPayload} payload - Notification content and metadata
+   *
+   * @returns {Promise<SendResult>} Result with count of sent/failed and invalid tokens
+   *
+   * @example
+   * ```typescript
+   * const result = await pushService.sendToUser({
+   *   userId: 'user-123',
+   *   id: 'notif-456',
+   *   title: 'Booking Confirmed',
+   *   body: 'Your booking at Studio ABC has been confirmed',
+   *   type: 'BOOKING_CONFIRMED',
+   *   priority: 'HIGH',
+   *   actionUrl: '/bookings/booking-123',
+   *   metadata: { bookingId: 'booking-123', studioName: 'Studio ABC' },
+   * });
+   *
+   * console.log(`Sent to ${result.sent} devices, ${result.failed} failed`);
+   * ```
+   *
+   * @see {@link sendToTokens} - Send to specific tokens
    */
   async sendToUser(payload: PushNotificationPayload): Promise<SendResult> {
     if (!isFirebaseAdminAvailable()) {
@@ -80,7 +139,31 @@ class PushService {
   }
 
   /**
-   * Send push notification to specific tokens
+   * Send push notification to specific device tokens
+   *
+   * Sends a push notification directly to given tokens, bypassing device lookup.
+   * Useful for admin notifications or targeting specific devices.
+   *
+   * @param {string[]} tokens - Array of device tokens to send to
+   * @param {Omit<PushNotificationPayload, 'userId'>} payload - Notification content
+   *
+   * @returns {Promise<SendResult>} Result with sent/failed counts and invalid tokens
+   *
+   * @example
+   * ```typescript
+   * const result = await pushService.sendToTokens(
+   *   ['token1', 'token2', 'token3'],
+   *   {
+   *     id: 'notif-123',
+   *     title: 'System Maintenance',
+   *     body: 'We are performing scheduled maintenance',
+   *     type: 'SYSTEM_MAINTENANCE',
+   *     priority: 'NORMAL',
+   *   }
+   * );
+   * ```
+   *
+   * @see {@link sendToUser} - Send to all user devices
    */
   async sendToTokens(
     tokens: string[],
@@ -101,7 +184,17 @@ class PushService {
   }
 
   /**
-   * Build FCM message from payload
+   * Build a multi-platform FCM message from notification payload
+   *
+   * Creates platform-specific configurations for Android, iOS (APNS), and Web.
+   * Maps notification priority to platform-specific priorities and notification channels.
+   * Includes all required fields for proper delivery and display.
+   *
+   * @param {PushNotificationPayload} payload - Notification content
+   *
+   * @returns {Omit<messaging.MulticastMessage, 'tokens'>} FCM message configuration
+   *
+   * @private
    */
   private buildMessage(
     payload: PushNotificationPayload
@@ -166,7 +259,16 @@ class PushService {
   }
 
   /**
-   * Get Android notification channel based on priority
+   * Get Android notification channel ID based on priority
+   *
+   * Android uses notification channels for grouping and user control of notifications.
+   * Different channels for different priority levels allow users to manage notifications per type.
+   *
+   * @param {NotificationPriority} priority - Notification priority level
+   *
+   * @returns {string} Android notification channel ID
+   *
+   * @private
    */
   private getAndroidChannel(priority: NotificationPriority): string {
     switch (priority) {
@@ -180,7 +282,18 @@ class PushService {
   }
 
   /**
-   * Send multicast message to multiple tokens
+   * Send multicast message to multiple device tokens with error handling
+   *
+   * Sends a single message to multiple tokens in one batch operation. Collects results
+   * and identifies invalid tokens for cleanup. Handles FCM errors gracefully with logging.
+   *
+   * @param {messaging.Messaging} messaging - Firebase messaging instance
+   * @param {Omit<messaging.MulticastMessage, 'tokens'>} message - FCM message configuration
+   * @param {string[]} tokens - Array of device tokens to send to
+   *
+   * @returns {Promise<SendResult>} Send result with counts and invalid tokens
+   *
+   * @private
    */
   private async sendMulticast(
     messaging: messaging.Messaging,
@@ -228,7 +341,16 @@ class PushService {
   }
 
   /**
-   * Handle invalid tokens by marking them inactive
+   * Mark invalid device tokens as inactive in the database
+   *
+   * Tokens that consistently fail to deliver are marked as inactive to prevent
+   * future delivery attempts. Updates failure count and records reason for debugging.
+   *
+   * @param {string[]} tokens - Array of invalid tokens to deactivate
+   *
+   * @returns {Promise<void>}
+   *
+   * @private
    */
   private async handleInvalidTokens(tokens: string[]): Promise<void> {
     if (tokens.length === 0) return;

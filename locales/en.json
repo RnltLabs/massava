@@ -365,6 +365,88 @@
       "accountDescription": "Email, Password & Settings",
       "help": "Help & Support",
       "signOut": "Sign Out"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": {
+        "business": "For your studio"
+      },
+      "errorLoading": "Could not load settings",
+      "errorSaving": "Could not save settings",
+      "autoSaveInfo": "Changes are saved automatically",
+      "channels": {
+        "title": "Channels"
+      },
+      "categories": {
+        "title": "Notification Types",
+        "sectionTitleBusiness": "Business Notifications",
+        "studioOwner": {
+          "bookingRequests": {
+            "title": "New Booking Requests",
+            "description": "Instant notification for new requests"
+          },
+          "cancellations": {
+            "title": "Cancellations",
+            "description": "When a customer cancels their booking"
+          },
+          "reviews": {
+            "title": "Customer Reviews",
+            "description": "New reviews from customers"
+          },
+          "reminders": {
+            "title": "Appointment Reminders",
+            "description": "1 hour before the appointment"
+          }
+        },
+        "customer": {
+          "confirmations": {
+            "title": "Booking Confirmations",
+            "description": "Confirmation of your booking"
+          },
+          "reminders": {
+            "title": "Appointment Reminders",
+            "description": "24 hours before the appointment"
+          },
+          "studioCancellations": {
+            "title": "Studio Cancellations",
+            "description": "When the studio cancels an appointment"
+          },
+          "reviewRequests": {
+            "title": "Review Requests",
+            "description": "Request for feedback after your visit"
+          }
+        }
+      },
+      "push": {
+        "title": "Push Notifications",
+        "notSupported": "Not supported",
+        "permissionDenied": "Permission denied",
+        "permissionDeniedDescription": "Please enable notifications in your browser settings"
+      },
+      "email": {
+        "title": "Email Notifications"
+      },
+      "reminders": {
+        "toggle": "Appointment Reminders",
+        "toggleDesc": "24 hours before your appointments"
+      },
+      "marketing": {
+        "toggle": "Updates",
+        "toggleDesc": "New studios near you"
+      },
+      "prePermission": {
+        "headline": "Never miss an appointment",
+        "body": "Enable notifications to get timely reminders about your bookings.",
+        "benefits": {
+          "reminder": "Reminder 24h before your appointment",
+          "changes": "Instant updates on appointment changes",
+          "newStudios": "Discover new studios near you",
+          "bookingRequests": "Get notified instantly about new booking requests",
+          "cancellations": "Never miss a customer cancellation"
+        },
+        "cta": "Enable Notifications",
+        "skip": "Set up later"
+      }
     }
   }
 }

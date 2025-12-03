@@ -15,9 +15,6 @@ const nextConfig: NextConfig = {
   // Now: massava.app and staging.massava.app run without basePath
   basePath: '',
   output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint warnings during build (TODO: fix warnings)
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -216,12 +213,13 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline for dev
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com", // Next.js requires unsafe-inline for dev + Firebase SDK
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: blob: https:", // Allow external images (studio photos) + blob for previews
               "font-src 'self' data:",
-              "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de https://photon.komoot.io", // Allow Sentry/GlitchTip + Photon Geocoding API
+              "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de https://photon.komoot.io https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com", // Allow Sentry/GlitchTip + Photon Geocoding API + Firebase
               "frame-ancestors 'none'",
+              "worker-src 'self' blob:", // Service Workers
             ].join('; '),
           },
           {

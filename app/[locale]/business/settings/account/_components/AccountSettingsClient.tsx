@@ -54,14 +54,6 @@ export function AccountSettingsClient({
   const [privacyPopupOpen, setPrivacyPopupOpen] = useState(false);
   const [dangerZonePopupOpen, setDangerZonePopupOpen] = useState(false);
 
-  // TODO: Get from user preferences (currently hardcoded)
-  const notificationSettings = {
-    bookings: true,
-    cancellations: true,
-    reminders: true,
-    marketing: false,
-  };
-
   const userPreferences = {
     language: 'de' as const,
     timezone: 'Europe/Berlin',
@@ -238,7 +230,6 @@ export function AccountSettingsClient({
       <NotificationsPopup
         open={notificationsPopupOpen}
         onOpenChange={setNotificationsPopupOpen}
-        initialSettings={notificationSettings}
       />
 
       <PrivacyPopup
