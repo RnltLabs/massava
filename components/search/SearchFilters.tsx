@@ -44,7 +44,8 @@ type SortValue = (typeof SORT_OPTIONS)[number]['value'];
  *
  * Features:
  * - Sticky header with location info (clickable to edit search parameters)
- * - Horizontal scrollable service type pills with sort dropdown (instant apply)
+ * - Sort dropdown in header row
+ * - Horizontal scrollable service type pills (instant apply)
  * - URL parameter sync
  * - Same layout for mobile and desktop
  */
@@ -56,8 +57,10 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
   // Get current values from URL
   const currentServiceType = searchParams.get('serviceType') || '';
   const currentSort = (searchParams.get('sort') as SortValue) || 'distance';
-  const location = searchParams.get('location') || 'In deiner Nähe';
-  const radius = searchParams.get('radius') || '10';
+  const fullLocation = searchParams.get('location') || 'In deiner Nähe';
+
+  // Extract only the street/first part of the location (before comma)
+  const displayLocation = fullLocation.split(',')[0].trim();
 
   // Initial values for search parameter sheet
   const initialSearchValues = useMemo(() => ({
@@ -112,39 +115,34 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
     <>
       {/* Sticky Header - Always visible */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 px-4 py-3 mb-4">
-        {/* Location Row - Clickable to open search sheet */}
-        <button
-          type="button"
-          onClick={() => setIsSearchSheetOpen(true)}
-          className="flex items-center justify-between w-full mb-3 py-2 -my-2 rounded-lg hover:bg-black/5 active:bg-black/10 transition-colors group"
-          aria-label="Suchparameter anpassen"
-        >
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-gray-900">{location}</span>
-            <span className="text-sm text-gray-600">
-              &bull; {radius}km
-            </span>
-          </div>
-          <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-        </button>
+        {/* Location Row with Sort Dropdown */}
+        <div className="flex items-center justify-between mb-3">
+          {/* Location - Clickable to open search sheet */}
+          <button
+            type="button"
+            onClick={() => setIsSearchSheetOpen(true)}
+            className="flex items-center gap-2 py-2 -my-2 rounded-lg hover:bg-black/5 active:bg-black/10 transition-colors group flex-1 min-w-0"
+            aria-label="Suchparameter anpassen"
+          >
+            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="text-sm font-medium text-gray-900 truncate">{displayLocation}</span>
+            <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0" />
+          </button>
 
-        {/* Service Type Pills + Sort - Horizontal Scroll */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {/* Sort Dropdown as first pill */}
+          {/* Sort Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="px-4 py-2 text-sm font-medium rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 whitespace-nowrap transition-all flex-shrink-0 flex items-center gap-1.5"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0 ml-2"
                 aria-label="Sortierung ändern"
               >
                 <ArrowUpDown className="h-3.5 w-3.5" />
-                {currentSortLabel}
+                <span className="hidden sm:inline">{currentSortLabel}</span>
                 <ChevronDown className="h-3 w-3 opacity-60" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="min-w-[140px]">
+            <DropdownMenuContent align="end" className="min-w-[140px]">
               {SORT_OPTIONS.map((option) => (
                 <DropdownMenuItem
                   key={option.value}
@@ -156,11 +154,10 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
 
-          {/* Divider */}
-          <div className="w-px bg-gray-200 my-1 flex-shrink-0" />
-
-          {/* Service Type Pills */}
+        {/* Service Type Pills - Horizontal Scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {allServiceTypes.map((option) => {
             const isActive = currentServiceType === option.value;
 
