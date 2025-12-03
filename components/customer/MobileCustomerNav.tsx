@@ -11,7 +11,7 @@ import { usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import {
-  SearchIcon,
+  HomeIcon,
   CalendarDaysIcon,
   UserIcon,
 } from 'lucide-react';
@@ -74,8 +74,8 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
     () => [
       {
         label: t('discover'),
-        href: `/${locale}/search`,
-        icon: SearchIcon,
+        href: `/${locale}`,
+        icon: HomeIcon,
       },
       {
         label: t('bookings'),
@@ -93,9 +93,9 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
 
   const isActive = useCallback(
     (href: string): boolean => {
-      if (href === `/${locale}/search`) {
-        // Search is active on search page and landing when logged in
-        return pathname === href || pathname === `/${locale}`;
+      if (href === `/${locale}`) {
+        // Home is active only on landing page (exact match)
+        return pathname === href;
       }
       return pathname?.startsWith(href) ?? false;
     },
