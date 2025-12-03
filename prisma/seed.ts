@@ -169,19 +169,19 @@ async function main() {
       services: {
         create: [
           {
-            name: 'Thai-Massage 60 Minuten',
+            name: 'Thai-Massage Klassik',
             description: 'Klassische Thai-Massage zur Entspannung und Lockerung',
             price: 65.0,
             duration: 60,
           },
           {
-            name: 'Thai-Massage 90 Minuten',
+            name: 'Thai-Massage Premium',
             description: 'Ausführliche Thai-Massage für tiefe Entspannung',
             price: 90.0,
             duration: 90,
           },
           {
-            name: 'Ölmassage 60 Minuten',
+            name: 'Ölmassage',
             description: 'Sanfte Ölmassage mit aromatischen Ölen',
             price: 70.0,
             duration: 60,
@@ -223,13 +223,13 @@ async function main() {
       services: {
         create: [
           {
-            name: 'Thai-Massage 60 Minuten',
+            name: 'Thai-Massage Traditionell',
             description: 'Traditionelle Thai-Massage',
             price: 60.0,
             duration: 60,
           },
           {
-            name: 'Thai-Massage 120 Minuten',
+            name: 'Thai-Massage Deluxe',
             description: 'Premium Thai-Massage mit ausgiebiger Behandlung',
             price: 110.0,
             duration: 120,
@@ -282,7 +282,7 @@ async function main() {
       services: {
         create: [
           {
-            name: 'Thai-Massage 75 Minuten',
+            name: 'Thai-Massage Luxus',
             description: 'Premium Thai-Massage in luxuriösem Ambiente',
             price: 85.0,
             duration: 75,
