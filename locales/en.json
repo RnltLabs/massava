@@ -301,10 +301,9 @@
   "business": {
     "nav": {
       "today": "Today",
-      "week": "Week",
-      "new": "New",
-      "requests": "Requests",
-      "more": "More"
+      "calendar": "Calendar",
+      "requests": "Bookings",
+      "settings": "Settings"
     },
     "dashboard": {
       "greeting": "Good {timeOfDay}, {name}",
@@ -338,6 +337,19 @@
       "confirmBooking": "Confirm Booking",
       "declineBooking": "Decline Booking",
       "contactCustomer": "Contact Customer"
+    },
+    "bookings": {
+      "title": "Bookings",
+      "subtitle": "Manage your appointments",
+      "total": "Total",
+      "pending": "Open",
+      "today": "Today",
+      "emptyTitle": "No bookings found",
+      "emptyWithFilters": "Try adjusting your filters or search.",
+      "emptyNoFilters": "New bookings will appear here automatically when customers book.",
+      "dateGroupToday": "TODAY",
+      "dateGroupTomorrow": "TOMORROW",
+      "dateGroupOlder": "OLDER REQUESTS"
     },
     "quickActions": {
       "title": "Quick Actions",

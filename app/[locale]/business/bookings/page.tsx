@@ -9,7 +9,6 @@ import { auth } from '@/auth';
 import { redirect } from 'next/navigation';
 import { BookingsList } from '@/components/business/BookingsList';
 import { BookingFilters } from '@/components/business/BookingFilters';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface BookingsPageProps {
@@ -24,20 +23,19 @@ interface BookingsPageProps {
 
 function BookingsListSkeleton(): React.JSX.Element {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {[1, 2, 3, 4, 5].map((i) => (
-        <Card key={i}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-48" />
-                <Skeleton className="h-3 w-24" />
-              </div>
-              <Skeleton className="h-6 w-20" />
+        <div key={i} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <Skeleton className="w-10 h-10 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+              <Skeleton className="h-3 w-24" />
             </div>
-          </CardContent>
-        </Card>
+            <Skeleton className="h-6 w-20 rounded-full" />
+          </div>
+        </div>
       ))}
     </div>
   );
@@ -57,7 +55,7 @@ export default async function BookingsPage({
 
   return (
     <div className="space-y-4 pt-4">
-      {/* Filters - Compact on mobile */}
+      {/* Filters - Sticky */}
       <BookingFilters />
 
       {/* Bookings List */}
