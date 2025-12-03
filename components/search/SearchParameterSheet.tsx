@@ -128,7 +128,7 @@ export function SearchParameterSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[85vh] max-h-[85vh] rounded-t-3xl flex flex-col"
+        className="h-[85dvh] max-h-[85dvh] rounded-t-3xl flex flex-col"
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
         <SheetHeader className="px-6 pt-6 pb-4 border-b">
