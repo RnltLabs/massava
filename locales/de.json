@@ -310,7 +310,7 @@
     "nav": {
       "today": "Heute",
       "calendar": "Kalender",
-      "requests": "Anfragen",
+      "requests": "Buchungen",
       "settings": "Einstellungen"
     },
     "dashboard": {
@@ -345,6 +345,19 @@
       "confirmBooking": "Buchung bestätigen",
       "declineBooking": "Buchung ablehnen",
       "contactCustomer": "Kunde kontaktieren"
+    },
+    "bookings": {
+      "title": "Buchungen",
+      "subtitle": "Verwalte deine Termine",
+      "total": "Gesamt",
+      "pending": "Offen",
+      "today": "Heute",
+      "emptyTitle": "Keine Buchungen gefunden",
+      "emptyWithFilters": "Versuche, deine Filter anzupassen oder die Suche zu ändern.",
+      "emptyNoFilters": "Neue Buchungen werden hier automatisch angezeigt, sobald Kunden buchen.",
+      "dateGroupToday": "HEUTE",
+      "dateGroupTomorrow": "MORGEN",
+      "dateGroupOlder": "ÄLTERE ANFRAGEN"
     },
     "quickActions": {
       "title": "Schnellaktionen",

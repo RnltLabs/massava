@@ -4,11 +4,8 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import { Card, CardContent } from '@/components/ui/card';
-import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
-import { Button } from '@/components/ui/button';
-import { BookingActions } from '@/components/business/BookingActions';
-import { CalendarIcon, ClockIcon, MailIcon, PhoneIcon, MessageSquareIcon } from 'lucide-react';
+import { BookingCard } from '@/components/business/BookingCard';
+import { CalendarIcon } from 'lucide-react';
 import { NewBooking, BookingStatus } from '@/app/generated/prisma';
 import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -19,11 +16,47 @@ interface BookingsListProps {
   searchQuery?: string;
 }
 
+type BookingWithService = NewBooking & { service: { name: string } | null };
+
+/**
+ * Groups bookings by date category (HEUTE, MORGEN, ÄLTERE ANFRAGEN, or specific date)
+ */
+function groupBookingsByDate(bookings: BookingWithService[]): Map<string, BookingWithService[]> {
+  const groups = new Map<string, BookingWithService[]>();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  for (const booking of bookings) {
+    const bookingDate = new Date(booking.preferredDateTime);
+    bookingDate.setHours(0, 0, 0, 0);
+
+    let groupKey: string;
+    if (bookingDate.getTime() === today.getTime()) {
+      groupKey = `HEUTE • ${format(bookingDate, 'EEEE, d. MMM', { locale: de })}`;
+    } else if (bookingDate.getTime() === tomorrow.getTime()) {
+      groupKey = `MORGEN • ${format(bookingDate, 'EEEE, d. MMM', { locale: de })}`;
+    } else if (bookingDate < today) {
+      groupKey = 'ÄLTERE ANFRAGEN';
+    } else {
+      groupKey = format(bookingDate, 'EEEE, d. MMMM', { locale: de }).toUpperCase();
+    }
+
+    if (!groups.has(groupKey)) {
+      groups.set(groupKey, []);
+    }
+    groups.get(groupKey)!.push(booking);
+  }
+
+  return groups;
+}
+
 async function getBookings(
   userEmail: string,
   statusFilter?: string,
   searchQuery?: string
-): Promise<Array<NewBooking & { service: { name: string } | null }>> {
+): Promise<BookingWithService[]> {
   // Get user's studio via User->StudioOwnership->Studio path
   const user = await prisma.user.findUnique({
     where: { email: userEmail },
@@ -96,116 +129,74 @@ export async function BookingsList({
 }: BookingsListProps): Promise<React.JSX.Element> {
   const bookings = await getBookings(userEmail, statusFilter, searchQuery);
 
+  // Check if filters are applied
+  const hasFilters = Boolean(searchQuery || (statusFilter && statusFilter !== 'all'));
+
+  // Empty state
   if (bookings.length === 0) {
     return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-          <CalendarIcon className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium text-neutral-900">Keine Buchungen gefunden</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            {searchQuery || statusFilter
-              ? 'Versuchen Sie, Ihre Filter anzupassen'
-              : 'Neue Buchungen werden hier angezeigt'}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <CalendarIcon className="h-8 w-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Keine Buchungen gefunden</h3>
+        <p className="text-sm text-gray-500 max-w-sm">
+          {hasFilters
+            ? 'Versuche, deine Filter anzupassen oder die Suche zu ändern.'
+            : 'Neue Buchungen werden hier automatisch angezeigt, sobald Kunden buchen.'}
+        </p>
+      </div>
     );
   }
 
+  // Group bookings by date
+  const groupedBookings = groupBookingsByDate(bookings);
+
+  // Sort groups: HEUTE, MORGEN, future dates (ascending), then ÄLTERE ANFRAGEN
+  const sortedGroupKeys = Array.from(groupedBookings.keys()).sort((a, b) => {
+    if (a.startsWith('HEUTE')) return -1;
+    if (b.startsWith('HEUTE')) return 1;
+    if (a.startsWith('MORGEN')) return -1;
+    if (b.startsWith('MORGEN')) return 1;
+    if (a === 'ÄLTERE ANFRAGEN') return 1;
+    if (b === 'ÄLTERE ANFRAGEN') return -1;
+    return a.localeCompare(b);
+  });
+
   return (
-    <div className="space-y-4">
-      {bookings.map((booking) => (
-        <Card key={booking.id} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              {/* Booking Info */}
-              <div className="flex-1 space-y-4">
-                {/* Customer Info */}
-                <div>
-                  <h3 className="text-lg font-semibold text-neutral-900">
-                    {booking.customerName}
-                  </h3>
-                  <div className="mt-2 space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MailIcon className="h-4 w-4" />
-                      <span>{booking.customerEmail}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <PhoneIcon className="h-4 w-4" />
-                      <span>{booking.customerPhone}</span>
-                    </div>
-                  </div>
-                </div>
+    <div className="space-y-6">
+      {sortedGroupKeys.map((groupKey) => {
+        const groupBookings = groupedBookings.get(groupKey)!;
 
-                {/* Booking Details */}
-                <div className="grid gap-2 sm:grid-cols-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Datum:</span>
-                    <span className="text-muted-foreground">
-                      {format(booking.preferredDateTime, 'dd.MM.yyyy', { locale: de })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Uhrzeit:</span>
-                    <span className="text-muted-foreground">
-                      {format(booking.preferredDateTime, 'HH:mm')} Uhr
-                    </span>
-                  </div>
-                </div>
-
-                {/* Service */}
-                {booking.service && (
-                  <div className="text-sm">
-                    <span className="font-medium">Service:</span>
-                    <span className="ml-2 text-muted-foreground">{booking.service.name}</span>
-                  </div>
-                )}
-
-                {/* Message */}
-                {booking.message && (
-                  <div className="rounded-lg bg-neutral-50 p-3">
-                    <div className="flex items-start gap-2">
-                      <MessageSquareIcon className="h-4 w-4 text-muted-foreground mt-0.5" />
-                      <div>
-                        <p className="text-xs font-medium text-neutral-700 mb-1">
-                          Kundennachricht:
-                        </p>
-                        <p className="text-sm text-neutral-600">{booking.message}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Booking Date */}
-                <p className="text-xs text-muted-foreground">
-                  Angefragt am {new Date(booking.createdAt).toLocaleDateString('de-DE')} um{' '}
-                  {new Date(booking.createdAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-
-              {/* Actions */}
-              <div className="flex flex-col items-end gap-3">
-                <BookingStatusBadge status={booking.status} />
-
-                {booking.status === BookingStatus.PENDING && (
-                  <BookingActions
-                    bookingId={booking.id}
-                    customerName={booking.customerName || 'Kunde'}
-                  />
-                )}
-
-                {booking.status === BookingStatus.CONFIRMED && (
-                  <Button size="sm" variant="outline" className="w-full sm:w-auto">
-                    Kunde kontaktieren
-                  </Button>
-                )}
-              </div>
+        return (
+          <div key={groupKey} className="space-y-3">
+            {/* Date Group Header - iOS-inspired minimal style */}
+            <div className="pt-4 pb-1 px-1">
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+                {groupKey}
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      ))}
+
+            {/* Bookings in this date group */}
+            <div className="space-y-3">
+              {groupBookings.map((booking) => (
+                <BookingCard
+                  key={booking.id}
+                  id={booking.id}
+                  customerName={booking.customerName}
+                  customerEmail={booking.customerEmail}
+                  customerPhone={booking.customerPhone}
+                  serviceName={booking.service?.name ?? null}
+                  dateTime={booking.preferredDateTime}
+                  status={booking.status}
+                  message={booking.message}
+                  createdAt={booking.createdAt}
+                />
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
