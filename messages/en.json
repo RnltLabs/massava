@@ -1,4 +1,11 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Discover",
+      "bookings": "Bookings",
+      "profile": "Profile"
+    }
+  },
   "search": {
     "title": "Available Appointments in {location}",
     "subtitle": "Within {radius} km radius",
