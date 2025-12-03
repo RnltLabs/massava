@@ -5,9 +5,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useLocale } from 'next-intl';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { cn } from '@/lib/utils';
 import { Logo } from './Logo';
@@ -16,7 +17,6 @@ import { MobileProfileSheet } from './MobileProfileSheet';
 import { DesktopProfileDropdown } from './DesktopProfileDropdown';
 import { LoadingSkeleton } from './LoadingSkeleton';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { UnifiedAuthDialog } from '@/components/auth/UnifiedAuthDialog';
 
 interface UnifiedHeaderProps {
@@ -26,6 +26,9 @@ interface UnifiedHeaderProps {
 export function UnifiedHeader({ className }: UnifiedHeaderProps): React.JSX.Element {
   const { data: session, status } = useSession();
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
@@ -33,10 +36,23 @@ export function UnifiedHeader({ className }: UnifiedHeaderProps): React.JSX.Elem
   const [authDialog, setAuthDialog] = useState<{
     open: boolean;
     tab: 'login' | 'signup';
+    accountType?: 'customer' | 'studio';
   }>({
     open: false,
     tab: 'login',
+    accountType: undefined,
   });
+
+  // Check for URL params to open auth dialog (e.g., ?signup=studio)
+  useEffect(() => {
+    const signupParam = searchParams.get('signup');
+    if (signupParam === 'studio') {
+      setAuthDialog({ open: true, tab: 'signup', accountType: 'studio' });
+      // Clear the URL param without refresh
+      const newUrl = pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, pathname, router]);
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';
@@ -124,8 +140,9 @@ export function UnifiedHeader({ className }: UnifiedHeaderProps): React.JSX.Elem
       {/* Unified Auth Dialog */}
       <UnifiedAuthDialog
         isOpen={authDialog.open}
-        onClose={() => setAuthDialog({ ...authDialog, open: false })}
+        onClose={() => setAuthDialog({ ...authDialog, open: false, accountType: undefined })}
         initialMode={authDialog.tab}
+        initialAccountType={authDialog.accountType}
       />
     </>
   );
