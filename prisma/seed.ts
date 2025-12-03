@@ -59,81 +59,31 @@ async function main() {
     owner3: owner3.email,
   });
 
-  // Create customer accounts
-  const customers = await Promise.all([
-    prisma.user.create({
+  // Create customer accounts (sequential to avoid memory issues in containers)
+  const customerData = [
+    { email: 'anna.mueller@example.com', name: 'Anna Müller' },
+    { email: 'thomas.weber@example.com', name: 'Thomas Weber' },
+    { email: 'sarah.fischer@example.com', name: 'Sarah Fischer' },
+    { email: 'michael.hoffmann@example.com', name: 'Michael Hoffmann' },
+    { email: 'julia.becker@example.com', name: 'Julia Becker' },
+    { email: 'markus.klein@example.com', name: 'Markus Klein' },
+    { email: 'lisa.zimmermann@example.com', name: 'Lisa Zimmermann' },
+    { email: 'david.schulz@example.com', name: 'David Schulz' },
+  ];
+
+  const customers = [];
+  for (const data of customerData) {
+    const customer = await prisma.user.create({
       data: {
-        email: 'anna.mueller@example.com',
-        name: 'Anna Müller',
+        email: data.email,
+        name: data.name,
         password: hashedPassword,
         primaryRole: 'CUSTOMER',
         emailVerified: new Date(),
       },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'thomas.weber@example.com',
-        name: 'Thomas Weber',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'sarah.fischer@example.com',
-        name: 'Sarah Fischer',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'michael.hoffmann@example.com',
-        name: 'Michael Hoffmann',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'julia.becker@example.com',
-        name: 'Julia Becker',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'markus.klein@example.com',
-        name: 'Markus Klein',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'lisa.zimmermann@example.com',
-        name: 'Lisa Zimmermann',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-    prisma.user.create({
-      data: {
-        email: 'david.schulz@example.com',
-        name: 'David Schulz',
-        password: hashedPassword,
-        primaryRole: 'CUSTOMER',
-        emailVerified: new Date(),
-      },
-    }),
-  ]);
+    });
+    customers.push(customer);
+  }
 
   console.log('✅ Created customers:', customers.length);
 
@@ -310,33 +260,16 @@ async function main() {
     studio3: studio3.name,
   });
 
-  // Create studio ownerships (1:1 mapping for MVP)
-  await Promise.all([
-    prisma.studioOwnership.create({
-      data: {
-        userId: owner1.id,
-        studioId: studio1.id,
-        canTransfer: true,
-        acceptedAt: new Date(),
-      },
-    }),
-    prisma.studioOwnership.create({
-      data: {
-        userId: owner2.id,
-        studioId: studio2.id,
-        canTransfer: true,
-        acceptedAt: new Date(),
-      },
-    }),
-    prisma.studioOwnership.create({
-      data: {
-        userId: owner3.id,
-        studioId: studio3.id,
-        canTransfer: true,
-        acceptedAt: new Date(),
-      },
-    }),
-  ]);
+  // Create studio ownerships (1:1 mapping for MVP) - sequential to avoid memory issues
+  await prisma.studioOwnership.create({
+    data: { userId: owner1.id, studioId: studio1.id, canTransfer: true, acceptedAt: new Date() },
+  });
+  await prisma.studioOwnership.create({
+    data: { userId: owner2.id, studioId: studio2.id, canTransfer: true, acceptedAt: new Date() },
+  });
+  await prisma.studioOwnership.create({
+    data: { userId: owner3.id, studioId: studio3.id, canTransfer: true, acceptedAt: new Date() },
+  });
 
   console.log('✅ Created studio ownerships');
 
@@ -365,299 +298,61 @@ async function main() {
   const futureDate3 = new Date();
   futureDate3.setDate(futureDate3.getDate() + 3); // 3 days from now
 
-  const bookings = await Promise.all([
+  // Create bookings sequentially to avoid memory issues in containers
+  const bookingData = [
     // Studio 1 bookings
-    prisma.newBooking.create({
-      data: {
-        studioId: studio1.id,
-        serviceId: studio1Services[0].id,
-        customerId: customers[0].id,
-        customerName: customers[0].name!,
-        customerEmail: customers[0].email,
-        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T14:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate1,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio1.id,
-        serviceId: studio1Services[1].id,
-        customerId: customers[1].id,
-        customerName: customers[1].name!,
-        customerEmail: customers[1].email,
-        preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T16:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate2,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio1.id,
-        serviceId: studio1Services[0].id,
-        customerId: customers[2].id,
-        customerName: customers[2].name!,
-        customerEmail: customers[2].email,
-        preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T11:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate3,
-        reviewRequestSent: true,
-      },
-    }),
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[0].id, customerName: customers[0].name!, customerEmail: customers[0].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio1.id, serviceId: studio1Services[1].id, customerId: customers[1].id, customerName: customers[1].name!, customerEmail: customers[1].email, preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T16:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate2, reviewRequestSent: true },
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[2].id, customerName: customers[2].name!, customerEmail: customers[2].email, preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T11:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate3, reviewRequestSent: true },
     // Studio 2 bookings
-    prisma.newBooking.create({
-      data: {
-        studioId: studio2.id,
-        serviceId: studio2Services[0].id,
-        customerId: customers[3].id,
-        customerName: customers[3].name!,
-        customerEmail: customers[3].email,
-        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T15:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate1,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio2.id,
-        serviceId: studio2Services[1].id,
-        customerId: customers[4].id,
-        customerName: customers[4].name!,
-        customerEmail: customers[4].email,
-        preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T10:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate2,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio2.id,
-        serviceId: studio2Services[2].id,
-        customerId: customers[5].id,
-        customerName: customers[5].name!,
-        customerEmail: customers[5].email,
-        preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T17:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate4,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio2.id,
-        serviceId: studio2Services[0].id,
-        customerId: customers[6].id,
-        customerName: customers[6].name!,
-        customerEmail: customers[6].email,
-        preferredDateTime: new Date(pastDate5.toISOString().split('T')[0] + 'T13:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate5,
-        reviewRequestSent: true,
-      },
-    }),
+    { studioId: studio2.id, serviceId: studio2Services[0].id, customerId: customers[3].id, customerName: customers[3].name!, customerEmail: customers[3].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T15:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[1].id, customerId: customers[4].id, customerName: customers[4].name!, customerEmail: customers[4].email, preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T10:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate2, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[2].id, customerId: customers[5].id, customerName: customers[5].name!, customerEmail: customers[5].email, preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T17:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate4, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[0].id, customerId: customers[6].id, customerName: customers[6].name!, customerEmail: customers[6].email, preferredDateTime: new Date(pastDate5.toISOString().split('T')[0] + 'T13:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate5, reviewRequestSent: true },
     // Studio 3 bookings
-    prisma.newBooking.create({
-      data: {
-        studioId: studio3.id,
-        serviceId: studio3Services[0].id,
-        customerId: customers[7].id,
-        customerName: customers[7].name!,
-        customerEmail: customers[7].email,
-        preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T18:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate1,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio3.id,
-        serviceId: studio3Services[1].id,
-        customerId: customers[0].id,
-        customerName: customers[0].name!,
-        customerEmail: customers[0].email,
-        preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T14:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate3,
-        reviewRequestSent: true,
-      },
-    }),
-    prisma.newBooking.create({
-      data: {
-        studioId: studio3.id,
-        serviceId: studio3Services[2].id,
-        customerId: customers[1].id,
-        customerName: customers[1].name!,
-        customerEmail: customers[1].email,
-        preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T19:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: pastDate4,
-        reviewRequestSent: true,
-      },
-    }),
-    // FUTURE BOOKINGS (for testing availability)
-    // Tomorrow - Studio 1
-    prisma.newBooking.create({
-      data: {
-        studioId: studio1.id,
-        serviceId: studio1Services[0].id,
-        customerId: customers[2].id,
-        customerName: customers[2].name!,
-        customerEmail: customers[2].email,
-        preferredDateTime: new Date(futureDate1.toISOString().split('T')[0] + 'T14:00:00'),
-        status: 'CONFIRMED',
-        confirmedAt: new Date(),
-      },
-    }),
-    // 2 days from now - Studio 2
-    prisma.newBooking.create({
-      data: {
-        studioId: studio2.id,
-        serviceId: studio2Services[1].id,
-        customerId: customers[3].id,
-        customerName: customers[3].name!,
-        customerEmail: customers[3].email,
-        preferredDateTime: new Date(futureDate2.toISOString().split('T')[0] + 'T11:30:00'),
-        status: 'PENDING',
-      },
-    }),
-    // 3 days from now - Studio 3
-    prisma.newBooking.create({
-      data: {
-        studioId: studio3.id,
-        serviceId: studio3Services[2].id,
-        customerId: customers[4].id,
-        customerName: customers[4].name!,
-        customerEmail: customers[4].email,
-        preferredDateTime: new Date(futureDate3.toISOString().split('T')[0] + 'T16:45:00'),
-        status: 'CONFIRMED',
-        confirmedAt: new Date(),
-      },
-    }),
-  ]);
+    { studioId: studio3.id, serviceId: studio3Services[0].id, customerId: customers[7].id, customerName: customers[7].name!, customerEmail: customers[7].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T18:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio3.id, serviceId: studio3Services[1].id, customerId: customers[0].id, customerName: customers[0].name!, customerEmail: customers[0].email, preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate3, reviewRequestSent: true },
+    { studioId: studio3.id, serviceId: studio3Services[2].id, customerId: customers[1].id, customerName: customers[1].name!, customerEmail: customers[1].email, preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T19:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate4, reviewRequestSent: true },
+    // FUTURE BOOKINGS
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[2].id, customerName: customers[2].name!, customerEmail: customers[2].email, preferredDateTime: new Date(futureDate1.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: new Date() },
+    { studioId: studio2.id, serviceId: studio2Services[1].id, customerId: customers[3].id, customerName: customers[3].name!, customerEmail: customers[3].email, preferredDateTime: new Date(futureDate2.toISOString().split('T')[0] + 'T11:30:00'), status: 'PENDING' as const },
+    { studioId: studio3.id, serviceId: studio3Services[2].id, customerId: customers[4].id, customerName: customers[4].name!, customerEmail: customers[4].email, preferredDateTime: new Date(futureDate3.toISOString().split('T')[0] + 'T16:45:00'), status: 'CONFIRMED' as const, confirmedAt: new Date() },
+  ];
+
+  const bookings = [];
+  for (const data of bookingData) {
+    const booking = await prisma.newBooking.create({ data });
+    bookings.push(booking);
+  }
 
   console.log('✅ Created bookings:', bookings.length);
 
-  // Create reviews for studios
-  const reviews = await Promise.all([
-    // Studio 1 reviews (3 reviews, average ~4.7)
-    prisma.review.create({
-      data: {
-        studioId: studio1.id,
-        userId: customers[0].id,
-        bookingId: bookings[0].id,
-        rating: 5,
-        comment: 'Absolut fantastisch! Die Therapeutin war super professionell und die Massage war genau das, was ich brauchte. Sehr entspannende Atmosphäre.',
-        isVisible: true,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio1.id,
-        userId: customers[1].id,
-        bookingId: bookings[1].id,
-        rating: 5,
-        comment: 'Beste Thai-Massage in Karlsruhe! Ich komme definitiv wieder. Das Personal ist sehr freundlich und kompetent.',
-        isVisible: true,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio1.id,
-        userId: customers[2].id,
-        bookingId: bookings[2].id,
-        rating: 4,
-        comment: 'Sehr gute Massage, nur die Terminvergabe könnte etwas flexibler sein. Ansonsten top!',
-        isVisible: true,
-      },
-    }),
-    // Studio 2 reviews (4 reviews, average ~4.5)
-    prisma.review.create({
-      data: {
-        studioId: studio2.id,
-        userId: customers[3].id,
-        bookingId: bookings[3].id,
-        rating: 5,
-        comment: 'Hervorragende Thai-Massage! Die Atmosphäre ist wunderschön und das Team sehr professionell. Absolut empfehlenswert!',
-        isVisible: true,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio2.id,
-        userId: customers[4].id,
-        bookingId: bookings[4].id,
-        rating: 5,
-        comment: 'Die 120-Minuten-Massage war jeden Cent wert. Ich fühlte mich danach wie neugeboren. Sehr zu empfehlen!',
-        isVisible: true,
-        response: 'Vielen Dank für Ihre positive Bewertung! Es freut uns sehr, dass Sie sich bei uns wohl gefühlt haben. Wir freuen uns auf Ihren nächsten Besuch!',
-        respondedAt: new Date(),
-        respondedBy: owner2.id, // Studio 2 owner response
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio2.id,
-        userId: customers[5].id,
-        bookingId: bookings[5].id,
-        rating: 4,
-        comment: 'Tolle Fußmassage! Sehr entspannend. Nur die Parkplatzsituation ist etwas schwierig.',
-        isVisible: true,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio2.id,
-        userId: customers[6].id,
-        bookingId: bookings[6].id,
-        rating: 4,
-        comment: 'Gute Massage und angenehmes Ambiente. Komme gerne wieder!',
-        isVisible: true,
-      },
-    }),
-    // Studio 3 reviews (3 reviews, average ~4.3)
-    prisma.review.create({
-      data: {
-        studioId: studio3.id,
-        userId: customers[7].id,
-        bookingId: bookings[7].id,
-        rating: 5,
-        comment: 'Luxuriöses Ambiente und erstklassige Massage. Die Hot Stone Massage war unglaublich entspannend. Preis-Leistung stimmt absolut!',
-        isVisible: true,
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio3.id,
-        userId: customers[0].id,
-        bookingId: bookings[8].id,
-        rating: 4,
-        comment: 'Sehr schönes Studio mit hochwertiger Ausstattung. Die Aromatherapie-Massage war toll, nur etwas teurer als andere Studios.',
-        isVisible: true,
-        response: 'Vielen Dank für Ihr Feedback! Wir legen großen Wert auf Qualität und Premium-Service. Wir hoffen, Sie bald wiederzusehen!',
-        respondedAt: new Date(),
-        respondedBy: owner3.id, // Studio 3 owner response
-      },
-    }),
-    prisma.review.create({
-      data: {
-        studioId: studio3.id,
-        userId: customers[1].id,
-        bookingId: bookings[9].id,
-        rating: 4,
-        comment: 'Die Hot Stone Massage war fantastisch! Sehr professionelles Team und wunderschöne Räumlichkeiten.',
-        isVisible: true,
-      },
-    }),
-  ]);
+  // Create reviews sequentially to avoid memory issues in containers
+  const reviewData = [
+    // Studio 1 reviews
+    { studioId: studio1.id, userId: customers[0].id, bookingId: bookings[0].id, rating: 5, comment: 'Absolut fantastisch! Die Therapeutin war super professionell und die Massage war genau das, was ich brauchte. Sehr entspannende Atmosphäre.', isVisible: true },
+    { studioId: studio1.id, userId: customers[1].id, bookingId: bookings[1].id, rating: 5, comment: 'Beste Thai-Massage in Karlsruhe! Ich komme definitiv wieder. Das Personal ist sehr freundlich und kompetent.', isVisible: true },
+    { studioId: studio1.id, userId: customers[2].id, bookingId: bookings[2].id, rating: 4, comment: 'Sehr gute Massage, nur die Terminvergabe könnte etwas flexibler sein. Ansonsten top!', isVisible: true },
+    // Studio 2 reviews
+    { studioId: studio2.id, userId: customers[3].id, bookingId: bookings[3].id, rating: 5, comment: 'Hervorragende Thai-Massage! Die Atmosphäre ist wunderschön und das Team sehr professionell. Absolut empfehlenswert!', isVisible: true },
+    { studioId: studio2.id, userId: customers[4].id, bookingId: bookings[4].id, rating: 5, comment: 'Die 120-Minuten-Massage war jeden Cent wert. Ich fühlte mich danach wie neugeboren. Sehr zu empfehlen!', isVisible: true, response: 'Vielen Dank für Ihre positive Bewertung! Es freut uns sehr, dass Sie sich bei uns wohl gefühlt haben. Wir freuen uns auf Ihren nächsten Besuch!', respondedAt: new Date(), respondedBy: owner2.id },
+    { studioId: studio2.id, userId: customers[5].id, bookingId: bookings[5].id, rating: 4, comment: 'Tolle Fußmassage! Sehr entspannend. Nur die Parkplatzsituation ist etwas schwierig.', isVisible: true },
+    { studioId: studio2.id, userId: customers[6].id, bookingId: bookings[6].id, rating: 4, comment: 'Gute Massage und angenehmes Ambiente. Komme gerne wieder!', isVisible: true },
+    // Studio 3 reviews
+    { studioId: studio3.id, userId: customers[7].id, bookingId: bookings[7].id, rating: 5, comment: 'Luxuriöses Ambiente und erstklassige Massage. Die Hot Stone Massage war unglaublich entspannend. Preis-Leistung stimmt absolut!', isVisible: true },
+    { studioId: studio3.id, userId: customers[0].id, bookingId: bookings[8].id, rating: 4, comment: 'Sehr schönes Studio mit hochwertiger Ausstattung. Die Aromatherapie-Massage war toll, nur etwas teurer als andere Studios.', isVisible: true, response: 'Vielen Dank für Ihr Feedback! Wir legen großen Wert auf Qualität und Premium-Service. Wir hoffen, Sie bald wiederzusehen!', respondedAt: new Date(), respondedBy: owner3.id },
+    { studioId: studio3.id, userId: customers[1].id, bookingId: bookings[9].id, rating: 4, comment: 'Die Hot Stone Massage war fantastisch! Sehr professionelles Team und wunderschöne Räumlichkeiten.', isVisible: true },
+  ];
+
+  const reviews = [];
+  for (const data of reviewData) {
+    const review = await prisma.review.create({ data });
+    reviews.push(review);
+  }
 
   console.log('✅ Created reviews:', reviews.length);
 
-  // Calculate and update studio ratings
+  // Calculate and update studio ratings sequentially
   const studio1Reviews = reviews.filter(r => r.studioId === studio1.id && r.isVisible);
   const studio1AvgRating = studio1Reviews.reduce((sum, r) => sum + r.rating, 0) / studio1Reviews.length;
 
@@ -667,29 +362,18 @@ async function main() {
   const studio3Reviews = reviews.filter(r => r.studioId === studio3.id && r.isVisible);
   const studio3AvgRating = studio3Reviews.reduce((sum, r) => sum + r.rating, 0) / studio3Reviews.length;
 
-  await Promise.all([
-    prisma.studio.update({
-      where: { id: studio1.id },
-      data: {
-        averageRating: parseFloat(studio1AvgRating.toFixed(2)),
-        totalReviews: studio1Reviews.length,
-      },
-    }),
-    prisma.studio.update({
-      where: { id: studio2.id },
-      data: {
-        averageRating: parseFloat(studio2AvgRating.toFixed(2)),
-        totalReviews: studio2Reviews.length,
-      },
-    }),
-    prisma.studio.update({
-      where: { id: studio3.id },
-      data: {
-        averageRating: parseFloat(studio3AvgRating.toFixed(2)),
-        totalReviews: studio3Reviews.length,
-      },
-    }),
-  ]);
+  await prisma.studio.update({
+    where: { id: studio1.id },
+    data: { averageRating: parseFloat(studio1AvgRating.toFixed(2)), totalReviews: studio1Reviews.length },
+  });
+  await prisma.studio.update({
+    where: { id: studio2.id },
+    data: { averageRating: parseFloat(studio2AvgRating.toFixed(2)), totalReviews: studio2Reviews.length },
+  });
+  await prisma.studio.update({
+    where: { id: studio3.id },
+    data: { averageRating: parseFloat(studio3AvgRating.toFixed(2)), totalReviews: studio3Reviews.length },
+  });
 
   console.log('✅ Updated studio ratings:', {
     [studio1.name]: `${studio1AvgRating.toFixed(2)} (${studio1Reviews.length} reviews)`,
