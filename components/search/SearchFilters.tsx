@@ -121,7 +121,7 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
           <button
             type="button"
             onClick={() => setIsSearchSheetOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 w-48 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+            className="flex items-center gap-2 px-3 py-2 flex-1 min-w-0 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
             aria-label="Suchparameter anpassen"
           >
             <Search className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
