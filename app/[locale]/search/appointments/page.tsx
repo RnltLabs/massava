@@ -29,7 +29,7 @@ export default async function AppointmentSearchPage({ params, searchParams }: Pr
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <div className="max-w-2xl mx-auto px-4 pt-4 pb-8 sm:px-6">
+      <div className="max-w-2xl mx-auto px-4 pb-8 sm:px-6">
         {/* Unified Search Filters with Header */}
         <SearchFilters />
 
