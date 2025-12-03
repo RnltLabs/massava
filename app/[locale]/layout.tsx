@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { NextIntlClientProvider } from 'next-intl';
@@ -30,6 +30,13 @@ export const metadata: Metadata = {
       follow: false,
     },
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default async function LocaleLayout({

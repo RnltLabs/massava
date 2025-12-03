@@ -223,7 +223,7 @@ export function LocationSearchAutocomplete({
           }}
           autoFocus={autoFocus}
           className={cn(
-            'w-full h-11 pl-10 pr-10 rounded-xl border-2 border-muted focus:border-primary text-sm',
+            'w-full h-11 pl-10 pr-10 rounded-xl border-2 border-muted focus:border-primary text-base md:text-sm',
             'transition-colors',
             hasError && 'border-amber-500 focus:border-amber-500'
           )}

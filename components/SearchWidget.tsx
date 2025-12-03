@@ -104,7 +104,7 @@ export function SearchWidget({
               id="radius-select"
               value={radius}
               onChange={(e) => setRadius(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-sm bg-card cursor-pointer"
+              className="w-full h-11 px-4 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-base md:text-sm bg-card cursor-pointer"
               aria-label="Suchradius auswählen"
             >
               <option value="5">5 km</option>
