@@ -79,6 +79,9 @@ export function NotificationsPopup({
     unregister: unregisterPush,
   } = usePushRegistration();
 
+  // Check if at least one channel is active (for category toggles)
+  const hasActiveChannel = settings.pushEnabled || settings.emailEnabled || isPushRegistered;
+
   // Determine initial step when popup opens
   useEffect(() => {
     console.log('[NotificationsPopup] State:', {
@@ -391,18 +394,25 @@ export function NotificationsPopup({
     const isEnabled =
       settings.categorySettings[category.id] ?? category.defaultEnabled;
     const isSaving = savingField === category.id;
+    const isDisabled = !hasActiveChannel;
 
     return (
       <div
         key={category.id}
-        className="flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0"
+        className={cn(
+          'flex items-center justify-between py-3 border-b border-gray-200 last:border-b-0',
+          isDisabled && 'opacity-50'
+        )}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
           <div className={cn('p-2 rounded-lg flex-shrink-0', category.bgColor)}>
             <Icon className={cn('h-5 w-5', category.iconColor)} />
           </div>
           <div className="min-w-0">
-            <Label className="text-base font-medium text-gray-900">
+            <Label className={cn(
+              'text-base font-medium',
+              isDisabled ? 'text-gray-500' : 'text-gray-900'
+            )}>
               {t(`categories.${category.titleKey}`)}
             </Label>
             <p className="text-sm text-gray-500 truncate">
@@ -417,6 +427,7 @@ export function NotificationsPopup({
             <Switch
               checked={isEnabled}
               onCheckedChange={() => handleCategoryToggle(category.id)}
+              disabled={isDisabled}
             />
           )}
         </div>

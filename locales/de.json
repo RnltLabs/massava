@@ -453,6 +453,13 @@
         },
         "cta": "Benachrichtigungen aktivieren",
         "skip": "Später einrichten"
+      },
+      "noChannelWarning": {
+        "title": "Kein Zustellkanal aktiv",
+        "description": "Aktiviere Push oder E-Mail, um Benachrichtigungen zu erhalten.",
+        "enablePush": "Push aktivieren",
+        "enableEmail": "E-Mail aktivieren",
+        "inactive": "inaktiv"
       }
     }
   }
