@@ -7,7 +7,6 @@
 
 import React, { useState } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,8 +16,8 @@ import {
   BellIcon,
   SettingsIcon,
   AlertTriangleIcon,
-  Edit2Icon,
 } from 'lucide-react';
+import { SettingsCard } from '@/components/business/settings';
 import { EmailChangeDialog } from './EmailChangeDialog';
 import { PasswordChangeDialog } from './PasswordChangeDialog';
 import { TwoFactorDialog } from './TwoFactorDialog';
@@ -63,60 +62,6 @@ export function AccountSettingsClient({
   // TODO: Get 2FA status from user
   const twoFactorEnabled = false;
 
-  const cards = [
-    {
-      id: 'email',
-      icon: MailIcon,
-      title: 'E-Mail-Adresse',
-      description: 'Ändere deine E-Mail-Adresse',
-      value: user.email,
-      action: () => setEmailDialogOpen(true),
-      badge: null,
-    },
-    {
-      id: 'password',
-      icon: KeyIcon,
-      title: 'Passwort',
-      description: 'Ändere dein Passwort',
-      value: '••••••••',
-      action: () => setPasswordDialogOpen(true),
-      badge: null,
-    },
-    {
-      id: '2fa',
-      icon: ShieldIcon,
-      title: 'Zwei-Faktor-Authentifizierung',
-      description: 'Erhöhe die Sicherheit deines Kontos',
-      value: null,
-      action: () => setTwoFactorDialogOpen(true),
-      badge: twoFactorEnabled ? (
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
-          Aktiviert
-        </Badge>
-      ) : (
-        <Badge variant="secondary">Deaktiviert</Badge>
-      ),
-    },
-    {
-      id: 'notifications',
-      icon: BellIcon,
-      title: 'Benachrichtigungen',
-      description: 'Verwalte deine Benachrichtigungseinstellungen',
-      value: null,
-      action: () => setNotificationsPopupOpen(true),
-      badge: null,
-    },
-    {
-      id: 'privacy',
-      icon: SettingsIcon,
-      title: 'Datenschutz & Präferenzen',
-      description: 'Sprache, Zeitzone und Datenexport',
-      value: null,
-      action: () => setPrivacyPopupOpen(true),
-      badge: null,
-    },
-  ];
-
   return (
     <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
       {/* Fixed Header Section with backdrop blur */}
@@ -131,79 +76,106 @@ export function AccountSettingsClient({
         />
       </div>
 
-      {/* Scrollable Content with Cards */}
+      {/* Scrollable Content with Bento Grid */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-8">
-        <div className="grid gap-4 md:grid-cols-2 max-w-5xl mx-auto">
-          {cards.map((card) => (
-            <Card
-              key={card.id}
-              className="group relative overflow-hidden rounded-[1.5rem] border border-border bg-background transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
-            >
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-0.5">
-                      <card.icon className="h-5 w-5 text-gray-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base font-semibold mb-1">
-                        {card.title}
-                      </CardTitle>
-                      <CardDescription className="text-sm">
-                        {card.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {card.badge && <div>{card.badge}</div>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl mx-auto">
+          {/* Email Card */}
+          <SettingsCard
+            icon={MailIcon}
+            title="E-Mail-Adresse"
+            subtitle="Ändere deine E-Mail-Adresse"
+            iconBg="bg-blue-100"
+            iconColor="text-blue-600"
+            onEdit={() => setEmailDialogOpen(true)}
+            preview={<p className="text-muted-foreground">{user.email}</p>}
+          />
+
+          {/* Password Card */}
+          <SettingsCard
+            icon={KeyIcon}
+            title="Passwort"
+            subtitle="Ändere dein Passwort"
+            iconBg="bg-amber-100"
+            iconColor="text-amber-600"
+            onEdit={() => setPasswordDialogOpen(true)}
+            preview={<p className="text-muted-foreground">••••••••</p>}
+          />
+
+          {/* 2FA Card with Badge */}
+          <SettingsCard
+            icon={ShieldIcon}
+            title="Zwei-Faktor-Authentifizierung"
+            subtitle="Erhöhe die Sicherheit deines Kontos"
+            iconBg="bg-emerald-100"
+            iconColor="text-emerald-600"
+            onEdit={() => setTwoFactorDialogOpen(true)}
+            preview={
+              <Badge
+                className={
+                  twoFactorEnabled ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''
+                }
+                variant={twoFactorEnabled ? 'default' : 'secondary'}
+              >
+                {twoFactorEnabled ? 'Aktiviert' : 'Deaktiviert'}
+              </Badge>
+            }
+          />
+
+          {/* Notifications Card */}
+          <SettingsCard
+            icon={BellIcon}
+            title="Benachrichtigungen"
+            subtitle="Verwalte deine Benachrichtigungseinstellungen"
+            iconBg="bg-purple-100"
+            iconColor="text-purple-600"
+            onEdit={() => setNotificationsPopupOpen(true)}
+          />
+
+          {/* Privacy & Preferences Card */}
+          <SettingsCard
+            icon={SettingsIcon}
+            title="Datenschutz & Präferenzen"
+            subtitle="Sprache, Zeitzone und Datenexport"
+            iconBg="bg-slate-100"
+            iconColor="text-slate-600"
+            onEdit={() => setPrivacyPopupOpen(true)}
+          />
+
+          {/* Danger Zone Card - Full Width with Custom Styling */}
+          {studio && (
+            <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border-2 border-red-200 bg-red-50/30 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-start gap-4">
+                {/* Icon */}
+                <div
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-100 group-hover:scale-105 transition-transform duration-300"
+                  aria-hidden="true"
+                >
+                  <AlertTriangleIcon className="h-5 w-5 text-red-600" />
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-base font-semibold text-red-600">
+                      Konto löschen
+                    </h3>
                     <Button
                       size="icon"
                       variant="ghost"
-                      onClick={card.action}
-                      className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
+                      onClick={() => setDangerZonePopupOpen(true)}
+                      className="h-8 w-8 shrink-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-100"
+                      aria-label="Konto löschen bearbeiten"
                     >
-                      <Edit2Icon className="h-4 w-4 text-primary" />
+                      <AlertTriangleIcon className="h-4 w-4 text-red-600" />
                     </Button>
                   </div>
-                </div>
-              </CardHeader>
-              {card.value && (
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground">{card.value}</p>
-                </CardContent>
-              )}
-            </Card>
-          ))}
 
-          {/* Danger Zone Card (only if studio exists) */}
-          {studio && (
-            <Card className="group relative overflow-hidden rounded-[1.5rem] border-2 border-red-200 bg-red-50/30 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg md:col-span-2">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-start gap-3 flex-1">
-                    <div className="mt-0.5">
-                      <AlertTriangleIcon className="h-5 w-5 text-red-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base font-semibold text-red-600 mb-1">
-                        Konto löschen
-                      </CardTitle>
-                      <CardDescription className="text-sm text-red-700">
-                        Lösche dein Studio-Konto dauerhaft (30 Tage Kulanzfrist)
-                      </CardDescription>
-                    </div>
-                  </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setDangerZonePopupOpen(true)}
-                    className="h-9 w-9 shrink-0 rounded-full hover:bg-destructive/10"
-                  >
-                    <AlertTriangleIcon className="h-4 w-4 text-red-600" />
-                  </Button>
+                  <p className="text-sm text-red-700 mt-0.5">
+                    Lösche dein Studio-Konto dauerhaft (30 Tage Kulanzfrist)
+                  </p>
                 </div>
-              </CardHeader>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       </div>

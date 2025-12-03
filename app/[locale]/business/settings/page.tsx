@@ -35,6 +35,8 @@ async function getStudioProfile(userEmail: string) {
   if (!user || user.ownedStudios.length === 0) {
     return {
       servicesCount: 0,
+      studioName: 'Mein Studio',
+      studioLogo: null,
     };
   }
 
@@ -42,6 +44,8 @@ async function getStudioProfile(userEmail: string) {
 
   return {
     servicesCount: studio.services.length,
+    studioName: studio.name,
+    studioLogo: studio.logoUrl ?? null,
   };
 }
 

@@ -8,13 +8,13 @@
 import React from 'react';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PlusIcon, Edit2Icon, Trash2Icon } from 'lucide-react';
+import { PlusIcon, Edit2Icon, Trash2Icon, ClockIcon } from 'lucide-react';
 import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/utils';
 
 interface Service {
   id: string;
@@ -78,79 +78,100 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
 
       {/* Scrollable Section - Only service cards list */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
-          {services.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-              <p className="text-lg font-medium text-neutral-900 mb-2">No services yet</p>
-              <p className="text-sm text-muted-foreground mb-4">
-                Add your first service to get started
-              </p>
-              <Button onClick={handleAddService}>
-                <PlusIcon className="mr-2 h-4 w-4" />
-                Add Service
-              </Button>
-            </CardContent>
-          </Card>
+        {services.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <p className="text-lg font-medium text-neutral-900 mb-2">Noch keine Services</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Fügen Sie Ihren ersten Service hinzu, um zu beginnen
+            </p>
+            <Button onClick={handleAddService}>
+              <PlusIcon className="mr-2 h-4 w-4" />
+              Service hinzufügen
+            </Button>
+          </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {services.map((service) => (
               <div
                 key={service.id}
-                className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                className={cn(
+                  "group relative overflow-hidden rounded-2xl border bg-card",
+                  "transition-all duration-300",
+                  "hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20"
+                )}
               >
-                {/* Header: Name + Actions (Edit & Delete) */}
-                <div className="mb-3 flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-semibold text-foreground flex-1">
+                {/* Price Badge - Top Right */}
+                <div className="absolute top-4 right-4">
+                  <Badge className="bg-primary/10 text-primary font-semibold px-3 py-1 rounded-full">
+                    €{service.price.toFixed(2)}
+                  </Badge>
+                </div>
+
+                {/* Content */}
+                <div className="p-5 pr-24">
+                  <h3 className="text-lg font-semibold text-foreground">
                     {service.name}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleEditService(service)}
-                      className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-                    >
-                      <Edit2Icon className="h-4 w-4 text-primary" />
-                    </Button>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleDeleteService(service)}
-                      aria-label={`${service.name} löschen`}
-                      className="h-9 w-9 shrink-0 rounded-full hover:bg-destructive/10"
-                    >
-                      <Trash2Icon className="h-4 w-4 text-destructive" />
-                    </Button>
+
+                  <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
+                    <ClockIcon className="h-4 w-4" />
+                    <span>{service.duration} Min</span>
                   </div>
-                </div>
 
-                {/* Price/Duration */}
-                <div className="mb-3">
-                  <span className="text-base font-medium text-primary">
-                    €{service.price.toFixed(2)} • {service.duration} Min
-                  </span>
-                </div>
+                  {service.description && (
+                    <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
+                      {service.description}
+                    </p>
+                  )}
 
-                {/* Description */}
-                {service.description && (
-                  <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
-                    {service.description}
-                  </p>
-                )}
-
-                {/* Footer: Category only */}
-                {service.category && (
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
-                    >
+                  {service.category && (
+                    <Badge variant="outline" className="mt-3 rounded-full">
                       {service.category}
                     </Badge>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                {/* Actions - Bottom */}
+                <div className="flex items-center justify-end gap-1 px-4 pb-4">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleEditService(service)}
+                    className="text-primary hover:bg-primary/10"
+                  >
+                    <Edit2Icon className="h-4 w-4 mr-1.5" />
+                    Bearbeiten
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDeleteService(service)}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2Icon className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             ))}
+
+            {/* Add Service Card */}
+            <button
+              onClick={handleAddService}
+              className={cn(
+                "flex flex-col items-center justify-center gap-3",
+                "min-h-[220px] rounded-2xl border-2 border-dashed border-border",
+                "bg-muted/30 transition-all duration-300",
+                "hover:border-primary/50 hover:bg-primary/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              )}
+            >
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                <PlusIcon className="h-7 w-7 text-primary" />
+              </div>
+              <span className="text-sm font-medium text-muted-foreground">
+                Service hinzufügen
+              </span>
+            </button>
           </div>
         )}
       </div>

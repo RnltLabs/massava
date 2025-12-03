@@ -6,9 +6,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Edit2Icon, MapPinIcon, ClockIcon, ImageIcon, InfoIcon, PhoneIcon } from 'lucide-react';
+import { MapPinIcon, ClockIcon, ImageIcon, InfoIcon, PhoneIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
+import { SettingsCard } from '@/components/business/settings';
 import { BasicInfoPopup } from './BasicInfoPopup';
 import { AddressPopup } from './AddressPopup';
 import { ContactPopup } from './ContactPopup';
@@ -45,7 +45,7 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
   const [activePopup, setActivePopup] = useState<'basic' | 'address' | 'contact' | 'hours' | 'images' | null>(null);
 
   const formatOpeningHours = (hours: Record<string, { open: string; close: string } | null>): string => {
-    const openDays = Object.entries(hours).filter(([_, value]) => value !== null);
+    const openDays = Object.entries(hours).filter(([, value]) => value !== null);
     if (openDays.length === 0) return 'Nicht festgelegt';
     if (openDays.length === 7) return 'Täglich geöffnet';
     return `${openDays.length} Tage geöffnet`;
@@ -67,181 +67,102 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
         />
       </div>
 
-      {/* Scrollable Content - Only cards */}
+      {/* Scrollable Content - Bento Grid Layout */}
       <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Card 1: Basic Info */}
-          <div className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            {/* Header with Edit Button */}
-            <div className="mb-3 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <InfoIcon className="h-5 w-5 text-primary" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Featured Card - Grundinformationen */}
+          <SettingsCard
+            icon={InfoIcon}
+            title="Grundinformationen"
+            subtitle="Name, Beschreibung deines Studios"
+            variant="featured"
+            iconBg="bg-blue-100"
+            iconColor="text-blue-600"
+            onEdit={() => setActivePopup('basic')}
+            preview={
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">{studio.name}</p>
+                <p className="text-muted-foreground line-clamp-2">{studio.description}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Grundinformationen
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Name, Beschreibung
+            }
+          />
+
+          {/* Standort */}
+          <SettingsCard
+            icon={MapPinIcon}
+            title="Standort"
+            subtitle="Adresse deines Studios"
+            iconBg="bg-emerald-100"
+            iconColor="text-emerald-600"
+            onEdit={() => setActivePopup('address')}
+            preview={
+              <div className="space-y-1">
+                <p className="text-foreground">{studio.address}</p>
+                <p className="text-muted-foreground">
+                  {studio.postalCode} {studio.city}
                 </p>
               </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setActivePopup('basic')}
-                className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-              >
-                <Edit2Icon className="h-4 w-4 text-primary" />
-              </Button>
-            </div>
+            }
+          />
 
-            {/* Content Preview */}
-            <div className="space-y-1 text-sm">
-              <p className="font-medium text-foreground">{studio.name}</p>
-              <p className="line-clamp-2 text-muted-foreground">{studio.description}</p>
-            </div>
-          </div>
-
-          {/* Card 2: Standort (Address) */}
-          <div className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            {/* Header with Edit Button */}
-            <div className="mb-3 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <MapPinIcon className="h-5 w-5 text-primary" />
+          {/* Kontakt */}
+          <SettingsCard
+            icon={PhoneIcon}
+            title="Kontakt"
+            subtitle="Telefon, E-Mail und Website"
+            iconBg="bg-purple-100"
+            iconColor="text-purple-600"
+            onEdit={() => setActivePopup('contact')}
+            preview={
+              <div className="space-y-1">
+                <p className="text-foreground">{studio.phone}</p>
+                <p className="text-muted-foreground">{studio.email}</p>
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Standort
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Adresse
+            }
+          />
+
+          {/* Öffnungszeiten */}
+          <SettingsCard
+            icon={ClockIcon}
+            title="Öffnungszeiten"
+            subtitle="Wann ist dein Studio geöffnet"
+            iconBg="bg-amber-100"
+            iconColor="text-amber-600"
+            onEdit={() => setActivePopup('hours')}
+            preview={
+              <div className="space-y-1">
+                <p className="font-medium text-foreground">{formatOpeningHours(studio.openingHours)}</p>
+                {Object.entries(studio.openingHours)
+                  .filter(([, value]) => value !== null)
+                  .slice(0, 2)
+                  .map(([day, value]) => (
+                    <p key={day} className="text-muted-foreground capitalize">
+                      {day}: {value?.open} - {value?.close}
+                    </p>
+                  ))}
+              </div>
+            }
+          />
+
+          {/* Bilder */}
+          <SettingsCard
+            icon={ImageIcon}
+            title="Bilder"
+            subtitle="Logo und Galerie-Fotos"
+            iconBg="bg-pink-100"
+            iconColor="text-pink-600"
+            onEdit={() => setActivePopup('images')}
+            preview={
+              <div className="space-y-1">
+                <p className="text-foreground">
+                  {studio.logoUrl ? '✓ Logo vorhanden' : 'Kein Logo'}
+                </p>
+                <p className="text-muted-foreground">
+                  {galleryCount} Galerie-{galleryCount === 1 ? 'Bild' : 'Bilder'}
                 </p>
               </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setActivePopup('address')}
-                className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-              >
-                <Edit2Icon className="h-4 w-4 text-primary" />
-              </Button>
-            </div>
-
-            {/* Content Preview */}
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">{studio.address}</p>
-              <p className="text-muted-foreground">
-                {studio.postalCode} {studio.city}
-              </p>
-            </div>
-          </div>
-
-          {/* Card 3: Kontakt (Contact) */}
-          <div className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            {/* Header with Edit Button */}
-            <div className="mb-3 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <PhoneIcon className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Kontakt
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Telefon, E-Mail
-                </p>
-              </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setActivePopup('contact')}
-                className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-              >
-                <Edit2Icon className="h-4 w-4 text-primary" />
-              </Button>
-            </div>
-
-            {/* Content Preview */}
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">{studio.phone}</p>
-              <p className="text-muted-foreground">{studio.email}</p>
-            </div>
-          </div>
-
-          {/* Card 4: Opening Hours */}
-          <div className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            {/* Header with Edit Button */}
-            <div className="mb-3 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <ClockIcon className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Öffnungszeiten
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Wann ist dein Studio geöffnet
-                </p>
-              </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setActivePopup('hours')}
-                className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-              >
-                <Edit2Icon className="h-4 w-4 text-primary" />
-              </Button>
-            </div>
-
-            {/* Content Preview */}
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">{formatOpeningHours(studio.openingHours)}</p>
-              {Object.entries(studio.openingHours)
-                .filter(([_, value]) => value !== null)
-                .slice(0, 2)
-                .map(([day, value]) => (
-                  <p key={day} className="text-muted-foreground capitalize">
-                    {day}: {value?.open} - {value?.close}
-                  </p>
-                ))}
-            </div>
-          </div>
-
-          {/* Card 5: Images */}
-          <div className="group relative flex flex-col overflow-hidden rounded-[1.5rem] border border-border bg-background p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg">
-            {/* Header with Edit Button */}
-            <div className="mb-3 flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <ImageIcon className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-foreground">
-                  Bilder
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Logo und Galerie-Fotos
-                </p>
-              </div>
-              <Button
-                size="icon"
-                variant="ghost"
-                onClick={() => setActivePopup('images')}
-                className="h-9 w-9 shrink-0 rounded-full hover:bg-primary/10"
-              >
-                <Edit2Icon className="h-4 w-4 text-primary" />
-              </Button>
-            </div>
-
-            {/* Content Preview */}
-            <div className="space-y-1 text-sm">
-              <p className="text-foreground">
-                {studio.logoUrl ? '✓ Logo vorhanden' : 'Kein Logo'}
-              </p>
-              <p className="text-muted-foreground">
-                {galleryCount} Galerie-{galleryCount === 1 ? 'Bild' : 'Bilder'}
-              </p>
-            </div>
-          </div>
+            }
+          />
         </div>
       </div>
 
