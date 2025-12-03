@@ -166,7 +166,7 @@ export function StudioViewPopup({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto p-0 gap-0">
+        <DialogContent className="sm:max-w-[500px] max-h-[90dvh] overflow-y-auto p-0 gap-0">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle>Studio Details</DialogTitle>
             <DialogDescription>
@@ -185,7 +185,7 @@ export function StudioViewPopup({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[90vh] rounded-t-[2rem] p-0"
+        className="h-[90dvh] rounded-t-[2rem] p-0"
       >
         <SheetHeader className="px-6 pt-6 pb-2">
           <SheetTitle>Studio Details</SheetTitle>

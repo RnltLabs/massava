@@ -116,7 +116,7 @@ function QuickActionsSheetComponent({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-auto max-h-[85vh] rounded-t-3xl p-6 overflow-y-auto"
+        className="h-auto max-h-[85dvh] rounded-t-3xl p-6 overflow-y-auto"
         showCloseButton={true}
         aria-describedby="quick-actions-description"
       >

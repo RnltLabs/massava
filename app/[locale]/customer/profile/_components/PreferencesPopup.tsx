@@ -288,7 +288,7 @@ export function PreferencesPopup({
         <SheetContent
           side="bottom"
           style={{ backgroundColor: '#F4EDE8' }}
-          className="h-[80vh] rounded-t-3xl p-6 overflow-y-auto"
+          className="h-[80dvh] rounded-t-3xl p-6 overflow-y-auto"
           showCloseButton={false}
         >
           <VisuallyHidden>
@@ -304,7 +304,7 @@ export function PreferencesPopup({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         style={{ backgroundColor: '#F4EDE8' }}
-        className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-[500px] max-h-[90dvh] overflow-y-auto"
         showCloseButton={false}
       >
         <VisuallyHidden>
