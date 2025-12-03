@@ -133,12 +133,12 @@ export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.J
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
+                className="flex items-center justify-between gap-1.5 px-3 py-2 w-32 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
                 aria-label="Sortierung ändern"
               >
-                <ArrowUpDown className="h-3.5 w-3.5" />
-                {currentSortLabel}
-                <ChevronDown className="h-3 w-3 opacity-60" />
+                <ArrowUpDown className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="flex-1 text-left">{currentSortLabel}</span>
+                <ChevronDown className="h-3 w-3 opacity-60 flex-shrink-0" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[140px]">
