@@ -10,6 +10,7 @@
 
 import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
+import { getErrorStatusCode } from '@/lib/auth/errors'
 import { prisma } from '@/lib/prisma'
 import { statsQuerySchema } from '@/lib/validations/business'
 import { BookingStatus } from '@/app/generated/prisma'
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
     const session = await auth()
     const accessResult = requireBusinessAccess(session?.user)
     if (!accessResult.ok) {
-      const status = accessResult.error.code === 'UNAUTHORIZED' ? 401 : 403
+      const status = getErrorStatusCode(accessResult.error)
       return NextResponse.json({ error: accessResult.error.message }, { status })
     }
 
