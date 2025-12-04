@@ -64,11 +64,28 @@ export default async function Home({ params }: Props) {
       <section className="relative pt-8 sm:pt-16 pb-12 sm:pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8 sm:mb-12">
-            {/* Badge - now visible on all devices */}
-            <div className="inline-flex items-center gap-2 bg-accent/15 text-accent px-3 py-1.5 rounded-full mb-4 sm:mb-6 text-xs sm:text-sm font-medium backdrop-blur-sm border border-accent/20">
-              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span>{t('badge')}</span>
-            </div>
+            {/* Badge - Desktop: always show "Heute noch verfügbar" */}
+            {/* Mobile: show greeting for logged-in users, badge for others */}
+            {session?.user ? (
+              <>
+                {/* Mobile: Personal greeting */}
+                <div className="inline-flex sm:hidden items-center gap-2 bg-primary/10 text-primary px-3 py-1.5 rounded-full mb-4 text-sm font-medium border border-primary/20">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{t('greeting', { name: session.user.name?.split(' ')[0] ?? '' })}</span>
+                </div>
+                {/* Desktop: Show availability badge */}
+                <div className="hidden sm:inline-flex items-center gap-2 bg-accent/15 text-accent px-3 py-1.5 rounded-full mb-6 text-sm font-medium backdrop-blur-sm border border-accent/20">
+                  <Clock className="h-4 w-4" />
+                  <span>{t('badge')}</span>
+                </div>
+              </>
+            ) : (
+              /* Not logged in: Show badge on all devices */
+              <div className="inline-flex items-center gap-2 bg-accent/15 text-accent px-3 py-1.5 rounded-full mb-4 sm:mb-6 text-xs sm:text-sm font-medium backdrop-blur-sm border border-accent/20">
+                <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span>{t('badge')}</span>
+              </div>
+            )}
 
             {/* Simplified H1 structure */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 leading-[1.1] tracking-tight">
@@ -79,17 +96,6 @@ export default async function Home({ params }: Props) {
             <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-xl mx-auto mb-8 sm:mb-10 leading-relaxed">
               {t('hero_description')}
             </p>
-
-            {/* Welcome Banner for Logged-in Users */}
-            {session?.user && (
-              <div className="max-w-2xl mx-auto mb-6">
-                <div className="glass-card rounded-xl px-4 py-3 text-center">
-                  <p className="text-[15px] font-medium text-foreground">
-                    {t('welcome_back', { name: session.user.name ?? '' })}
-                  </p>
-                </div>
-              </div>
-            )}
 
             {/* Location Search Widget */}
             <SearchWidget

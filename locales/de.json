@@ -8,6 +8,7 @@
   },
   "home": {
     "badge": "Heute noch verfügbar",
+    "greeting": "Willkommen, {name}",
     "hero_title": "Deine Massage",
     "hero_subtitle": "heute noch buchen",
     "hero_description": "Spontan entspannen – finde Studios in deiner Nähe und buche direkt. Ohne Provisionen, transparent, unkompliziert.",
