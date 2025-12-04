@@ -3,7 +3,7 @@
     "nav": {
       "discover": "Discover",
       "bookings": "Bookings",
-      "profile": "Profile"
+      "account": "Account"
     }
   },
   "home": {
@@ -159,6 +159,12 @@
     "logout": "Logout",
     "my_account": "My Account",
     "my_bookings": "My Bookings",
+    "studio_dashboard": "Studio Dashboard",
+    "studio_settings": "Studio Settings",
+    "bookings": "Bookings",
+    "language": "Language",
+    "help": "Help",
+    "profile_menu": "Profile Menu",
     "customer_login": "Customer Login",
     "customer_login_button": "Sign In",
     "account_type_selector": {

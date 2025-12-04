@@ -83,8 +83,8 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
         icon: CalendarDaysIcon,
       },
       {
-        label: t('profile'),
-        href: `/${locale}/customer/profile`,
+        label: t('account'),
+        href: `/${locale}/customer/account`,
         icon: UserIcon,
       },
     ],

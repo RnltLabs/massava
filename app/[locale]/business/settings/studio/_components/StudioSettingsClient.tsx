@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import { MapPinIcon, ClockIcon, ImageIcon, InfoIcon, PhoneIcon } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
-import { SettingsCard } from '@/components/business/settings';
+import { SettingsSection, SettingsListItem } from '@/components/business/settings';
 import { BasicInfoPopup } from './BasicInfoPopup';
 import { AddressPopup } from './AddressPopup';
 import { ContactPopup } from './ContactPopup';
@@ -48,10 +48,21 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
     const openDays = Object.entries(hours).filter(([, value]) => value !== null);
     if (openDays.length === 0) return 'Nicht festgelegt';
     if (openDays.length === 7) return 'Täglich geöffnet';
-    return `${openDays.length} Tage geöffnet`;
+    return `${openDays.length} Tage`;
   };
 
   const galleryCount = studio.galleryImages?.length || 0;
+  const formatAddress = (): string => {
+    if (!studio.address) return 'Nicht festgelegt';
+    return `${studio.address}, ${studio.postalCode}`;
+  };
+
+  const formatImages = (): string => {
+    const parts: string[] = [];
+    if (studio.logoUrl) parts.push('Logo');
+    if (galleryCount > 0) parts.push(`${galleryCount} Fotos`);
+    return parts.length > 0 ? parts.join(' + ') : 'Keine Bilder';
+  };
 
   return (
     <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
@@ -67,102 +78,65 @@ export function StudioSettingsClient({ studio, locale }: StudioSettingsClientPro
         />
       </div>
 
-      {/* Scrollable Content - Bento Grid Layout */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Featured Card - Grundinformationen */}
-          <SettingsCard
-            icon={InfoIcon}
-            title="Grundinformationen"
-            subtitle="Name, Beschreibung deines Studios"
-            variant="featured"
-            iconBg="bg-blue-100"
-            iconColor="text-blue-600"
-            onEdit={() => setActivePopup('basic')}
-            preview={
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">{studio.name}</p>
-                <p className="text-muted-foreground line-clamp-2">{studio.description}</p>
-              </div>
-            }
-          />
+      {/* Scrollable Content - iOS-style Lists */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-8">
+        <div className="space-y-6 max-w-2xl mx-auto">
+          {/* Grundinformationen */}
+          <SettingsSection title="Grundinformationen">
+            <SettingsListItem
+              icon={InfoIcon}
+              iconBg="bg-blue-100"
+              iconColor="text-blue-600"
+              label="Name & Beschreibung"
+              description="Studio-Name und Beschreibungstext"
+              preview={studio.name}
+              onClick={() => setActivePopup('basic')}
+            />
+          </SettingsSection>
 
-          {/* Standort */}
-          <SettingsCard
-            icon={MapPinIcon}
-            title="Standort"
-            subtitle="Adresse deines Studios"
-            iconBg="bg-emerald-100"
-            iconColor="text-emerald-600"
-            onEdit={() => setActivePopup('address')}
-            preview={
-              <div className="space-y-1">
-                <p className="text-foreground">{studio.address}</p>
-                <p className="text-muted-foreground">
-                  {studio.postalCode} {studio.city}
-                </p>
-              </div>
-            }
-          />
+          {/* Standort & Kontakt */}
+          <SettingsSection title="Standort & Kontakt">
+            <SettingsListItem
+              icon={MapPinIcon}
+              iconBg="bg-emerald-100"
+              iconColor="text-emerald-600"
+              label="Adresse"
+              description="Standort deines Studios"
+              preview={formatAddress()}
+              onClick={() => setActivePopup('address')}
+            />
+            <SettingsListItem
+              icon={PhoneIcon}
+              iconBg="bg-purple-100"
+              iconColor="text-purple-600"
+              label="Kontaktdaten"
+              description="Telefon, E-Mail und Website"
+              preview={studio.phone || 'Nicht festgelegt'}
+              onClick={() => setActivePopup('contact')}
+            />
+          </SettingsSection>
 
-          {/* Kontakt */}
-          <SettingsCard
-            icon={PhoneIcon}
-            title="Kontakt"
-            subtitle="Telefon, E-Mail und Website"
-            iconBg="bg-purple-100"
-            iconColor="text-purple-600"
-            onEdit={() => setActivePopup('contact')}
-            preview={
-              <div className="space-y-1">
-                <p className="text-foreground">{studio.phone}</p>
-                <p className="text-muted-foreground">{studio.email}</p>
-              </div>
-            }
-          />
-
-          {/* Öffnungszeiten */}
-          <SettingsCard
-            icon={ClockIcon}
-            title="Öffnungszeiten"
-            subtitle="Wann ist dein Studio geöffnet"
-            iconBg="bg-amber-100"
-            iconColor="text-amber-600"
-            onEdit={() => setActivePopup('hours')}
-            preview={
-              <div className="space-y-1">
-                <p className="font-medium text-foreground">{formatOpeningHours(studio.openingHours)}</p>
-                {Object.entries(studio.openingHours)
-                  .filter(([, value]) => value !== null)
-                  .slice(0, 2)
-                  .map(([day, value]) => (
-                    <p key={day} className="text-muted-foreground capitalize">
-                      {day}: {value?.open} - {value?.close}
-                    </p>
-                  ))}
-              </div>
-            }
-          />
-
-          {/* Bilder */}
-          <SettingsCard
-            icon={ImageIcon}
-            title="Bilder"
-            subtitle="Logo und Galerie-Fotos"
-            iconBg="bg-pink-100"
-            iconColor="text-pink-600"
-            onEdit={() => setActivePopup('images')}
-            preview={
-              <div className="space-y-1">
-                <p className="text-foreground">
-                  {studio.logoUrl ? '✓ Logo vorhanden' : 'Kein Logo'}
-                </p>
-                <p className="text-muted-foreground">
-                  {galleryCount} Galerie-{galleryCount === 1 ? 'Bild' : 'Bilder'}
-                </p>
-              </div>
-            }
-          />
+          {/* Öffnungszeiten & Medien */}
+          <SettingsSection title="Öffnungszeiten & Medien">
+            <SettingsListItem
+              icon={ClockIcon}
+              iconBg="bg-amber-100"
+              iconColor="text-amber-600"
+              label="Öffnungszeiten"
+              description="Wann ist dein Studio geöffnet"
+              preview={formatOpeningHours(studio.openingHours)}
+              onClick={() => setActivePopup('hours')}
+            />
+            <SettingsListItem
+              icon={ImageIcon}
+              iconBg="bg-pink-100"
+              iconColor="text-pink-600"
+              label="Bilder"
+              description="Logo und Galerie-Fotos"
+              preview={formatImages()}
+              onClick={() => setActivePopup('images')}
+            />
+          </SettingsSection>
         </div>
       </div>
 

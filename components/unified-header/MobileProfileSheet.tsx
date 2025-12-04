@@ -7,6 +7,7 @@
 
 import { signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Calendar, User, Settings, LayoutDashboard, LogOut, HelpCircle, Globe, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -36,6 +37,7 @@ export function MobileProfileSheet({
 }: MobileProfileSheetProps): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('auth');
 
   // TODO: Get from API
   const pendingBookingsCount = 0;
@@ -85,7 +87,7 @@ export function MobileProfileSheet({
 
         {/* Accessible Title (required for screen readers) */}
         <SheetHeader className="sr-only">
-          <SheetTitle>Profile Menu</SheetTitle>
+          <SheetTitle>{t('profile_menu')}</SheetTitle>
         </SheetHeader>
 
         {/* User Info Header (Compact) */}
@@ -111,27 +113,27 @@ export function MobileProfileSheet({
               <SheetMenuItem
                 href={`/${locale}/business`}
                 icon={LayoutDashboard}
-                label="Studio Dashboard"
+                label={t('studio_dashboard')}
                 onClick={() => onOpenChange(false)}
               />
               {hasRegisteredStudio && (
                 <SheetMenuItem
                   href={`/${locale}/business/settings`}
                   icon={Settings}
-                  label="Studio Settings"
+                  label={t('studio_settings')}
                   onClick={() => onOpenChange(false)}
                 />
               )}
               <SheetMenuItem
-                href={`/${locale}/account`}
+                href={`/${locale}/business/settings/account?from=header`}
                 icon={User}
-                label="My Account"
+                label={t('my_account')}
                 onClick={() => onOpenChange(false)}
               />
               <SheetMenuItem
                 href={`/${locale}/business/bookings`}
                 icon={Calendar}
-                label="Bookings"
+                label={t('bookings')}
                 badge={pendingBookingsCount > 0 ? pendingBookingsCount : undefined}
                 onClick={() => onOpenChange(false)}
               />
@@ -141,13 +143,13 @@ export function MobileProfileSheet({
               <SheetMenuItem
                 href={`/${locale}/customer/bookings`}
                 icon={Calendar}
-                label="My Bookings"
+                label={t('my_bookings')}
                 onClick={() => onOpenChange(false)}
               />
               <SheetMenuItem
-                href={`/${locale}/customer/profile`}
+                href={`/${locale}/customer/account?from=header`}
                 icon={User}
-                label="My Account"
+                label={t('my_account')}
                 onClick={() => onOpenChange(false)}
               />
             </>
@@ -160,7 +162,7 @@ export function MobileProfileSheet({
         <div className="flex flex-col gap-1 mb-2">
           <p className="px-4 py-2 text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Language
+            {t('language')}
           </p>
           <button
             onClick={() => handleLocaleChange('de')}
@@ -184,7 +186,7 @@ export function MobileProfileSheet({
               className="flex items-center gap-3 h-12 px-4 rounded-xl hover:bg-accent transition-colors"
             >
               <HelpCircle className="h-5 w-5" />
-              <span className="flex-1 font-medium">Help</span>
+              <span className="flex-1 font-medium">{t('help')}</span>
             </Link>
           )}
         </div>
@@ -197,7 +199,7 @@ export function MobileProfileSheet({
           className="w-full h-12 px-4 flex items-center gap-3 rounded-xl hover:bg-destructive/10 text-destructive transition-colors font-medium"
         >
           <LogOut className="h-5 w-5" />
-          <span>Logout</span>
+          <span>{t('logout')}</span>
         </button>
 
         {/* Bottom padding for safe area */}
