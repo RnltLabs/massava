@@ -17,6 +17,7 @@ import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { Toaster } from '@/components/ui/toaster';
 import { MobileCustomerNavWrapper } from '@/components/customer';
+import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
 import { MainContentWrapper } from '@/components/layout';
 import "../globals.css";
 
@@ -91,6 +92,7 @@ export default async function LocaleLayout({
               {children}
             </MainContentWrapper>
             <MobileCustomerNavWrapper />
+            <MobileBusinessNavWrapper />
             <CookieConsentBanner />
             <Toaster />
           </NextIntlClientProvider>

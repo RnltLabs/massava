@@ -29,24 +29,10 @@ export function MainContentWrapper({ children }: MainContentWrapperProps): React
   const { data: session, status } = useSession();
   const pathname = usePathname();
 
-  // Determine if mobile customer nav will be shown
+  // Determine if any mobile nav will be shown (customer OR business)
   const shouldShowMobileNav = (() => {
     // Not authenticated or loading
     if (status !== 'authenticated' || !session?.user) {
-      return false;
-    }
-
-    // Get user role
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const primaryRole = (session.user as any)?.primaryRole || 'CUSTOMER';
-
-    // Studio owners have their own nav
-    if (primaryRole === 'STUDIO_OWNER') {
-      return false;
-    }
-
-    // Business routes have their own layout
-    if (pathname?.includes('/business')) {
       return false;
     }
 
@@ -55,6 +41,26 @@ export function MainContentWrapper({ children }: MainContentWrapperProps): React
       return false;
     }
 
+    // Get user role
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const primaryRole = (session.user as any)?.primaryRole || 'CUSTOMER';
+
+    // Studio owners on /business routes - business layout handles padding
+    if (primaryRole === 'STUDIO_OWNER' && pathname?.includes('/business')) {
+      return false;
+    }
+
+    // Studio owners outside /business - show business nav, need padding
+    if (primaryRole === 'STUDIO_OWNER') {
+      return true;
+    }
+
+    // Customers on /business routes shouldn't happen, but handle it
+    if (pathname?.includes('/business')) {
+      return false;
+    }
+
+    // Customers everywhere else - show customer nav
     return true;
   })();
 
