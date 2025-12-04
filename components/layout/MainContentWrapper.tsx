@@ -68,8 +68,8 @@ export function MainContentWrapper({ children }: MainContentWrapperProps): React
     <main
       className={cn(
         'pt-14 md:pt-16',
-        // Add bottom padding on mobile when customer nav is shown
-        shouldShowMobileNav && 'pb-20 md:pb-0'
+        // Add bottom padding on mobile when nav is shown (h-16 + safe-area)
+        shouldShowMobileNav && 'pb-[calc(5rem+env(safe-area-inset-bottom,0px))] md:pb-0'
       )}
     >
       {children}

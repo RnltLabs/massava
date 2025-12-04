@@ -148,7 +148,7 @@ export default async function BusinessLayout({
       {/* Mobile Layout */}
       <div className="md:hidden">
         {/* Page Content - No extra top nav needed, using UnifiedHeader from parent layout */}
-        <main className={hasStudio ? "pb-20 px-4" : "-mt-14"}>{children}</main>
+        <main className={hasStudio ? "pb-[calc(5rem+env(safe-area-inset-bottom,0px))] px-4" : "-mt-14"}>{children}</main>
 
         {/* Bottom Navigation - Only show when user has a studio */}
         {hasStudio && <MobileBusinessNav locale={locale} pendingCount={pendingCount} />}
