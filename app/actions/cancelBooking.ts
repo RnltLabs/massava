@@ -165,6 +165,50 @@ export async function cancelBooking(
       }
     });
 
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_CANCELLED_BY_CUSTOMER -> Owners
+    // =====================================================
+    try {
+      const { sendBookingCancelledByCustomerNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingCancelledByCustomerNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone,
+        customerName: booking.customerName,
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Service',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+        cancellationReason,
+      });
+
+      if (notificationResult.ok) {
+        logger.info('Push notifications sent to owners for cancellation', {
+          action: 'CANCEL_BOOKING',
+          bookingId: booking.id,
+          sent: notificationResult.value.sent,
+          failed: notificationResult.value.failed,
+        });
+      } else {
+        logger.error('Failed to send cancellation push notifications', {
+          action: 'CANCEL_BOOKING',
+          bookingId: booking.id,
+          error: notificationResult.error.message,
+        });
+      }
+    } catch (notificationError) {
+      logger.error('Exception sending cancellation push notification', {
+        action: 'CANCEL_BOOKING',
+        bookingId: booking.id,
+        error: notificationError instanceof Error ? notificationError.message : 'Unknown error',
+      });
+      // Notification-Fehler sollten den Stornierungsprozess NICHT blockieren
+    }
+
     return {
       success: true,
       message: 'Booking cancelled successfully',

@@ -116,6 +116,34 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       // Note: We don't fail the entire operation if email fails
     }
 
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_CONFIRMED -> Customer
+    // =====================================================
+    try {
+      const { sendBookingConfirmedNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingConfirmedNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for booking confirmation');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending confirmation push notification:', notificationError);
+      // Notification-Fehler sollten den Bestätigungsprozess NICHT blockieren
+    }
+
     // Revalidate business dashboard pages
     revalidatePath('/[locale]/business');
     revalidatePath('/[locale]/business/calendar');
@@ -228,6 +256,35 @@ export async function declineBooking(
     } catch (emailError) {
       console.error('Exception sending cancellation email:', emailError);
       // Note: We don't fail the entire operation if email fails
+    }
+
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_REJECTED -> Customer
+    // =====================================================
+    try {
+      const { sendBookingRejectedNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingRejectedNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+        cancellationReason: reason,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for booking rejection');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending rejection push notification:', notificationError);
+      // Notification-Fehler sollten den Ablehnungsprozess NICHT blockieren
     }
 
     // Revalidate business dashboard pages
