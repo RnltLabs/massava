@@ -86,6 +86,16 @@ export function PushNotificationPrompt(): React.JSX.Element | null {
   const handleEnable = async (): Promise<void> => {
     const success = await register();
     if (success) {
+      // Also enable push in notification preferences
+      try {
+        await fetch('/api/notifications/preferences', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pushEnabled: true }),
+        });
+      } catch (error) {
+        console.error('Failed to update notification preferences:', error);
+      }
       setIsVisible(false);
     }
   };
