@@ -8,6 +8,7 @@
   },
   "home": {
     "badge": "Available today",
+    "greeting": "Welcome, {name}",
     "hero_title": "Your massage",
     "hero_subtitle": "book today",
     "hero_description": "Relax spontaneously – find studios near you and book directly. No commissions, transparent, uncomplicated.",
