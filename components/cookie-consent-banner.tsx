@@ -8,9 +8,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { X, Cookie, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -28,6 +31,8 @@ import {
 } from "@/lib/cookie-consent"
 
 export function CookieConsentBanner() {
+  const { data: session, status } = useSession()
+  const pathname = usePathname()
   const [showBanner, setShowBanner] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [consent, setConsentState] = useState<Omit<CookieConsent, "timestamp" | "version">>({
@@ -35,6 +40,17 @@ export function CookieConsentBanner() {
     analytics: false,
     marketing: false,
   })
+
+  // Check if mobile nav will be shown (same logic as MobileCustomerNavWrapper)
+  const mobileNavVisible = (() => {
+    if (status !== 'authenticated' || !session?.user) return false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const primaryRole = (session.user as any)?.primaryRole || 'CUSTOMER'
+    if (primaryRole === 'STUDIO_OWNER') return false
+    if (pathname?.includes('/business')) return false
+    if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/verify')) return false
+    return true
+  })()
 
   useEffect(() => {
     // Check if user has already given consent
@@ -100,7 +116,11 @@ export function CookieConsentBanner() {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg">
+      {/* Position above MobileCustomerNav when it's visible */}
+      <div className={cn(
+        "fixed left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
+        mobileNavVisible ? "bottom-16 md:bottom-0" : "bottom-0"
+      )}>
         <Card className="max-w-6xl mx-auto p-6">
           <div className="flex items-start gap-4">
             <Cookie className="w-8 h-8 text-primary flex-shrink-0 mt-1" />

@@ -104,7 +104,7 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-gray-200 bg-white shadow-lg md:hidden"
       aria-label="Mobile navigation"
       role="navigation"
     >
