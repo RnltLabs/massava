@@ -93,8 +93,11 @@ function hasBusinessAccess(session: { user?: { primaryRole?: string; roles?: str
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Step 1: Apply i18n middleware
-  const intlResponse = intlMiddleware(request);
+  // Skip i18n middleware for API routes (they don't need locale prefix)
+  const isApiRoute = pathname.startsWith('/api/');
+
+  // Step 1: Apply i18n middleware (skip for API routes)
+  const intlResponse = isApiRoute ? NextResponse.next() : intlMiddleware(request);
 
   // Step 2: Check if this is a business portal route
   if (isBusinessPortalRoute(pathname)) {
