@@ -121,9 +121,9 @@ export function CookieConsentBanner() {
   return (
     <>
       {/* Cookie Banner */}
-      {/* Position above MobileCustomerNav when it's visible */}
+      {/* Cookie banner is always topmost (GDPR important), positioned above mobile nav */}
       <div className={cn(
-        "fixed left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
+        "fixed left-0 right-0 z-[100] p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
         mobileNavVisible ? "bottom-16 md:bottom-0" : "bottom-0"
       )}>
         <Card className="max-w-6xl mx-auto p-6">
