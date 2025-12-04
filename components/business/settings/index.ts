@@ -6,3 +6,6 @@
 export { SettingsHeroCard } from './SettingsHeroCard';
 export { SettingsListGroup } from './SettingsListGroup';
 export { SettingsCard } from './SettingsCard';
+export { SettingsSection } from './SettingsSection';
+export { SettingsListItem } from './SettingsListItem';
+export { ServiceListItem } from './ServiceListItem';

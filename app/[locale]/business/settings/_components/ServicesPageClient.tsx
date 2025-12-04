@@ -5,16 +5,13 @@
 
 'use client';
 
-import React from 'react';
-
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PlusIcon, Edit2Icon, Trash2Icon, ClockIcon } from 'lucide-react';
+import { PlusIcon, SparklesIcon } from 'lucide-react';
 import { ServiceManagementDialog } from '@/app/[locale]/dashboard/_components/service-management/ServiceManagementDialog';
 import { ServiceDeleteDialog } from './ServiceDeleteDialog';
 import { PageHeader } from '@/components/ui/page-header';
-import { cn } from '@/lib/utils';
+import { SettingsSection, ServiceListItem } from '@/components/business/settings';
 
 interface Service {
   id: string;
@@ -51,127 +48,78 @@ export function ServicesPageClient({ services, studioId, locale }: ServicesPageC
     setIsDeleteDialogOpen(true);
   };
 
+  const formatDuration = (duration: number): string => {
+    if (duration < 60) return `${duration} Min`;
+    const hours = Math.floor(duration / 60);
+    const mins = duration % 60;
+    if (mins === 0) return `${hours} Std`;
+    return `${hours} Std ${mins} Min`;
+  };
+
+  const formatPrice = (price: number): string => {
+    return `€${price.toFixed(2)}`;
+  };
+
   return (
     <div className="fixed inset-0 top-14 bottom-0 flex flex-col bg-neutral-50 md:static md:h-full md:top-auto">
-      {/* Fixed Header Section with backdrop blur - Everything above the divider line */}
+      {/* Fixed Header Section with backdrop blur */}
       <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 backdrop-blur-lg bg-neutral-50/95 sticky top-0 z-10">
         <PageHeader
           title="Services verwalten"
-          subtitle="Verwalten Sie Ihre Service-Angebote"
+          subtitle="Verwalte deine Service-Angebote"
           breadcrumb="Services"
           backHref={`/${locale}/business/settings`}
           backLabel="Einstellungen"
           showBackButton={true}
-          actionPlacement="stacked"
-          actions={
-            <Button
-              onClick={handleAddService}
-              size="sm"
-              className="w-full md:w-auto h-11 md:h-10"
-            >
-              <PlusIcon className="mr-2 h-4 w-4" />
-              Hinzufügen
-            </Button>
-          }
         />
       </div>
 
-      {/* Scrollable Section - Only service cards list */}
-      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-0">
+      {/* Scrollable Content - iOS-style List */}
+      <div className="flex-1 overflow-y-auto px-4 pb-24 md:px-0 md:pb-8">
         {services.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="flex flex-col items-center justify-center py-16 text-center max-w-2xl mx-auto">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 mb-4">
+              <SparklesIcon className="h-8 w-8 text-orange-600" />
+            </div>
             <p className="text-lg font-medium text-neutral-900 mb-2">Noch keine Services</p>
-            <p className="text-sm text-muted-foreground mb-4">
-              Fügen Sie Ihren ersten Service hinzu, um zu beginnen
+            <p className="text-sm text-muted-foreground mb-6">
+              Füge deinen ersten Service hinzu, um zu beginnen
             </p>
-            <Button onClick={handleAddService}>
-              <PlusIcon className="mr-2 h-4 w-4" />
+            <Button onClick={handleAddService} size="lg">
+              <PlusIcon className="mr-2 h-5 w-5" />
               Service hinzufügen
             </Button>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <div
-                key={service.id}
-                className={cn(
-                  "group relative overflow-hidden rounded-2xl border bg-card",
-                  "transition-all duration-300",
-                  "hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20"
-                )}
+          <div className="space-y-6 max-w-2xl mx-auto">
+            {/* Services Section */}
+            <SettingsSection title="Deine Services">
+              {services.map((service) => (
+                <ServiceListItem
+                  key={service.id}
+                  icon={SparklesIcon}
+                  iconBg="bg-orange-100"
+                  iconColor="text-orange-600"
+                  label={service.name}
+                  description={formatDuration(service.duration)}
+                  preview={formatPrice(service.price)}
+                  onClick={() => handleEditService(service)}
+                  onDelete={() => handleDeleteService(service)}
+                />
+              ))}
+            </SettingsSection>
+
+            {/* Add Service Button */}
+            <div className="px-4">
+              <Button
+                onClick={handleAddService}
+                size="lg"
+                className="w-full h-12"
               >
-                {/* Price Badge - Top Right */}
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-primary/10 text-primary font-semibold px-3 py-1 rounded-full">
-                    €{service.price.toFixed(2)}
-                  </Badge>
-                </div>
-
-                {/* Content */}
-                <div className="p-5 pr-24">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    {service.name}
-                  </h3>
-
-                  <div className="flex items-center gap-2 mt-1.5 text-sm text-muted-foreground">
-                    <ClockIcon className="h-4 w-4" />
-                    <span>{service.duration} Min</span>
-                  </div>
-
-                  {service.description && (
-                    <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-                      {service.description}
-                    </p>
-                  )}
-
-                  {service.category && (
-                    <Badge variant="outline" className="mt-3 rounded-full">
-                      {service.category}
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Actions - Bottom */}
-                <div className="flex items-center justify-end gap-1 px-4 pb-4">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleEditService(service)}
-                    className="text-primary hover:bg-primary/10"
-                  >
-                    <Edit2Icon className="h-4 w-4 mr-1.5" />
-                    Bearbeiten
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => handleDeleteService(service)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2Icon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-
-            {/* Add Service Card */}
-            <button
-              onClick={handleAddService}
-              className={cn(
-                "flex flex-col items-center justify-center gap-3",
-                "min-h-[220px] rounded-2xl border-2 border-dashed border-border",
-                "bg-muted/30 transition-all duration-300",
-                "hover:border-primary/50 hover:bg-primary/5",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              )}
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                <PlusIcon className="h-7 w-7 text-primary" />
-              </div>
-              <span className="text-sm font-medium text-muted-foreground">
+                <PlusIcon className="mr-2 h-5 w-5" />
                 Service hinzufügen
-              </span>
-            </button>
+              </Button>
+            </div>
           </div>
         )}
       </div>

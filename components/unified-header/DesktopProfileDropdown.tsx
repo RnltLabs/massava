@@ -7,6 +7,7 @@
 
 import { signOut } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { Calendar, User, Settings, LayoutDashboard, LogOut, HelpCircle, Globe, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -37,6 +38,7 @@ export function DesktopProfileDropdown({
 }: DesktopProfileDropdownProps): React.JSX.Element {
   const router = useRouter();
   const pathname = usePathname();
+  const t = useTranslations('auth');
 
   // TODO: Get from API
   const pendingBookingsCount = 0;
@@ -97,21 +99,21 @@ export function DesktopProfileDropdown({
             <DropdownMenuItem asChild>
               <Link href={`/${locale}/business`} className="flex items-center gap-2">
                 <LayoutDashboard className="h-4 w-4" />
-                Studio Dashboard
+                {t('studio_dashboard')}
               </Link>
             </DropdownMenuItem>
             {hasRegisteredStudio && (
               <DropdownMenuItem asChild>
                 <Link href={`/${locale}/business/settings`} className="flex items-center gap-2">
                   <Settings className="h-4 w-4" />
-                  Studio Settings
+                  {t('studio_settings')}
                 </Link>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <Link href={`/${locale}/account`} className="flex items-center gap-2">
+              <Link href={`/${locale}/business/settings/account?from=header`} className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                My Account
+                {t('my_account')}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
@@ -121,7 +123,7 @@ export function DesktopProfileDropdown({
               >
                 <span className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  Bookings
+                  {t('bookings')}
                 </span>
                 {pendingBookingsCount > 0 && (
                   <Badge variant="destructive" className="rounded-full px-2 py-0.5 text-xs">
@@ -136,13 +138,13 @@ export function DesktopProfileDropdown({
             <DropdownMenuItem asChild>
               <Link href={`/${locale}/customer/bookings`} className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                My Bookings
+                {t('my_bookings')}
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/${locale}/customer/profile`} className="flex items-center gap-2">
+              <Link href={`/${locale}/customer/account?from=header`} className="flex items-center gap-2">
                 <User className="h-4 w-4" />
-                My Account
+                {t('my_account')}
               </Link>
             </DropdownMenuItem>
           </>
@@ -153,7 +155,7 @@ export function DesktopProfileDropdown({
         {/* Language Submenu */}
         <DropdownMenuLabel className="flex items-center gap-2 font-normal text-sm">
           <Globe className="h-4 w-4" />
-          Language
+          {t('language')}
         </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => handleLocaleChange('de')}
@@ -176,7 +178,7 @@ export function DesktopProfileDropdown({
             <DropdownMenuItem asChild>
               <Link href={`/${locale}/business/help`} className="flex items-center gap-2">
                 <HelpCircle className="h-4 w-4" />
-                Help
+                {t('help')}
               </Link>
             </DropdownMenuItem>
           </>
@@ -190,7 +192,7 @@ export function DesktopProfileDropdown({
           className="text-destructive focus:text-destructive flex items-center gap-2"
         >
           <LogOut className="h-4 w-4" />
-          Logout
+          {t('logout')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

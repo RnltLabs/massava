@@ -3,7 +3,7 @@
     "nav": {
       "discover": "Entdecken",
       "bookings": "Buchungen",
-      "profile": "Profil"
+      "account": "Konto"
     }
   },
   "home": {
@@ -157,8 +157,14 @@
     "dashboard": "Dashboard",
     "register_studio": "Studio registrieren",
     "logout": "Abmelden",
-    "my_account": "Mein Account",
+    "my_account": "Mein Konto",
     "my_bookings": "Meine Buchungen",
+    "studio_dashboard": "Studio Dashboard",
+    "studio_settings": "Studio Einstellungen",
+    "bookings": "Buchungen",
+    "language": "Sprache",
+    "help": "Hilfe",
+    "profile_menu": "Profilmenü",
     "customer_login": "Kundenlogin",
     "customer_login_button": "Anmelden",
     "account_type_selector": {

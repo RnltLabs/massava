@@ -135,7 +135,7 @@ export function MobileNav({
               </Link>
 
               <Link
-                href={`/${locale}/customer/profile`}
+                href={`/${locale}/customer/account?from=header`}
                 onClick={() => setOpen(false)}
               >
                 <Button

@@ -1,57 +1,54 @@
 /**
  * Copyright (c) 2025 Roman Reinelt / RNLT Labs
  * All rights reserved.
+ *
+ * Customer Profile Client Component
+ * Aligned with AccountSettingsClient structure
  */
 
 'use client';
 
 import React, { useState } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
+import { SettingsSection, SettingsListItem } from '@/components/business/settings';
 import {
   MailIcon,
   KeyIcon,
   ShieldIcon,
   BellIcon,
   LockIcon,
-  AlertTriangleIcon,
 } from 'lucide-react';
-import { SettingsSection, SettingsListItem } from '@/components/business/settings';
-import { EmailChangeDialog } from './EmailChangeDialog';
-import { PasswordChangeDialog } from './PasswordChangeDialog';
-import { TwoFactorDialog } from './TwoFactorDialog';
-import { NotificationsPopup } from './NotificationsPopup';
-import { PrivacyPopup } from './PrivacyPopup';
-import { DangerZonePopup } from './DangerZonePopup';
 
-interface AccountSettingsClientProps {
+// Reuse Business Account Dialogs
+import { EmailChangeDialog } from '@/app/[locale]/business/settings/account/_components/EmailChangeDialog';
+import { PasswordChangeDialog } from '@/app/[locale]/business/settings/account/_components/PasswordChangeDialog';
+import { TwoFactorDialog } from '@/app/[locale]/business/settings/account/_components/TwoFactorDialog';
+import { NotificationsPopup } from '@/app/[locale]/business/settings/account/_components/NotificationsPopup';
+import { PrivacyPopup } from '@/app/[locale]/business/settings/account/_components/PrivacyPopup';
+
+interface CustomerProfileClientProps {
   user: {
     id: string;
     email: string;
     name: string | null;
   };
-  studio: {
-    id: string;
-    name: string;
-  } | null;
   locale: string;
   showBackButton?: boolean;
 }
 
-export function AccountSettingsClient({
+export function CustomerProfileClient({
   user,
-  studio,
   locale,
   showBackButton = true,
-}: AccountSettingsClientProps): React.JSX.Element {
-  // Dialog states for existing components
+}: CustomerProfileClientProps): React.JSX.Element {
+  // Dialog states
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [twoFactorDialogOpen, setTwoFactorDialogOpen] = useState(false);
 
-  // Popup states for new components
+  // Popup states
   const [notificationsPopupOpen, setNotificationsPopupOpen] = useState(false);
   const [privacyPopupOpen, setPrivacyPopupOpen] = useState(false);
-  const [dangerZonePopupOpen, setDangerZonePopupOpen] = useState(false);
 
   const userPreferences = {
     language: 'de' as const,
@@ -67,11 +64,11 @@ export function AccountSettingsClient({
       {/* Fixed Header Section with backdrop blur */}
       <div className="flex-shrink-0 px-4 pt-4 pb-6 md:px-0 md:pt-0 md:pb-6 backdrop-blur-lg bg-neutral-50/95 sticky top-0 z-10">
         <PageHeader
-          title="Konto"
+          title="Mein Konto"
           subtitle="Verwalte deine Konto-Einstellungen"
           breadcrumb="Konto"
-          backHref={`/${locale}/business/settings`}
-          backLabel="Einstellungen"
+          backHref={`/${locale}/customer`}
+          backLabel="Zurück"
           showBackButton={showBackButton}
         />
       </div>
@@ -133,25 +130,10 @@ export function AccountSettingsClient({
               onClick={() => setPrivacyPopupOpen(true)}
             />
           </SettingsSection>
-
-          {/* Gefahrenzone */}
-          {studio && (
-            <SettingsSection title="Gefahrenzone" variant="danger">
-              <SettingsListItem
-                icon={AlertTriangleIcon}
-                iconBg="bg-red-100"
-                iconColor="text-red-600"
-                label="Konto löschen"
-                description="Lösche dein Studio-Konto dauerhaft (30 Tage Kulanzfrist)"
-                onClick={() => setDangerZonePopupOpen(true)}
-                variant="danger"
-              />
-            </SettingsSection>
-          )}
         </div>
       </div>
 
-      {/* Existing Dialogs (reused as-is) */}
+      {/* Dialogs (reused from business settings) */}
       <EmailChangeDialog
         open={emailDialogOpen}
         onOpenChange={setEmailDialogOpen}
@@ -169,7 +151,7 @@ export function AccountSettingsClient({
         isEnabled={twoFactorEnabled}
       />
 
-      {/* New Popups */}
+      {/* Popups */}
       <NotificationsPopup
         open={notificationsPopupOpen}
         onOpenChange={setNotificationsPopupOpen}
@@ -181,15 +163,6 @@ export function AccountSettingsClient({
         currentPreferences={userPreferences}
         locale={locale}
       />
-
-      {studio && (
-        <DangerZonePopup
-          open={dangerZonePopupOpen}
-          onOpenChange={setDangerZonePopupOpen}
-          studioId={studio.id}
-          studioName={studio.name}
-        />
-      )}
     </div>
   );
 }

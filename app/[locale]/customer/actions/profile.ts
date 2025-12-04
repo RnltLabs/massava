@@ -106,7 +106,7 @@ export async function updateCustomerAddress(
     // Then uncomment the update code above
 
     // 4. Revalidate customer profile pages
-    revalidatePath('/customer/profile');
+    revalidatePath('/customer/account');
     revalidatePath('/customer/settings');
 
     return {
@@ -161,7 +161,7 @@ export async function updateCustomerPhone(
     });
 
     // 4. Revalidate customer profile pages
-    revalidatePath('/customer/profile');
+    revalidatePath('/customer/account');
     revalidatePath('/customer/settings');
 
     return {
@@ -229,7 +229,7 @@ export async function updateCustomerPreferences(
     // Then uncomment the update code above
 
     // 4. Revalidate customer profile pages
-    revalidatePath('/customer/profile');
+    revalidatePath('/customer/account');
     revalidatePath('/customer/settings');
     revalidatePath('/customer/preferences');
 
@@ -309,7 +309,7 @@ export async function updateCustomerPassword(
     });
 
     // 7. Revalidate customer profile pages
-    revalidatePath('/customer/profile');
+    revalidatePath('/customer/account');
     revalidatePath('/customer/settings');
     revalidatePath('/customer/security');
 

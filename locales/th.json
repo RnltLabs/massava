@@ -1,4 +1,11 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "ค้นหา",
+      "bookings": "การจอง",
+      "account": "บัญชี"
+    }
+  },
   "home": {
     "badge": "วันนี้ยังว่างอยู่",
     "hero_title": "นวดของคุณ",
