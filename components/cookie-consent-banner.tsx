@@ -41,14 +41,19 @@ export function CookieConsentBanner() {
     marketing: false,
   })
 
-  // Check if mobile nav will be shown (same logic as MobileCustomerNavWrapper)
+  // Check if any mobile nav will be shown (customer OR business)
   const mobileNavVisible = (() => {
     if (status !== 'authenticated' || !session?.user) return false
+    if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/verify')) return false
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const primaryRole = (session.user as any)?.primaryRole || 'CUSTOMER'
-    if (primaryRole === 'STUDIO_OWNER') return false
+    // Studio owners on /business - business layout handles its own nav
+    if (primaryRole === 'STUDIO_OWNER' && pathname?.includes('/business')) return false
+    // Studio owners outside /business - business nav shows
+    if (primaryRole === 'STUDIO_OWNER') return true
+    // Customers on /business - shouldn't happen
     if (pathname?.includes('/business')) return false
-    if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/verify')) return false
+    // Customers elsewhere - customer nav shows
     return true
   })()
 
