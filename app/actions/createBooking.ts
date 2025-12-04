@@ -487,6 +487,49 @@ export async function createBooking(
       // Note: We don't fail the entire operation if email fails
     }
 
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_REQUEST_RECEIVED -> Owners
+    // =====================================================
+    try {
+      const { sendBookingRequestReceivedNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingRequestReceivedNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone,
+        customerName: booking.customerName,
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: authenticatedUserId,
+      });
+
+      if (notificationResult.ok) {
+        logger.info('Push notifications sent to studio owners', {
+          correlationId,
+          bookingId: booking.id,
+          sent: notificationResult.value.sent,
+          failed: notificationResult.value.failed,
+        });
+      } else {
+        logger.error('Failed to send push notifications to owners', {
+          correlationId,
+          bookingId: booking.id,
+          error: notificationResult.error.message,
+        });
+      }
+    } catch (notificationError) {
+      logger.error('Exception sending push notification to owners', {
+        correlationId,
+        bookingId: booking.id,
+        error: notificationError instanceof Error ? notificationError : new Error(String(notificationError)),
+      });
+      // Notification-Fehler sollten den Buchungsprozess NICHT blockieren
+    }
+
     // NOTE: We DON'T call revalidatePath here because it could trigger a page reload
     // and show the "slot unavailable" error. The search page will be revalidated
     // when the user navigates back to it naturally.
