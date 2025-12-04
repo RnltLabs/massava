@@ -18,7 +18,6 @@ import {
 import { notificationService } from '@/lib/notifications/notification-service';
 import { prisma } from '@/lib/prisma';
 import { logger } from '@/lib/logger';
-import { formatInTimezone } from '@/lib/timezone/utils';
 import { ok, err } from '@/lib/result';
 import { createNotificationError } from '@/lib/notifications/errors';
 
@@ -50,15 +49,6 @@ jest.mock('@/lib/logger', () => ({
   generateCorrelationId: jest.fn(() => 'test-correlation-id'),
 }));
 
-jest.mock('@/lib/timezone/utils', () => ({
-  formatInTimezone: jest.fn((date: Date, _timezone: string, format: string) => {
-    // Mock format output for testing
-    if (format === "dd.MM.yyyy 'um' HH:mm") {
-      return '15.01.2025 um 14:00';
-    }
-    return date.toISOString();
-  }),
-}));
 
 // ============================================
 // Test Data
@@ -143,7 +133,7 @@ describe('sendBookingRequestReceivedNotification', () => {
           customerName: 'Max Mustermann',
           customerEmail: 'max@example.com',
           serviceName: 'Thai Massage',
-          appointmentTime: '15.01.2025 um 14:00',
+          appointmentTime: '2025-01-15T14:00:00.000Z',
           studioName: 'Test Studio',
           studioId: 'studio-456',
         }),
@@ -341,7 +331,7 @@ describe('sendBookingRequestReceivedNotification', () => {
     expect(callArgs.metadata.customerEmail).toBeUndefined();
   });
 
-  it('should use formatInTimezone with correct parameters', async () => {
+  it('should use ISO 8601 format for appointmentTime', async () => {
     // Arrange
     (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([
       { userId: 'owner-1' },
@@ -353,40 +343,9 @@ describe('sendBookingRequestReceivedNotification', () => {
     // Act
     await sendBookingRequestReceivedNotification(mockInput);
 
-    // Assert
-    expect(formatInTimezone).toHaveBeenCalledWith(
-      mockInput.preferredDateTime,
-      'Europe/Berlin',
-      "dd.MM.yyyy 'um' HH:mm"
-    );
-  });
-
-  it('should handle timezone formatting error gracefully', async () => {
-    // Arrange
-    (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([
-      { userId: 'owner-1' },
-    ]);
-    (notificationService.create as jest.Mock).mockResolvedValue(
-      ok(mockNotificationSuccess)
-    );
-    (formatInTimezone as jest.Mock).mockImplementation(() => {
-      throw new Error('Invalid timezone');
-    });
-
-    // Act
-    const result = await sendBookingRequestReceivedNotification(mockInput);
-
-    // Assert - should still succeed with ISO fallback
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.sent).toBe(1);
-    }
-
-    // Verify ISO string was used as fallback
+    // Assert - appointmentTime should be ISO 8601 format
     const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
-    expect(callArgs.metadata.appointmentTime).toBe(
-      mockInput.preferredDateTime.toISOString()
-    );
+    expect(callArgs.metadata.appointmentTime).toBe('2025-01-15T14:00:00.000Z');
   });
 });
 
@@ -902,9 +861,6 @@ describe('sendBookingRejectedNotification', () => {
 
   it('should build metadata with all required fields', async () => {
     // Arrange
-    // Mock formatInTimezone to return expected format
-    (formatInTimezone as jest.Mock).mockReturnValueOnce('15.01.2025 um 14:00');
-
     (notificationService.create as jest.Mock).mockResolvedValue(
       ok(mockNotificationSuccess)
     );
@@ -924,7 +880,7 @@ describe('sendBookingRejectedNotification', () => {
       customerName: 'Max Mustermann',
       customerEmail: 'customer@example.com',
       serviceName: 'Thai Massage',
-      appointmentTime: '15.01.2025 um 14:00',
+      appointmentTime: '2025-01-15T14:00:00.000Z',
       studioName: 'Test Studio',
       studioId: 'studio-456',
     });
@@ -1006,7 +962,7 @@ describe('Edge Cases and Integration', () => {
     expect(callArgs.metadata.customerName).toHaveLength(1000);
   });
 
-  it('should handle different timezone formats', async () => {
+  it('should use ISO 8601 format regardless of timezone input', async () => {
     // Arrange
     (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([
       { userId: 'owner-1' },
@@ -1022,18 +978,15 @@ describe('Edge Cases and Integration', () => {
       'UTC',
     ];
 
-    // Act & Assert
+    // Act & Assert - appointmentTime should always be ISO 8601 regardless of timezone
     for (const timezone of timezones) {
       jest.clearAllMocks();
       const input = { ...mockInput, studioTimezone: timezone };
       const result = await sendBookingRequestReceivedNotification(input);
 
       expect(result.ok).toBe(true);
-      expect(formatInTimezone).toHaveBeenCalledWith(
-        expect.any(Date),
-        timezone,
-        "dd.MM.yyyy 'um' HH:mm"
-      );
+      const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
+      expect(callArgs.metadata.appointmentTime).toBe('2025-01-15T14:00:00.000Z');
     }
   });
 
