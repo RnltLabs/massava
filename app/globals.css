@@ -133,6 +133,11 @@
     margin: 0;
     padding: 0;
   }
+  /* iOS PWA safe area hack - prevents white bar at bottom */
+  html {
+    min-height: calc(100% + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
