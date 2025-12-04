@@ -14,7 +14,9 @@ import {
   HomeIcon,
   CalendarDaysIcon,
   UserIcon,
+  BellIcon,
 } from 'lucide-react';
+import { useNotificationStore } from '@/stores/notification-store';
 
 interface MobileCustomerNavProps {
   locale: string;
@@ -24,6 +26,7 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  badgeCount?: number;
 }
 
 // Memoized Nav Item component
@@ -51,6 +54,15 @@ const NavItemComponent = React.memo(({
           )}
           aria-hidden="true"
         />
+        {/* Badge for unread notifications */}
+        {item.badgeCount !== undefined && item.badgeCount > 0 && (
+          <span
+            className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#B56550] px-1 text-[10px] font-bold text-white"
+            aria-label={`${item.badgeCount} neue Benachrichtigungen`}
+          >
+            {item.badgeCount > 99 ? '99+' : item.badgeCount}
+          </span>
+        )}
       </div>
       <span
         className={cn(
@@ -68,6 +80,7 @@ NavItemComponent.displayName = 'CustomerNavItem';
 function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.JSX.Element {
   const pathname = usePathname();
   const t = useTranslations('customer.nav');
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
 
   // Memoize nav items configuration
   const navItems = useMemo<NavItem[]>(
@@ -83,12 +96,18 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
         icon: CalendarDaysIcon,
       },
       {
+        label: t('notifications'),
+        href: `/${locale}/customer/account`,
+        icon: BellIcon,
+        badgeCount: unreadCount,
+      },
+      {
         label: t('account'),
         href: `/${locale}/customer/account`,
         icon: UserIcon,
       },
     ],
-    [locale, t]
+    [locale, t, unreadCount]
   );
 
   const isActive = useCallback(

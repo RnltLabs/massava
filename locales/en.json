@@ -3,6 +3,7 @@
     "nav": {
       "discover": "Discover",
       "bookings": "Bookings",
+      "notifications": "Alerts",
       "account": "Account"
     }
   },

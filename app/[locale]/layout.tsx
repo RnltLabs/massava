@@ -19,6 +19,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { MobileCustomerNavWrapper } from '@/components/customer';
 import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
 import { MainContentWrapper } from '@/components/layout';
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -88,14 +89,16 @@ export default async function LocaleLayout({
         <SessionProvider>
           <GoogleAnalytics />
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <UnifiedHeader />
-            <MainContentWrapper>
-              {children}
-            </MainContentWrapper>
-            <MobileCustomerNavWrapper />
-            <MobileBusinessNavWrapper />
-            <CookieConsentBanner />
-            <Toaster />
+            <NotificationProvider>
+              <UnifiedHeader />
+              <MainContentWrapper>
+                {children}
+              </MainContentWrapper>
+              <MobileCustomerNavWrapper />
+              <MobileBusinessNavWrapper />
+              <CookieConsentBanner />
+              <Toaster />
+            </NotificationProvider>
           </NextIntlClientProvider>
         </SessionProvider>
       </body>
