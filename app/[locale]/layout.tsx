@@ -20,6 +20,7 @@ import { MobileCustomerNavWrapper } from '@/components/customer';
 import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
 import { MainContentWrapper } from '@/components/layout';
 import { NotificationProvider } from '@/components/providers/NotificationProvider';
+import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -96,6 +97,7 @@ export default async function LocaleLayout({
               </MainContentWrapper>
               <MobileCustomerNavWrapper />
               <MobileBusinessNavWrapper />
+              <PushNotificationPrompt />
               <CookieConsentBanner />
               <Toaster />
             </NotificationProvider>
