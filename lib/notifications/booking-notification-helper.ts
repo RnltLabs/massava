@@ -13,7 +13,6 @@
 import { notificationService } from '@/lib/notifications/notification-service';
 import { prisma } from '@/lib/prisma';
 import { logger, generateCorrelationId } from '@/lib/logger';
-import { formatInTimezone } from '@/lib/timezone/utils';
 import { Result, ok } from '@/lib/result';
 import type { NotificationError } from '@/lib/notifications/errors';
 import type { BookingNotificationMetadata } from '@/lib/notifications/notification-metadata';
@@ -87,19 +86,14 @@ async function getStudioOwnerIds(
 }
 
 /**
- * Formats the appointment time in the studio's timezone.
+ * Formats the appointment time as ISO 8601 string.
+ * The schema requires datetime format for validation.
  *
  * @param dateTime - The UTC date/time to format
- * @param timezone - The studio's IANA timezone
- * @returns Formatted date string (e.g., "01.12.2025 um 14:30")
+ * @returns ISO 8601 formatted date string
  */
-function formatAppointmentTime(dateTime: Date, timezone: string): string {
-  try {
-    return formatInTimezone(dateTime, timezone, "dd.MM.yyyy 'um' HH:mm");
-  } catch {
-    // Fallback to ISO string if timezone formatting fails
-    return dateTime.toISOString();
-  }
+function formatAppointmentTime(dateTime: Date): string {
+  return dateTime.toISOString();
 }
 
 /**
@@ -116,10 +110,7 @@ function createBookingMetadata(
     customerName: input.customerName,
     customerEmail: input.customerEmail,
     serviceName: input.serviceName,
-    appointmentTime: formatAppointmentTime(
-      input.preferredDateTime,
-      input.studioTimezone
-    ),
+    appointmentTime: formatAppointmentTime(input.preferredDateTime),
     studioName: input.studioName,
     studioId: input.studioId,
   };
