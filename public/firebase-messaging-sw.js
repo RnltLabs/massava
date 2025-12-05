@@ -8,14 +8,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
 // Firebase config - these are public values, safe to include
-// Hardcoded because service workers don't have access to environment variables
 const firebaseConfig = {
-  apiKey: 'AIzaSyAxAT2gMLipjI0O_BZKY5RArPBahUfZ3gA',
-  authDomain: 'massava-a3292.firebaseapp.com',
-  projectId: 'massava-a3292',
-  storageBucket: 'massava-a3292.firebasestorage.app',
-  messagingSenderId: '10834115260',
-  appId: '1:10834115260:web:fc0467406937ba2561eeb9',
+  apiKey: self.FIREBASE_CONFIG?.apiKey || '',
+  authDomain: self.FIREBASE_CONFIG?.authDomain || '',
+  projectId: self.FIREBASE_CONFIG?.projectId || '',
+  storageBucket: self.FIREBASE_CONFIG?.storageBucket || '',
+  messagingSenderId: self.FIREBASE_CONFIG?.messagingSenderId || '',
+  appId: self.FIREBASE_CONFIG?.appId || '',
 };
 
 // Initialize Firebase only if config is available
