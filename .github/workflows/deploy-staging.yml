@@ -119,6 +119,7 @@ jobs:
             -e RESEND_API_KEY="${{ secrets.RESEND_API_KEY }}" \
             -e RESEND_FROM_EMAIL="noreply@massava.app" \
             -e NEXT_PUBLIC_VERCEL_ENV=staging \
+            -e NEXT_PUBLIC_APP_URL="https://staging.massava.app" \
             -e HEALTH_DATA_ENCRYPTION_KEY="${{ secrets.HEALTH_DATA_ENCRYPTION_KEY_STAGING }}" \
             -e FIREBASE_ADMIN_SDK_JSON="$FIREBASE_ADMIN_SDK_JSON" \
             -e NEXT_PUBLIC_FIREBASE_API_KEY="${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" \
@@ -126,6 +127,12 @@ jobs:
             -e NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}" \
             -e NEXT_PUBLIC_FIREBASE_APP_ID="${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}" \
             -e NEXT_PUBLIC_FIREBASE_VAPID_KEY="${{ secrets.NEXT_PUBLIC_FIREBASE_VAPID_KEY }}" \
+            -e UPSTASH_REDIS_URL="${{ secrets.UPSTASH_REDIS_URL }}" \
+            -e UPSTASH_REDIS_TOKEN="${{ secrets.UPSTASH_REDIS_TOKEN }}" \
+            -e QSTASH_URL="${{ secrets.QSTASH_URL }}" \
+            -e QSTASH_TOKEN="${{ secrets.QSTASH_TOKEN }}" \
+            -e QSTASH_CURRENT_SIGNING_KEY="${{ secrets.QSTASH_CURRENT_SIGNING_KEY }}" \
+            -e QSTASH_NEXT_SIGNING_KEY="${{ secrets.QSTASH_NEXT_SIGNING_KEY }}" \
             --name massava-staging \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
