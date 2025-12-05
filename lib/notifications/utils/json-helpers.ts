@@ -10,6 +10,7 @@ import { logger } from '@/lib/logger';
 import {
   statusHistorySchema,
   typePreferencesSchema,
+  typePreferenceSchema,
   genericMetadataSchema,
   type StatusHistory,
 } from '@/lib/schemas/notification.schema';
@@ -58,19 +59,39 @@ export function toStatusHistoryJson(history: StatusHistory): Prisma.JsonArray {
 
 /**
  * Safely parse type preferences from Prisma Json
+ * Empty objects or partially filled objects are valid - we fall back to defaults
  */
 export function parseTypePreferences(json: Prisma.JsonValue | null): TypePreferences {
   if (!json) {
     return {};
   }
 
+  // Empty object is valid - means use all defaults
+  if (typeof json === 'object' && !Array.isArray(json) && Object.keys(json).length === 0) {
+    return {};
+  }
+
   const result = typePreferencesSchema.safeParse(json);
 
   if (!result.success) {
-    logger.error('Invalid type preferences JSON:', {
-      error: result.error,
-      json,
+    // Only log as warning, not error - partial preferences are normal
+    // Users may only customize some notification types
+    logger.warn('Using default preferences due to partial type preferences:', {
+      providedKeys: typeof json === 'object' && json ? Object.keys(json) : [],
     });
+
+    // Try to extract valid entries manually
+    if (typeof json === 'object' && json && !Array.isArray(json)) {
+      const validEntries: TypePreferences = {};
+      for (const [key, value] of Object.entries(json)) {
+        const entryResult = typePreferenceSchema.safeParse(value);
+        if (entryResult.success) {
+          validEntries[key as keyof TypePreferences] = entryResult.data;
+        }
+      }
+      return validEntries;
+    }
+
     return {};
   }
 

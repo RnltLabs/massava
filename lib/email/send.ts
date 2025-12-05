@@ -65,6 +65,20 @@ function getResendClient(): Resend {
 // Default sender email
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@massava.app';
 
+/**
+ * Sanitize a string for use as a Resend email tag value.
+ * Resend tags only allow ASCII letters, numbers, underscores, or dashes.
+ */
+function sanitizeTagValue(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics (ä → a, etc.)
+    .replace(/[^a-zA-Z0-9_-]/g, '-') // Replace invalid chars with dash
+    .replace(/-+/g, '-') // Collapse multiple dashes
+    .replace(/^-|-$/g, '') // Trim leading/trailing dashes
+    .substring(0, 50); // Limit length
+}
+
 export interface SendEmailResult {
   success: boolean;
   messageId?: string;
@@ -1266,7 +1280,7 @@ export async function sendNewBookingNotificationToOwner(
       tags: [
         { name: 'type', value: 'new-booking-notification-owner' },
         { name: 'locale', value: locale },
-        { name: 'studio', value: bookingData.studioName },
+        { name: 'studio', value: sanitizeTagValue(bookingData.studioName) },
       ],
     });
 
@@ -1381,7 +1395,7 @@ export async function sendBookingCancelledByCustomerToOwner(
       tags: [
         { name: 'type', value: 'booking-cancelled-by-customer-owner' },
         { name: 'locale', value: locale },
-        { name: 'studio', value: cancellationData.studioName },
+        { name: 'studio', value: sanitizeTagValue(cancellationData.studioName) },
       ],
     });
 
@@ -1488,7 +1502,7 @@ export async function sendStudioRegistrationWelcomeEmail(
       tags: [
         { name: 'type', value: 'studio-registration-welcome' },
         { name: 'locale', value: locale },
-        { name: 'studio', value: studioData.studioName },
+        { name: 'studio', value: sanitizeTagValue(studioData.studioName) },
       ],
     });
 
@@ -1593,7 +1607,7 @@ export async function sendStudioDeletionWarningEmail(
       tags: [
         { name: 'type', value: 'studio-deletion-warning' },
         { name: 'locale', value: locale },
-        { name: 'studio', value: deletionData.studioName },
+        { name: 'studio', value: sanitizeTagValue(deletionData.studioName) },
       ],
     });
 
@@ -1694,7 +1708,7 @@ export async function sendStudioDeletionConfirmedEmail(
       tags: [
         { name: 'type', value: 'studio-deletion-confirmed' },
         { name: 'locale', value: locale },
-        { name: 'studio', value: deletionData.studioName },
+        { name: 'studio', value: sanitizeTagValue(deletionData.studioName) },
       ],
     });
 
