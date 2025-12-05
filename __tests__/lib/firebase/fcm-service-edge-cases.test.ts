@@ -653,4 +653,239 @@ describe('FCMService - Edge Cases', () => {
       );
     });
   });
+
+  describe('buildMessage() - Data-Only Message Structure', () => {
+    it('should NOT include top-level notification object', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      const sentMessage = (mockMessaging.sendEachForMulticast as jest.Mock).mock.calls[0][0];
+      expect(sentMessage).not.toHaveProperty('notification');
+    });
+
+    it('should include title in data object', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      expect(mockMessaging.sendEachForMulticast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: 'Test Notification',
+          }),
+        })
+      );
+    });
+
+    it('should include body in data object', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      expect(mockMessaging.sendEachForMulticast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            body: 'Test body',
+          }),
+        })
+      );
+    });
+
+    it('should include notificationId in data object', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      expect(mockMessaging.sendEachForMulticast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            notificationId: 'notif-123',
+            type: 'BOOKING_CONFIRMED',
+            priority: 'HIGH',
+          }),
+        })
+      );
+    });
+
+    it('should NOT include notification object in webpush config', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[2]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      const sentMessage = (mockMessaging.sendEachForMulticast as jest.Mock).mock.calls[0][0];
+      expect(sentMessage.webpush).not.toHaveProperty('notification');
+      expect(sentMessage.webpush).toHaveProperty('fcmOptions');
+      expect(sentMessage.webpush.fcmOptions).toHaveProperty('link');
+    });
+
+    it('should include notification object in android config (native platform)', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[1]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      expect(mockMessaging.sendEachForMulticast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          android: expect.objectContaining({
+            notification: expect.objectContaining({
+              channelId: expect.any(String),
+              priority: expect.any(String),
+              sound: 'default',
+              clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should include alert in apns.payload.aps (native platform)', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      expect(mockMessaging.sendEachForMulticast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          apns: expect.objectContaining({
+            payload: expect.objectContaining({
+              aps: expect.objectContaining({
+                alert: {
+                  title: 'Test Notification',
+                  body: 'Test body',
+                },
+                sound: 'default',
+                badge: 1,
+                'mutable-content': 1,
+              }),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should stringify metadata in data object', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      const payloadWithComplexMetadata: PushNotificationPayload = {
+        ...mockPayload,
+        metadata: {
+          bookingId: 'booking-123',
+          studioName: 'Studio ABC',
+          nested: { value: 42 },
+        },
+      };
+
+      await pushService.sendToUser(payloadWithComplexMetadata);
+
+      const sentMessage = (mockMessaging.sendEachForMulticast as jest.Mock).mock.calls[0][0];
+      expect(sentMessage.data.metadata).toBe(
+        JSON.stringify({
+          bookingId: 'booking-123',
+          studioName: 'Studio ABC',
+          nested: { value: 42 },
+        })
+      );
+    });
+
+    it('should build complete data-only message structure', async () => {
+      (prisma.deviceToken.findMany as jest.Mock).mockResolvedValue([mockDevices[0]]);
+      (mockMessaging.sendEachForMulticast as jest.Mock).mockResolvedValue({
+        successCount: 1,
+        failureCount: 0,
+        responses: [{ success: true }],
+      });
+
+      await pushService.sendToUser(mockPayload);
+
+      const sentMessage = (mockMessaging.sendEachForMulticast as jest.Mock).mock.calls[0][0];
+
+      // Verify complete structure
+      expect(sentMessage).toMatchObject({
+        data: {
+          notificationId: 'notif-123',
+          type: 'BOOKING_CONFIRMED',
+          priority: 'HIGH',
+          title: 'Test Notification',
+          body: 'Test body',
+          actionUrl: '/bookings/123',
+          metadata: JSON.stringify({ bookingId: 'booking-123' }),
+        },
+        android: {
+          priority: 'high',
+          notification: {
+            channelId: 'high_priority_notifications',
+            priority: 'high',
+            sound: 'default',
+            clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          },
+        },
+        apns: {
+          headers: {
+            'apns-priority': '10',
+          },
+          payload: {
+            aps: {
+              alert: {
+                title: 'Test Notification',
+                body: 'Test body',
+              },
+              sound: 'default',
+              badge: 1,
+              'mutable-content': 1,
+            },
+          },
+        },
+        webpush: {
+          fcmOptions: {
+            link: '/bookings/123',
+          },
+        },
+        tokens: ['token-1'],
+      });
+
+      // Explicitly verify no top-level notification
+      expect(sentMessage.notification).toBeUndefined();
+      // Explicitly verify no webpush notification
+      expect(sentMessage.webpush.notification).toBeUndefined();
+    });
+  });
 });

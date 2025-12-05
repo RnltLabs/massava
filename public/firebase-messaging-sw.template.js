@@ -21,9 +21,13 @@ if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey) {
   messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Background message:', payload);
 
-    const notificationTitle = payload.notification?.title || 'Massava';
+    // Data-only messages pattern (Firebase best practice):
+    // - title and body are sent in payload.data (not payload.notification)
+    // - This allows full control over notification display and tracking
+    // - Fallback to payload.notification for backwards compatibility during rollout
+    const notificationTitle = payload.data?.title || payload.notification?.title || 'Massava';
     const notificationOptions = {
-      body: payload.notification?.body || '',
+      body: payload.data?.body || payload.notification?.body || '',
       icon: '/icons/notification-icon.png',
       badge: '/icons/badge-icon.png',
       tag: payload.data?.notificationId || 'default',
@@ -131,6 +135,31 @@ async function trackNotificationInteraction(notificationId, action, clickAction 
   }
 }
 
+/**
+ * Validate that actionUrl is safe to navigate to
+ * Only allows relative URLs or same-origin URLs
+ * @param {string} url - URL to validate
+ * @returns {boolean} True if URL is safe
+ */
+function isValidActionUrl(url) {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
+  // Allow relative URLs
+  if (url.startsWith('/')) {
+    return true;
+  }
+
+  // Check same-origin for absolute URLs
+  try {
+    const parsed = new URL(url);
+    return parsed.origin === self.location.origin;
+  } catch {
+    return false;
+  }
+}
+
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event);
@@ -150,13 +179,30 @@ self.addEventListener('notificationclick', (event) => {
 
   // Handle action buttons
   if (event.action === 'confirm' && data.actionUrl) {
-    url = data.actionUrl + '?action=confirm';
+    const proposedUrl = data.actionUrl + '?action=confirm';
+    if (isValidActionUrl(proposedUrl)) {
+      url = proposedUrl;
+    } else {
+      console.warn('[SW] Rejected invalid actionUrl for confirm action:', proposedUrl);
+    }
   } else if (event.action === 'view' && data.actionUrl) {
-    url = data.actionUrl;
+    if (isValidActionUrl(data.actionUrl)) {
+      url = data.actionUrl;
+    } else {
+      console.warn('[SW] Rejected invalid actionUrl for view action:', data.actionUrl);
+    }
   } else if (event.action === 'review' && data.actionUrl) {
-    url = data.actionUrl;
+    if (isValidActionUrl(data.actionUrl)) {
+      url = data.actionUrl;
+    } else {
+      console.warn('[SW] Rejected invalid actionUrl for review action:', data.actionUrl);
+    }
   } else if (data.actionUrl) {
-    url = data.actionUrl;
+    if (isValidActionUrl(data.actionUrl)) {
+      url = data.actionUrl;
+    } else {
+      console.warn('[SW] Rejected invalid actionUrl for main notification:', data.actionUrl);
+    }
   }
 
   // Open or focus the app
