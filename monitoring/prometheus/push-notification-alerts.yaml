@@ -1,0 +1,440 @@
+# Push Notification Analytics Alert Rules
+# Version: 1.0
+# Last Updated: December 5, 2025
+# Location: /monitoring/prometheus/push-notification-alerts.yaml
+#
+# Usage:
+#   1. Copy this file to your Prometheus configuration directory
+#   2. Add to prometheus.yml:
+#      rule_files:
+#        - '/etc/prometheus/rules/push-notification-alerts.yaml'
+#   3. Reload Prometheus configuration
+#
+# These alerts monitor key push notification metrics including:
+# - Opt-in/opt-out rates
+# - Delivery success rates
+# - Click-through rates
+# - Active device health
+
+groups:
+  # ============================================
+  # Push Consent & Opt-in Monitoring
+  # ============================================
+  - name: push_consent_monitoring
+    interval: 5m
+    rules:
+      # Alert: High opt-out rate (churn indicator)
+      - alert: PushOptOutRateHigh
+        expr: |
+          (
+            rate(push_consents_revoked_total[1h])
+            /
+            (rate(push_consents_granted_total[1h]) + rate(push_consents_revoked_total[1h]))
+          ) > 0.15
+        for: 30m
+        labels:
+          severity: warning
+          group: user_engagement
+          service: push_notifications
+          sla_minutes: 60
+        annotations:
+          summary: "High push notification opt-out rate"
+          description: |
+            Push notification opt-out rate is {{ $value | humanizePercentage }} (threshold: 15%)
+
+            This indicates users are actively disabling push notifications,
+            which may signal:
+            - Too many notifications being sent
+            - Poor notification relevance
+            - Bad timing of notifications
+            - Technical delivery issues causing annoyance
+
+            Immediate Actions:
+            1. Review recent notification campaigns
+            2. Check notification frequency per user
+            3. Analyze notification types being revoked
+            4. Review user feedback and support tickets
+
+            Investigation Steps:
+            1. Query opt-out reasons: GET /api/metrics/push-notifications
+            2. Check notification volume trends
+            3. Review notification content quality
+            4. Analyze time-of-day patterns
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#high-opt-out-rate"
+          dashboard_url: "https://grafana.massava.com/d/push-analytics"
+          owner: "growth-team"
+          slack_channel: "#alerts-growth"
+
+      # Alert: Low opt-in rate (growth issue)
+      - alert: PushOptInRateLow
+        expr: |
+          (
+            push_active_consents_count
+            /
+            (SELECT count(*) FROM users)
+          ) < 0.20
+        for: 24h
+        labels:
+          severity: info
+          group: user_engagement
+          service: push_notifications
+          sla_hours: 48
+        annotations:
+          summary: "Low push notification opt-in rate"
+          description: |
+            Push notification opt-in rate is {{ $value | humanizePercentage }} (target: >20%)
+
+            Low opt-in rate impacts:
+            - Reduced user engagement
+            - Lower booking conversion
+            - Missed reminder opportunities
+
+            Review:
+            1. Opt-in prompt timing and UX
+            2. Value proposition clarity
+            3. Permission request messaging
+            4. Platform-specific permission flows
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#low-opt-in-rate"
+          dashboard_url: "https://grafana.massava.com/d/push-analytics"
+          owner: "growth-team"
+          slack_channel: "#metrics"
+
+      # Alert: Sudden drop in active consents
+      - alert: PushActiveConsentsDropped
+        expr: |
+          (
+            push_active_consents_count
+            -
+            push_active_consents_count offset 24h
+          ) / push_active_consents_count offset 24h < -0.10
+        for: 1h
+        labels:
+          severity: critical
+          group: user_engagement
+          service: push_notifications
+          sla_minutes: 30
+        annotations:
+          summary: "Sudden drop in active push notification consents"
+          description: |
+            Active push consents dropped by {{ $value | humanizePercentage }} in 24h (threshold: -10%)
+
+            Potential causes:
+            - Bulk opt-out event
+            - Database migration issue
+            - Application bug
+            - Mass account deletions
+
+            Critical Actions:
+            1. Check for system errors or deployments
+            2. Verify database integrity
+            3. Review application logs for consent-related errors
+            4. Check if specific user segment affected
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#consents-dropped"
+          dashboard_url: "https://grafana.massava.com/d/push-analytics"
+          owner: "engineering-team"
+          slack_channel: "#alerts-critical"
+          pagerduty_routing: "high_urgency"
+
+  # ============================================
+  # Push Delivery Performance
+  # ============================================
+  - name: push_delivery_performance
+    interval: 5m
+    rules:
+      # Alert: Low delivery rate
+      - alert: PushDeliveryRateLow
+        expr: |
+          (
+            rate(notifications_delivered_total{channel="PUSH"}[15m])
+            /
+            (rate(notifications_delivered_total{channel="PUSH"}[15m]) + rate(notifications_failed_total{channel="PUSH"}[15m]))
+          ) < 0.90
+        for: 10m
+        labels:
+          severity: critical
+          group: delivery
+          service: push_notifications
+          sla_minutes: 15
+        annotations:
+          summary: "Push notification delivery rate below threshold"
+          description: |
+            Push delivery rate is {{ $value | humanizePercentage }} (threshold: 90%)
+
+            This affects user experience and booking reminders.
+
+            Immediate Actions:
+            1. Check FCM/APNS service status
+            2. Review error logs for delivery failures
+            3. Verify device token validity
+            4. Check network connectivity to push services
+
+            Common Causes:
+            - Invalid device tokens
+            - FCM/APNS service outage
+            - Authentication issues
+            - Rate limiting by push provider
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#low-delivery-rate"
+          dashboard_url: "https://grafana.massava.com/d/push-delivery"
+          owner: "engineering-team"
+          slack_channel: "#alerts-critical"
+          pagerduty_routing: "high_urgency"
+
+      # Alert: High push failure rate by platform
+      - alert: PushFailureRateHighByPlatform
+        expr: |
+          (
+            rate(notifications_failed_total{channel="PUSH"}[10m])
+            /
+            rate(notifications_delivered_total{channel="PUSH"}[10m])
+          ) > 0.15
+        for: 10m
+        labels:
+          severity: warning
+          group: delivery
+          service: push_notifications
+          sla_minutes: 30
+        annotations:
+          summary: "High push failure rate on platform {{ $labels.platform }}"
+          description: |
+            Push failure rate is {{ $value | humanizePercentage }} (threshold: 15%)
+            Platform: {{ $labels.platform }}
+
+            Platform-specific troubleshooting:
+
+            iOS:
+            - Check APNS certificate expiry
+            - Verify app bundle ID
+            - Review iOS version compatibility
+
+            Android:
+            - Check FCM server key
+            - Verify app package name
+            - Review Android version compatibility
+
+            Web:
+            - Check VAPID keys
+            - Verify service worker registration
+            - Review browser compatibility
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#platform-failures"
+          dashboard_url: "https://grafana.massava.com/d/push-delivery"
+          owner: "engineering-team"
+          slack_channel: "#alerts"
+
+  # ============================================
+  # Push Engagement & Click Rates
+  # ============================================
+  - name: push_engagement_monitoring
+    interval: 10m
+    rules:
+      # Alert: Low click-through rate
+      - alert: PushClickRateLow
+        expr: |
+          (
+            rate(push_notifications_clicked_total[1h])
+            /
+            rate(notifications_delivered_total{channel="PUSH"}[1h])
+          ) < 0.05
+        for: 2h
+        labels:
+          severity: warning
+          group: user_engagement
+          service: push_notifications
+          sla_hours: 4
+        annotations:
+          summary: "Low push notification click-through rate"
+          description: |
+            Push CTR is {{ $value | humanizePercentage }} (target: >5%)
+
+            Low engagement suggests:
+            - Poor notification copy/messaging
+            - Irrelevant content
+            - Bad timing
+            - Notification fatigue
+
+            Optimization Checklist:
+            1. A/B test notification copy
+            2. Review send timing (time-of-day, day-of-week)
+            3. Segment users for relevance
+            4. Add rich media (images, actions)
+            5. Personalize content
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#low-ctr"
+          dashboard_url: "https://grafana.massava.com/d/push-engagement"
+          owner: "growth-team"
+          slack_channel: "#metrics"
+
+      # Alert: Slow time-to-click (engagement delay)
+      - alert: PushTimeToClickSlow
+        expr: |
+          histogram_quantile(
+            0.90,
+            rate(push_time_to_click_seconds_bucket[1h])
+          ) > 3600
+        for: 2h
+        labels:
+          severity: info
+          group: user_engagement
+          service: push_notifications
+          sla_hours: 24
+        annotations:
+          summary: "Users taking long to click push notifications"
+          description: |
+            P90 time-to-click is {{ $value | humanizeDuration }} (target: <1h)
+
+            This indicates:
+            - Low urgency perception
+            - Notifications not compelling
+            - Users viewing but not acting
+
+            Consider:
+            1. Add urgency cues ("Limited time", "Ending soon")
+            2. Improve call-to-action clarity
+            3. Test notification timing
+            4. Review notification priority
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#slow-engagement"
+          dashboard_url: "https://grafana.massava.com/d/push-engagement"
+          owner: "growth-team"
+          slack_channel: "#metrics"
+
+  # ============================================
+  # Device Token Health
+  # ============================================
+  - name: push_device_health
+    interval: 10m
+    rules:
+      # Alert: Declining active devices
+      - alert: PushActiveDevicesDeclining
+        expr: |
+          (
+            push_active_devices_count
+            -
+            push_active_devices_count offset 7d
+          ) / push_active_devices_count offset 7d < -0.15
+        for: 6h
+        labels:
+          severity: warning
+          group: device_health
+          service: push_notifications
+          sla_hours: 12
+        annotations:
+          summary: "Active push device count declining"
+          description: |
+            Active devices dropped by {{ $value | humanizePercentage }} in 7 days (threshold: -15%)
+
+            Potential causes:
+            - App uninstalls
+            - Users clearing app data
+            - Token expiration issues
+            - Device token cleanup job too aggressive
+
+            Investigation:
+            1. Check app uninstall rates
+            2. Review device token refresh logic
+            3. Verify token expiration policies
+            4. Analyze by platform (iOS/Android/Web)
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#devices-declining"
+          dashboard_url: "https://grafana.massava.com/d/push-devices"
+          owner: "engineering-team"
+          slack_channel: "#alerts"
+
+      # Alert: Stale device tokens accumulating
+      - alert: PushStaleDeviceTokensHigh
+        expr: |
+          (
+            count(device_tokens{is_active="true", last_used_days_ago > 90})
+            /
+            count(device_tokens{is_active="true"})
+          ) > 0.25
+        for: 24h
+        labels:
+          severity: info
+          group: device_health
+          service: push_notifications
+          sla_days: 7
+        annotations:
+          summary: "High percentage of stale device tokens"
+          description: |
+            {{ $value | humanizePercentage }} of active tokens haven't been used in 90+ days
+
+            Impact:
+            - Wasted push delivery attempts
+            - Inflated active device metrics
+            - Potential cost implications
+
+            Actions:
+            1. Run device token cleanup job
+            2. Mark inactive tokens as inactive
+            3. Review token refresh strategy
+            4. Update metrics to exclude stale tokens
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#stale-tokens"
+          dashboard_url: "https://grafana.massava.com/d/push-devices"
+          owner: "engineering-team"
+          slack_channel: "#maintenance"
+
+  # ============================================
+  # Push Analytics API Health
+  # ============================================
+  - name: push_analytics_api_health
+    interval: 5m
+    rules:
+      # Alert: Slow analytics API response
+      - alert: PushAnalyticsAPIResponseSlow
+        expr: |
+          histogram_quantile(
+            0.95,
+            rate(http_request_duration_seconds_bucket{path="/api/metrics/push-notifications"}[5m])
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          group: api_performance
+          service: push_notifications
+          sla_minutes: 30
+        annotations:
+          summary: "Push analytics API responding slowly"
+          description: |
+            P95 response time is {{ $value | humanizeDuration }} (target: <3s)
+
+            This affects dashboard and reporting users.
+
+            Performance optimization:
+            1. Check database query performance
+            2. Review cache hit rates
+            3. Analyze query plans
+            4. Consider pre-aggregating metrics
+            5. Add database indexes
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#api-slow"
+          dashboard_url: "https://grafana.massava.com/d/api-performance"
+          owner: "engineering-team"
+          slack_channel: "#alerts"
+
+      # Alert: High analytics API error rate
+      - alert: PushAnalyticsAPIErrorRateHigh
+        expr: |
+          (
+            rate(http_requests_total{path="/api/metrics/push-notifications", status=~"5.."}[5m])
+            /
+            rate(http_requests_total{path="/api/metrics/push-notifications"}[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          group: api_reliability
+          service: push_notifications
+          sla_minutes: 15
+        annotations:
+          summary: "High error rate on push analytics API"
+          description: |
+            Error rate is {{ $value | humanizePercentage }} (threshold: 5%)
+
+            This breaks analytics dashboards and reporting.
+
+            Immediate Actions:
+            1. Check application error logs
+            2. Verify database connectivity
+            3. Review recent deployments
+            4. Check authentication service status
+          runbook_url: "https://docs.massava.com/push-notifications/runbook#api-errors"
+          dashboard_url: "https://grafana.massava.com/d/api-errors"
+          owner: "engineering-team"
+          slack_channel: "#alerts-critical"
+          pagerduty_routing: "high_urgency"

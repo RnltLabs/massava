@@ -20,7 +20,6 @@ import { MobileCustomerNavWrapper } from '@/components/customer';
 import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
 import { MainContentWrapper } from '@/components/layout';
 import { NotificationProvider } from '@/components/providers/NotificationProvider';
-import { PushNotificationPrompt } from '@/components/notifications/PushNotificationPrompt';
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -97,7 +96,13 @@ export default async function LocaleLayout({
               </MainContentWrapper>
               <MobileCustomerNavWrapper />
               <MobileBusinessNavWrapper />
-              <PushNotificationPrompt />
+              {/*
+                PushNotificationPrompt removed for DSGVO compliance.
+                Push notification prompts are now triggered contextually
+                (e.g., after appointment booking, before important notifications)
+                rather than automatically on page load. This respects user privacy
+                and provides a better UX by asking for permissions at relevant moments.
+              */}
               <CookieConsentBanner />
               <Toaster />
             </NotificationProvider>

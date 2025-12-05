@@ -12,6 +12,7 @@ import {
   sendBookingRequestReceivedNotification,
   sendBookingConfirmedNotification,
   sendBookingCancelledByCustomerNotification,
+  sendBookingCancelledByStudioNotification,
   sendBookingRejectedNotification,
   type BookingNotificationInput,
 } from '@/lib/notifications/booking-notification-helper';
@@ -888,6 +889,299 @@ describe('sendBookingRejectedNotification', () => {
 });
 
 // ============================================
+// ============================================
+// Tests: sendBookingCancelledByStudioNotification
+// ============================================
+
+describe('sendBookingCancelledByStudioNotification', () => {
+  beforeEach(() => {
+    resetAllMocks();
+  });
+
+  it('should send notification to customer successfully', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(1);
+      expect(result.value.failed).toBe(0);
+    }
+
+    // Verify notificationService.create was called correctly
+    expect(notificationService.create).toHaveBeenCalledTimes(1);
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'customer-789',
+        type: 'BOOKING_CANCELLED_BY_STUDIO',
+        priority: 'HIGH',
+        bookingId: 'booking-123',
+        studioId: 'studio-456',
+        actionUrl: '/bookings/booking-123',
+        metadata: expect.objectContaining({
+          bookingId: 'booking-123',
+          customerName: 'Max Mustermann',
+          serviceName: 'Thai Massage',
+          studioName: 'Test Studio',
+        }),
+      })
+    );
+
+    // Verify logging
+    expect(logger.info).toHaveBeenCalledWith(
+      'Sending booking cancelled by studio notification to customer',
+      expect.objectContaining({
+        bookingId: 'booking-123',
+        customerId: 'customer-789',
+        studioId: 'studio-456',
+      })
+    );
+  });
+
+  it('should skip notification for guest booking (no customerId)', async () => {
+    // Arrange
+    const guestInput: BookingNotificationInput = {
+      ...mockInput,
+      customerId: null,
+    };
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(guestInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).not.toHaveBeenCalled();
+    expect(logger.debug).toHaveBeenCalledWith(
+      'Skipping studio cancellation notification for guest booking',
+      expect.objectContaining({
+        bookingId: 'booking-123',
+      })
+    );
+  });
+
+  it('should skip notification for undefined customerId', async () => {
+    // Arrange
+    const guestInput: BookingNotificationInput = {
+      ...mockInput,
+      customerId: undefined,
+    };
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(guestInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).not.toHaveBeenCalled();
+  });
+
+  it('should include cancellation reason in metadata when provided', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    const inputWithReason = {
+      ...mockInput,
+      cancellationReason: 'Studio emergency - need to reschedule',
+    };
+
+    // Act
+    await sendBookingCancelledByStudioNotification(inputWithReason);
+
+    // Assert
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          cancellationReason: 'Studio emergency - need to reschedule',
+        }),
+      })
+    );
+  });
+
+  it('should not include cancellation reason when not provided', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
+    expect(callArgs.metadata.cancellationReason).toBeUndefined();
+  });
+
+  it('should handle notification service failure', async () => {
+    // Arrange
+    const mockError = createNotificationError('DELIVERY_ERROR', 'Service unavailable', {
+      userId: 'customer-789',
+      channel: 'PUSH',
+      notificationId: 'notif-123',
+    });
+    (notificationService.create as jest.Mock).mockResolvedValue(err(mockError));
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(1);
+    }
+
+    expect(logger.error).toHaveBeenCalledWith(
+      'Failed to send booking cancelled by studio notification',
+      expect.objectContaining({
+        bookingId: 'booking-123',
+        customerId: 'customer-789',
+        errorType: 'DELIVERY_ERROR',
+        errorMessage: 'Service unavailable',
+      })
+    );
+  });
+
+  it('should log success with notification ID', async () => {
+    // Arrange
+    const mockSuccess = {
+      ...mockNotificationSuccess,
+      id: 'notif-studio-cancel-123',
+    };
+    (notificationService.create as jest.Mock).mockResolvedValue(ok(mockSuccess));
+
+    // Act
+    await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    expect(logger.info).toHaveBeenCalledWith(
+      'Booking cancelled by studio notification sent',
+      expect.objectContaining({
+        bookingId: 'booking-123',
+        customerId: 'customer-789',
+        notificationId: 'notif-studio-cancel-123',
+      })
+    );
+  });
+
+  it('should use correct actionUrl format', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actionUrl: '/bookings/booking-123',
+      })
+    );
+  });
+
+  it('should handle special characters in cancellation reason', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    const inputWithSpecialChars = {
+      ...mockInput,
+      cancellationReason: 'Studio closed due to "emergency" & repairs (unexpected)',
+    };
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(inputWithSpecialChars);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
+    expect(callArgs.metadata.cancellationReason).toBe(
+      'Studio closed due to "emergency" & repairs (unexpected)'
+    );
+  });
+
+  it('should handle very long cancellation reason', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    const longReason = 'A'.repeat(1000);
+    const inputWithLongReason = {
+      ...mockInput,
+      cancellationReason: longReason,
+    };
+
+    // Act
+    const result = await sendBookingCancelledByStudioNotification(inputWithLongReason);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
+    expect(callArgs.metadata.cancellationReason).toHaveLength(1000);
+  });
+
+  it('should include all required metadata fields', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    const callArgs = (notificationService.create as jest.Mock).mock.calls[0][0];
+    expect(callArgs.metadata).toEqual(
+      expect.objectContaining({
+        bookingId: 'booking-123',
+        customerName: 'Max Mustermann',
+        customerEmail: 'max@example.com',
+        serviceName: 'Thai Massage',
+        appointmentTime: '2025-01-15T14:00:00.000Z',
+        studioName: 'Test Studio',
+        studioId: 'studio-456',
+      })
+    );
+  });
+
+  it('should use HIGH priority', async () => {
+    // Arrange
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    await sendBookingCancelledByStudioNotification(mockInput);
+
+    // Assert
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        priority: 'HIGH',
+      })
+    );
+  });
+});
+
 // Integration Tests: Edge Cases
 // ============================================
 
@@ -1049,6 +1343,205 @@ describe('Edge Cases and Integration', () => {
 });
 
 // ============================================
+// Booking Reminder Customer Tests
+// ============================================
+
+describe('sendBookingReminderCustomerNotification', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should send reminder notification to customer successfully', async () => {
+    const { sendBookingReminderCustomerNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Mock notification service
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok({
+        id: 'notification-123',
+        status: 'PENDING' as NotificationStatus,
+      })
+    );
+
+    // Act
+    const result = await sendBookingReminderCustomerNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(1);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).toHaveBeenCalledWith({
+      userId: mockInput.customerId,
+      type: 'BOOKING_REMINDER_CUSTOMER',
+      metadata: expect.objectContaining({
+        bookingId: mockInput.bookingId,
+        customerName: mockInput.customerName,
+        serviceName: mockInput.serviceName,
+        studioName: mockInput.studioName,
+        studioId: mockInput.studioId,
+      }),
+      priority: 'URGENT',
+      bookingId: mockInput.bookingId,
+      studioId: mockInput.studioId,
+      actionUrl: `/bookings/${mockInput.bookingId}`,
+    });
+  });
+
+  it('should skip guest bookings when customerId is null', async () => {
+    const { sendBookingReminderCustomerNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Act
+    const result = await sendBookingReminderCustomerNotification({
+      ...mockInput,
+      customerId: null,
+    });
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).not.toHaveBeenCalled();
+  });
+
+  it('should return failure when notification service fails', async () => {
+    const { sendBookingReminderCustomerNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Mock notification service error
+    const mockError = createNotificationError('DELIVERY_ERROR', 'Push service unavailable', {
+      userId: 'customer-789',
+      channel: 'PUSH',
+      notificationId: 'notif-fail',
+    });
+    (notificationService.create as jest.Mock).mockResolvedValue(err(mockError));
+
+    // Act
+    const result = await sendBookingReminderCustomerNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(1);
+    }
+  });
+});
+
+// ============================================
+// Booking Reminder Studio Tests
+// ============================================
+
+describe('sendBookingReminderStudioNotification', () => {
+  beforeEach(() => {
+    resetAllMocks();
+  });
+
+  it('should send reminder notifications to all studio owners', async () => {
+    const { sendBookingReminderStudioNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Mock studio ownership
+    (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([
+      { userId: 'owner-1' },
+      { userId: 'owner-2' },
+    ]);
+
+    // Mock notification service
+    (notificationService.create as jest.Mock).mockResolvedValue(
+      ok(mockNotificationSuccess)
+    );
+
+    // Act
+    const result = await sendBookingReminderStudioNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(2);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).toHaveBeenCalledTimes(2);
+    expect(notificationService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'owner-1',
+        type: 'BOOKING_REMINDER_STUDIO',
+        priority: 'NORMAL',
+        bookingId: mockInput.bookingId,
+        studioId: mockInput.studioId,
+      })
+    );
+  });
+
+  it('should return empty result when no studio owners found', async () => {
+    const { sendBookingReminderStudioNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Mock no owners
+    (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([]);
+
+    // Act
+    const result = await sendBookingReminderStudioNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(0);
+      expect(result.value.failed).toBe(0);
+    }
+
+    expect(notificationService.create).not.toHaveBeenCalled();
+  });
+
+  it('should handle partial failures correctly', async () => {
+    const { sendBookingReminderStudioNotification } = await import(
+      '@/lib/notifications/booking-notification-helper'
+    );
+
+    // Mock studio ownership
+    (prisma.studioOwnership.findMany as jest.Mock).mockResolvedValue([
+      { userId: 'owner-1' },
+      { userId: 'owner-2' },
+      { userId: 'owner-3' },
+    ]);
+
+    // Mock partial success
+    const mockError = createNotificationError('DELIVERY_ERROR', 'Push service error', {
+      userId: 'owner-2',
+      channel: 'PUSH',
+      notificationId: 'notif-2',
+    });
+
+    (notificationService.create as jest.Mock)
+      .mockResolvedValueOnce(ok(mockNotificationSuccess))
+      .mockResolvedValueOnce(err(mockError))
+      .mockResolvedValueOnce(ok(mockNotificationSuccess));
+
+    // Act
+    const result = await sendBookingReminderStudioNotification(mockInput);
+
+    // Assert
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.sent).toBe(2);
+      expect(result.value.failed).toBe(1);
+    }
+  });
+});
+
+// ============================================
 // Coverage Summary
 // ============================================
 
@@ -1056,18 +1549,21 @@ describe('Edge Cases and Integration', () => {
  * COVERAGE REPORT
  * ===============
  *
- * Functions: 4/4 (100%)
+ * Functions: 7/7 (100%)
  * - sendBookingRequestReceivedNotification ✓
  * - sendBookingConfirmedNotification ✓
  * - sendBookingCancelledByCustomerNotification ✓
+ * - sendBookingCancelledByStudioNotification ✓
  * - sendBookingRejectedNotification ✓
+ * - sendBookingReminderCustomerNotification ✓
+ * - sendBookingReminderStudioNotification ✓
  *
  * Helper Functions: 3/3 (100%)
  * - getStudioOwnerIds ✓
  * - formatAppointmentTime ✓
  * - createBookingMetadata ✓
  *
- * Test Scenarios: 50+
+ * Test Scenarios: 60+
  * - Happy path: All functions ✓
  * - Error handling: Database errors, service failures ✓
  * - Edge cases: Guest bookings, empty data, special characters ✓
@@ -1075,6 +1571,7 @@ describe('Edge Cases and Integration', () => {
  * - Metadata validation: With/without optional fields ✓
  * - Logging: All log statements covered ✓
  * - Concurrent operations ✓
+ * - Studio cancellation with/without reason ✓
  *
  * Lines: 100%
  * Branches: 100%

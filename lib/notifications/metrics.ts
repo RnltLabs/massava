@@ -154,6 +154,53 @@ class InMemoryMetricsCollector implements IMetricsCollector {
       'notifications_rate_limited_count',
       'Current number of rate-limited notifications',
     );
+
+    // ============================================
+    // Push Notification Specific Metrics
+    // ============================================
+
+    // Counter: Push consent granted
+    this.registerCounter(
+      'push_consents_granted_total',
+      'Total number of push notification consents granted',
+    );
+
+    // Counter: Push consent revoked
+    this.registerCounter(
+      'push_consents_revoked_total',
+      'Total number of push notification consents revoked',
+    );
+
+    // Counter: Push notifications clicked
+    this.registerCounter(
+      'push_notifications_clicked_total',
+      'Total number of push notifications clicked by users',
+    );
+
+    // Gauge: Active push consent count
+    this.registerGauge(
+      'push_active_consents_count',
+      'Current number of users with active push notification consent',
+    );
+
+    // Gauge: Active device tokens
+    this.registerGauge(
+      'push_active_devices_count',
+      'Current number of active device tokens by platform',
+    );
+
+    // Counter: Push notification opt-in rate by method
+    this.registerCounter(
+      'push_optin_method_total',
+      'Push notification opt-ins by consent capture method',
+    );
+
+    // Histogram: Time from send to click
+    this.registerHistogram(
+      'push_time_to_click_seconds',
+      'Time from push notification delivery to user click',
+      [1, 5, 10, 30, 60, 300, 600, 1800, 3600], // 1s to 1h
+    );
   }
 
   private registerCounter(name: string, help: string): void {
@@ -409,6 +456,57 @@ export function updatePendingCount(count: number): void {
 export function updateRateLimitedCount(count: number): void {
   const collector = getMetricsCollector();
   collector.setGauge('notifications_rate_limited_count', {}, count);
+}
+
+// ============================================
+// Push Notification Specific Helpers
+// ============================================
+
+/**
+ * Record push consent granted
+ */
+export function recordPushConsentGranted(method: string): void {
+  const collector = getMetricsCollector();
+  collector.incrementCounter('push_consents_granted_total', { method });
+  collector.incrementCounter('push_optin_method_total', { method });
+}
+
+/**
+ * Record push consent revoked
+ */
+export function recordPushConsentRevoked(reason?: string): void {
+  const collector = getMetricsCollector();
+  collector.incrementCounter('push_consents_revoked_total', {
+    reason: reason || 'user_action',
+  });
+}
+
+/**
+ * Record push notification clicked
+ */
+export function recordPushNotificationClicked(
+  type: NotificationType,
+  timeToClickSeconds: number,
+): void {
+  const collector = getMetricsCollector();
+  collector.incrementCounter('push_notifications_clicked_total', { type });
+  collector.observeHistogram('push_time_to_click_seconds', { type }, timeToClickSeconds);
+}
+
+/**
+ * Update active push consent count
+ */
+export function updateActivePushConsentsCount(count: number): void {
+  const collector = getMetricsCollector();
+  collector.setGauge('push_active_consents_count', {}, count);
+}
+
+/**
+ * Update active device tokens count by platform
+ */
+export function updateActiveDevicesCount(platform: string, count: number): void {
+  const collector = getMetricsCollector();
+  collector.setGauge('push_active_devices_count', { platform }, count);
 }
 
 // ============================================
