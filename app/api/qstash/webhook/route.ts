@@ -18,6 +18,20 @@ const receiver = new Receiver({
   nextSigningKey: process.env.QSTASH_NEXT_SIGNING_KEY!,
 });
 
+/**
+ * Get the canonical webhook URL for signature verification.
+ * Uses NEXT_PUBLIC_APP_URL to match the URL QStash uses to call this endpoint.
+ * Falls back to request URL if not configured (local dev).
+ */
+function getWebhookUrl(request: NextRequest): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (appUrl) {
+    return `${appUrl}/api/qstash/webhook`;
+  }
+  // Fallback for local development
+  return request.url;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
@@ -28,11 +42,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing signature' }, { status: 401 });
     }
 
-    // Verify the signature
+    // Verify the signature using the canonical URL (not internal container URL)
+    const webhookUrl = getWebhookUrl(request);
     const isValid = await receiver.verify({
       body,
       signature,
-      url: request.url,
+      url: webhookUrl,
     });
 
     if (!isValid) {
