@@ -166,9 +166,16 @@ export async function requestPushPermission(): Promise<string | null> {
 
 /**
  * Listen for foreground messages
+ *
+ * Validates and processes incoming Firebase messages:
+ * - Ensures payload exists and contains valid data
+ * - Supports data-only messages (title/body in payload.data)
+ * - Falls back to payload.notification for backwards compatibility
+ * - Skips messages with no title/body (logs warning)
+ * - Guarantees callback always receives defined values
  */
 export function onForegroundMessage(
-  callback: (payload: { title?: string; body?: string; data?: Record<string, string> }) => void
+  callback: (payload: { title: string; body: string; data: Record<string, string> }) => void
 ): (() => void) | null {
   const messaging = getFirebaseMessaging();
   if (!messaging) {
@@ -177,10 +184,31 @@ export function onForegroundMessage(
 
   return onMessage(messaging, (payload) => {
     logger.info('[Firebase Client] Foreground message received');
+
+    // Validate payload exists
+    if (!payload) {
+      logger.warn('[Firebase Client] Received empty payload, skipping');
+      return;
+    }
+
+    // Extract title and body from data-only or notification payloads
+    const title = payload.data?.title || payload.notification?.title;
+    const body = payload.data?.body || payload.notification?.body;
+
+    // Skip messages with no content (both title and body missing)
+    if (!title && !body) {
+      logger.warn('[Firebase Client] Message has no title or body, skipping', {
+        hasData: !!payload.data,
+        hasNotification: !!payload.notification,
+      });
+      return;
+    }
+
+    // Call callback with validated, guaranteed-defined values
     callback({
-      title: payload.notification?.title,
-      body: payload.notification?.body,
-      data: payload.data,
+      title: String(title || ''),
+      body: String(body || ''),
+      data: payload.data || {},
     });
   });
 }
