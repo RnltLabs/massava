@@ -1,36 +1,75 @@
 /**
  * Build Service Worker Script
  *
- * Injects Firebase config into the service worker at build time.
+ * Reads the service worker template and injects Firebase config at build time.
+ * The generated file (firebase-messaging-sw.js) is in .gitignore.
+ *
+ * Usage: npm run build:sw (automatically called in prebuild)
  */
 
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
 
-const swPath = path.join(process.cwd(), 'public/firebase-messaging-sw.js');
+// Load environment variables from .env file (for local development)
+dotenv.config();
 
-// Read the service worker template
-let swContent = fs.readFileSync(swPath, 'utf-8');
+const templatePath = path.join(process.cwd(), 'public/firebase-messaging-sw.template.js');
+const outputPath = path.join(process.cwd(), 'public/firebase-messaging-sw.js');
+
+// Validate required environment variables
+const requiredEnvVars = [
+  'NEXT_PUBLIC_FIREBASE_API_KEY',
+  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
+  'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
+  'NEXT_PUBLIC_FIREBASE_APP_ID',
+];
+
+const missingVars = requiredEnvVars.filter((varName) => !process.env[varName]);
+
+if (missingVars.length > 0) {
+  console.error('[Build SW] ERROR: Missing required environment variables:');
+  missingVars.forEach((varName) => console.error(`  - ${varName}`));
+  console.error('[Build SW] Service worker will not work without Firebase config!');
+  // Don't exit - still generate the file so the app can start (just without push)
+}
+
+// Read the template
+if (!fs.existsSync(templatePath)) {
+  console.error('[Build SW] ERROR: Template file not found:', templatePath);
+  process.exit(1);
+}
+
+const template = fs.readFileSync(templatePath, 'utf-8');
 
 // Create the config injection
-const configInjection = `
-// Firebase config injected at build time
-self.FIREBASE_CONFIG = {
-  apiKey: "${process.env.NEXT_PUBLIC_FIREBASE_API_KEY || ''}",
-  authDomain: "${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || ''}",
-  projectId: "${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || ''}",
-  storageBucket: "${process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || ''}",
-  messagingSenderId: "${process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || ''}",
-  appId: "${process.env.NEXT_PUBLIC_FIREBASE_APP_ID || ''}",
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || '',
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || '',
 };
+
+const configCode = `// Firebase config - injected at build time (${new Date().toISOString()})
+const FIREBASE_CONFIG = ${JSON.stringify(firebaseConfig, null, 2)};
 `;
 
-// Check if config is already injected
-if (!swContent.includes('self.FIREBASE_CONFIG')) {
-  // Prepend config to the file
-  swContent = configInjection + swContent;
-  fs.writeFileSync(swPath, swContent);
-  console.log('[Build] Firebase config injected into service worker');
-} else {
-  console.log('[Build] Service worker already has config');
-}
+// Replace the placeholder with the actual config
+const output = template.replace(
+  '// __FIREBASE_CONFIG_PLACEHOLDER__ - This line will be replaced by the build script',
+  configCode
+);
+
+// Write the generated service worker
+fs.writeFileSync(outputPath, output);
+
+// Log success with config summary (without exposing full values)
+console.log('[Build SW] Service worker generated successfully');
+console.log('[Build SW] Firebase config status:');
+console.log(`  - apiKey: ${firebaseConfig.apiKey ? '✓ set' : '✗ missing'}`);
+console.log(`  - projectId: ${firebaseConfig.projectId ? '✓ set' : '✗ missing'}`);
+console.log(`  - messagingSenderId: ${firebaseConfig.messagingSenderId ? '✓ set' : '✗ missing'}`);
+console.log(`  - appId: ${firebaseConfig.appId ? '✓ set' : '✗ missing'}`);
+console.log(`[Build SW] Output: ${outputPath}`);

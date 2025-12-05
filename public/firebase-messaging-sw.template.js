@@ -1,25 +1,20 @@
 /**
- * Firebase Messaging Service Worker
+ * Firebase Messaging Service Worker Template
  *
- * Handles background push notifications.
+ * This is a TEMPLATE file. The actual service worker is generated at build time
+ * by scripts/build-service-worker.ts which injects the Firebase config.
+ *
+ * DO NOT rename this file to firebase-messaging-sw.js - that file is auto-generated.
  */
 
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// Firebase config - these are public values, safe to include
-const firebaseConfig = {
-  apiKey: self.FIREBASE_CONFIG?.apiKey || '',
-  authDomain: self.FIREBASE_CONFIG?.authDomain || '',
-  projectId: self.FIREBASE_CONFIG?.projectId || '',
-  storageBucket: self.FIREBASE_CONFIG?.storageBucket || '',
-  messagingSenderId: self.FIREBASE_CONFIG?.messagingSenderId || '',
-  appId: self.FIREBASE_CONFIG?.appId || '',
-};
+// __FIREBASE_CONFIG_PLACEHOLDER__ - This line will be replaced by the build script
 
 // Initialize Firebase only if config is available
-if (firebaseConfig.apiKey) {
-  firebase.initializeApp(firebaseConfig);
+if (typeof FIREBASE_CONFIG !== 'undefined' && FIREBASE_CONFIG.apiKey) {
+  firebase.initializeApp(FIREBASE_CONFIG);
   const messaging = firebase.messaging();
 
   // Handle background messages
@@ -38,6 +33,8 @@ if (firebaseConfig.apiKey) {
 
     self.registration.showNotification(notificationTitle, notificationOptions);
   });
+} else {
+  console.warn('[SW] Firebase config not available - push notifications disabled');
 }
 
 // Get notification actions based on type
