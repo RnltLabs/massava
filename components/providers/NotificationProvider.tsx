@@ -4,8 +4,9 @@
  *
  * Notification Provider Component
  *
- * Provides real-time notification updates via Firebase Cloud Messaging.
- * Listens for foreground messages and refreshes badge count on visibility change.
+ * Provides real-time notification updates via multiple channels:
+ * - Firebase Cloud Messaging (push notifications, desktop/Android)
+ * - Server-Sent Events (real-time updates, works on all platforms including iOS PWA)
  *
  * @module components/providers/NotificationProvider
  */
@@ -13,6 +14,7 @@
 'use client';
 
 import { useNotificationListener } from '@/hooks/useNotificationListener';
+import { useNotificationSSE } from '@/hooks/useNotificationSSE';
 
 interface NotificationProviderProps {
   children: React.ReactNode;
@@ -39,7 +41,11 @@ interface NotificationProviderProps {
  * ```
  */
 export function NotificationProvider({ children }: NotificationProviderProps): React.JSX.Element {
+  // Firebase push notifications (desktop, Android)
   useNotificationListener();
+
+  // SSE for real-time updates (works on all platforms, including iOS PWA)
+  useNotificationSSE();
 
   return <>{children}</>;
 }
