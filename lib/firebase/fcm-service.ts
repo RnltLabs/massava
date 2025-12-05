@@ -52,6 +52,18 @@ interface SendResult {
 }
 
 /**
+ * Validation result for payload inputs
+ *
+ * @interface ValidationResult
+ * @property {boolean} valid - Whether validation passed
+ * @property {string} [error] - Error message if validation failed
+ */
+interface ValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
+/**
  * Firebase Cloud Messaging service for push notifications
  *
  * Manages sending push notifications to user devices via Firebase Cloud Messaging.
@@ -61,6 +73,114 @@ interface SendResult {
  * @class PushService
  */
 class PushService {
+  /**
+   * Valid notification types from Prisma schema
+   */
+  private readonly VALID_NOTIFICATION_TYPES: NotificationType[] = [
+    'BOOKING_REQUEST_RECEIVED',
+    'BOOKING_CANCELLED_BY_CUSTOMER',
+    'BOOKING_REMINDER_STUDIO',
+    'PAYMENT_RECEIVED',
+    'REVIEW_POSTED',
+    'LOW_AVAILABILITY_ALERT',
+    'BOOKING_CONFIRMED',
+    'BOOKING_REJECTED',
+    'BOOKING_REMINDER_CUSTOMER',
+    'BOOKING_CANCELLED_BY_STUDIO',
+    'REVIEW_REQUEST',
+    'STUDIO_PROMOTION',
+    'ACCOUNT_LOGIN_NEW_DEVICE',
+    'ACCOUNT_PASSWORD_CHANGED',
+  ];
+
+  /**
+   * Valid notification priorities from Prisma schema
+   */
+  private readonly VALID_PRIORITIES: NotificationPriority[] = [
+    'URGENT',
+    'HIGH',
+    'NORMAL',
+    'LOW',
+  ];
+
+  /**
+   * Validate push notification payload inputs
+   *
+   * Performs comprehensive validation of all payload fields to prevent runtime errors
+   * and security issues. Validates string lengths, URL formats, and enum values.
+   *
+   * @param {PushNotificationPayload | Omit<PushNotificationPayload, 'userId'>} payload - Payload to validate
+   * @param {boolean} requireUserId - Whether userId field is required (true for sendToUser)
+   *
+   * @returns {ValidationResult} Validation result with error message if invalid
+   *
+   * @private
+   *
+   * @example
+   * ```typescript
+   * const result = this.validatePayload(payload, true);
+   * if (!result.valid) {
+   *   logger.error('[FCM] Invalid payload:', result.error);
+   *   return { sent: 0, failed: 0, invalidTokens: [] };
+   * }
+   * ```
+   */
+  private validatePayload(
+    payload: PushNotificationPayload | Omit<PushNotificationPayload, 'userId'>,
+    requireUserId = false
+  ): ValidationResult {
+    // Validate userId if required
+    if (requireUserId) {
+      const userId = (payload as PushNotificationPayload).userId;
+      if (!userId || typeof userId !== 'string' || userId.trim().length === 0) {
+        return { valid: false, error: 'userId must be a non-empty string' };
+      }
+    }
+
+    // Validate id
+    if (!payload.id || typeof payload.id !== 'string' || payload.id.trim().length === 0) {
+      return { valid: false, error: 'id must be a non-empty string' };
+    }
+
+    // Validate title
+    if (!payload.title || typeof payload.title !== 'string' || payload.title.trim().length === 0) {
+      return { valid: false, error: 'title must be a non-empty string' };
+    }
+    if (payload.title.length > 200) {
+      return { valid: false, error: 'title must not exceed 200 characters' };
+    }
+
+    // Validate body
+    if (!payload.body || typeof payload.body !== 'string' || payload.body.trim().length === 0) {
+      return { valid: false, error: 'body must be a non-empty string' };
+    }
+    if (payload.body.length > 1000) {
+      return { valid: false, error: 'body must not exceed 1000 characters' };
+    }
+
+    // Validate actionUrl if present
+    if (payload.actionUrl !== undefined) {
+      if (typeof payload.actionUrl !== 'string') {
+        return { valid: false, error: 'actionUrl must be a string' };
+      }
+      if (!payload.actionUrl.startsWith('/')) {
+        return { valid: false, error: 'actionUrl must be a valid relative URL starting with "/"' };
+      }
+    }
+
+    // Validate type (must be valid NotificationType enum)
+    if (!this.VALID_NOTIFICATION_TYPES.includes(payload.type)) {
+      return { valid: false, error: `type must be a valid NotificationType enum value` };
+    }
+
+    // Validate priority (must be valid NotificationPriority enum)
+    if (!this.VALID_PRIORITIES.includes(payload.priority)) {
+      return { valid: false, error: `priority must be a valid NotificationPriority enum value` };
+    }
+
+    return { valid: true };
+  }
+
   /**
    * Send push notification to all active devices of a user
    *
@@ -91,6 +211,13 @@ class PushService {
    * @see {@link sendToTokens} - Send to specific tokens
    */
   async sendToUser(payload: PushNotificationPayload): Promise<SendResult> {
+    // Validate payload first
+    const validation = this.validatePayload(payload, true);
+    if (!validation.valid) {
+      logger.error(`[FCM] Invalid payload for sendToUser: ${validation.error}`);
+      return { sent: 0, failed: 0, invalidTokens: [] };
+    }
+
     if (!isFirebaseAdminAvailable()) {
       logger.warn('[FCM] Firebase Admin not available, skipping push');
       return { sent: 0, failed: 0, invalidTokens: [] };
@@ -169,6 +296,13 @@ class PushService {
     tokens: string[],
     payload: Omit<PushNotificationPayload, 'userId'>
   ): Promise<SendResult> {
+    // Validate payload first
+    const validation = this.validatePayload(payload, false);
+    if (!validation.valid) {
+      logger.error(`[FCM] Invalid payload for sendToTokens: ${validation.error}`);
+      return { sent: 0, failed: 0, invalidTokens: [] };
+    }
+
     if (!isFirebaseAdminAvailable()) {
       logger.warn('[FCM] Firebase Admin not available, skipping push');
       return { sent: 0, failed: 0, invalidTokens: [] };
@@ -190,6 +324,10 @@ class PushService {
    * Maps notification priority to platform-specific priorities and notification channels.
    * Includes all required fields for proper delivery and display.
    *
+   * NOTE: Web browsers use data-only messages (no notification object) to prevent duplicate
+   * notifications. The Service Worker reads title/body from the data payload and displays
+   * the notification manually. This is a Firebase best practice for web push.
+   *
    * @param {PushNotificationPayload} payload - Notification content
    *
    * @returns {Omit<messaging.MulticastMessage, 'tokens'>} FCM message configuration
@@ -208,14 +346,13 @@ class PushService {
     const androidChannel = this.getAndroidChannel(payload.priority);
 
     return {
-      notification: {
-        title: payload.title,
-        body: payload.body,
-      },
+      // No top-level notification object (web browsers would show duplicate notifications)
       data: {
         notificationId: payload.id,
         type: payload.type,
         priority: payload.priority,
+        title: payload.title, // For Service Worker to read
+        body: payload.body,   // For Service Worker to read
         ...(payload.actionUrl && { actionUrl: payload.actionUrl }),
         ...(payload.metadata && { metadata: JSON.stringify(payload.metadata) }),
       },
@@ -245,12 +382,7 @@ class PushService {
         },
       },
       webpush: {
-        notification: {
-          title: payload.title,
-          body: payload.body,
-          icon: '/icons/notification-icon.png',
-          badge: '/icons/badge-icon.png',
-        },
+        // No notification object for web (prevents duplicate notifications)
         fcmOptions: {
           link: payload.actionUrl || '/',
         },
