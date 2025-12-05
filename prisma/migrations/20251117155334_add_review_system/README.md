@@ -235,6 +235,5 @@ For issues or questions about this migration:
 
 ---
 
-**Author:** Migration Tool
 **Reviewed By:** [Pending]
 **Applied To Production:** [Pending]

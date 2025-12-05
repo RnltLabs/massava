@@ -253,7 +253,7 @@ Benefits:
 
 ## Standards Compliance
 
-This implementation follows all standards from `/STANDARDS.md`:
+This implementation follows project standards:
 
 - ✅ Result<T, E> pattern (no throwing from business logic)
 - ✅ Discriminated unions for type safety

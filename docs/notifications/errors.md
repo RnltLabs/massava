@@ -1,6 +1,6 @@
 # Notification Error Handling
 
-This document describes the error handling system for the notification feature, following the Result<T, E> pattern described in the project's STANDARDS.md.
+This document describes the error handling system for the notification feature, following the Result<T, E> pattern.
 
 ## Overview
 
@@ -489,5 +489,4 @@ The notification-service.ts has been fully migrated to use the new error classes
 
 - [Result Pattern Implementation](/lib/result.ts)
 - [Auth Error Handling](/lib/auth/errors.ts) - Similar pattern used for auth
-- [Project Standards](/STANDARDS.md) - Error handling standards
 - [Notification Service](/lib/notifications/notification-service.ts) - Usage examples

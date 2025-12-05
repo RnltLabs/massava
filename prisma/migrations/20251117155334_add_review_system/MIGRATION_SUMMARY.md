@@ -265,7 +265,6 @@ For questions or issues:
 
 ---
 
-**Migration Author:** Migration Tool
 **Applied By:** Development Team
 **Environment:** Development
 **Production Deployment:** Pending
