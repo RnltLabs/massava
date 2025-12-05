@@ -142,6 +142,7 @@ model User {
   notifications          Notification[]
   notificationPreference NotificationPreference?
   deviceTokens           DeviceToken[]
+  pushConsentLogs        PushConsentLog[]
 
   @@index([email])
   @@index([primaryRole])
@@ -248,6 +249,7 @@ model NewBooking {
   cancelledAt              DateTime?
   cancellationReason       String?
   reminderSent             Boolean       @default(false)
+  studioReminderSent       Boolean       @default(false)
   reviewRequestSent        Boolean       @default(false)
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
@@ -266,6 +268,7 @@ model NewBooking {
   @@index([studioId, preferredDateTime])
   @@index([studioId, status, confirmedAt])
   @@index([status, reminderSent, preferredDateTime])
+  @@index([status, studioReminderSent, preferredDateTime])
   @@index([status, reviewRequestSent, preferredDateTime])
   @@index([studioId, status, preferredDateTime], name: "new_bookings_capacity_check_idx")
   @@map("new_bookings")
@@ -393,6 +396,9 @@ model Notification {
   channels          NotificationChannel[]
   pushDeliveredAt   DateTime?
   pushReadAt        DateTime?
+  pushClickedAt     DateTime?
+  pushDismissedAt   DateTime?
+  clickAction       String?
   pushFailedAt      DateTime?
   pushError         String?
   emailSentAt       DateTime?
@@ -427,6 +433,9 @@ model Notification {
   @@index([idempotencyKey])
   @@index([status, nextRetryAt])
   @@index([createdAt])
+  @@index([pushClickedAt])
+  @@index([pushDismissedAt])
+  @@index([userId, pushClickedAt])
   @@map("notifications")
 }
 
@@ -494,6 +503,48 @@ model DeviceToken {
   @@index([platform])
   @@index([lastUsedAt])
   @@map("device_tokens")
+}
+
+model PushConsentLog {
+  id              String        @id @default(cuid())
+  userId          String
+
+  action          ConsentAction
+  consentVersion  String        // e.g., "1.0", "2024-12-04"
+
+  // Granular category consents (GDPR Art. 7 requirement)
+  categories      Json          // { "bookings": true, "cancellations": true, "reminders": true, "marketing": false }
+
+  // Consent capture method (GDPR Art. 7.1 requirement)
+  method          String        // e.g., "browser_prompt", "settings_toggle", "onboarding_flow"
+
+  // Proof of consent metadata (GDPR Art. 7.1 requirement)
+  ipAddress       String?
+  userAgent       String?
+  deviceInfo      Json?         // { "platform": "IOS", "model": "iPhone 14", "osVersion": "17.1", "appVersion": "1.2.3" }
+
+  // Additional context
+  previousState   Json?         // Snapshot of previous consent state for UPDATED/CATEGORIES_CHANGED actions
+  triggeredBy     String?       // "user", "admin", "system_migration"
+  notes           String?       // Additional context for admin-initiated changes
+
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  timestamp       DateTime      @default(now())
+
+  @@index([userId])
+  @@index([userId, timestamp])
+  @@index([timestamp])
+  @@index([action])
+  @@index([consentVersion])
+  @@map("push_consent_logs")
+}
+
+enum ConsentAction {
+  GRANTED              // Initial consent given
+  REVOKED              // Full consent withdrawn
+  UPDATED              // Consent renewed or re-affirmed
+  CATEGORIES_CHANGED   // Specific categories toggled
 }
 
 enum BookingStatus {

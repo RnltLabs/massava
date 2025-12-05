@@ -503,5 +503,55 @@
         "inactive": "inaktiv"
       }
     }
+  },
+  "pushConsent": {
+    "title": "Push-Benachrichtigungen aktivieren",
+    "subtitle": "Bleibe immer auf dem Laufenden",
+    "close": "Schließen",
+    "preview": {
+      "customer": "Erinnerung: Dein Termin bei Wellness Studio beginnt morgen um 14:00 Uhr",
+      "studioOwner": "Neue Buchungsanfrage: Sarah M. möchte morgen um 15:30 Uhr buchen"
+    },
+    "benefits": {
+      "customer": {
+        "reminders": "Rechtzeitige Erinnerung 24h vor deinem Termin",
+        "changes": "Sofortige Benachrichtigung bei Terminänderungen",
+        "discover": "Neue Studios in deiner Nähe entdecken"
+      },
+      "studioOwner": {
+        "realtime": "Echtzeit-Benachrichtigungen bei Buchungsanfragen",
+        "noMiss": "Keine Kundenanfrage mehr verpassen",
+        "control": "Volle Kontrolle über deine Benachrichtigungen"
+      }
+    },
+    "categories": {
+      "description": "Wähle aus, worüber du benachrichtigt werden möchtest:"
+    },
+    "gdpr": {
+      "title": "Datenschutzinformationen",
+      "dataProcessing": "Wir verarbeiten deine Push-Token und Geräteinformationen, um dir Benachrichtigungen senden zu können. Die Daten werden verschlüsselt übertragen und sicher gespeichert.",
+      "thirdParty": "Für die Zustellung nutzen wir Firebase Cloud Messaging (Google). Deine Daten werden dabei gemäß DSGVO verarbeitet.",
+      "rights": "Du kannst deine Einwilligung jederzeit in den Einstellungen widerrufen. Deine Daten werden dann umgehend gelöscht.",
+      "privacyLink": "Zur vollständigen Datenschutzerklärung",
+      "consentCheckbox": "Ich habe die Datenschutzinformationen gelesen und stimme der Verarbeitung meiner Daten für Push-Benachrichtigungen zu."
+    },
+    "actions": {
+      "accept": "Benachrichtigungen aktivieren",
+      "decline": "Nicht jetzt"
+    },
+    "validation": {
+      "consentRequired": "Einwilligung erforderlich",
+      "consentRequiredDescription": "Bitte bestätige, dass du die Datenschutzinformationen gelesen hast."
+    },
+    "errors": {
+      "notSupported": "Nicht unterstützt",
+      "notSupportedDescription": "Dein Browser unterstützt keine Push-Benachrichtigungen.",
+      "failed": "Aktivierung fehlgeschlagen",
+      "unknownError": "Ein unbekannter Fehler ist aufgetreten. Bitte versuche es erneut."
+    },
+    "success": {
+      "title": "Benachrichtigungen aktiviert",
+      "description": "Du erhältst ab sofort Push-Benachrichtigungen."
+    }
   }
 }

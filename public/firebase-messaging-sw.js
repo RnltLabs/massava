@@ -66,12 +66,89 @@ function getNotificationActions(type) {
   }
 }
 
+// Track notification interaction
+async function trackNotificationInteraction(notificationId, action, clickAction = null) {
+  if (!notificationId) {
+    console.warn('[SW] Cannot track: notificationId missing');
+    return;
+  }
+
+  try {
+    const trackingData = {
+      notificationId,
+      action,
+      timestamp: new Date().toISOString(),
+    };
+
+    if (clickAction) {
+      trackingData.clickAction = clickAction;
+    }
+
+    const response = await fetch('/api/notifications/track', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(trackingData),
+    });
+
+    if (!response.ok) {
+      console.warn('[SW] Tracking failed:', response.status, response.statusText);
+    } else {
+      console.log('[SW] Interaction tracked:', action, clickAction || '(main)');
+    }
+  } catch (error) {
+    // Fail silently - tracking shouldn't block navigation
+    // Queue for retry if offline
+    console.error('[SW] Tracking error:', error);
+
+    // Store in IndexedDB for retry when online (if needed)
+    try {
+      if ('indexedDB' in self) {
+        const dbRequest = indexedDB.open('NotificationTracking', 1);
+
+        dbRequest.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains('pendingTracking')) {
+            db.createObjectStore('pendingTracking', { keyPath: 'id', autoIncrement: true });
+          }
+        };
+
+        dbRequest.onsuccess = (event) => {
+          const db = event.target.result;
+          const transaction = db.transaction(['pendingTracking'], 'readwrite');
+          const store = transaction.objectStore('pendingTracking');
+
+          store.add({
+            notificationId,
+            action,
+            clickAction,
+            timestamp: new Date().toISOString(),
+            retryCount: 0,
+          });
+        };
+      }
+    } catch (dbError) {
+      console.error('[SW] Failed to queue tracking for retry:', dbError);
+    }
+  }
+}
+
 // Handle notification click
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked:', event);
-  event.notification.close();
 
   const data = event.notification.data || {};
+  const notificationId = data.notificationId;
+  const clickAction = event.action || null; // Action button clicked, or null for main notification
+
+  // Track the click
+  event.waitUntil(
+    trackNotificationInteraction(notificationId, 'click', clickAction)
+  );
+
+  event.notification.close();
+
   let url = '/';
 
   // Handle action buttons
@@ -104,6 +181,19 @@ self.addEventListener('notificationclick', (event) => {
         return clients.openWindow(url);
       }
     })
+  );
+});
+
+// Handle notification close (dismiss)
+self.addEventListener('notificationclose', (event) => {
+  console.log('[SW] Notification dismissed:', event);
+
+  const data = event.notification.data || {};
+  const notificationId = data.notificationId;
+
+  // Track the dismissal
+  event.waitUntil(
+    trackNotificationInteraction(notificationId, 'dismiss')
   );
 });
 

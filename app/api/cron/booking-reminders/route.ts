@@ -3,15 +3,21 @@
  * All rights reserved.
  *
  * Vercel Cron Endpoint for Booking Reminders
- * Scheduled to run daily to send 24-hour booking reminders
+ * Scheduled to run hourly to send booking reminders:
+ * - Customer reminders: 24 hours before appointment (email + push)
+ * - Studio reminders: 1 hour before appointment (push only)
  * EMAIL_IMPLEMENTATION_PLAN.md Task 4.1: Booking Reminders
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { sendBookingReminderEmail } from '@/lib/email/send';
+import {
+  sendBookingReminderCustomerNotification,
+  sendBookingReminderStudioNotification,
+} from '@/lib/notifications/booking-notification-helper';
 import { logger } from '@/lib/logger';
-import { format, startOfDay, endOfDay, addDays } from 'date-fns';
+import { format, startOfDay, endOfDay, addDays, addHours, subMinutes } from 'date-fns';
 
 /**
  * Vercel Cron Job Endpoint
@@ -21,11 +27,13 @@ import { format, startOfDay, endOfDay, addDays } from 'date-fns';
  * {
  *   "crons": [{
  *     "path": "/api/cron/booking-reminders",
- *     "schedule": "0 10 * * *"
+ *     "schedule": "0 * * * *"  // Run every hour
  *   }]
  * }
  *
- * Sends reminder emails for bookings happening in 24 hours
+ * Sends reminder emails and push notifications:
+ * - Customer: 24 hours before appointment (email + push)
+ * - Studio: 1 hour before appointment (push only)
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -58,14 +66,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       action: 'CRON_BOOKING_REMINDERS',
     });
 
-    // Calculate tomorrow's date range (24 hours from now)
     const now = new Date();
+
+    // ============================================
+    // CUSTOMER REMINDERS (24 hours before)
+    // ============================================
+
+    // Calculate tomorrow's date range (24 hours from now)
     const tomorrow = addDays(now, 1);
     const tomorrowStart = startOfDay(tomorrow);
     const tomorrowEnd = endOfDay(tomorrow);
     const tomorrowDate = format(tomorrow, 'yyyy-MM-dd');
 
-    logger.info('Searching for bookings to remind', {
+    logger.info('Searching for customer bookings to remind (24h before)', {
       action: 'CRON_BOOKING_REMINDERS',
       targetDateRange: {
         start: tomorrowStart.toISOString(),
@@ -73,8 +86,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
 
-    // Find all confirmed bookings for tomorrow that haven't received a reminder
-    const bookings = await prisma.newBooking.findMany({
+    // Find all confirmed bookings for tomorrow that haven't received a customer reminder
+    const customerBookings = await prisma.newBooking.findMany({
       where: {
         status: 'CONFIRMED',
         reminderSent: false,
@@ -86,9 +99,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       include: {
         studio: {
           select: {
+            id: true,
             name: true,
             address: true,
             phone: true,
+            timezone: true,
           },
         },
         service: {
@@ -99,33 +114,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
 
-    logger.info('Found bookings to remind', {
+    logger.info('Found customer bookings to remind', {
       action: 'CRON_BOOKING_REMINDERS',
-      count: bookings.length,
+      count: customerBookings.length,
       targetDate: tomorrowDate,
     });
 
-    if (bookings.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'No bookings to remind for tomorrow',
-        remindersSent: 0,
-        targetDate: tomorrowDate,
-      });
-    }
+    let customerEmailsSent = 0;
+    let customerPushSent = 0;
+    let customerPushFailed = 0;
+    let customerFailures = 0;
+    const customerErrors: Array<{ bookingId: string; error: string }> = [];
 
-    // Send reminder emails
-    let successCount = 0;
-    let failureCount = 0;
-    const errors: Array<{ bookingId: string; error: string }> = [];
-
-    for (const booking of bookings) {
+    for (const booking of customerBookings) {
       try {
-        // Determine locale based on studio or default to 'de'
         const locale = 'de'; // TODO: Add locale field to Studio model in future
 
-        // Send reminder email
-        const result = await sendBookingReminderEmail(
+        // Send reminder email to customer
+        const emailResult = await sendBookingReminderEmail(
           booking.customerEmail,
           {
             bookingId: booking.id,
@@ -140,39 +146,162 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           locale
         );
 
-        if (result.success) {
-          // Mark reminder as sent
-          await prisma.newBooking.update({
-            where: { id: booking.id },
-            data: { reminderSent: true },
-          });
-
-          successCount++;
-          logger.info('Booking reminder sent successfully', {
+        if (emailResult.success) {
+          customerEmailsSent++;
+          logger.info('Customer booking reminder email sent', {
             action: 'CRON_BOOKING_REMINDERS',
             bookingId: booking.id,
-            studioName: booking.studio.name,
+            type: 'customer_24h',
           });
         } else {
-          failureCount++;
-          errors.push({
-            bookingId: booking.id,
-            error: result.error || 'Unknown error',
-          });
-          logger.error('Failed to send booking reminder', {
+          logger.error('Failed to send customer reminder email', {
             action: 'CRON_BOOKING_REMINDERS',
             bookingId: booking.id,
-            error: result.error,
+            error: emailResult.error,
           });
         }
+
+        // Send push notification to customer (if registered user)
+        if (booking.customerId) {
+          const pushResult = await sendBookingReminderCustomerNotification({
+            bookingId: booking.id,
+            studioId: booking.studio.id,
+            studioName: booking.studio.name,
+            studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+            customerName: booking.customerName,
+            customerEmail: booking.customerEmail,
+            serviceName: booking.service?.name || 'Service',
+            preferredDateTime: booking.preferredDateTime,
+            customerId: booking.customerId,
+          });
+
+          if (pushResult.ok) {
+            customerPushSent += pushResult.value.sent;
+            customerPushFailed += pushResult.value.failed;
+            logger.info('Customer booking reminder push notification sent', {
+              action: 'CRON_BOOKING_REMINDERS',
+              bookingId: booking.id,
+              type: 'customer_24h',
+              sent: pushResult.value.sent,
+              failed: pushResult.value.failed,
+            });
+          }
+        }
+
+        // Mark customer reminder as sent
+        await prisma.newBooking.update({
+          where: { id: booking.id },
+          data: { reminderSent: true },
+        });
       } catch (error) {
-        failureCount++;
+        customerFailures++;
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        errors.push({
+        customerErrors.push({
           bookingId: booking.id,
           error: errorMessage,
         });
-        logger.error('Exception while sending booking reminder', {
+        logger.error('Exception while sending customer reminder', {
+          action: 'CRON_BOOKING_REMINDERS',
+          bookingId: booking.id,
+          error: errorMessage,
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
+    }
+
+    // ============================================
+    // STUDIO REMINDERS (1 hour before)
+    // ============================================
+
+    // Calculate 1 hour from now (with 5 minute buffer for cron timing)
+    const oneHourLater = addHours(now, 1);
+    const oneHourStart = oneHourLater;
+    const oneHourEnd = addHours(oneHourLater, 5); // 5-minute window to catch bookings
+
+    logger.info('Searching for studio bookings to remind (1h before)', {
+      action: 'CRON_BOOKING_REMINDERS',
+      targetTimeRange: {
+        start: oneHourStart.toISOString(),
+        end: oneHourEnd.toISOString(),
+      },
+    });
+
+    // Find all confirmed bookings happening in approximately 1 hour
+    const studioBookings = await prisma.newBooking.findMany({
+      where: {
+        status: 'CONFIRMED',
+        studioReminderSent: false,
+        preferredDateTime: {
+          gte: oneHourStart,
+          lte: oneHourEnd,
+        },
+      },
+      include: {
+        studio: {
+          select: {
+            id: true,
+            name: true,
+            timezone: true,
+          },
+        },
+        service: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    logger.info('Found studio bookings to remind', {
+      action: 'CRON_BOOKING_REMINDERS',
+      count: studioBookings.length,
+    });
+
+    let studioPushSent = 0;
+    let studioPushFailed = 0;
+    let studioFailures = 0;
+    const studioErrors: Array<{ bookingId: string; error: string }> = [];
+
+    for (const booking of studioBookings) {
+      try {
+        // Send push notification to studio owners
+        const pushResult = await sendBookingReminderStudioNotification({
+          bookingId: booking.id,
+          studioId: booking.studio.id,
+          studioName: booking.studio.name,
+          studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+          customerName: booking.customerName,
+          customerEmail: booking.customerEmail,
+          serviceName: booking.service?.name || 'Service',
+          preferredDateTime: booking.preferredDateTime,
+          customerId: booking.customerId,
+        });
+
+        if (pushResult.ok) {
+          studioPushSent += pushResult.value.sent;
+          studioPushFailed += pushResult.value.failed;
+          logger.info('Studio booking reminder push notification sent', {
+            action: 'CRON_BOOKING_REMINDERS',
+            bookingId: booking.id,
+            type: 'studio_1h',
+            sent: pushResult.value.sent,
+            failed: pushResult.value.failed,
+          });
+        }
+
+        // Mark studio reminder as sent
+        await prisma.newBooking.update({
+          where: { id: booking.id },
+          data: { studioReminderSent: true },
+        });
+      } catch (error) {
+        studioFailures++;
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        studioErrors.push({
+          bookingId: booking.id,
+          error: errorMessage,
+        });
+        logger.error('Exception while sending studio reminder', {
           action: 'CRON_BOOKING_REMINDERS',
           bookingId: booking.id,
           error: errorMessage,
@@ -184,11 +313,22 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const responseData = {
       success: true,
       message: 'Booking reminders cron job completed',
-      targetDate: tomorrowDate,
-      totalBookings: bookings.length,
-      remindersSent: successCount,
-      failures: failureCount,
-      errors: errors.length > 0 ? errors : undefined,
+      customer: {
+        targetDate: tomorrowDate,
+        totalBookings: customerBookings.length,
+        emailsSent: customerEmailsSent,
+        pushSent: customerPushSent,
+        pushFailed: customerPushFailed,
+        failures: customerFailures,
+        errors: customerErrors.length > 0 ? customerErrors : undefined,
+      },
+      studio: {
+        totalBookings: studioBookings.length,
+        pushSent: studioPushSent,
+        pushFailed: studioPushFailed,
+        failures: studioFailures,
+        errors: studioErrors.length > 0 ? studioErrors : undefined,
+      },
     };
 
     logger.info('Booking reminders cron job completed', {
