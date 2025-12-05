@@ -48,6 +48,9 @@ next-env.d.ts
 GoogleService-Info.plist
 google-services.json
 
+# Generated service worker (contains Firebase config, generated from template)
+public/firebase-messaging-sw.js
+
 # Capacitor build outputs (native platforms)
 ios/
 android/
