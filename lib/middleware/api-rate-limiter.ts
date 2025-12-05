@@ -438,6 +438,15 @@ export const NOTIFICATION_RATE_LIMITS = {
     ipLimit: true, // Prevent connection flooding
     userLimit: true,
   },
+
+  // POST /api/notifications/track - Click tracking from service worker
+  trackNotification: {
+    requests: 100,
+    windowSeconds: 60, // 100 per minute (generous for user interactions)
+    requireAuth: false, // No auth in service worker context
+    ipLimit: true, // Rate limit by IP only
+    userLimit: false,
+  },
 } as const;
 
 /**

@@ -162,6 +162,159 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
 }
 
 /**
+ * Cancel a confirmed booking
+ * This is different from declineBooking which only handles PENDING bookings.
+ * This function allows studios to cancel already confirmed bookings.
+ */
+export async function cancelConfirmedBooking(
+  bookingId: string,
+  reason?: string
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Nicht authentifiziert',
+      };
+    }
+
+    // Get booking with studio and service details
+    const booking = await prisma.newBooking.findUnique({
+      where: { id: bookingId },
+      include: {
+        studio: {
+          include: {
+            ownerships: {
+              where: {
+                userId: session.user.id,
+              },
+            },
+          },
+        },
+        service: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      return {
+        success: false,
+        error: 'Buchung nicht gefunden',
+      };
+    }
+
+    // Verify user owns the studio
+    if (booking.studio.ownerships.length === 0) {
+      return {
+        success: false,
+        error: 'Keine Berechtigung für diese Buchung',
+      };
+    }
+
+    // Check if booking is already cancelled
+    if (booking.status === BookingStatus.CANCELLED) {
+      return {
+        success: false,
+        error: 'Diese Buchung wurde bereits storniert',
+      };
+    }
+
+    // Only allow canceling CONFIRMED bookings (not PENDING)
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      return {
+        success: false,
+        error: 'Diese Buchung kann nicht storniert werden. Bitte verwenden Sie "Ablehnen" für ausstehende Buchungen.',
+      };
+    }
+
+    // Update booking status
+    await prisma.newBooking.update({
+      where: { id: bookingId },
+      data: {
+        status: BookingStatus.CANCELLED,
+        cancelledBy: session.user.id,
+        cancelledAt: new Date(),
+        cancellationReason: reason,
+      },
+    });
+
+    // Send cancellation email to customer
+    try {
+      const emailResult = await sendBookingCancellationEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName || 'Kunde',
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
+          cancellationReason: reason,
+        },
+        'de'
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send cancellation email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending cancellation email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_CANCELLED_BY_STUDIO -> Customer
+    // =====================================================
+    try {
+      const { sendBookingCancelledByStudioNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingCancelledByStudioNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+        cancellationReason: reason,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for studio cancellation');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending studio cancellation push notification:', notificationError);
+      // Notification-Fehler sollten den Stornierungsprozess NICHT blockieren
+    }
+
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
+    revalidatePath('/[locale]/business/bookings');
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error canceling confirmed booking:', error);
+    return {
+      success: false,
+      error: 'Ein Fehler ist aufgetreten',
+    };
+  }
+}
+
+/**
  * Decline a pending booking
  */
 export async function declineBooking(

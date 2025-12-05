@@ -15,6 +15,7 @@ import { WeekView } from './WeekView';
 import { BlockTimeDialog } from './BlockTimeDialog';
 import { BookingDetailSheet } from './BookingDetailSheet';
 import { UnblockConfirmDialog } from './UnblockConfirmDialog';
+import { StudioOwnerPushPrompt } from './StudioOwnerPushPrompt';
 import { addDays, subDays, addWeeks, subWeeks, format, startOfDay, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -265,6 +266,9 @@ export function CalendarClient({
         onOpenChange={setUnblockDialogOpen}
         blocked={selectedBlocked}
       />
+
+      {/* Push Notification Prompt for First Booking Request */}
+      <StudioOwnerPushPrompt studioId={studioId} />
     </div>
   );
 }
