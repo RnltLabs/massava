@@ -272,8 +272,13 @@ export const useNotificationStore = create<NotificationState>()(
       setError: (error) => set({ error }),
       setNotificationCenterOpen: (open) => set({ isNotificationCenterOpen: open }),
 
-      // Add new notification
+      // Add new notification (with deduplication)
       addNotification: (notification) => {
+        // Skip if notification with same ID already exists (prevents duplicates from SSE + Firebase)
+        if (get().notifications.some((n) => n.id === notification.id)) {
+          return;
+        }
+
         set((state) => ({
           notifications: [notification, ...state.notifications],
           unreadCount: state.unreadCount + 1,
