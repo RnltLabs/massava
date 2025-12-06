@@ -15,6 +15,81 @@ import { calculateAvailableSlots, type AvailableSlot } from '@/lib/slots';
 import { logger, generateCorrelationId } from '@/lib/logger';
 
 /**
+ * Time-of-day ranges for slot filtering
+ * These match the ranges shown in the date-time picker UI
+ */
+const TIME_RANGES = {
+  morning: { start: 8, end: 12 },    // 08:00 - 12:00
+  afternoon: { start: 12, end: 17 }, // 12:00 - 17:00
+  evening: { start: 17, end: 22 },   // 17:00 - 22:00
+} as const;
+
+/**
+ * Determines which time-of-day category an hour falls into
+ * Returns null if no specific time was requested (user wants all slots)
+ */
+function getTimeOfDayCategory(hour: number): keyof typeof TIME_RANGES | null {
+  // The date-time picker uses specific hours to represent categories:
+  // - 09:00 = morning
+  // - 14:00 = afternoon
+  // - 19:00 = evening
+  // - 12:00 = "any time" (no filtering)
+
+  if (hour === 12) {
+    // 12:00 is used for "any time" - no filtering
+    return null;
+  }
+
+  if (hour >= 8 && hour < 12) {
+    return 'morning';
+  }
+  if (hour >= 12 && hour < 17) {
+    return 'afternoon';
+  }
+  if (hour >= 17 && hour < 22) {
+    return 'evening';
+  }
+
+  // For custom times outside standard ranges, find the closest category
+  if (hour < 8) return 'morning';
+  if (hour >= 22) return 'evening';
+
+  return null;
+}
+
+/**
+ * Filters slots to only include those within the specified time-of-day range
+ */
+function filterSlotsByTimeOfDay(
+  slots: AvailableSlot[],
+  timeCategory: keyof typeof TIME_RANGES,
+  timezone: string
+): AvailableSlot[] {
+  const range = TIME_RANGES[timeCategory];
+
+  return slots.filter((slot) => {
+    // Use startTimeFormatted (HH:mm in studio's timezone) if available
+    // Otherwise, convert the Date to local time
+    let slotHour: number;
+
+    if (slot.startTimeFormatted) {
+      // Format: "HH:mm" (e.g., "10:00") - already in studio's timezone
+      slotHour = parseInt(slot.startTimeFormatted.split(':')[0], 10);
+    } else {
+      // Fallback: Date object - convert to studio timezone to get local hour
+      const localTimeStr = slot.startTime.toLocaleTimeString('en-US', {
+        timeZone: timezone,
+        hour12: false,
+        hour: '2-digit',
+      });
+      slotHour = parseInt(localTimeStr, 10);
+    }
+
+    return slotHour >= range.start && slotHour < range.end;
+  });
+}
+
+/**
  * Search Query Schema
  */
 const SearchQuerySchema = z.object({
@@ -144,6 +219,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       ? new Date(datetime).toISOString().split('T')[0]
       : new Date().toISOString().split('T')[0];
 
+    // Determine time-of-day filter based on the requested datetime
+    let requestedTimeCategory: keyof typeof TIME_RANGES | null = null;
+    if (datetime) {
+      const requestedDateTime = new Date(datetime);
+      const requestedHour = requestedDateTime.getUTCHours();
+      requestedTimeCategory = getTimeOfDayCategory(requestedHour);
+
+      logger.info('Time-of-day filter determined', {
+        correlationId,
+        datetime,
+        requestedHour,
+        timeCategory: requestedTimeCategory,
+      });
+    }
+
     // Calculate dynamic availability for each studio in parallel
     const studiosWithSlotsResults = await Promise.all(
       studiosWithDistance.map(async (studio) => {
@@ -173,16 +263,27 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             return { ...studio, availableSlots: [] as AvailableSlot[] };
           }
 
+          // Apply time-of-day filter if specified
+          let filteredSlots = slotsResult.value;
+          if (requestedTimeCategory) {
+            filteredSlots = filterSlotsByTimeOfDay(
+              slotsResult.value,
+              requestedTimeCategory,
+              studio.timezone || 'Europe/Berlin'
+            );
+          }
+
           logger.info('Slot calculation succeeded for studio', {
             correlationId,
             studioId: studio.id,
             studioName: studio.name,
             totalSlots: slotsResult.value.length,
-            availableSlots: slotsResult.value.filter(s => s.available).length,
+            afterTimeFilter: filteredSlots.length,
+            timeCategory: requestedTimeCategory,
           });
 
           // Limit to 10 slots per studio for performance
-          const limitedSlots = slotsResult.value.slice(0, 10);
+          const limitedSlots = filteredSlots.slice(0, 10);
           return { ...studio, availableSlots: limitedSlots };
         } catch (error) {
           logger.error('Error calculating slots for studio', {
