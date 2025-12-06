@@ -89,17 +89,17 @@ export function StepConfirm({
   return (
     <div className="flex flex-col h-full">
       {/* Header with Back Button */}
-      <div className="flex items-center gap-3 mb-4">
+      <div className="flex items-center gap-3 mt-1 mb-3">
         <Button
           variant="ghost"
           size="icon"
           onClick={onBack}
           disabled={isSubmitting}
-          aria-label="Zurück zur Behandlungsauswahl"
+          aria-label="Zurück zur Serviceauswahl"
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h3 className="text-xl font-semibold">Buchung bestätigen</h3>
+        <h3 className="text-lg font-semibold">Buchung bestätigen</h3>
       </div>
 
       {/* Booking Summary Card */}
@@ -140,7 +140,7 @@ export function StepConfirm({
           <Separator />
 
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Behandlung</p>
+            <p className="text-sm text-muted-foreground mb-1">Service</p>
             <p className="font-semibold">{selectedService.name}</p>
             <p className="text-sm text-muted-foreground">
               {selectedService.duration} Minuten
@@ -258,7 +258,7 @@ export function StepConfirm({
           className="w-full"
           disabled={isSubmitting}
         >
-          Zurück zur Behandlungsauswahl
+          Zurück zur Serviceauswahl
         </Button>
       </div>
     </div>

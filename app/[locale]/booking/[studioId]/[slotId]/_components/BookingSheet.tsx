@@ -489,14 +489,10 @@ export function BookingSheet({
         <ProgressDots current={getStepNumber(currentStep)} total={3} />
       )}
 
-      {/* Title (hide on success) */}
-      {currentStep !== "success" && (
-        <DialogHeader className="mb-6">
-          <DialogTitle className="text-2xl font-bold">
-            Termin bestätigen
-          </DialogTitle>
-        </DialogHeader>
-      )}
+      {/* Hidden title for accessibility */}
+      <DialogHeader className="sr-only">
+        <DialogTitle>Terminbuchung</DialogTitle>
+      </DialogHeader>
 
       {/* Step Content */}
       <div className="flex-1 overflow-hidden">
@@ -514,22 +510,15 @@ export function BookingSheet({
             side="bottom"
             className="h-[80vh] rounded-t-3xl p-4 flex flex-col"
           >
-            {/* Drag Handle - Reduced margin: mb-4 (was mb-6) */}
-            <div className="mx-auto w-12 h-1.5 bg-muted rounded-full mb-4 flex-shrink-0" />
-
-            {/* Progress Dots */}
+            {/* Progress Dots - minimal spacing */}
             {currentStep !== "success" && (
               <ProgressDots current={getStepNumber(currentStep)} total={3} />
             )}
 
-            {/* Title - No bottom margin, text-lg (was text-2xl) for space efficiency */}
-            {currentStep !== "success" && (
-              <SheetHeader className="mb-2">
-                <SheetTitle className="text-lg font-bold">
-                  Termin bestätigen
-                </SheetTitle>
-              </SheetHeader>
-            )}
+            {/* Hidden title for accessibility */}
+            <SheetHeader className="sr-only">
+              <SheetTitle>Terminbuchung</SheetTitle>
+            </SheetHeader>
 
             {/* Content (Scrollable) - Adjusted margins: -mx-4 px-4 (was -mx-6 px-6) */}
             <div className="flex-1 overflow-y-auto -mx-4 px-4">

@@ -1,13 +1,9 @@
 "use client"
 
-import { useState } from "react"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { X, ChevronRight, Search, Calendar, Clock, MapPin } from "lucide-react"
+import { Calendar, Clock, MapPin } from "lucide-react"
 import type { Service, Studio } from "@/app/generated/prisma"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { RadioGroup } from "@/components/ui/radio-group"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { ServiceCard } from "./ServiceCard"
 
@@ -58,31 +54,22 @@ export function StepService({
   timeSlot,
   studio,
 }: StepServiceProps) {
-  const [searchQuery, setSearchQuery] = useState("")
   const startTime = new Date(timeSlot.startTime)
 
-  // Filter services based on search query
-  const filteredServices = services.filter((service) =>
-    service.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Handle service selection - select and immediately continue
+  const handleServiceClick = (serviceId: string) => {
+    onServiceSelect(serviceId)
+    // Small delay to show selection before continuing
+    setTimeout(() => onContinue(), 150)
+  }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with Cancel Button */}
-      <div className="flex items-center gap-3 mb-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onCancel}
-          aria-label="Buchung abbrechen"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-        <h3 className="text-xl font-semibold">Behandlung wählen</h3>
-      </div>
+      {/* Section Title */}
+      <h3 className="text-lg font-semibold mt-1 mb-3">Service wählen</h3>
 
       {/* Context Badge - Shows selected date/time/studio */}
-      <div className="bg-accent/10 border-l-4 border-primary p-3 mb-4 rounded-r-lg">
+      <div className="bg-accent/10 border-l-4 border-primary p-3 mb-4 rounded-lg">
         <div className="flex items-center gap-2 text-sm">
           <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
           <span>{format(startTime, "EEE, dd. MMM yyyy", { locale: de })}</span>
@@ -96,68 +83,27 @@ export function StepService({
         </div>
       </div>
 
-      {/* Search Input */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Behandlung suchen..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-12"
-          aria-label="Behandlungen durchsuchen"
-        />
-      </div>
-
       {/* Service List (Scrollable) */}
-      <ScrollArea className="flex-1 -mx-6 px-6">
-        {filteredServices.length > 0 ? (
-          <div className="bg-card rounded-xl overflow-hidden shadow-sm mb-4">
-            <RadioGroup
-              value={selectedServiceId || undefined}
-              onValueChange={onServiceSelect}
-            >
-              {filteredServices.map((service, index) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  isSelected={selectedServiceId === service.id}
-                  showBorder={index < filteredServices.length - 1}
-                />
-              ))}
-            </RadioGroup>
+      <ScrollArea className="flex-1">
+        {services.length > 0 ? (
+          <div className="space-y-2 pb-4">
+            {services.map((service) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                isSelected={selectedServiceId === service.id}
+                onClick={() => handleServiceClick(service.id)}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
-              Keine Behandlungen gefunden
+              Keine Services verfügbar
             </p>
-            {searchQuery && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSearchQuery("")}
-                className="mt-2"
-              >
-                Suche zurücksetzen
-              </Button>
-            )}
           </div>
         )}
       </ScrollArea>
-
-      {/* Actions */}
-      <div className="space-y-3 pt-4 border-t mt-4">
-        <Button
-          size="lg"
-          className="w-full h-14 text-lg bg-primary hover:bg-primary/90"
-          onClick={onContinue}
-          disabled={!selectedServiceId}
-        >
-          Weiter
-          <ChevronRight className="ml-2 h-5 w-5" />
-        </Button>
-      </div>
     </div>
   )
 }

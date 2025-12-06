@@ -3,81 +3,82 @@
 import { Clock } from "lucide-react"
 import type { Service } from "@/app/generated/prisma"
 import { cn } from "@/lib/utils"
-import { RadioGroupItem } from "@/components/ui/radio-group"
 
 interface ServiceCardProps {
   service: Service
   isSelected: boolean
-  showBorder?: boolean
+  onClick: () => void
 }
 
 /**
- * Compact Service List Item
+ * Service Card Component
  *
- * Kompaktes Listen-Item für Service-Auswahl im Booking Flow.
- * Design basiert auf SettingsListItem für konsistentes, platzsparendes Layout.
+ * Einzelne auswählbare Service-Card im Booking Flow.
+ * Design optimiert für klare visuelle Trennung und Auswahl-Feedback.
  *
  * Features:
- * - Radio button für Auswahl (links)
- * - Service Name prominent
- * - Duration + Price kompakt in einer Zeile
- * - Optionale Description (truncated)
- * - Border-bottom Separatoren statt separate Cards
+ * - Eigenständige Card mit Border und Rundung
+ * - Check-Icon bei Auswahl
+ * - Hover/Active States für Interaktivität
+ * - Preis und Dauer prominent
  *
  * Accessibility:
+ * - aria-pressed für Auswahlstatus
  * - Touch target minimum 48px
  * - Keyboard navigation support
- * - ARIA labels for screen readers
  */
-export function ServiceCard({ service, isSelected, showBorder = true }: ServiceCardProps) {
+export function ServiceCard({ service, isSelected, onClick }: ServiceCardProps) {
   return (
-    <label
-      htmlFor={service.id}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={isSelected}
       className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors",
-        isSelected
-          ? "bg-primary/5"
-          : "hover:bg-accent/50 active:bg-accent",
-        showBorder && "border-b border-border last:border-b-0"
+        // Base styles
+        "w-full flex items-start gap-3 p-4 transition-all text-left rounded-xl border-2",
+
+        // Default: erkennbar als interaktiv
+        !isSelected && [
+          "bg-card border-border/50",
+          "hover:border-primary/40 hover:bg-accent/30",
+          "active:bg-accent/50 active:scale-[0.99]"
+        ],
+
+        // Selected: deutlich hervorgehoben
+        isSelected && [
+          "bg-primary/10 border-primary",
+          "shadow-sm"
+        ]
       )}
     >
-      {/* Radio Button */}
-      <RadioGroupItem
-        value={service.id}
-        id={service.id}
-        className="shrink-0"
-      />
-
-      {/* Service Icon mit farbigem Background */}
-      <div
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10"
-        aria-hidden="true"
-      >
-        <Clock className="h-4 w-4 text-primary" />
-      </div>
-
-      {/* Service Info */}
+      {/* Left: Title + Description */}
       <div className="flex-1 min-w-0">
-        <p className="text-[15px] font-medium text-foreground truncate">
+        <span className={cn(
+          "font-semibold leading-tight block",
+          isSelected ? "text-primary" : "text-foreground"
+        )}>
           {service.name}
-        </p>
-        <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-          <span>{service.duration} min</span>
-          {service.description && (
-            <>
-              <span>•</span>
-              <span className="truncate">{service.description}</span>
-            </>
-          )}
-        </div>
+        </span>
+        {service.description && (
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+            {service.description}
+          </p>
+        )}
       </div>
 
-      {/* Price */}
-      <div className="shrink-0 text-right">
-        <p className="text-[15px] font-semibold text-primary">
+      {/* Right: Price + Duration */}
+      <div className="flex-shrink-0 flex flex-col items-end gap-1">
+        <span className={cn(
+          "font-bold text-base",
+          isSelected ? "text-primary" : "text-foreground"
+        )}>
           €{service.price.toFixed(0)}
-        </p>
+        </span>
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Clock className="h-3 w-3" />
+          {service.duration} min
+        </span>
       </div>
-    </label>
+    </button>
   )
 }
