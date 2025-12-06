@@ -20,8 +20,8 @@ import { logger, generateCorrelationId } from '@/lib/logger';
  */
 const TIME_RANGES = {
   morning: { start: 8, end: 12 },    // 08:00 - 12:00
-  afternoon: { start: 12, end: 17 }, // 12:00 - 17:00
-  evening: { start: 17, end: 22 },   // 17:00 - 22:00
+  afternoon: { start: 12, end: 18 }, // 12:00 - 18:00
+  evening: { start: 18, end: 22 },   // 18:00 - 22:00
 } as const;
 
 /**
@@ -43,10 +43,10 @@ function getTimeOfDayCategory(hour: number): keyof typeof TIME_RANGES | null {
   if (hour >= 8 && hour < 12) {
     return 'morning';
   }
-  if (hour >= 12 && hour < 17) {
+  if (hour >= 12 && hour < 18) {
     return 'afternoon';
   }
-  if (hour >= 17 && hour < 22) {
+  if (hour >= 18 && hour < 22) {
     return 'evening';
   }
 
