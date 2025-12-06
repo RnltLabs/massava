@@ -111,37 +111,39 @@ export function StepService({
 
       {/* Service List (Scrollable) */}
       <ScrollArea className="flex-1 -mx-6 px-6">
-        <RadioGroup
-          value={selectedServiceId || undefined}
-          onValueChange={onServiceSelect}
-          className="space-y-3 pb-4"
-        >
-          {filteredServices.length > 0 ? (
-            filteredServices.map((service) => (
-              <ServiceCard
-                key={service.id}
-                service={service}
-                isSelected={selectedServiceId === service.id}
-              />
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">
-                Keine Behandlungen gefunden
-              </p>
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery("")}
-                  className="mt-2"
-                >
-                  Suche zurücksetzen
-                </Button>
-              )}
-            </div>
-          )}
-        </RadioGroup>
+        {filteredServices.length > 0 ? (
+          <div className="bg-card rounded-xl overflow-hidden shadow-sm mb-4">
+            <RadioGroup
+              value={selectedServiceId || undefined}
+              onValueChange={onServiceSelect}
+            >
+              {filteredServices.map((service, index) => (
+                <ServiceCard
+                  key={service.id}
+                  service={service}
+                  isSelected={selectedServiceId === service.id}
+                  showBorder={index < filteredServices.length - 1}
+                />
+              ))}
+            </RadioGroup>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              Keine Behandlungen gefunden
+            </p>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSearchQuery("")}
+                className="mt-2"
+              >
+                Suche zurücksetzen
+              </Button>
+            )}
+          </div>
+        )}
       </ScrollArea>
 
       {/* Actions */}
