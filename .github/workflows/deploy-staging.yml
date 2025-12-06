@@ -135,6 +135,7 @@ jobs:
             -e QSTASH_TOKEN="${{ secrets.QSTASH_TOKEN }}" \
             -e QSTASH_CURRENT_SIGNING_KEY="${{ secrets.QSTASH_CURRENT_SIGNING_KEY }}" \
             -e QSTASH_NEXT_SIGNING_KEY="${{ secrets.QSTASH_NEXT_SIGNING_KEY }}" \
+            -e RADAR_SECRET_KEY="${{ secrets.RADAR_SECRET_KEY }}" \
             --name massava-staging \
             --restart unless-stopped \
             ${{ secrets.DOCKER_USERNAME }}/massava:staging
