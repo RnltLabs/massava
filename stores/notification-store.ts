@@ -402,6 +402,11 @@ export const useNotificationStore = create<NotificationState>()(
         try {
           const response = await fetch('/api/notifications/unread-count');
 
+          // 401 is expected when user is not logged in - silently ignore
+          if (response.status === 401) {
+            return;
+          }
+
           if (!response.ok) {
             throw new Error('Failed to fetch unread count');
           }
@@ -409,6 +414,11 @@ export const useNotificationStore = create<NotificationState>()(
           const data = await response.json();
           set({ unreadCount: data.count });
         } catch (error) {
+          // Only log errors that are not network-related auth issues
+          if (error instanceof TypeError && error.message.includes('fetch')) {
+            // Network error - silently ignore
+            return;
+          }
           console.error('Failed to fetch unread count:', error);
         }
       },
