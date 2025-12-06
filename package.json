@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:fresh": "npm run seed:if-empty && npm run dev",
+    "seed:if-empty": "tsx scripts/seed-if-empty.ts",
     "prebuild": "npm run build:sw",
     "build": "next build",
     "start": "next start",
