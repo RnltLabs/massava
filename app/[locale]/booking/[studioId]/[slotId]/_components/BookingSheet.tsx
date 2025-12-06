@@ -451,6 +451,7 @@ export function BookingSheet({
             postalCode: studio.postalCode || undefined,
             country: "Deutschland", // Default country
             phone: studio.phone || undefined,
+            timezone: studio.timezone || "Europe/Berlin", // Use studio's timezone for ICS
           }
 
           return (

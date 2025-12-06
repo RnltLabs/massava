@@ -13,7 +13,7 @@ import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { revalidatePath } from 'next/cache';
 import { sendBookingConfirmationEmail, sendBookingCancellationEmail } from '@/lib/email/send';
-import { format } from 'date-fns';
+import { formatInTimezone } from '@/lib/timezone/utils';
 import { de } from 'date-fns/locale';
 
 export interface ActionResult {
@@ -91,6 +91,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
 
     // Send confirmation email to customer
     try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
       const emailResult = await sendBookingConfirmationEmail(
         booking.customerEmail,
         {
@@ -98,8 +99,8 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
-          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
           studioAddress: booking.studio.address || undefined,
           studioPhone: booking.studio.phone || undefined,
           message: booking.message || undefined,
@@ -245,6 +246,7 @@ export async function cancelConfirmedBooking(
 
     // Send cancellation email to customer
     try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
       const emailResult = await sendBookingCancellationEmail(
         booking.customerEmail,
         {
@@ -252,8 +254,8 @@ export async function cancelConfirmedBooking(
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
-          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
           cancellationReason: reason,
         },
         'de'
@@ -388,6 +390,7 @@ export async function declineBooking(
 
     // Send cancellation email to customer
     try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
       const emailResult = await sendBookingCancellationEmail(
         booking.customerEmail,
         {
@@ -395,8 +398,8 @@ export async function declineBooking(
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de }),
-          bookingTime: format(booking.preferredDateTime, 'HH:mm'),
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
           cancellationReason: reason,
         },
         'de'

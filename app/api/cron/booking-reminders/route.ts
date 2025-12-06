@@ -18,6 +18,7 @@ import {
 } from '@/lib/notifications/booking-notification-helper';
 import { logger } from '@/lib/logger';
 import { format, startOfDay, endOfDay, addDays, addHours, subMinutes } from 'date-fns';
+import { formatInTimezone } from '@/lib/timezone/utils';
 
 /**
  * Vercel Cron Job Endpoint
@@ -131,6 +132,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         const locale = 'de'; // TODO: Add locale field to Studio model in future
 
         // Send reminder email to customer
+        const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
         const emailResult = await sendBookingReminderEmail(
           booking.customerEmail,
           {
@@ -138,8 +140,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             customerName: booking.customerName,
             studioName: booking.studio.name,
             serviceName: booking.service?.name || 'Service',
-            bookingDate: format(booking.preferredDateTime, 'yyyy-MM-dd'),
-            bookingTime: format(booking.preferredDateTime, 'HH:mm'),
+            bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'yyyy-MM-dd'),
+            bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
             studioAddress: booking.studio.address || undefined,
             studioPhone: booking.studio.phone || undefined,
           },

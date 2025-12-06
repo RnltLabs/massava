@@ -113,6 +113,7 @@ function createBookingMetadata(
     appointmentTime: formatAppointmentTime(input.preferredDateTime),
     studioName: input.studioName,
     studioId: input.studioId,
+    studioTimezone: input.studioTimezone, // Include timezone for proper date formatting
   };
   // Return as Record<string, unknown> to satisfy notificationService.create() signature
   return metadata as unknown as Record<string, unknown>;

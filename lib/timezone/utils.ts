@@ -6,6 +6,7 @@
  */
 
 import { toZonedTime, fromZonedTime, format, formatInTimeZone } from 'date-fns-tz';
+import type { Locale } from 'date-fns';
 import { validateTimezoneOrThrow } from './validation';
 import type { OpeningHours } from './types';
 
@@ -72,26 +73,34 @@ export function nowInTimezone(timezone: string): Date {
  * @param date - Date to format
  * @param timezone - IANA timezone
  * @param formatStr - date-fns format string (default: 'yyyy-MM-dd HH:mm')
+ * @param options - Additional options including locale
  * @returns Formatted date string
  *
  * @throws Error if timezone is invalid
  *
  * @example
+ * import { de } from 'date-fns/locale';
+ *
  * formatInTimezone(
  *   new Date('2025-12-01T10:00:00Z'),
  *   'Europe/Berlin',
- *   'yyyy-MM-dd HH:mm:ss'
+ *   'EEEE, d. MMMM yyyy',
+ *   { locale: de }
  * )
- * // "2025-12-01 11:00:00"
+ * // "Montag, 1. Dezember 2025"
  */
 export function formatInTimezone(
   date: Date,
   timezone: string,
-  formatStr: string = 'yyyy-MM-dd HH:mm'
+  formatStr: string = 'yyyy-MM-dd HH:mm',
+  options?: { locale?: Locale }
 ): string {
   validateTimezoneOrThrow(timezone);
-  return formatInTimeZone(date, timezone, formatStr);
+  return formatInTimeZone(date, timezone, formatStr, options);
 }
+
+// Re-export Locale type for convenience
+export type { Locale };
 
 /**
  * Get timezone offset for a date (e.g., "+01:00", "-05:00")

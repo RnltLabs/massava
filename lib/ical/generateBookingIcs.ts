@@ -11,7 +11,7 @@ import { z, ZodError } from "zod"
 
 // Constants
 const REMINDER_MINUTES_BEFORE = 15;
-const TIMEZONE = 'Europe/Berlin';
+const DEFAULT_TIMEZONE = 'Europe/Berlin';
 
 /**
  * Zod schema for booking details validation
@@ -35,6 +35,7 @@ const studioDetailsSchema = z.object({
   postalCode: z.string().max(20).optional(),
   country: z.string().max(100).optional(),
   phone: z.string().max(30).optional(),
+  timezone: z.string().max(50).optional(), // IANA timezone (e.g., 'Europe/Berlin')
 });
 
 /**
@@ -79,22 +80,24 @@ function sanitizeICalText(text: string): string {
 }
 
 /**
- * Convert Date to DateArray format for ics library in local timezone
- * The date should already be in the correct timezone (Europe/Berlin)
- * We use it as-is without UTC conversion to preserve the local time
+ * Convert Date to DateArray format for ics library in specified timezone
+ * Converts UTC date to target timezone before extracting components
  *
- * @param date - Date object in local timezone (Europe/Berlin)
+ * @param date - Date object (typically in UTC from database)
+ * @param timezone - Target timezone (IANA format, e.g., 'Europe/Berlin')
  * @returns DateArray: [year, month, day, hour, minute]
  */
-function dateToLocalArray(date: Date): DateArray {
-  // Use the date as-is (should already be in Europe/Berlin timezone)
-  // Don't convert to UTC - we want to preserve the local time
+function dateToLocalArray(date: Date, timezone: string): DateArray {
+  // Convert UTC date to target timezone
+  const zonedDate = toZonedTime(date, timezone);
+
+  // Extract components from the zoned date
   return [
-    date.getFullYear(),
-    date.getMonth() + 1, // Month is 0-indexed in JS, 1-indexed in ics
-    date.getDate(),
-    date.getHours(),
-    date.getMinutes(),
+    zonedDate.getFullYear(),
+    zonedDate.getMonth() + 1, // Month is 0-indexed in JS, 1-indexed in ics
+    zonedDate.getDate(),
+    zonedDate.getHours(),
+    zonedDate.getMinutes(),
   ];
 }
 
@@ -109,15 +112,15 @@ function dateToLocalArray(date: Date): DateArray {
  * - Alarm reminder (15 minutes before)
  *
  * @param booking - Booking details
- * @param studio - Studio details
- * @param timezone - Timezone for the booking (defaults to Europe/Berlin)
+ * @param studio - Studio details (including timezone)
  * @returns ICS file content as string, or null if generation fails
  */
 export function generateBookingIcs(
   booking: BookingDetails,
-  studio: StudioDetails,
-  timezone: string = TIMEZONE
+  studio: StudioDetails
 ): string | null {
+  // Use studio's timezone or default to Europe/Berlin
+  const timezone = studio.timezone || DEFAULT_TIMEZONE;
   const correlationId = generateCorrelationId();
 
   try {
@@ -172,11 +175,11 @@ export function generateBookingIcs(
 
     const description = descriptionLines.join("\\n"); // Use escaped newline for iCal
 
-    // Create event attributes with local timezone times (Europe/Berlin)
+    // Create event attributes with times in studio's timezone
     const event: EventAttributes = {
-      start: dateToLocalArray(validatedBooking.startDateTime),
+      start: dateToLocalArray(validatedBooking.startDateTime, timezone),
       startInputType: 'local',
-      end: dateToLocalArray(validatedBooking.endDateTime),
+      end: dateToLocalArray(validatedBooking.endDateTime, timezone),
       endInputType: 'local',
       title: sanitizedBooking.serviceName,
       description,

@@ -19,7 +19,7 @@ import {
   assertPaymentMetadata,
   assertReviewMetadata,
 } from './utils/metadata-guards';
-import { format } from 'date-fns';
+import { formatInTimezone } from '@/lib/timezone/utils';
 import { de } from 'date-fns/locale';
 
 /**
@@ -70,25 +70,27 @@ export interface NotificationTemplate {
 type TemplateFunction = (metadata: Record<string, unknown>) => NotificationTemplate;
 
 /**
- * Format a date string for display in German locale
+ * Format a date string for display in German locale with timezone support
  *
  * Converts ISO 8601 dates to human-readable German format with day of week, date, and time.
+ * Uses the studio's timezone for accurate local time display.
  * Example: "Montag, 15. Januar um 14:00 Uhr"
  *
  * @param {string} dateString - ISO 8601 formatted date string
+ * @param {string} [timezone='Europe/Berlin'] - IANA timezone for formatting
  *
  * @returns {string} Formatted date string in German locale, or original string if parsing fails
  *
  * @example
  * ```typescript
- * const formatted = formatDate('2025-01-15T14:00:00Z');
- * // Returns: "Mittwoch, 15. Januar um 14:00 Uhr"
+ * const formatted = formatDate('2025-01-15T14:00:00Z', 'Europe/Berlin');
+ * // Returns: "Mittwoch, 15. Januar um 15:00 Uhr" (UTC+1)
  * ```
  */
-function formatDate(dateString: string): string {
+function formatDate(dateString: string, timezone: string = 'Europe/Berlin'): string {
   try {
     const date = new Date(dateString);
-    return format(date, "EEEE, d. MMMM 'um' HH:mm 'Uhr'", { locale: de });
+    return formatInTimezone(date, timezone, "EEEE, d. MMMM 'um' HH:mm 'Uhr'", { locale: de });
   } catch {
     return dateString;
   }
@@ -121,7 +123,7 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, TemplateFunction> 
     assertBookingMetadata(meta);
     return {
       title: 'Neue Buchungsanfrage',
-      body: `${meta.customerName} möchte ${meta.serviceName} am ${formatDate(meta.appointmentTime)} buchen.`,
+      body: `${meta.customerName} möchte ${meta.serviceName} am ${formatDate(meta.appointmentTime, meta.studioTimezone)} buchen.`,
       actionUrl: `/business/bookings?highlight=${meta.bookingId}`,
     };
   },
@@ -130,7 +132,7 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, TemplateFunction> 
     assertBookingMetadata(meta);
     return {
       title: 'Buchung storniert',
-      body: `${meta.customerName} hat die Buchung für ${meta.serviceName} am ${formatDate(meta.appointmentTime)} storniert.`,
+      body: `${meta.customerName} hat die Buchung für ${meta.serviceName} am ${formatDate(meta.appointmentTime, meta.studioTimezone)} storniert.`,
       actionUrl: `/business/bookings?highlight=${meta.bookingId}`,
     };
   },
@@ -173,7 +175,7 @@ export const NOTIFICATION_TEMPLATES: Record<NotificationType, TemplateFunction> 
     assertBookingMetadata(meta);
     return {
       title: 'Buchung bestätigt',
-      body: `Dein Termin bei ${meta.studioName} für ${meta.serviceName} am ${formatDate(meta.appointmentTime)} wurde bestätigt.`,
+      body: `Dein Termin bei ${meta.studioName} für ${meta.serviceName} am ${formatDate(meta.appointmentTime, meta.studioTimezone)} wurde bestätigt.`,
       actionUrl: `/bookings/${meta.bookingId}`,
     };
   },

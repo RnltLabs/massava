@@ -16,6 +16,7 @@ export interface BookingNotificationMetadata {
   appointmentTime: string; // ISO 8601
   studioName: string;
   studioId: string;
+  studioTimezone?: string; // IANA timezone (e.g., 'Europe/Berlin')
 }
 
 /**
