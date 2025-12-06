@@ -114,34 +114,6 @@ export interface GeocodingSearchResult {
 }
 
 /**
- * Extended configuration for a geocoding provider
- *
- * This is used for advanced configuration scenarios.
- * For the basic provider configuration, see GeocodingProviderConfig
- * in providers/geocoding-provider.ts
- *
- * @deprecated Use GeocodingProviderConfig from providers/geocoding-provider.ts
- */
-export interface GeocodingProviderConfigExtended {
-  /** Provider name */
-  readonly name: GeocodingProviderName;
-  /** Base URL for API requests */
-  readonly baseUrl: string;
-  /** Request timeout in milliseconds */
-  readonly timeout: number;
-  /** Default result limit */
-  readonly defaultLimit: number;
-  /** Default language code */
-  readonly defaultLang: string;
-  /** API key (if required) */
-  readonly apiKey?: string;
-  /** Priority for provider selection (lower = higher priority) */
-  readonly priority: number;
-  /** Whether this provider is enabled */
-  readonly enabled: boolean;
-}
-
-/**
  * Cache statistics for monitoring
  */
 export interface CacheStats {

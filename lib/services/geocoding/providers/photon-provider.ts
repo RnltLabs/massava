@@ -13,21 +13,17 @@
  * @module lib/services/geocoding/providers/photon-provider
  */
 
-import { logger, generateCorrelationId } from '@/lib/logger';
-import { createGeocodingError, exceptionToGeocodingError } from '../errors';
-import type { GeocodingError } from '../errors';
-import type {
-  AddressSuggestion,
-  GeocodingSearchOptions,
-  ProviderHealth,
-} from '../types';
-import { prioritizeDACHAddresses } from '../utils/dach-prioritizer';
+import { logger, generateCorrelationId } from "@/lib/logger";
+import { createGeocodingError, exceptionToGeocodingError } from "../errors";
+import type { GeocodingError } from "../errors";
+import type { AddressSuggestion, GeocodingSearchOptions } from "../types";
+import { prioritizeDACHAddresses } from "../utils/dach-prioritizer";
 import type {
   GeocodingProvider,
   GeocodingProviderConfig,
   GeocodingProviderResult,
-} from './geocoding-provider';
-import { createProviderConfig } from './geocoding-provider';
+} from "./geocoding-provider";
+import { createProviderConfig } from "./geocoding-provider";
 
 /**
  * Photon API response structures
@@ -48,7 +44,7 @@ interface PhotonFeatureProperties {
 
 interface PhotonFeatureGeometry {
   readonly coordinates: readonly [number, number]; // [longitude, latitude]
-  readonly type: 'Point';
+  readonly type: "Point";
 }
 
 interface PhotonFeature {
@@ -58,38 +54,22 @@ interface PhotonFeature {
 
 interface PhotonResponse {
   readonly features: readonly PhotonFeature[];
-  readonly type: 'FeatureCollection';
+  readonly type: "FeatureCollection";
 }
 
 /**
  * Default configuration for Photon provider
  */
 const PHOTON_DEFAULTS = {
-  baseUrl: 'https://photon.komoot.io/api/',
+  baseUrl: "https://photon.komoot.io/api/",
   timeout: 5000,
   maxRetries: 2,
   defaultLimit: 8,
-  defaultLang: 'de',
+  defaultLang: "de",
   minQueryLength: 3,
   // Bounding box for DACH region: West(5.9), South(45.8), East(17.2), North(55.0)
-  dachBbox: '5.9,45.8,17.2,55.0',
-  // Circuit breaker settings
-  failureThreshold: 5,
-  recoveryTimeMs: 30000,
+  dachBbox: "5.9,45.8,17.2,55.0",
 } as const;
-
-/**
- * Health tracking state
- */
-interface HealthState {
-  consecutiveFailures: number;
-  lastSuccessAt: Date | null;
-  lastFailureAt: Date | null;
-  responseTimes: readonly number[];
-  requestCount: number;
-  successCount: number;
-  circuitOpenUntil: Date | null;
-}
 
 /**
  * Transform Photon API feature to AddressSuggestion format
@@ -97,12 +77,14 @@ interface HealthState {
  * @param feature - Photon API feature object
  * @returns Transformed address suggestion or null if invalid
  */
-function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | null {
+function transformPhotonFeature(
+  feature: PhotonFeature,
+): AddressSuggestion | null {
   const { properties, geometry } = feature;
 
   // Extract street information (prefer 'street' field, fallback to 'name')
-  const streetName = properties.street || properties.name || '';
-  const houseNumber = properties.housenumber || '';
+  const streetName = properties.street || properties.name || "";
+  const houseNumber = properties.housenumber || "";
   const street = houseNumber ? `${streetName} ${houseNumber}` : streetName;
 
   // Extract city information (multiple fallbacks)
@@ -111,13 +93,13 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
     properties.locality ||
     properties.district ||
     properties.state ||
-    '';
+    "";
 
   // Extract postal code
-  const postalCode = properties.postcode || '';
+  const postalCode = properties.postcode || "";
 
   // Extract country
-  const country = properties.country || 'Deutschland';
+  const country = properties.country || "Deutschland";
 
   // Extract coordinates (Photon returns [longitude, latitude])
   const [lng, lat] = geometry.coordinates;
@@ -128,7 +110,7 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
   }
 
   // Validate coordinates
-  if (typeof lat !== 'number' || typeof lng !== 'number') {
+  if (typeof lat !== "number" || typeof lng !== "number") {
     return null;
   }
 
@@ -155,8 +137,11 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
  * - Free OSM-based geocoding
  * - No API key required
  * - DACH region prioritization
- * - Circuit breaker pattern for resilience
- * - Health tracking and metrics
+ *
+ * **NOTE**: This provider is stateless regarding failure tracking.
+ * Circuit breaker logic and health monitoring are handled by the
+ * GeocodingOrchestrator, which is the single source of truth for
+ * provider health decisions.
  *
  * @example
  * ```typescript
@@ -173,18 +158,8 @@ function transformPhotonFeature(feature: PhotonFeature): AddressSuggestion | nul
  * ```
  */
 export class PhotonProvider implements GeocodingProvider {
-  readonly name = 'photon' as const;
+  readonly name = "photon" as const;
   readonly config: GeocodingProviderConfig;
-
-  private health: HealthState = {
-    consecutiveFailures: 0,
-    lastSuccessAt: null,
-    lastFailureAt: null,
-    responseTimes: [],
-    requestCount: 0,
-    successCount: 0,
-    circuitOpenUntil: null,
-  };
 
   /**
    * Create a new Photon provider instance
@@ -208,7 +183,7 @@ export class PhotonProvider implements GeocodingProvider {
    */
   async search(
     query: string,
-    options: GeocodingSearchOptions
+    options: GeocodingSearchOptions,
   ): Promise<GeocodingProviderResult> {
     const correlationId = options.correlationId ?? generateCorrelationId();
     const limit = options.limit ?? PHOTON_DEFAULTS.defaultLimit;
@@ -220,43 +195,29 @@ export class PhotonProvider implements GeocodingProvider {
     if (trimmedQuery.length < PHOTON_DEFAULTS.minQueryLength) {
       return {
         ok: false,
-        error: createGeocodingError('INVALID_INPUT', 'Query too short', {
+        error: createGeocodingError("INVALID_INPUT", "Query too short", {
           correlationId,
           provider: this.name,
-          field: 'query',
+          field: "query",
           value: trimmedQuery,
           constraint: `Minimum ${PHOTON_DEFAULTS.minQueryLength} characters required`,
         }),
       };
     }
 
-    // Check circuit breaker
-    if (!this.isAvailable()) {
-      return {
-        ok: false,
-        error: createGeocodingError(
-          'PROVIDER_UNAVAILABLE',
-          'Provider temporarily unavailable due to recent failures',
-          {
-            correlationId,
-            provider: this.name,
-            reason: 'Circuit breaker open',
-            availableAt: this.health.circuitOpenUntil ?? undefined,
-          }
-        ),
-      };
-    }
+    // NOTE: Circuit breaker check is handled by the GeocodingOrchestrator
+    // This provider just executes the request
 
     // Build URL with query parameters
     const url = new URL(this.config.baseUrl);
-    url.searchParams.set('q', trimmedQuery);
-    url.searchParams.set('lang', lang);
+    url.searchParams.set("q", trimmedQuery);
+    url.searchParams.set("lang", lang);
     // Request more results than limit to allow for DACH prioritization
-    url.searchParams.set('limit', String(Math.min(limit * 2, 20)));
+    url.searchParams.set("limit", String(Math.min(limit * 2, 20)));
 
     // Optional: Restrict results to DACH region using bounding box
     if (options.restrictToDACH) {
-      url.searchParams.set('bbox', PHOTON_DEFAULTS.dachBbox);
+      url.searchParams.set("bbox", PHOTON_DEFAULTS.dachBbox);
     }
 
     // Create abort controller for timeout
@@ -271,7 +232,7 @@ export class PhotonProvider implements GeocodingProvider {
     const startTime = Date.now();
 
     try {
-      logger.debug('Photon: Fetching address suggestions', {
+      logger.debug("Photon: Fetching address suggestions", {
         correlationId,
         query: trimmedQuery,
         limit,
@@ -280,9 +241,9 @@ export class PhotonProvider implements GeocodingProvider {
       });
 
       const response = await fetch(url.toString(), {
-        method: 'GET',
+        method: "GET",
         headers: {
-          Accept: 'application/json',
+          Accept: "application/json",
         },
         signal: combinedSignal,
       });
@@ -290,7 +251,6 @@ export class PhotonProvider implements GeocodingProvider {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        this.recordFailure();
         return {
           ok: false,
           error: this.handleHttpError(response.status, correlationId),
@@ -301,18 +261,17 @@ export class PhotonProvider implements GeocodingProvider {
 
       // Validate response structure
       if (!data.features || !Array.isArray(data.features)) {
-        this.recordFailure();
         return {
           ok: false,
           error: createGeocodingError(
-            'INVALID_RESPONSE',
-            'Invalid response structure from Photon API',
+            "INVALID_RESPONSE",
+            "Invalid response structure from Photon API",
             {
               correlationId,
               provider: this.name,
-              expectedFormat: '{ features: PhotonFeature[] }',
+              expectedFormat: "{ features: PhotonFeature[] }",
               receivedData: JSON.stringify(data).slice(0, 200),
-            }
+            },
           ),
         };
       }
@@ -320,18 +279,18 @@ export class PhotonProvider implements GeocodingProvider {
       // Transform features to address suggestions
       const suggestions = data.features
         .map(transformPhotonFeature)
-        .filter((suggestion): suggestion is AddressSuggestion => suggestion !== null);
+        .filter(
+          (suggestion): suggestion is AddressSuggestion => suggestion !== null,
+        );
 
       // Prioritize DACH addresses and limit results
       const prioritizedSuggestions = prioritizeDACHAddresses(suggestions, {
         maxResults: limit,
       });
 
-      // Record success
       const duration = Date.now() - startTime;
-      this.recordSuccess(duration);
 
-      logger.debug('Photon: Successfully fetched address suggestions', {
+      logger.debug("Photon: Successfully fetched address suggestions", {
         correlationId,
         query: trimmedQuery,
         rawResultCount: data.features.length,
@@ -346,15 +305,14 @@ export class PhotonProvider implements GeocodingProvider {
       };
     } catch (error) {
       clearTimeout(timeoutId);
-      this.recordFailure();
 
       const geocodingError = exceptionToGeocodingError(
         error,
         this.name,
-        correlationId
+        correlationId,
       );
 
-      logger.warn('Photon: Request failed', {
+      logger.warn("Photon: Request failed", {
         correlationId,
         query: trimmedQuery,
         errorType: geocodingError.type,
@@ -369,127 +327,60 @@ export class PhotonProvider implements GeocodingProvider {
   }
 
   /**
-   * Check if the provider is currently available
+   * Check if the provider is properly configured
    *
-   * @returns True if provider can accept requests
-   */
-  isAvailable(): boolean {
-    // Check if circuit breaker is open
-    if (this.health.circuitOpenUntil) {
-      const now = new Date();
-      if (now < this.health.circuitOpenUntil) {
-        return false;
-      }
-      // Circuit breaker timeout expired, allow retry (half-open state)
-      this.health = {
-        ...this.health,
-        circuitOpenUntil: null,
-      };
-    }
-
-    return true;
-  }
-
-  /**
-   * Get detailed health status of the provider
+   * For Photon, this always returns true as no API key is required.
+   * Circuit breaker state is managed by the GeocodingOrchestrator.
    *
-   * @returns Provider health status
+   * @returns True (Photon is always configured)
    */
-  getHealth(): ProviderHealth {
-    const avgResponseTimeMs =
-      this.health.responseTimes.length > 0
-        ? this.health.responseTimes.reduce((a, b) => a + b, 0) /
-          this.health.responseTimes.length
-        : 0;
-
-    const successRate =
-      this.health.requestCount > 0
-        ? (this.health.successCount / this.health.requestCount) * 100
-        : 100;
-
-    return {
-      provider: this.name,
-      isHealthy: this.isAvailable() && this.health.consecutiveFailures < 3,
-      consecutiveFailures: this.health.consecutiveFailures,
-      lastSuccessAt: this.health.lastSuccessAt,
-      lastFailureAt: this.health.lastFailureAt,
-      avgResponseTimeMs: Math.round(avgResponseTimeMs),
-      successRate: Math.round(successRate * 100) / 100,
-      availableAt: this.health.circuitOpenUntil,
-    };
+  isConfigured(): boolean {
+    // Photon requires no API key and has a default base URL
+    return Boolean(this.config.baseUrl);
   }
 
   /**
    * Handle HTTP error responses
    */
-  private handleHttpError(statusCode: number, correlationId: string): GeocodingError {
+  private handleHttpError(
+    statusCode: number,
+    correlationId: string,
+  ): GeocodingError {
     if (statusCode === 429) {
-      return createGeocodingError('RATE_LIMITED', 'Photon API rate limit exceeded', {
-        correlationId,
-        provider: this.name,
-        statusCode,
-        retryAfterMs: 60000,
-      });
+      return createGeocodingError(
+        "RATE_LIMITED",
+        "Photon API rate limit exceeded",
+        {
+          correlationId,
+          provider: this.name,
+          statusCode,
+          retryAfterMs: 60000,
+        },
+      );
     }
 
     if (statusCode >= 500) {
-      return createGeocodingError('PROVIDER_UNAVAILABLE', 'Photon API server error', {
+      return createGeocodingError(
+        "PROVIDER_UNAVAILABLE",
+        "Photon API server error",
+        {
+          correlationId,
+          provider: this.name,
+          statusCode,
+          reason: `HTTP ${statusCode}`,
+        },
+      );
+    }
+
+    return createGeocodingError(
+      "NETWORK_ERROR",
+      `Photon API returned ${statusCode}`,
+      {
         correlationId,
         provider: this.name,
         statusCode,
-        reason: `HTTP ${statusCode}`,
-      });
-    }
-
-    return createGeocodingError('NETWORK_ERROR', `Photon API returned ${statusCode}`, {
-      correlationId,
-      provider: this.name,
-      statusCode,
-    });
-  }
-
-  /**
-   * Record a successful request
-   */
-  private recordSuccess(durationMs: number): void {
-    // Keep only last 100 response times for rolling average
-    const responseTimes = [...this.health.responseTimes, durationMs].slice(-100);
-
-    this.health = {
-      ...this.health,
-      consecutiveFailures: 0,
-      lastSuccessAt: new Date(),
-      responseTimes,
-      requestCount: this.health.requestCount + 1,
-      successCount: this.health.successCount + 1,
-      circuitOpenUntil: null,
-    };
-  }
-
-  /**
-   * Record a failed request
-   */
-  private recordFailure(): void {
-    const consecutiveFailures = this.health.consecutiveFailures + 1;
-
-    // Open circuit breaker if threshold exceeded
-    let circuitOpenUntil: Date | null = null;
-    if (consecutiveFailures >= PHOTON_DEFAULTS.failureThreshold) {
-      circuitOpenUntil = new Date(Date.now() + PHOTON_DEFAULTS.recoveryTimeMs);
-      logger.warn('Photon: Circuit breaker opened', {
-        consecutiveFailures,
-        recoveryTimeMs: PHOTON_DEFAULTS.recoveryTimeMs,
-        availableAt: circuitOpenUntil.toISOString(),
-      });
-    }
-
-    this.health = {
-      ...this.health,
-      consecutiveFailures,
-      lastFailureAt: new Date(),
-      requestCount: this.health.requestCount + 1,
-      circuitOpenUntil,
-    };
+      },
+    );
   }
 
   /**
@@ -503,7 +394,7 @@ export class PhotonProvider implements GeocodingProvider {
         controller.abort(signal.reason);
         break;
       }
-      signal.addEventListener('abort', () => controller.abort(signal.reason), {
+      signal.addEventListener("abort", () => controller.abort(signal.reason), {
         once: true,
       });
     }
@@ -518,7 +409,7 @@ export class PhotonProvider implements GeocodingProvider {
  * @returns Configured PhotonProvider instance
  */
 export function createPhotonProvider(
-  config?: Partial<GeocodingProviderConfig>
+  config?: Partial<GeocodingProviderConfig>,
 ): PhotonProvider {
   return new PhotonProvider(config);
 }

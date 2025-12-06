@@ -57,7 +57,8 @@ interface CacheState {
  * @returns Unique cache key
  */
 function generateCacheKey(query: string, options?: GeocodingSearchOptions): string {
-  const normalizedQuery = query.trim().toLowerCase();
+  // Limit query length for cache key to prevent excessively large keys
+  const normalizedQuery = query.trim().toLowerCase().slice(0, 200);
   const limit = options?.limit ?? 8;
   const lang = options?.lang ?? 'de';
   const restrictToDACH = options?.restrictToDACH ?? false;

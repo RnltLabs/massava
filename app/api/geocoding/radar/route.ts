@@ -46,13 +46,69 @@ const RADAR_CONFIG = {
 const RATE_LIMIT_CONFIG = {
   windowMs: 60000, // 1 minute
   maxRequests: 100, // Max 100 requests per minute per IP
+  cleanupIntervalMs: 60000, // Cleanup expired entries every 60 seconds
+  maxStoreSize: 10000, // Maximum entries before forced cleanup
 } as const;
+
+/**
+ * CORS configuration - allowed origins for cross-origin requests
+ * Security: Only allow requests from known domains
+ */
+const ALLOWED_ORIGINS = [
+  'https://massava.app',
+  'https://www.massava.app',
+  'https://staging.massava.app',
+  process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : '',
+].filter(Boolean) as string[];
+
+/**
+ * Get CORS origin for response headers
+ * Returns the request origin if allowed, otherwise the primary domain
+ *
+ * @param request - Incoming request
+ * @returns Allowed origin string
+ */
+function getCorsOrigin(request: NextRequest): string {
+  const origin = request.headers.get('origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+}
 
 /**
  * In-memory rate limit store
  * Note: In production, use Redis for distributed rate limiting
  */
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+
+/**
+ * Last cleanup timestamp for rate limit store
+ */
+let lastRateLimitCleanup = Date.now();
+
+/**
+ * Cleanup expired entries from rate limit store (non-blocking)
+ * Runs periodically based on CLEANUP_INTERVAL, not on every request
+ */
+function cleanupRateLimitStore(): void {
+  const now = Date.now();
+
+  // Only cleanup if interval has passed
+  if (now - lastRateLimitCleanup < RATE_LIMIT_CONFIG.cleanupIntervalMs) {
+    return;
+  }
+
+  lastRateLimitCleanup = now;
+
+  // Remove expired entries
+  for (const [key, value] of rateLimitStore.entries()) {
+    if (value.resetAt < now) {
+      rateLimitStore.delete(key);
+    }
+  }
+
+  logger.debug('Rate limit store cleanup completed', {
+    remainingEntries: rateLimitStore.size,
+  });
+}
 
 /**
  * Query parameter validation schema
@@ -150,16 +206,21 @@ function transformRadarAddress(address: RadarAddress): AddressSuggestion {
  */
 function checkRateLimit(ip: string): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
-  const entry = rateLimitStore.get(ip);
 
-  // Clean up expired entries periodically
-  if (rateLimitStore.size > 10000) {
-    for (const [key, value] of rateLimitStore.entries()) {
-      if (value.resetAt < now) {
-        rateLimitStore.delete(key);
-      }
-    }
+  // Run non-blocking cleanup periodically
+  cleanupRateLimitStore();
+
+  // Force cleanup if store is too large (safety valve)
+  if (rateLimitStore.size > RATE_LIMIT_CONFIG.maxStoreSize) {
+    logger.warn('Rate limit store exceeded max size, forcing cleanup', {
+      storeSize: rateLimitStore.size,
+      maxSize: RATE_LIMIT_CONFIG.maxStoreSize,
+    });
+    lastRateLimitCleanup = 0; // Reset to force cleanup
+    cleanupRateLimitStore();
   }
+
+  const entry = rateLimitStore.get(ip);
 
   // New entry or expired entry
   if (!entry || entry.resetAt < now) {
@@ -457,15 +518,19 @@ export async function GET(request: NextRequest): Promise<NextResponse<ApiRespons
 
 /**
  * OPTIONS handler for CORS preflight
+ * Security: Only allows requests from whitelisted origins
  */
-export async function OPTIONS(): Promise<NextResponse> {
+export async function OPTIONS(request: NextRequest): Promise<NextResponse> {
+  const corsOrigin = getCorsOrigin(request);
+
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': corsOrigin,
       'Access-Control-Allow-Methods': 'GET, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, X-Correlation-ID',
       'Access-Control-Max-Age': '86400',
+      'Vary': 'Origin',
     },
   });
 }

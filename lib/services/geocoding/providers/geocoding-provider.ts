@@ -8,13 +8,13 @@
  * @module lib/services/geocoding/providers/geocoding-provider
  */
 
-import type { GeocodingError } from '../errors';
+import type { GeocodingError } from "../errors";
 import type {
   AddressSuggestion,
   GeocodingSearchOptions,
   GeocodingProviderName,
   ProviderHealth,
-} from '../types';
+} from "../types";
 
 /**
  * Configuration for a geocoding provider
@@ -47,7 +47,10 @@ export type GeocodingProviderResult =
  * - Making API requests to their respective services
  * - Transforming responses to the unified AddressSuggestion format
  * - Handling errors and converting them to GeocodingError types
- * - Tracking their own health status
+ *
+ * **IMPORTANT**: Circuit breaker logic and health tracking are handled
+ * by the GeocodingOrchestrator, NOT by individual providers.
+ * Providers should be "stateless" regarding failure tracking.
  *
  * @example
  * ```typescript
@@ -56,7 +59,7 @@ export type GeocodingProviderResult =
  *   readonly config: GeocodingProviderConfig;
  *
  *   async search(query: string, options: GeocodingSearchOptions) {
- *     // Implementation
+ *     // Implementation - just execute the request, don't track failures
  *   }
  * }
  * ```
@@ -98,33 +101,23 @@ export interface GeocodingProvider {
    */
   search(
     query: string,
-    options: GeocodingSearchOptions
+    options: GeocodingSearchOptions,
   ): Promise<GeocodingProviderResult>;
 
   /**
-   * Check if the provider is currently available
+   * Check if the provider is properly configured and can accept requests
    *
-   * Returns false if:
-   * - Circuit breaker is open (too many failures)
-   * - Provider is in maintenance mode
-   * - Rate limit is exceeded
+   * This checks static configuration only:
+   * - API key is present (if required)
+   * - Base URL is configured
+   * - Provider is not explicitly disabled
    *
-   * @returns True if provider can accept requests
+   * **NOTE**: This does NOT check circuit breaker state.
+   * Circuit breaker decisions are made by the GeocodingOrchestrator.
+   *
+   * @returns True if provider is configured and can accept requests
    */
-  isAvailable(): boolean;
-
-  /**
-   * Get detailed health status of the provider
-   *
-   * Includes metrics like:
-   * - Consecutive failures count
-   * - Average response time
-   * - Success rate
-   * - Last success/failure timestamps
-   *
-   * @returns Provider health status object
-   */
-  getHealth(): ProviderHealth;
+  isConfigured(): boolean;
 }
 
 /**
@@ -133,7 +126,7 @@ export interface GeocodingProvider {
 export const DEFAULT_PROVIDER_CONFIG: Readonly<GeocodingProviderConfig> = {
   timeout: 5000,
   maxRetries: 2,
-  baseUrl: '',
+  baseUrl: "",
 } as const;
 
 /**
@@ -143,7 +136,7 @@ export const DEFAULT_PROVIDER_CONFIG: Readonly<GeocodingProviderConfig> = {
  * @returns Complete provider configuration
  */
 export function createProviderConfig(
-  partial: Partial<GeocodingProviderConfig> & { readonly baseUrl: string }
+  partial: Partial<GeocodingProviderConfig> & { readonly baseUrl: string },
 ): GeocodingProviderConfig {
   return {
     timeout: partial.timeout ?? DEFAULT_PROVIDER_CONFIG.timeout,

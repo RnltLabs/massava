@@ -59,7 +59,6 @@ import { getDefaultCache } from './cache';
  * Track initialization state
  */
 let initialized = false;
-let initializationPromise: Promise<void> | null = null;
 
 /**
  * Default configuration for the orchestrator
@@ -83,11 +82,6 @@ const DEFAULT_ORCHESTRATOR_CONFIG = {
  */
 function ensureInitialized(): void {
   if (initialized) {
-    return;
-  }
-
-  // Prevent re-initialization during async operations
-  if (initializationPromise) {
     return;
   }
 
@@ -515,7 +509,6 @@ export function resetGeocodingService(): void {
   }
 
   initialized = false;
-  initializationPromise = null;
   logger.debug('Geocoding service reset');
 }
 
