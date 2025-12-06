@@ -131,7 +131,7 @@ function MobileCustomerNavComponent({ locale }: MobileCustomerNavProps): React.J
       <div className="flex items-center justify-around pt-2 pb-3">
         {navItems.map((item) => (
           <NavItemComponent
-            key={item.href}
+            key={item.label}
             item={item}
             isActive={isActive(item.href)}
           />

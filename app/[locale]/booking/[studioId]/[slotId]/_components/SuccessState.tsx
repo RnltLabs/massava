@@ -8,10 +8,9 @@
 import { useEffect, useState, useCallback } from "react"
 import type { JSX } from "react"
 import { useRouter } from "next/navigation"
-import { signIn } from "next-auth/react"
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { Calendar, Search, Check, Info, MapPin, Clock, Sparkles } from "lucide-react"
+import { Calendar, Check, Info, MapPin, Clock, Sparkles, Mail } from "lucide-react"
 import type { BookingStatus } from "@/app/generated/prisma"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -26,12 +25,12 @@ const ANIMATION_DURATION_MS = 400;
 interface SuccessStateProps {
   bookingNumber: string
   customerEmail: string
-  onNewSearch: () => void
   bookingStatus: BookingStatus | null
   isGuest: boolean
   locale: string
   bookingDetails: BookingDetails
   studioDetails: StudioDetails
+  isJustRegistered?: boolean
 }
 
 /**
@@ -67,12 +66,12 @@ interface SuccessStateProps {
 export function SuccessState({
   bookingNumber,
   customerEmail,
-  onNewSearch,
   bookingStatus,
   isGuest,
   locale,
   bookingDetails,
   studioDetails,
+  isJustRegistered = false,
 }: SuccessStateProps): JSX.Element {
   const router = useRouter()
   const { toast } = useToast()
@@ -225,6 +224,16 @@ export function SuccessState({
         </Alert>
       )}
 
+      {/* Email Verification Alert - Only for newly registered users */}
+      {isJustRegistered && (
+        <Alert className="mb-3 py-2 border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900">
+          <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <AlertDescription className="text-xs text-blue-800 dark:text-blue-200">
+            Wir haben Ihnen eine E-Mail zur Verifizierung gesendet. Bitte bestätigen Sie Ihre E-Mail-Adresse um alle Funktionen zu nutzen.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Booking Summary - Context Badge Style (matching StepConfirm) */}
       <div className="bg-accent/10 border-l-4 border-primary p-3 mb-3 rounded-lg">
         {/* Studio */}
@@ -267,38 +276,9 @@ export function SuccessState({
         </span>
       </div>
 
-      {/* Guest Account Creation Offer - Compact */}
-      {isGuest && (
-        <div className="p-3 bg-accent/10 border border-primary/20 rounded-lg mb-3">
-          <p className="text-sm font-medium mb-2">Konto erstellen?</p>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
-              <Check className="h-3 w-3 text-primary" />
-              Erinnerungen
-            </span>
-            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
-              <Check className="h-3 w-3 text-primary" />
-              Alle Termine
-            </span>
-            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
-              <Check className="h-3 w-3 text-primary" />
-              Schneller buchen
-            </span>
-          </div>
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => signIn()}
-            aria-label="Kostenloses Konto erstellen"
-          >
-            Jetzt kostenloses Konto erstellen
-          </Button>
-        </div>
-      )}
-
-      {/* Action Buttons - Compact */}
+      {/* Action Buttons */}
       <div className="space-y-2">
-        {/* Add to Calendar */}
+        {/* Add to Calendar - Always shown */}
         <Button
           variant="outline"
           className="w-full h-11"
@@ -309,27 +289,35 @@ export function SuccessState({
           Zum Kalender hinzufügen
         </Button>
 
-        {/* View All Bookings */}
-        <Button
-          className="w-full h-11 bg-primary hover:bg-primary/90"
-          onClick={handleViewBookings}
-          aria-label="Alle meine Buchungen anzeigen"
-        >
-          Meine Buchungen
-        </Button>
+        {/* View All Bookings - Only for logged in users */}
+        {!isGuest && (
+          <Button
+            className="w-full h-11 bg-primary hover:bg-primary/90"
+            onClick={handleViewBookings}
+            aria-label="Alle meine Buchungen anzeigen"
+          >
+            Meine Buchungen
+          </Button>
+        )}
 
-        {/* New Search */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="w-full"
-          onClick={onNewSearch}
-          aria-label="Nach weiteren Terminen suchen"
-        >
-          <Search className="mr-2 h-4 w-4" aria-hidden="true" />
-          Weitere Termine suchen
-        </Button>
+        {/* Guest: Create Account CTA - Opens signup dialog on homepage */}
+        {isGuest && !isJustRegistered && (
+          <Button
+            className="w-full h-11 bg-primary hover:bg-primary/90"
+            onClick={() => router.push(`/${locale}?openAuth=signup`)}
+            aria-label="Kostenloses Konto erstellen"
+          >
+            Konto erstellen
+          </Button>
+        )}
       </div>
+
+      {/* Guest Benefits - Subtle hint below buttons */}
+      {isGuest && !isJustRegistered && (
+        <p className="text-xs text-center text-muted-foreground mt-3">
+          Mit einem Konto: Erinnerungen • Alle Termine • Schneller buchen
+        </p>
+      )}
     </div>
   )
 }

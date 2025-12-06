@@ -127,6 +127,11 @@ export function BookingSheet({
   const [bookingNumber, setBookingNumber] = useState<string>("")
   const [bookingStatus, setBookingStatus] = useState<BookingStatus | null>(null)
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [isJustRegistered, setIsJustRegistered] = useState(false)
+  const [submittedCustomerData, setSubmittedCustomerData] = useState<{
+    name: string
+    email: string
+  } | null>(null)
 
   // Form setup with react-hook-form + Zod validation
   const form = useForm<BookingFormData>({
@@ -234,10 +239,19 @@ export function BookingSheet({
     // P0.1 FIX: customerId is set server-side from session, not client-side
     // Server action will handle customerId from authenticated session
     // If logged in, proceed with booking directly
+    const customerName = session.user.name || ""
+    const customerEmail = session.user.email || ""
+
+    // Store customer data for success screen
+    setSubmittedCustomerData({
+      name: customerName,
+      email: customerEmail,
+    })
+
     await createBookingNow({
       ...data,
-      customerName: session.user.name || "",
-      customerEmail: session.user.email || "",
+      customerName,
+      customerEmail,
       customerPhone: data.customerPhone || "",
       explicitHealthConsent: true, // Assumed for logged-in users
     })
@@ -248,6 +262,17 @@ export function BookingSheet({
    * @param guestData - Guest form data
    */
   const handleGuestSubmit = useCallback(async (guestData: GuestFormData): Promise<void> => {
+    // Prüfen ob User sich gerade registriert hat
+    if (guestData.isJustRegistered) {
+      setIsJustRegistered(true)
+    }
+
+    // Store customer data for success screen
+    setSubmittedCustomerData({
+      name: guestData.customerName,
+      email: guestData.customerEmail,
+    })
+
     // P0.1 FIX: customerId removed - set server-side in createBooking()
     const bookingData: BookingFormData = {
       ...form.getValues(),
@@ -255,6 +280,8 @@ export function BookingSheet({
       customerEmail: guestData.customerEmail,
       customerPhone: guestData.customerPhone,
       explicitHealthConsent: guestData.explicitHealthConsent,
+      // NEU: Falls registriert, ID mitgeben (für Server-Side Verknüpfung)
+      registeredUserId: guestData.registeredUserId,
     }
 
     await createBookingNow(bookingData)
@@ -347,42 +374,6 @@ export function BookingSheet({
     }
   }, [handleCancel])
 
-  /**
-   * Handle new search after successful booking
-   */
-  const handleNewSearch = useCallback((): void => {
-    // Build query string from search params to preserve search context
-    const params = new URLSearchParams()
-    if (searchParams.location && typeof searchParams.location === 'string') {
-      params.set('location', searchParams.location)
-    }
-    if (searchParams.lat && typeof searchParams.lat === 'string') {
-      params.set('lat', searchParams.lat)
-    }
-    if (searchParams.lng && typeof searchParams.lng === 'string') {
-      params.set('lng', searchParams.lng)
-    }
-    if (searchParams.radius && typeof searchParams.radius === 'string') {
-      params.set('radius', searchParams.radius)
-    }
-    if (searchParams.datetime && typeof searchParams.datetime === 'string') {
-      params.set('datetime', searchParams.datetime)
-    }
-    if (searchParams.serviceType && typeof searchParams.serviceType === 'string') {
-      params.set('serviceType', searchParams.serviceType)
-    }
-    if (searchParams.minPrice && typeof searchParams.minPrice === 'string') {
-      params.set('minPrice', searchParams.minPrice)
-    }
-    if (searchParams.maxPrice && typeof searchParams.maxPrice === 'string') {
-      params.set('maxPrice', searchParams.maxPrice)
-    }
-
-    const queryString = params.toString()
-    const searchUrl = `/${locale}/search/appointments${queryString ? `?${queryString}` : ''}`
-    router.push(searchUrl)
-  }, [searchParams, locale, router])
-
   // Get selected service object
   const selectedService = services.find((s) => s.id === selectedServiceId)
 
@@ -430,14 +421,25 @@ export function BookingSheet({
             />
           )
 
-        case "success":
+        case "success": {
           // Prepare booking details for iCal generation
+          // Use stored customer data (from guest form or session) with fallback to "Gast"
+          // Ensure customerName is never empty (required for ICS validation)
+          const storedName = submittedCustomerData?.name
+          const sessionName = session?.user?.name
+          const customerName = (storedName && storedName.trim().length > 0)
+            ? storedName
+            : (sessionName && sessionName.trim().length > 0)
+              ? sessionName
+              : "Gast"
+          const customerEmail = submittedCustomerData?.email || session?.user?.email || ""
+
           const bookingDetails = {
             startDateTime: timeSlot.startTime,
             endDateTime: timeSlot.endTime,
-            serviceName: selectedService?.name || "",
+            serviceName: selectedService?.name || "Behandlung",
             bookingNumber,
-            customerName: session?.user?.name || form.getValues("customerName") || "",
+            customerName,
             message: form.getValues("message") || "",
           }
 
@@ -454,15 +456,16 @@ export function BookingSheet({
           return (
             <SuccessState
               bookingNumber={bookingNumber}
-              customerEmail={form.getValues("customerEmail") || session?.user?.email || ""}
-              onNewSearch={handleNewSearch}
+              customerEmail={customerEmail}
               bookingStatus={bookingStatus}
               isGuest={!session} // P0.1 FIX: Check session instead of customerId
+              isJustRegistered={isJustRegistered}
               locale={locale}
               bookingDetails={bookingDetails}
               studioDetails={studioDetails}
             />
           )
+        }
 
         default:
           logger.warn("Unknown booking step", {

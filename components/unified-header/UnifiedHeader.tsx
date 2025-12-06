@@ -43,16 +43,38 @@ export function UnifiedHeader({ className }: UnifiedHeaderProps): React.JSX.Elem
     accountType: undefined,
   });
 
-  // Check for URL params to open auth dialog (e.g., ?signup=studio)
+  // Check for URL params to open auth dialog (e.g., ?signup=studio, ?openAuth=signup)
   useEffect(() => {
     const signupParam = searchParams.get('signup');
+    const openAuthParam = searchParams.get('openAuth');
+    const openLoginParam = searchParams.get('openLogin');
+
+    // Don't open auth dialog if user is already authenticated
+    if (session) return;
+
+    // Handle studio signup
     if (signupParam === 'studio') {
       setAuthDialog({ open: true, tab: 'signup', accountType: 'studio' });
       // Clear the URL param without refresh
       const newUrl = pathname;
       router.replace(newUrl, { scroll: false });
+      return;
     }
-  }, [searchParams, pathname, router]);
+
+    // Handle openAuth or openLogin params (for guest booking flow)
+    if (openAuthParam || openLoginParam) {
+      setAuthDialog({
+        open: true,
+        tab: openAuthParam === 'signup' ? 'signup' : 'login',
+        accountType: undefined,
+      });
+      // Clear the URL param without refresh
+      const url = new URL(window.location.href);
+      url.searchParams.delete('openAuth');
+      url.searchParams.delete('openLogin');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams, pathname, router, session]);
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated';

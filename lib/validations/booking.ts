@@ -114,6 +114,9 @@ export const bookingFormSchema = z.object({
   // Optional - filled via guest form
   explicitHealthConsent: z.boolean().optional(),
 
+  // Optional - set when user registers during booking flow
+  registeredUserId: z.string().cuid("Ungültige User-ID").optional(),
+
   // P0.1 FIX: customerId REMOVED - NEVER accept from client (IDOR prevention)
   // customerId is ALWAYS retrieved from server-side session in createBooking()
 }).refine(
