@@ -2,13 +2,11 @@
 
 import { format } from "date-fns"
 import { de } from "date-fns/locale"
-import { ArrowLeft, ArrowRight, Calendar, Clock, Info, Loader2, ChevronDown } from "lucide-react"
+import { ArrowLeft, ArrowRight, Calendar, Clock, Info, Loader2, ChevronDown, MapPin, Sparkles } from "lucide-react"
 import type { Studio, Service } from "@/app/generated/prisma"
 import { UseFormReturn } from "react-hook-form"
 import type { BookingFormData } from "@/lib/validations/booking"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useState } from "react"
@@ -102,132 +100,116 @@ export function StepConfirm({
         <h3 className="text-lg font-semibold">Buchung bestätigen</h3>
       </div>
 
-      {/* Booking Summary Card */}
-      <Card className="mb-4 wellness-shadow">
-        <CardHeader>
-          <CardTitle className="text-lg">Zusammenfassung</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Studio</p>
-            <p className="font-semibold">{studio.name}</p>
-            <p className="text-sm text-muted-foreground">{studio.city}</p>
-          </div>
+      {/* Compact Summary - Context Badge Style (matching StepService) */}
+      <div className="bg-accent/10 border-l-4 border-primary p-3 mb-3 rounded-lg">
+        {/* Studio */}
+        <div className="flex items-center gap-2 text-sm">
+          <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="font-medium">{studio.name}</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">{studio.city}</span>
+        </div>
 
-          <Separator />
+        {/* Date & Time - inline like StepService */}
+        <div className="flex items-center gap-2 text-sm mt-1.5">
+          <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+          <span>{format(startTime, "EEE, dd. MMM yyyy", { locale: de })}</span>
+          <span className="text-muted-foreground">•</span>
+          <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+          <span>{format(startTime, "HH:mm", { locale: de })} Uhr</span>
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Calendar className="h-3.5 w-3.5" />
-                <span>Datum</span>
-              </div>
-              <p className="font-medium text-sm">
-                {format(startTime, "dd. MMM yyyy", { locale: de })}
-              </p>
-            </div>
-            <div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-                <Clock className="h-3.5 w-3.5" />
-                <span>Uhrzeit</span>
-              </div>
-              <p className="font-medium text-sm">
-                {format(startTime, "HH:mm", { locale: de })} Uhr
-              </p>
-            </div>
-          </div>
+        {/* Service */}
+        <div className="flex items-center gap-2 text-sm mt-1.5">
+          <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="font-medium">{selectedService.name}</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">{selectedService.duration} min</span>
+        </div>
+      </div>
 
-          <Separator />
+      {/* Price Row - Prominent but compact */}
+      <div className="flex items-center justify-between p-3 bg-card border-2 border-border/50 rounded-xl mb-3">
+        <span className="font-semibold">Gesamt</span>
+        <span className="text-xl font-bold text-primary">
+          €{selectedService.price.toFixed(2)}
+        </span>
+      </div>
 
-          <div>
-            <p className="text-sm text-muted-foreground mb-1">Service</p>
-            <p className="font-semibold">{selectedService.name}</p>
-            <p className="text-sm text-muted-foreground">
-              {selectedService.duration} Minuten
-            </p>
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <span className="text-lg font-semibold">Gesamt</span>
-            <span className="text-2xl font-bold text-primary">
-              €{selectedService.price.toFixed(2)}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Optional Message (Collapsed by Default) */}
-      <Card className="mb-4">
-        <CardHeader
-          className="cursor-pointer"
-          onClick={() => setMessageExpanded(!messageExpanded)}
-        >
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium">
-              Nachricht hinzufügen (optional)
-            </CardTitle>
-            <ChevronDown className={cn(
-              "h-4 w-4 transition-transform",
-              messageExpanded && "transform rotate-180"
-            )} />
-          </div>
-        </CardHeader>
-        {messageExpanded && (
-          <CardContent>
-            <Textarea
-              placeholder="Besondere Wünsche oder Anmerkungen..."
-              rows={3}
-              value={form.watch("message") || ""}
-              onChange={(e) => form.setValue("message", e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground mt-2">
-              z.B. Allergien, bevorzugte Öle, Druck-Präferenzen
-            </p>
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Cancellation Policy */}
-      <Card className="mb-4 bg-muted/50">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium mb-1">Stornierungsbedingungen</p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Kostenlose Stornierung bis 24 Stunden vor dem Termin möglich.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Privacy/Terms Checkbox - REQUIRED */}
-      <div className="flex items-start gap-3 mb-6">
-        <Checkbox
-          id="privacy"
-          checked={privacyAccepted}
-          onCheckedChange={(checked) => setPrivacyAccepted(!!checked)}
+      {/* Message Expander - Compact */}
+      <button
+        type="button"
+        onClick={() => setMessageExpanded(!messageExpanded)}
+        className="w-full flex items-center justify-between p-3 bg-card border border-border/50 rounded-lg text-sm hover:bg-accent/30 transition-colors mb-2"
+      >
+        <span className="text-muted-foreground">Nachricht hinzufügen (optional)</span>
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            messageExpanded && "rotate-180"
+          )}
         />
-        <label htmlFor="privacy" className="text-sm leading-relaxed cursor-pointer">
-          Ich habe die{" "}
-          <a href="/datenschutz" className="underline text-primary" target="_blank" rel="noopener noreferrer">
-            Datenschutzerklärung
-          </a>{" "}
-          gelesen und akzeptiere die{" "}
-          <a href="/agb" className="underline text-primary" target="_blank" rel="noopener noreferrer">
-            AGB
-          </a>.
-        </label>
+      </button>
+
+      {messageExpanded && (
+        <div className="mb-2">
+          <Textarea
+            placeholder="Besondere Wünsche, Allergien, Druck-Präferenzen..."
+            rows={2}
+            value={form.watch("message") || ""}
+            onChange={(e) => form.setValue("message", e.target.value)}
+            className="text-sm"
+          />
+        </div>
+      )}
+
+      {/* Privacy/Terms in Card - Not floating */}
+      <div className="p-3 bg-card border border-border/50 rounded-lg mb-3">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="privacy"
+            checked={privacyAccepted}
+            onCheckedChange={(checked) => setPrivacyAccepted(!!checked)}
+            className="mt-0.5"
+          />
+          <label
+            htmlFor="privacy"
+            className="text-sm leading-relaxed cursor-pointer"
+          >
+            Ich akzeptiere die{" "}
+            <a
+              href="/datenschutz"
+              className="underline text-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Datenschutzerklärung
+            </a>{" "}
+            und{" "}
+            <a
+              href="/agb"
+              className="underline text-primary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              AGB
+            </a>
+            .
+          </label>
+        </div>
+      </div>
+
+      {/* Cancellation Info - Subtle inline */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground px-1 mb-2">
+        <Info className="h-3.5 w-3.5 flex-shrink-0" />
+        <span>Kostenlose Stornierung bis 24h vor Termin</span>
       </div>
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Actions */}
-      <div className="space-y-3 pt-4 border-t">
+      {/* Actions - Compact */}
+      <div className="pt-3 border-t">
         <Button
           size="lg"
           className="w-full h-14 text-lg font-semibold"
@@ -245,20 +227,6 @@ export function StepConfirm({
               <ArrowRight className="ml-2 h-5 w-5" />
             </>
           )}
-        </Button>
-
-        <p className="text-xs text-center text-muted-foreground">
-          Kostenlose Stornierung bis 24h vor Termin
-        </p>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="w-full"
-          disabled={isSubmitting}
-        >
-          Zurück zur Serviceauswahl
         </Button>
       </div>
     </div>

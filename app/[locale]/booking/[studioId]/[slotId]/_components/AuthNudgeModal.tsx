@@ -5,29 +5,21 @@ import { signIn } from "next-auth/react"
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet"
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useToast } from "@/components/ui/use-toast"
 import {
-  Check,
-  CalendarCheck,
   Bell,
   Clock,
   Zap,
   Mail,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { GuestCheckoutForm } from "./GuestCheckoutForm"
 import type { Service, Studio } from "@/app/generated/prisma"
 import { format } from "date-fns"
@@ -71,7 +63,7 @@ interface AuthNudgeModalProps {
  * - 3 key benefits highlighted
  *
  * Conversion Strategy:
- * - Success celebration (green checkmark animation)
+ * - Progress indicator shows user is almost done
  * - Remind user of their booking
  * - Emphasize account benefits (reminders, history, speed)
  * - Make guest option available but not prominent
@@ -102,7 +94,7 @@ export function AuthNudgeModal({
       await signIn(provider, {
         callbackUrl: window.location.href,
       })
-    } catch (error) {
+    } catch {
       toast({
         title: "Anmeldung fehlgeschlagen",
         description: "Bitte versuchen Sie es erneut",
@@ -113,10 +105,9 @@ export function AuthNudgeModal({
   }
 
   const handleEmailSignup = () => {
-    // TODO: Navigate to email signup flow
-    toast({
-      title: "In Entwicklung",
-      description: "E-Mail-Registrierung kommt bald",
+    // Open the auth dialog for email registration
+    signIn(undefined, {
+      callbackUrl: window.location.href,
     })
   }
 
@@ -139,81 +130,63 @@ export function AuthNudgeModal({
       message={message}
     />
   ) : (
-    <div className="space-y-6">
-      {/* Success Icon */}
-      <div className="flex justify-center mb-4">
-        <div className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center",
-          "bg-green-100 animate-scale-in"
-        )}>
-          <Check className="w-10 h-10 text-green-600" />
-        </div>
+    <div className="space-y-4">
+      {/* Progress Indicator */}
+      <div className="flex items-center justify-center gap-2 mb-2">
+        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+        <div className="w-8 h-0.5 bg-primary" />
+        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+        <div className="w-8 h-0.5 bg-muted" />
+        <div className="w-2.5 h-2.5 rounded-full bg-muted" />
       </div>
 
-      {/* Headline */}
+      {/* Headline with urgency */}
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">
+        <h2 className="text-xl font-bold mb-1">
           Fast geschafft!
         </h2>
-        <p className="text-muted-foreground text-base">
-          Sichern Sie Ihre Buchung mit einem kostenlosen Konto
+        <p className="text-sm text-muted-foreground">
+          Sichere dir deinen Termin mit einem kostenlosen Konto
         </p>
       </div>
 
-      {/* Booking Summary Reminder */}
-      <Card className="bg-accent/10">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <CalendarCheck className="h-8 w-8 text-primary flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold truncate">
-                {selectedService.name}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {format(new Date(timeSlot.startTime), "EEE, dd. MMM • HH:mm", { locale: de })} Uhr
-              </p>
-            </div>
-            <p className="text-lg font-bold text-primary">
-              €{selectedService.price.toFixed(0)}
+      {/* Booking Summary - Minimal */}
+      <div className="bg-muted/50 rounded-lg p-3 text-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium">{studio.name}</p>
+            <p className="text-muted-foreground">
+              {format(new Date(timeSlot.startTime), "dd. MMM, HH:mm", { locale: de })} Uhr
             </p>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Benefits (3 max) */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Bell className="w-5 h-5 text-primary" />
-          </div>
-          <p className="font-medium">
-            Automatische Erinnerungen
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Clock className="w-5 h-5 text-primary" />
-          </div>
-          <p className="font-medium">
-            Alle Termine an einem Ort
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Zap className="w-5 h-5 text-primary" />
-          </div>
-          <p className="font-medium">
-            Schneller buchen beim nächsten Mal
+          <p className="text-lg font-bold text-primary">
+            €{selectedService.price.toFixed(0)}
           </p>
         </div>
       </div>
 
-      {/* Social Login (PRIMARY) */}
-      <div className="space-y-3">
+      {/* Benefits - Compact inline */}
+      <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-1.5 text-xs bg-primary/10 px-2.5 py-1.5 rounded-full">
+          <Bell className="w-3.5 h-3.5 text-primary" />
+          <span>Erinnerungen</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs bg-primary/10 px-2.5 py-1.5 rounded-full">
+          <Clock className="w-3.5 h-3.5 text-primary" />
+          <span>Alle Termine</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs bg-primary/10 px-2.5 py-1.5 rounded-full">
+          <Zap className="w-3.5 h-3.5 text-primary" />
+          <span>Schneller buchen</span>
+        </div>
+      </div>
+
+      {/* Social Login (PRIMARY) - More prominent */}
+      <div className="space-y-2">
         <Button
           size="lg"
           variant="outline"
-          className="w-full h-12 text-base"
+          className="w-full h-12 text-base border-2 hover:bg-gray-50"
           onClick={() => handleSocialLogin("google")}
           disabled={isLoading}
         >
@@ -229,7 +202,7 @@ export function AuthNudgeModal({
         <Button
           size="lg"
           variant="outline"
-          className="w-full h-12 text-base"
+          className="w-full h-11"
           onClick={() => handleSocialLogin("apple")}
           disabled={isLoading}
         >
@@ -241,7 +214,7 @@ export function AuthNudgeModal({
       </div>
 
       {/* Divider */}
-      <div className="relative">
+      <div className="relative py-1">
         <Separator />
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
           oder
@@ -251,40 +224,33 @@ export function AuthNudgeModal({
       {/* Email Signup (SECONDARY) */}
       <Button
         size="lg"
-        className="w-full h-12"
+        variant="outline"
+        className="w-full h-11"
         onClick={handleEmailSignup}
       >
-        <Mail className="w-5 h-5 mr-2" />
+        <Mail className="w-4 h-4 mr-2" />
         Mit E-Mail registrieren
       </Button>
 
-      {/* Login Option */}
-      <div className="text-center">
-        <p className="text-xs text-muted-foreground mb-1">
-          Haben Sie bereits ein Konto?
-        </p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs"
+      {/* Login Option - Inline */}
+      <div className="text-center text-xs text-muted-foreground">
+        Haben Sie bereits ein Konto?{" "}
+        <button
+          className="underline hover:text-primary"
           onClick={() => signIn()}
         >
-          Jetzt anmelden
-        </Button>
+          Anmelden
+        </button>
       </div>
 
-      <Separator />
-
-      {/* Guest Option (STEALTH - very small) */}
-      <div className="text-center">
-        <Button
-          variant="link"
-          size="sm"
-          className="text-xs text-muted-foreground h-auto p-0"
+      {/* Guest Option - Maximum stealth */}
+      <div className="text-center pt-3 mt-2 border-t border-border/30">
+        <button
+          className="text-[10px] text-muted-foreground/60 hover:text-muted-foreground/80"
           onClick={handleGuestContinue}
         >
-          Ohne Konto fortfahren
-        </Button>
+          Lieber ohne Konto fortfahren
+        </button>
       </div>
     </div>
   )
@@ -295,7 +261,7 @@ export function AuthNudgeModal({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[80vh] rounded-t-3xl overflow-y-auto"
+          className="h-[80vh] rounded-t-3xl p-4 overflow-y-auto"
         >
           {/* Drag Handle */}
           <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
@@ -308,7 +274,7 @@ export function AuthNudgeModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[480px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] p-6 overflow-y-auto">
         {content}
       </DialogContent>
     </Dialog>

@@ -8,11 +8,13 @@
 import { useEffect, useState, useCallback } from "react"
 import type { JSX } from "react"
 import { useRouter } from "next/navigation"
-import { CheckCircle2, Calendar, Search, Check, Info } from "lucide-react"
+import { signIn } from "next-auth/react"
+import { format } from "date-fns"
+import { de } from "date-fns/locale"
+import { Calendar, Search, Check, Info, MapPin, Clock, Sparkles } from "lucide-react"
 import type { BookingStatus } from "@/app/generated/prisma"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 import { generateBookingIcs, downloadIcs, ICSGenerationError, type BookingDetails, type StudioDetails } from "@/lib/ical/generateBookingIcs"
@@ -163,7 +165,7 @@ export function SuccessState({
   }, [router, locale]);
 
   return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+    <div className="flex flex-col py-4 px-2">
       {/* Screen reader announcement for success state */}
       <div className="sr-only" role="status" aria-live="polite">
         {isPending
@@ -172,144 +174,159 @@ export function SuccessState({
         }
       </div>
 
-      {/* Animated Success Checkmark - Always Green for Success */}
-      <div
-        className={cn(
-          "w-24 h-24 rounded-full bg-green-600 flex items-center justify-center mb-6 transition-all duration-400",
-          isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100"
-        )}
-        role="img"
-        aria-label={isPending ? "Buchungsanfrage erhalten" : "Buchung erfolgreich"}
-      >
-        <Check
-          className="w-12 h-12 text-white"
-          strokeWidth={3}
-          aria-hidden="true"
-        />
+      {/* Animated Success Checkmark - Compact */}
+      <div className="flex justify-center mb-3">
+        <div
+          className={cn(
+            "w-16 h-16 rounded-full bg-green-600 flex items-center justify-center transition-all duration-400",
+            isAnimating ? "scale-0 opacity-0" : "scale-100 opacity-100"
+          )}
+          role="img"
+          aria-label={isPending ? "Buchungsanfrage erhalten" : "Buchung erfolgreich"}
+        >
+          <Check
+            className="w-8 h-8 text-white"
+            strokeWidth={3}
+            aria-hidden="true"
+          />
+        </div>
       </div>
 
-      {/* Status-Based Success Message */}
-      {isPending ? (
-        <>
-          <h2 className="text-2xl font-bold mb-2">
-            Buchungsanfrage erhalten!
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Das Studio wird Ihre Buchung prüfen und sich bei Ihnen melden.
-            Sie erhalten eine E-Mail, sobald Ihre Buchung bestätigt wurde.
-          </p>
-          <Alert className="mb-6 max-w-md">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Wartet auf Bestätigung</AlertTitle>
-            <AlertDescription>
-              Ihr Termin ist reserviert und für andere gesperrt.
-            </AlertDescription>
-          </Alert>
-        </>
-      ) : (
-        <>
-          <h2 className="text-2xl font-bold mb-2">
-            Buchung bestätigt!
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            Ihre Buchung wurde erfolgreich bestätigt.
-            Sie erhalten eine Bestätigungs-E-Mail an {customerEmail}.
-          </p>
-        </>
+      {/* Status-Based Success Message - Compact */}
+      <div className="text-center mb-4">
+        {isPending ? (
+          <>
+            <h2 className="text-xl font-bold mb-1">
+              Buchungsanfrage erhalten!
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Das Studio wird sich bei Ihnen melden.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="text-xl font-bold mb-1">
+              Buchung bestätigt!
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Bestätigung an {customerEmail}
+            </p>
+          </>
+        )}
+      </div>
+
+      {/* Pending Alert - Compact */}
+      {isPending && (
+        <Alert className="mb-3 py-2">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            Ihr Termin ist reserviert und für andere gesperrt.
+          </AlertDescription>
+        </Alert>
       )}
 
-      {/* Booking Confirmation Card */}
-      <Card className="w-full max-w-md mb-8 wellness-shadow">
-        <CardContent className="pt-6 space-y-4">
-          <div>
-            <p className="text-sm text-muted-foreground mb-2">
-              Ihre Buchungsnummer
-            </p>
-            <p className="text-2xl font-mono font-bold tracking-wide text-primary">
-              {bookingNumber}
-            </p>
-          </div>
+      {/* Booking Summary - Context Badge Style (matching StepConfirm) */}
+      <div className="bg-accent/10 border-l-4 border-primary p-3 mb-3 rounded-lg">
+        {/* Studio */}
+        <div className="flex items-center gap-2 text-sm">
+          <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="font-medium truncate">{studioDetails.name}</span>
+          {studioDetails.city && (
+            <>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-muted-foreground truncate">{studioDetails.city}</span>
+            </>
+          )}
+        </div>
 
-          <div className="bg-muted/50 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Eine Bestätigungsemail wurde an{" "}
-              <span className="font-medium text-foreground">
-                {customerEmail}
-              </span>{" "}
-              gesendet
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Date & Time */}
+        <div className="flex items-center gap-2 text-sm mt-1.5">
+          <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
+          <span>{format(new Date(bookingDetails.startDateTime), "EEE, dd. MMM yyyy", { locale: de })}</span>
+          <span className="text-muted-foreground">•</span>
+          <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+          <span>{format(new Date(bookingDetails.startDateTime), "HH:mm", { locale: de })} Uhr</span>
+        </div>
 
-      {/* Guest Account Creation Offer */}
+        {/* Service */}
+        <div className="flex items-center gap-2 text-sm mt-1.5">
+          <Sparkles className="h-4 w-4 text-primary flex-shrink-0" />
+          <span className="font-medium">{bookingDetails.serviceName}</span>
+          <span className="text-muted-foreground">•</span>
+          <span className="text-muted-foreground">
+            {Math.round((new Date(bookingDetails.endDateTime).getTime() - new Date(bookingDetails.startDateTime).getTime()) / 60000)} min
+          </span>
+        </div>
+      </div>
+
+      {/* Booking Number - Compact */}
+      <div className="flex items-center justify-between p-3 bg-card border-2 border-border/50 rounded-xl mb-3">
+        <span className="text-sm text-muted-foreground">Buchungsnummer</span>
+        <span className="font-mono font-bold text-primary">
+          {bookingNumber}
+        </span>
+      </div>
+
+      {/* Guest Account Creation Offer - Compact */}
       {isGuest && (
-        <Card className="w-full max-w-md mb-6 bg-accent/10">
-          <CardHeader>
-            <CardTitle className="text-lg">Konto erstellen?</CardTitle>
-            <CardDescription>
-              Verwalten Sie Ihre Buchungen und erhalten Sie automatische Erinnerungen
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <span>Alle Termine an einem Ort</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <span>Automatische Erinnerungen</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" aria-hidden="true" />
-              <span>Schnellere zukünftige Buchungen</span>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button
-              className="w-full"
-              variant="outline"
-              aria-label="Kostenloses Konto erstellen um Buchungen zu verwalten"
-            >
-              Jetzt kostenloses Konto erstellen
-            </Button>
-          </CardFooter>
-        </Card>
+        <div className="p-3 bg-accent/10 border border-primary/20 rounded-lg mb-3">
+          <p className="text-sm font-medium mb-2">Konto erstellen?</p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
+              <Check className="h-3 w-3 text-primary" />
+              Erinnerungen
+            </span>
+            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
+              <Check className="h-3 w-3 text-primary" />
+              Alle Termine
+            </span>
+            <span className="flex items-center gap-1 text-xs bg-background px-2 py-1 rounded-full">
+              <Check className="h-3 w-3 text-primary" />
+              Schneller buchen
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="w-full"
+            onClick={() => signIn()}
+            aria-label="Kostenloses Konto erstellen"
+          >
+            Jetzt kostenloses Konto erstellen
+          </Button>
+        </div>
       )}
 
-      {/* Action Buttons - Streamlined: 3 buttons instead of 4 */}
-      <div className="w-full max-w-md space-y-3">
-        {/* Add to Calendar - Now Functional */}
+      {/* Action Buttons - Compact */}
+      <div className="space-y-2">
+        {/* Add to Calendar */}
         <Button
-          size="lg"
           variant="outline"
-          className="w-full h-12"
+          className="w-full h-11"
           onClick={handleAddToCalendar}
           aria-label={`Buchung ${bookingNumber} zum Kalender hinzufügen`}
         >
-          <Calendar className="mr-2 h-5 w-5" aria-hidden="true" />
+          <Calendar className="mr-2 h-4 w-4" aria-hidden="true" />
           Zum Kalender hinzufügen
         </Button>
 
-        {/* View All Bookings - Renamed and Redirects to /customer/bookings */}
+        {/* View All Bookings */}
         <Button
-          size="lg"
-          className="w-full h-12 bg-primary hover:bg-primary/90"
+          className="w-full h-11 bg-primary hover:bg-primary/90"
           onClick={handleViewBookings}
           aria-label="Alle meine Buchungen anzeigen"
         >
           Meine Buchungen
         </Button>
 
-        {/* New Search (Secondary) */}
+        {/* New Search */}
         <Button
-          size="lg"
           variant="ghost"
-          className="w-full h-12"
+          size="sm"
+          className="w-full"
           onClick={onNewSearch}
-          aria-label="Nach weiteren verfügbaren Terminen suchen"
+          aria-label="Nach weiteren Terminen suchen"
         >
-          <Search className="mr-2 h-5 w-5" aria-hidden="true" />
+          <Search className="mr-2 h-4 w-4" aria-hidden="true" />
           Weitere Termine suchen
         </Button>
       </div>
