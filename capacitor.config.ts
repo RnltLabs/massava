@@ -40,7 +40,7 @@ const environmentConfig: Record<Environment, {
   },
   staging: {
     appId: 'com.massava.app.staging',
-    appName: 'Massava (Staging)',
+    appName: 'Massava Staging',
     serverUrl: 'https://staging.massava.app',
     cleartext: false,
   },
