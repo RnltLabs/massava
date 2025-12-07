@@ -14,10 +14,26 @@ export interface QueueMessage {
 }
 
 /**
- * Check if QStash is configured
+ * Check if QStash is configured and can be used
+ * Returns false for localhost URLs since QStash cannot reach them
  */
 function isQStashConfigured(): boolean {
-  return !!process.env.QSTASH_TOKEN;
+  if (!process.env.QSTASH_TOKEN) {
+    return false;
+  }
+
+  // QStash cannot reach localhost/loopback addresses
+  // Fall back to sync processing in local development
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.VERCEL_URL ||
+    '';
+
+  if (!baseUrl || baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1')) {
+    return false;
+  }
+
+  return true;
 }
 
 /**
