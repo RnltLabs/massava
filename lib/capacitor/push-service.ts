@@ -171,43 +171,76 @@ class CapacitorPushService {
    * Sends the device's push token to the backend API so notifications can be routed to this device.
    * Called automatically when APNS/FCM registration succeeds.
    *
+   * Includes retry logic for 401 errors with exponential backoff, since the session
+   * may not be fully established when push registration runs during app initialization.
+   *
    * @param {string} token - Push notification token from APNS/FCM
    *
    * @returns {Promise<void>}
    *
-   * @throws {Error} If registration API call fails
+   * @throws {Error} If registration API call fails after all retries
    *
    * @private
    */
   private async registerToken(token: string): Promise<void> {
-    try {
-      const platform = this.getPlatform();
-      const deviceName = await this.getDeviceName();
+    const platform = this.getPlatform();
+    const deviceName = await this.getDeviceName();
+    const maxRetries = 3;
+    const baseDelayMs = 1000;
 
-      const response = await fetch('/api/notifications/devices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          token,
-          platform,
-          deviceName,
-          appVersion: '1.0.0',
-        }),
-      });
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch('/api/notifications/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token,
+            platform,
+            deviceName,
+            appVersion: '1.0.0',
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error(`Failed to register token: ${response.statusText}`);
+        // Handle 401 Unauthorized - session may not be ready yet
+        if (response.status === 401) {
+          if (attempt < maxRetries) {
+            const delayMs = baseDelayMs * Math.pow(2, attempt);
+            logger.info(`Push token registration got 401, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            continue;
+          }
+          // After all retries, log but don't throw - user may not be logged in
+          logger.warn('Push token registration failed with 401 after retries - user may not be authenticated');
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(`Failed to register token: ${response.statusText}`);
+        }
+
+        const responseData = await response.json();
+        if (responseData.device?.id) {
+          this.deviceId = responseData.device.id;
+        }
+
+        logger.info('Push token registered successfully');
+        return;
+      } catch (error) {
+        // Network errors - retry with backoff
+        if (attempt < maxRetries) {
+          const delayMs = baseDelayMs * Math.pow(2, attempt);
+          logger.warn(`Push token registration failed, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`, {
+            error: error instanceof Error ? error : new Error(String(error)),
+          });
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+          continue;
+        }
+
+        logger.error('Failed to register token after retries:', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+        throw error;
       }
-
-      const responseData = await response.json();
-      if (responseData.device?.id) {
-        this.deviceId = responseData.device.id;
-      }
-    } catch (error) {
-      logger.error('Failed to register token:', {
-        error: error instanceof Error ? error : new Error(String(error)),
-      });
-      throw error;
     }
   }
 

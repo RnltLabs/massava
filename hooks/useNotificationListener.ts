@@ -7,12 +7,16 @@
  * Listens for foreground Firebase push notifications and updates the store.
  * Also refreshes unread count on page visibility change.
  *
+ * Note: On native Capacitor platforms (iOS/Android), Firebase Web Messaging
+ * is skipped since Capacitor's PushNotifications plugin handles push.
+ *
  * @module hooks/useNotificationListener
  */
 
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { onForegroundMessage } from '@/lib/firebase/firebase-client';
 import { useNotificationStore, type Notification } from '@/stores/notification-store';
 
@@ -22,6 +26,9 @@ import { useNotificationStore, type Notification } from '@/stores/notification-s
  * Sets up a listener for Firebase Cloud Messaging foreground notifications
  * and updates the notification store when new notifications arrive.
  * Also refreshes the unread count when the page becomes visible.
+ *
+ * On native Capacitor platforms (iOS/Android), Firebase Web Messaging is
+ * skipped since push notifications are handled by the Capacitor push service.
  *
  * @example
  * ```tsx
@@ -35,12 +42,18 @@ export function useNotificationListener(): void {
   const { addNotification, fetchUnreadCount } = useNotificationStore();
   const listenerRef = useRef<(() => void) | null>(null);
 
-  // Set up foreground message listener
+  // Set up foreground message listener (web only)
   useEffect(() => {
     // Only run on client
     if (typeof window === 'undefined') return;
 
-    // Set up foreground message listener
+    // Skip Firebase Web Messaging on native Capacitor platforms
+    // Native platforms use Capacitor PushNotifications plugin instead
+    if (Capacitor.isNativePlatform()) {
+      return;
+    }
+
+    // Set up foreground message listener (web browsers only)
     const unsubscribe = onForegroundMessage((payload) => {
       // Build notification object from payload
       const notification: Notification = {
