@@ -363,6 +363,8 @@ class PushService {
           priority: fcmPriority === 'high' ? 'high' : 'default',
           sound: 'default',
           clickAction: 'FLUTTER_NOTIFICATION_CLICK',
+          title: payload.title,
+          body: payload.body,
         },
       },
       apns: {
