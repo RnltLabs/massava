@@ -121,9 +121,9 @@ export function CookieConsentBanner() {
   return (
     <>
       {/* Cookie Banner */}
-      {/* Cookie banner is always topmost (GDPR important), positioned above mobile nav */}
+      {/* Cookie banner is always topmost (GDPR important), positioned above mobile nav and all dialogs/sheets */}
       <div className={cn(
-        "fixed left-0 right-0 z-[100] p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
+        "fixed left-0 right-0 z-[9999] p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
         mobileNavVisible ? "bottom-16 md:bottom-0" : "bottom-0"
       )}>
         <Card className="max-w-6xl mx-auto p-6">
@@ -188,9 +188,9 @@ export function CookieConsentBanner() {
         </Card>
       </div>
 
-      {/* Settings Dialog */}
+      {/* Settings Dialog - must be above all other dialogs (GDPR important) */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl z-[9999]">
           <DialogHeader>
             <DialogTitle>Cookie-Einstellungen</DialogTitle>
             <DialogDescription>
