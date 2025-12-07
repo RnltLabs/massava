@@ -214,6 +214,15 @@ export function onForegroundMessage(
 }
 
 /**
+ * Capacitor window interface for type safety
+ */
+interface CapacitorWindow extends Window {
+  Capacitor?: {
+    isNativePlatform?: () => boolean;
+  };
+}
+
+/**
  * Check if push notifications are available
  *
  * Returns true if:
@@ -229,9 +238,8 @@ export function isPushAvailable(): boolean {
 
   // Check for native Capacitor platform first
   // Capacitor sets window.Capacitor when running as native app
-  const isNativeApp = !!(
-    (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-  );
+  const capacitorWindow = window as CapacitorWindow;
+  const isNativeApp = !!capacitorWindow.Capacitor?.isNativePlatform?.();
 
   if (isNativeApp) {
     // Native apps use Capacitor PushNotifications, always available
@@ -247,10 +255,12 @@ export function isPushAvailable(): boolean {
 }
 
 /**
- * Get current push permission status
+ * Get current push permission status (Web only)
  *
  * On native platforms, returns 'default' since permission is managed by Capacitor
- * and checked asynchronously. The CapacitorInitializer handles native permissions.
+ * and must be checked asynchronously via capacitorPushService.getPermissionStatus().
+ *
+ * For unified permission handling across platforms, use the usePushRegistration hook.
  */
 export function getPushPermissionStatus(): 'granted' | 'denied' | 'default' | 'unavailable' {
   if (!isPushAvailable()) {
@@ -258,14 +268,12 @@ export function getPushPermissionStatus(): 'granted' | 'denied' | 'default' | 'u
   }
 
   // Check for native Capacitor platform
-  const isNativeApp = !!(
-    (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
-  );
+  const capacitorWindow = window as CapacitorWindow;
+  const isNativeApp = !!capacitorWindow.Capacitor?.isNativePlatform?.();
 
   if (isNativeApp) {
     // Native platforms manage permissions via Capacitor PushNotifications plugin
-    // Return 'default' to indicate permission needs to be requested
-    // The actual permission state is tracked by CapacitorInitializer
+    // Return 'default' - actual status requires async check via capacitorPushService
     return 'default';
   }
 
