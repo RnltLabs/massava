@@ -20,6 +20,7 @@ import { MobileCustomerNavWrapper } from '@/components/customer';
 import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
 import { MainContentWrapper } from '@/components/layout';
 import { NotificationProvider } from '@/components/providers/NotificationProvider';
+import { CapacitorInitializer } from '@/components/CapacitorInitializer';
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -89,8 +90,9 @@ export default async function LocaleLayout({
         <SessionProvider>
           <GoogleAnalytics />
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <NotificationProvider>
-              <UnifiedHeader />
+            <CapacitorInitializer>
+              <NotificationProvider>
+                <UnifiedHeader />
               <MainContentWrapper>
                 {children}
               </MainContentWrapper>
@@ -105,7 +107,8 @@ export default async function LocaleLayout({
               */}
               <CookieConsentBanner />
               <Toaster />
-            </NotificationProvider>
+              </NotificationProvider>
+            </CapacitorInitializer>
           </NextIntlClientProvider>
         </SessionProvider>
       </body>

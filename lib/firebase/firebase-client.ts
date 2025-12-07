@@ -215,12 +215,30 @@ export function onForegroundMessage(
 
 /**
  * Check if push notifications are available
+ *
+ * Returns true if:
+ * - Running in a browser with Web Push support (Notification + ServiceWorker + PushManager)
+ * - OR running as a native Capacitor app (iOS/Android)
+ *
+ * On native platforms, we use Capacitor's PushNotifications plugin instead of Web Push.
  */
 export function isPushAvailable(): boolean {
   if (typeof window === 'undefined') {
     return false;
   }
 
+  // Check for native Capacitor platform first
+  // Capacitor sets window.Capacitor when running as native app
+  const isNativeApp = !!(
+    (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+  );
+
+  if (isNativeApp) {
+    // Native apps use Capacitor PushNotifications, always available
+    return true;
+  }
+
+  // Web browser - check for Web Push API support
   return (
     'Notification' in window &&
     'serviceWorker' in navigator &&
@@ -230,10 +248,27 @@ export function isPushAvailable(): boolean {
 
 /**
  * Get current push permission status
+ *
+ * On native platforms, returns 'default' since permission is managed by Capacitor
+ * and checked asynchronously. The CapacitorInitializer handles native permissions.
  */
 export function getPushPermissionStatus(): 'granted' | 'denied' | 'default' | 'unavailable' {
   if (!isPushAvailable()) {
     return 'unavailable';
   }
+
+  // Check for native Capacitor platform
+  const isNativeApp = !!(
+    (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.()
+  );
+
+  if (isNativeApp) {
+    // Native platforms manage permissions via Capacitor PushNotifications plugin
+    // Return 'default' to indicate permission needs to be requested
+    // The actual permission state is tracked by CapacitorInitializer
+    return 'default';
+  }
+
+  // Web browser - use Notification API
   return Notification.permission;
 }
