@@ -12,6 +12,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { logger } from '@/lib/logger';
 
 // ============================================
 // Types
@@ -313,7 +314,9 @@ export const useNotificationStore = create<NotificationState>()(
             body: JSON.stringify({ notificationId: id }),
           });
         } catch (error) {
-          console.error('Failed to mark as read:', error);
+          logger.error('[NotificationStore] Failed to mark as read', {
+            error: error instanceof Error ? error : new Error(String(error)),
+          });
           // Revert on error
           get().fetchUnreadCount();
         }
@@ -338,7 +341,9 @@ export const useNotificationStore = create<NotificationState>()(
         try {
           await fetch('/api/notifications/read-all', { method: 'POST' });
         } catch (error) {
-          console.error('Failed to mark all as read:', error);
+          logger.error('[NotificationStore] Failed to mark all as read', {
+            error: error instanceof Error ? error : new Error(String(error)),
+          });
           set({ unreadCount: previousCount });
         }
       },
@@ -389,7 +394,9 @@ export const useNotificationStore = create<NotificationState>()(
             isLoading: false,
           });
         } catch (error) {
-          console.error('Failed to fetch notifications:', error);
+          logger.error('[NotificationStore] Failed to fetch notifications', {
+            error: error instanceof Error ? error : new Error(String(error)),
+          });
           set({
             error: 'Benachrichtigungen konnten nicht geladen werden',
             isLoading: false,
@@ -419,7 +426,9 @@ export const useNotificationStore = create<NotificationState>()(
             // Network error - silently ignore
             return;
           }
-          console.error('Failed to fetch unread count:', error);
+          logger.error('[NotificationStore] Failed to fetch unread count', {
+            error: error instanceof Error ? error : new Error(String(error)),
+          });
         }
       },
     }),

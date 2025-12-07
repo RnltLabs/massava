@@ -97,12 +97,14 @@ const config: CapacitorConfig = {
   },
 };
 
-// Log configuration on build (for debugging)
-console.log(`Capacitor Config - Environment: ${APP_ENV}`);
-console.log(`  App ID: ${config.appId}`);
-console.log(`  App Name: ${config.appName}`);
-if (config.server?.url) {
-  console.log(`  Server URL: ${config.server.url}`);
+// Log configuration on build (for debugging) - only in development
+if (process.env.NODE_ENV !== 'production') {
+  console.log(`Capacitor Config - Environment: ${APP_ENV}`);
+  console.log(`  App ID: ${config.appId}`);
+  console.log(`  App Name: ${config.appName}`);
+  if (config.server?.url) {
+    console.log(`  Server URL: ${config.server.url}`);
+  }
 }
 
 export default config;

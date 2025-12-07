@@ -13,7 +13,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useNotificationStore } from '@/stores/notification-store';
 import { useSession } from 'next-auth/react';
 
-// Client-side logger wrapper (console is acceptable in client components)
+// Client-side logger wrapper (only logs in development)
 const clientLogger = {
   info: (message: string, ...args: unknown[]) => {
     if (process.env.NODE_ENV === 'development') {
@@ -21,10 +21,14 @@ const clientLogger = {
     }
   },
   error: (message: string, ...args: unknown[]) => {
-    console.error(`[SSE] ${message}`, ...args);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`[SSE] ${message}`, ...args);
+    }
   },
   warn: (message: string, ...args: unknown[]) => {
-    console.warn(`[SSE] ${message}`, ...args);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`[SSE] ${message}`, ...args);
+    }
   },
 };
 

@@ -22,6 +22,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { GdprPushConsentDialog } from './GdprPushConsentDialog';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
 import { useNotificationContext } from '@/hooks/useNotificationContext';
+import { logger } from '@/lib/logger';
 
 /**
  * Trigger types for contextual push prompts
@@ -61,7 +62,9 @@ function wasRecentlyDismissed(trigger: PushPromptTrigger): boolean {
 
     return daysSinceDismissed < DISMISSAL_DURATION_DAYS;
   } catch (error) {
-    console.error('[ContextualPushPrompt] Error checking dismissal:', error);
+    logger.error('[ContextualPushPrompt] Error checking dismissal', {
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
     return false;
   }
 }
@@ -75,7 +78,9 @@ function storeDismissal(trigger: PushPromptTrigger): void {
   try {
     localStorage.setItem(getDismissalKey(trigger), new Date().toISOString());
   } catch (error) {
-    console.error('[ContextualPushPrompt] Error storing dismissal:', error);
+    logger.error('[ContextualPushPrompt] Error storing dismissal', {
+      error: error instanceof Error ? error : new Error(String(error)),
+    });
   }
 }
 
@@ -151,32 +156,32 @@ export function useContextualPushPrompt(): UseContextualPushPromptReturn {
     (trigger: PushPromptTrigger) => {
       // Don't show if not supported
       if (!isSupported) {
-        console.log('[ContextualPushPrompt] Push not supported, skipping prompt');
+        logger.debug('[ContextualPushPrompt] Push not supported, skipping prompt');
         return;
       }
 
       // Don't show if already registered
       if (isPushEnabled) {
-        console.log('[ContextualPushPrompt] Push already enabled, skipping prompt');
+        logger.debug('[ContextualPushPrompt] Push already enabled, skipping prompt');
         return;
       }
 
       // Don't show if permission was explicitly denied
       if (permissionStatus === 'denied') {
-        console.log('[ContextualPushPrompt] Permission denied, skipping prompt');
+        logger.debug('[ContextualPushPrompt] Permission denied, skipping prompt');
         return;
       }
 
       // Don't show if recently dismissed for this trigger
       if (wasRecentlyDismissed(trigger)) {
-        console.log(
-          `[ContextualPushPrompt] Trigger "${trigger}" was recently dismissed, skipping prompt`
-        );
+        logger.debug('[ContextualPushPrompt] Trigger was recently dismissed, skipping prompt', {
+          trigger,
+        });
         return;
       }
 
       // All checks passed - show the prompt
-      console.log(`[ContextualPushPrompt] Showing prompt for trigger: ${trigger}`);
+      logger.debug('[ContextualPushPrompt] Showing prompt for trigger', { trigger });
       setCurrentTrigger(trigger);
       setShowPrompt(true);
     },
@@ -189,7 +194,7 @@ export function useContextualPushPrompt(): UseContextualPushPromptReturn {
   const dismissPrompt = useCallback(() => {
     if (currentTrigger) {
       storeDismissal(currentTrigger);
-      console.log(`[ContextualPushPrompt] Dismissed trigger: ${currentTrigger}`);
+      logger.debug('[ContextualPushPrompt] Dismissed trigger', { trigger: currentTrigger });
     }
     setShowPrompt(false);
     setCurrentTrigger(null);
@@ -289,7 +294,7 @@ export function ContextualPushPrompt({
    */
   const handleConsent = useCallback(
     (selectedCategories: string[]) => {
-      console.log('[ContextualPushPrompt] Consent granted:', {
+      logger.info('[ContextualPushPrompt] Consent granted', {
         trigger: currentTrigger,
         categories: selectedCategories,
       });
@@ -345,11 +350,13 @@ export function clearAllDismissals(): void {
     try {
       localStorage.removeItem(getDismissalKey(trigger));
     } catch (error) {
-      console.error('[ContextualPushPrompt] Error clearing dismissal:', error);
+      logger.error('[ContextualPushPrompt] Error clearing dismissal', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
     }
   });
 
-  console.log('[ContextualPushPrompt] Cleared all dismissals');
+  logger.debug('[ContextualPushPrompt] Cleared all dismissals');
 }
 
 export default ContextualPushPrompt;

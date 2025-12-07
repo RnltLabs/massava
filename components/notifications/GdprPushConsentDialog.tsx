@@ -4,11 +4,22 @@
  *
  * GDPR-Compliant Push Notification Consent Dialog
  * Pre-permission dialog with granular consent options
+ *
+ * WCAG 2.1 AA Compliant:
+ * - Proper heading hierarchy (h2 > h3)
+ * - role="group" with aria-labelledby for fieldsets
+ * - Labels connected via htmlFor
+ * - Loading states with aria-busy and aria-label
+ * - Checkbox components with proper aria-describedby
+ * - Focus management handled by Dialog/Sheet components
+ * - Keyboard accessible interactive elements
+ *
+ * @module components/notifications/GdprPushConsentDialog
  */
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -18,10 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
-import {
-  getCategoriesForContext,
-  type NotificationCategory,
-} from '@/lib/notifications/notification-categories';
+import { getCategoriesForContext } from '@/lib/notifications/notification-categories';
 import { useTranslations } from 'next-intl';
 import {
   Loader2Icon,
@@ -34,6 +42,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { logger } from '@/lib/logger';
+import { announceToScreenReader, focusRingStyles } from '@/lib/utils/accessibility';
 
 interface GdprPushConsentDialogProps {
   /** Controls dialog visibility */
@@ -88,6 +98,14 @@ export function GdprPushConsentDialog({
   const isMobile = useMediaQuery('(max-width: 767px)');
   const t = useTranslations('pushConsent');
   const tNotifications = useTranslations('business.notifications');
+
+  // Generate unique IDs for ARIA relationships
+  const uniqueId = useId();
+  const benefitsHeadingId = `benefits-heading-${uniqueId}`;
+  const categoriesHeadingId = `categories-heading-${uniqueId}`;
+  const categoriesDescriptionId = `categories-desc-${uniqueId}`;
+  const gdprHeadingId = `gdpr-heading-${uniqueId}`;
+  const gdprConsentId = `gdpr-consent-${uniqueId}`;
 
   const {
     isSupported: isPushSupported,
@@ -204,18 +222,26 @@ export function GdprPushConsentDialog({
         description: t('success.description'),
       });
 
+      // Announce success to screen readers
+      announceToScreenReader(t('success.title'), 'polite');
+
       // Callback with selected categories
       onConsent?.(selectedCategories);
 
       // Close dialog
       onClose();
     } catch (error) {
-      console.error('[GdprPushConsentDialog] Consent failed:', error);
+      logger.error('[GdprPushConsentDialog] Consent failed', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
       toast({
         title: t('errors.failed'),
         description: error instanceof Error ? error.message : t('errors.unknownError'),
         variant: 'destructive',
       });
+
+      // Announce error to screen readers
+      announceToScreenReader(t('errors.failed'), 'assertive');
     } finally {
       setIsSubmitting(false);
     }
@@ -234,9 +260,12 @@ export function GdprPushConsentDialog({
         : t('preview.customer');
 
     return (
-      <div className="mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-200">
+      <figure
+        className="mb-6 p-4 bg-white rounded-xl shadow-lg border border-gray-200"
+        aria-label={t('preview.ariaLabel')}
+      >
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-1">
+          <div className="flex-shrink-0 mt-1" aria-hidden="true">
             <div className="w-10 h-10 rounded-lg bg-[#B56550] flex items-center justify-center">
               <Bell className="h-5 w-5 text-white" />
             </div>
@@ -244,13 +273,13 @@ export function GdprPushConsentDialog({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <p className="text-sm font-semibold text-gray-900">Massava</p>
-              <p className="text-xs text-gray-500">jetzt</p>
+              <p className="text-xs text-gray-500">{t('preview.now')}</p>
             </div>
             <p className="text-sm text-gray-700 line-clamp-2">{previewMessage}</p>
           </div>
-          <Smartphone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          <Smartphone className="h-4 w-4 text-gray-400 flex-shrink-0" aria-hidden="true" />
         </div>
-      </div>
+      </figure>
     );
   };
 
@@ -270,31 +299,46 @@ export function GdprPushConsentDialog({
           ];
 
     return (
-      <div className="space-y-3 mb-6">
-        {benefits.map((benefit, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <div className="mt-0.5 rounded-full bg-green-100 p-1 flex-shrink-0">
-              <Check className="h-4 w-4 text-green-600" />
-            </div>
-            <p className="text-sm text-gray-700">{benefit}</p>
-          </div>
-        ))}
-      </div>
+      <section className="mb-6" aria-labelledby={benefitsHeadingId}>
+        <h3 id={benefitsHeadingId} className="sr-only">
+          {t('benefits.heading')}
+        </h3>
+        <ul className="space-y-3" role="list">
+          {benefits.map((benefit, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-full bg-green-100 p-1 flex-shrink-0" aria-hidden="true">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+              <span className="text-sm text-gray-700">{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     );
   };
 
   // Render category checkboxes
   const renderCategories = (): React.JSX.Element => {
     return (
-      <div className="space-y-4 mb-6">
-        <div className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg">
-          <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-600" />
+      <fieldset className="space-y-4 mb-6" aria-labelledby={categoriesHeadingId}>
+        <legend id={categoriesHeadingId} className="sr-only">
+          {t('categories.heading')}
+        </legend>
+
+        <div
+          id={categoriesDescriptionId}
+          className="flex items-start gap-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg"
+          role="note"
+        >
+          <Info className="h-4 w-4 flex-shrink-0 mt-0.5 text-blue-600" aria-hidden="true" />
           <p>{t('categories.description')}</p>
         </div>
 
         {categories.map((category) => {
           const Icon = category.icon;
           const isSelected = selectedCategories.includes(category.id);
+          const categoryCheckboxId = `category-${category.id}-${uniqueId}`;
+          const categoryDescriptionId = `category-desc-${category.id}-${uniqueId}`;
 
           return (
             <div
@@ -306,92 +350,119 @@ export function GdprPushConsentDialog({
                   : 'border-gray-200 hover:border-gray-300'
               )}
               onClick={() => handleCategoryToggle(category.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCategoryToggle(category.id);
+                }
+              }}
+              role="presentation"
             >
               <Checkbox
-                id={`category-${category.id}`}
+                id={categoryCheckboxId}
                 checked={isSelected}
                 onCheckedChange={() => handleCategoryToggle(category.id)}
                 className="mt-1"
+                aria-describedby={categoryDescriptionId}
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <div className={cn('p-1 rounded', category.bgColor)}>
+                  <div className={cn('p-1 rounded', category.bgColor)} aria-hidden="true">
                     <Icon className={cn('h-4 w-4', category.iconColor)} />
                   </div>
                   <Label
-                    htmlFor={`category-${category.id}`}
+                    htmlFor={categoryCheckboxId}
                     className="text-sm font-medium text-gray-900 cursor-pointer"
                   >
                     {tNotifications(`categories.${category.titleKey}`)}
                   </Label>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p id={categoryDescriptionId} className="text-xs text-gray-600">
                   {tNotifications(`categories.${category.descriptionKey}`)}
                 </p>
               </div>
             </div>
           );
         })}
-      </div>
+      </fieldset>
     );
   };
 
   // Render GDPR consent section
   const renderGdprConsent = (): React.JSX.Element => {
     return (
-      <div className="space-y-4 mb-6">
+      <section className="space-y-4 mb-6" aria-labelledby={gdprHeadingId}>
         <div className="p-4 bg-gray-50 rounded-lg space-y-3 text-xs text-gray-700">
-          <p className="font-medium text-gray-900">{t('gdpr.title')}</p>
+          <h3 id={gdprHeadingId} className="font-medium text-gray-900">
+            {t('gdpr.title')}
+          </h3>
           <p>{t('gdpr.dataProcessing')}</p>
           <p>{t('gdpr.thirdParty')}</p>
           <p>{t('gdpr.rights')}</p>
           <Link
             href="/privacy"
             target="_blank"
-            className="inline-flex items-center gap-1 text-[#B56550] hover:underline font-medium"
+            rel="noopener noreferrer"
+            className={cn(
+              'inline-flex items-center gap-1 text-[#B56550] hover:underline font-medium',
+              focusRingStyles
+            )}
           >
             {t('gdpr.privacyLink')}
-            <ExternalLink className="h-3 w-3" />
+            <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            <span className="sr-only">({t('gdpr.opensInNewTab')})</span>
           </Link>
         </div>
 
         <div className="flex items-start gap-3 p-3 rounded-lg border border-gray-200">
           <Checkbox
-            id="gdpr-consent"
+            id={gdprConsentId}
             checked={hasConsented}
             onCheckedChange={(checked) => setHasConsented(checked === true)}
             className="mt-1"
+            aria-required="true"
           />
           <Label
-            htmlFor="gdpr-consent"
+            htmlFor={gdprConsentId}
             className="text-sm text-gray-700 cursor-pointer leading-relaxed"
           >
             {t('gdpr.consentCheckbox')}
+            <span className="text-red-500 ml-1" aria-hidden="true">*</span>
           </Label>
         </div>
-      </div>
+      </section>
     );
   };
 
   // Main content
   const renderContent = (): React.JSX.Element => {
     const isProcessing = isSubmitting || isPushRegistering;
+    const dialogTitleId = `dialog-title-${uniqueId}`;
+    const dialogSubtitleId = `dialog-subtitle-${uniqueId}`;
 
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full" aria-busy={isProcessing}>
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{t('title')}</h2>
-            <p className="text-sm text-gray-600 mt-1">{t('subtitle')}</p>
+            <h2 id={dialogTitleId} className="text-xl font-semibold text-gray-900">
+              {t('title')}
+            </h2>
+            <p id={dialogSubtitleId} className="text-sm text-gray-600 mt-1">
+              {t('subtitle')}
+            </p>
           </div>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50"
+            className={cn(
+              'p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors disabled:opacity-50',
+              focusRingStyles
+            )}
             aria-label={t('close')}
+            type="button"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -409,21 +480,33 @@ export function GdprPushConsentDialog({
             'flex flex-col gap-3 pt-4',
             isMobile && 'sticky bottom-0 bg-[#F4EDE8] border-t -mx-6 px-6 pb-4'
           )}
+          role="group"
+          aria-label={t('actions.groupLabel')}
         >
           <Button
             onClick={handleConsent}
             disabled={isProcessing || !hasConsented}
-            className="w-full bg-[#B56550] hover:bg-[#A05540] text-white font-medium"
+            className={cn(
+              'w-full bg-[#B56550] hover:bg-[#A05540] text-white font-medium',
+              focusRingStyles
+            )}
             size="lg"
+            aria-describedby={dialogSubtitleId}
           >
-            {isProcessing && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
-            {t('actions.accept')}
+            {isProcessing && (
+              <Loader2Icon className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            )}
+            {isProcessing ? t('actions.processing') : t('actions.accept')}
           </Button>
 
           <button
             onClick={handleDecline}
             disabled={isProcessing}
-            className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 disabled:opacity-50"
+            className={cn(
+              'w-full text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 disabled:opacity-50',
+              focusRingStyles
+            )}
+            type="button"
           >
             {t('actions.decline')}
           </button>

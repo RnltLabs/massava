@@ -166,6 +166,20 @@ export function usePushRegistration(): UsePushRegistrationReturn {
     isNative: boolean;
   } | null>(null);
 
+  // Refs for memory leak prevention in foreground message listener
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const isMountedRef = useRef(true);
+
+  /**
+   * Track component mount status to prevent state updates after unmount
+   */
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   /**
    * Check support and permission status on mount
    */
@@ -235,12 +249,24 @@ export function usePushRegistration(): UsePushRegistrationReturn {
 
   /**
    * Setup foreground message listener for web
+   *
+   * Uses refs to prevent memory leaks from duplicate listeners
+   * and guards against state updates after unmount.
    */
   useEffect(() => {
+    // Cleanup previous listener immediately to prevent duplicates
+    if (unsubscribeRef.current) {
+      unsubscribeRef.current();
+      unsubscribeRef.current = null;
+    }
+
     // Only setup web foreground listener if registered on web
     if (isNative || !isRegistered) return;
 
     const unsubscribe = onForegroundMessage((payload) => {
+      // Guard against updates after unmount
+      if (!isMountedRef.current) return;
+
       logger.info('[usePushRegistration] Foreground message received');
 
       // Show browser notification for foreground messages
@@ -253,9 +279,12 @@ export function usePushRegistration(): UsePushRegistrationReturn {
       }
     });
 
+    unsubscribeRef.current = unsubscribe || null;
+
     return () => {
-      if (unsubscribe) {
-        unsubscribe();
+      if (unsubscribeRef.current) {
+        unsubscribeRef.current();
+        unsubscribeRef.current = null;
       }
     };
   }, [isRegistered, isNative]);

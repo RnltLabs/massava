@@ -9,12 +9,23 @@
  * @module lib/capacitor/push-service
  */
 
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core';
 import { PushNotifications, type Token, type PushNotificationSchema, type ActionPerformed } from '@capacitor/push-notifications';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Badge } from '@capawesome/capacitor-badge';
 import { logger } from '@/lib/logger';
 import { isInternalUrl } from '@/lib/utils/url-validation';
+
+/**
+ * Constants for haptic feedback timing
+ */
+const HAPTIC_DOUBLE_TAP_DELAY_MS = 100;
+
+/**
+ * Constants for token registration retry logic
+ */
+const TOKEN_REGISTRATION_MAX_RETRIES = 3;
+const TOKEN_REGISTRATION_BASE_DELAY_MS = 1000;
 
 /**
  * Device platform type
@@ -60,9 +71,11 @@ export type NativePermissionStatus = 'granted' | 'denied' | 'prompt' | 'prompt-w
 
 class CapacitorPushService {
   private isInitialized = false;
+  private initializationPromise: Promise<boolean> | null = null;
   private config: PushServiceConfig = {};
   private currentToken: string | null = null;
   private deviceId: string | null = null;
+  private listeners: PluginListenerHandle[] = [];
 
   /**
    * Initialize the push notification service
@@ -96,12 +109,41 @@ class CapacitorPushService {
    * ```
    */
   async initialize(config: PushServiceConfig = {}): Promise<boolean> {
-    if (!Capacitor.isNativePlatform() || this.isInitialized) {
+    if (!Capacitor.isNativePlatform()) {
       return false;
     }
 
-    this.config = config;
+    // Prevent duplicate initialization - return existing promise if in progress
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
 
+    // Already initialized - just update config if needed
+    if (this.isInitialized) {
+      this.config = { ...this.config, ...config };
+      return true;
+    }
+
+    this.config = config;
+    this.initializationPromise = this.performInitialization();
+
+    try {
+      const result = await this.initializationPromise;
+      return result;
+    } finally {
+      // Clear promise only on failure to allow retry
+      // On success, keep the promise so subsequent calls return immediately
+      if (!this.isInitialized) {
+        this.initializationPromise = null;
+      }
+    }
+  }
+
+  /**
+   * Internal initialization logic
+   * @private
+   */
+  private async performInitialization(): Promise<boolean> {
     try {
       // Request permission
       const permStatus = await PushNotifications.requestPermissions();
@@ -113,46 +155,8 @@ class CapacitorPushService {
       // Register with APNS/FCM
       await PushNotifications.register();
 
-      // Listen for registration
-      await PushNotifications.addListener('registration', async (token: Token) => {
-        logger.info('Push registration success:', { token: token.value });
-        this.currentToken = token.value;
-        await this.registerToken(token.value);
-        this.config.onTokenReceived?.(token.value);
-      });
-
-      // Listen for errors
-      await PushNotifications.addListener('registrationError', (err) => {
-        logger.error('Push registration error:', { error: err.error });
-        this.config.onError?.(new Error(err.error));
-      });
-
-      // Listen for incoming notifications (foreground)
-      await PushNotifications.addListener(
-        'pushNotificationReceived',
-        async (notification: PushNotificationSchema) => {
-          logger.info('Push received:', { notification });
-
-          // Haptic feedback based on priority
-          const priority = notification.data?.['priority'] as string | undefined;
-          await this.triggerHaptic(priority);
-
-          // Update badge
-          await this.updateBadge();
-
-          this.config.onNotificationReceived?.(notification);
-        }
-      );
-
-      // Listen for notification taps
-      await PushNotifications.addListener(
-        'pushNotificationActionPerformed',
-        (action: ActionPerformed) => {
-          logger.info('Push action received');
-          this.handleNotificationAction(action);
-          this.config.onNotificationAction?.(action);
-        }
-      );
+      // Setup listeners with proper cleanup tracking
+      await this.setupListeners();
 
       this.isInitialized = true;
       return true;
@@ -163,6 +167,91 @@ class CapacitorPushService {
       this.config.onError?.(error instanceof Error ? error : new Error(String(error)));
       return false;
     }
+  }
+
+  /**
+   * Setup all push notification listeners
+   *
+   * Cleans up existing listeners first to prevent duplicates,
+   * then registers new listeners and tracks their handles for cleanup.
+   *
+   * @private
+   */
+  private async setupListeners(): Promise<void> {
+    // Cleanup existing listeners first to prevent duplicates
+    await this.cleanupListeners();
+
+    // Listen for registration
+    const registrationListener = await PushNotifications.addListener(
+      'registration',
+      async (token: Token) => {
+        logger.info('Push registration success:', { token: token.value });
+        this.currentToken = token.value;
+        await this.registerToken(token.value);
+        this.config.onTokenReceived?.(token.value);
+      }
+    );
+    this.listeners.push(registrationListener);
+
+    // Listen for errors
+    const errorListener = await PushNotifications.addListener(
+      'registrationError',
+      (err) => {
+        logger.error('Push registration error:', { error: err.error });
+        this.config.onError?.(new Error(err.error));
+      }
+    );
+    this.listeners.push(errorListener);
+
+    // Listen for incoming notifications (foreground)
+    const receivedListener = await PushNotifications.addListener(
+      'pushNotificationReceived',
+      async (notification: PushNotificationSchema) => {
+        logger.info('Push received:', { notification });
+
+        // Haptic feedback based on priority
+        const priority = notification.data?.['priority'] as string | undefined;
+        await this.triggerHaptic(priority);
+
+        // Update badge
+        await this.updateBadge();
+
+        this.config.onNotificationReceived?.(notification);
+      }
+    );
+    this.listeners.push(receivedListener);
+
+    // Listen for notification taps
+    const actionListener = await PushNotifications.addListener(
+      'pushNotificationActionPerformed',
+      (action: ActionPerformed) => {
+        logger.info('Push action received');
+        this.handleNotificationAction(action);
+        this.config.onNotificationAction?.(action);
+      }
+    );
+    this.listeners.push(actionListener);
+  }
+
+  /**
+   * Cleanup all registered listeners
+   *
+   * Iterates through tracked listener handles and removes each one.
+   * Logs warnings for any failures but continues cleanup.
+   *
+   * @private
+   */
+  private async cleanupListeners(): Promise<void> {
+    for (const listener of this.listeners) {
+      try {
+        await listener.remove();
+      } catch (error) {
+        logger.warn('[Push Service] Failed to remove listener', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
+      }
+    }
+    this.listeners = [];
   }
 
   /**
@@ -185,10 +274,8 @@ class CapacitorPushService {
   private async registerToken(token: string): Promise<void> {
     const platform = this.getPlatform();
     const deviceName = await this.getDeviceName();
-    const maxRetries = 3;
-    const baseDelayMs = 1000;
 
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    for (let attempt = 0; attempt <= TOKEN_REGISTRATION_MAX_RETRIES; attempt++) {
       try {
         const response = await fetch('/api/notifications/devices', {
           method: 'POST',
@@ -203,9 +290,9 @@ class CapacitorPushService {
 
         // Handle 401 Unauthorized - session may not be ready yet
         if (response.status === 401) {
-          if (attempt < maxRetries) {
-            const delayMs = baseDelayMs * Math.pow(2, attempt);
-            logger.info(`Push token registration got 401, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`);
+          if (attempt < TOKEN_REGISTRATION_MAX_RETRIES) {
+            const delayMs = TOKEN_REGISTRATION_BASE_DELAY_MS * Math.pow(2, attempt);
+            logger.info(`Push token registration got 401, retrying in ${delayMs}ms (attempt ${attempt + 1}/${TOKEN_REGISTRATION_MAX_RETRIES})`);
             await new Promise((resolve) => setTimeout(resolve, delayMs));
             continue;
           }
@@ -227,9 +314,9 @@ class CapacitorPushService {
         return;
       } catch (error) {
         // Network errors - retry with backoff
-        if (attempt < maxRetries) {
-          const delayMs = baseDelayMs * Math.pow(2, attempt);
-          logger.warn(`Push token registration failed, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries})`, {
+        if (attempt < TOKEN_REGISTRATION_MAX_RETRIES) {
+          const delayMs = TOKEN_REGISTRATION_BASE_DELAY_MS * Math.pow(2, attempt);
+          logger.warn(`Push token registration failed, retrying in ${delayMs}ms (attempt ${attempt + 1}/${TOKEN_REGISTRATION_MAX_RETRIES})`, {
             error: error instanceof Error ? error : new Error(String(error)),
           });
           await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -280,7 +367,7 @@ class CapacitorPushService {
       switch (priority) {
         case 'URGENT':
           await Haptics.impact({ style: ImpactStyle.Heavy });
-          await new Promise((r) => setTimeout(r, 100));
+          await new Promise((r) => setTimeout(r, HAPTIC_DOUBLE_TAP_DELAY_MS));
           await Haptics.impact({ style: ImpactStyle.Heavy });
           break;
         case 'HIGH':
@@ -413,10 +500,11 @@ class CapacitorPushService {
     if (!Capacitor.isNativePlatform()) return;
 
     try {
-      await PushNotifications.removeAllListeners();
+      await this.cleanupListeners();
       this.isInitialized = false;
+      this.initializationPromise = null;
     } catch (error) {
-      logger.error('Failed to unregister push service:', {
+      logger.error('[Push Service] Failed to unregister', {
         error: error instanceof Error ? error : new Error(String(error)),
       });
     }
@@ -579,12 +667,13 @@ class CapacitorPushService {
       this.deviceId = null;
 
       // Remove listeners but keep service usable
-      await PushNotifications.removeAllListeners();
+      await this.cleanupListeners();
       this.isInitialized = false;
+      this.initializationPromise = null;
 
       return true;
     } catch (error) {
-      logger.error('Failed to unregister device:', {
+      logger.error('[Push Service] Failed to unregister device:', {
         error: error instanceof Error ? error : new Error(String(error)),
       });
       return false;
@@ -612,13 +701,14 @@ class CapacitorPushService {
 
     try {
       // Clear old listeners
-      await PushNotifications.removeAllListeners();
+      await this.cleanupListeners();
       this.isInitialized = false;
+      this.initializationPromise = null;
 
       // Re-initialize
       return await this.initialize(this.config);
     } catch (error) {
-      logger.error('Failed to re-register:', {
+      logger.error('[Push Service] Failed to re-register:', {
         error: error instanceof Error ? error : new Error(String(error)),
       });
       return false;

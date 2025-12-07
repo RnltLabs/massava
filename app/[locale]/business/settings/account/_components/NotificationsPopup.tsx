@@ -4,11 +4,21 @@
  *
  * Dynamic Notification Settings Popup
  * Shows role-specific categories for Studio Owners vs Customers
+ *
+ * WCAG 2.1 AA Compliant:
+ * - Proper heading hierarchy (h2 > h3)
+ * - role="group" with aria-labelledby for sections
+ * - Labels connected via htmlFor
+ * - Loading states with aria-busy and aria-label
+ * - Switch components with proper aria-describedby
+ * - Focus management handled by Dialog/Sheet components
+ *
+ * @module app/[locale]/business/settings/account/_components/NotificationsPopup
  */
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useId } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
@@ -26,6 +36,8 @@ import {
 import { useTranslations } from 'next-intl';
 import { Loader2Icon, X, Bell, Check, Mail, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logger } from '@/lib/logger';
+import { announceToScreenReader, focusRingStyles } from '@/lib/utils/accessibility';
 
 interface NotificationsPopupProps {
   open: boolean;
@@ -62,6 +74,15 @@ export function NotificationsPopup({
   const isMobile = useMediaQuery('(max-width: 767px)');
   const t = useTranslations('business.notifications');
 
+  // Generate unique IDs for ARIA relationships
+  const uniqueId = useId();
+  const channelsHeadingId = `channels-heading-${uniqueId}`;
+  const categoriesHeadingId = `categories-heading-${uniqueId}`;
+  const pushToggleId = `push-toggle-${uniqueId}`;
+  const pushNotSupportedId = `push-not-supported-${uniqueId}`;
+  const pushDeniedId = `push-denied-${uniqueId}`;
+  const emailToggleId = `email-toggle-${uniqueId}`;
+
   // Get notification context (STUDIO_OWNER or CUSTOMER)
   const { context, isStudioOwner, isLoading: isContextLoading } = useNotificationContext();
 
@@ -84,7 +105,7 @@ export function NotificationsPopup({
 
   // Determine initial step when popup opens
   useEffect(() => {
-    console.log('[NotificationsPopup] State:', {
+    logger.debug('[NotificationsPopup] State', {
       open,
       isInitialized,
       isPushSupported,
@@ -99,7 +120,7 @@ export function NotificationsPopup({
       const shouldShowPrePermission =
         isPushSupported && permissionStatus === 'default' && !isPushRegistered;
 
-      console.log('[NotificationsPopup] Decision:', {
+      logger.debug('[NotificationsPopup] Decision', {
         shouldShowPrePermission,
         context,
         categoriesCount: categories.length,
@@ -159,7 +180,9 @@ export function NotificationsPopup({
         });
       }
     } catch (error) {
-      console.error('Failed to fetch notification preferences:', error);
+      logger.error('[NotificationsPopup] Failed to fetch notification preferences', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
       toast({
         title: 'Fehler',
         description: t('errorLoading'),
@@ -210,13 +233,21 @@ export function NotificationsPopup({
         if (!response.ok) {
           throw new Error('Failed to save preferences');
         }
+
+        // Announce success to screen readers
+        announceToScreenReader(t('settingsSaved'), 'polite');
       } catch (error) {
-        console.error('Failed to save notification preferences:', error);
+        logger.error('[NotificationsPopup] Failed to save notification preferences', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
         toast({
           title: 'Fehler',
           description: t('errorSaving'),
           variant: 'destructive',
         });
+
+        // Announce error to screen readers
+        announceToScreenReader(t('errorSaving'), 'assertive');
         fetchPreferences();
       } finally {
         setSavingField(null);
@@ -314,6 +345,8 @@ export function NotificationsPopup({
   // ============================================
 
   const renderPrePermissionStep = (): React.JSX.Element => {
+    const prePermissionHeadlineId = `pre-permission-headline-${uniqueId}`;
+    const prePermissionBodyId = `pre-permission-body-${uniqueId}`;
     const benefits = isStudioOwner
       ? [
           t('prePermission.benefits.bookingRequests'),
@@ -326,39 +359,52 @@ export function NotificationsPopup({
         ];
 
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full" role="region" aria-labelledby={prePermissionHeadlineId}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-semibold">{t('title')}</h2>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
-            aria-label="Schließen"
+            className={cn(
+              'p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors',
+              focusRingStyles
+            )}
+            aria-label={t('close')}
+            type="button"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         <div className="flex-1 flex flex-col items-center text-center px-4">
-          <div className="rounded-full bg-[#B56550]/10 p-4 mb-6">
+          <div className="rounded-full bg-[#B56550]/10 p-4 mb-6" aria-hidden="true">
             <Bell className="h-10 w-10 text-[#B56550]" />
           </div>
 
-          <h3 className="text-2xl font-semibold text-gray-900 mb-3">
+          <h3
+            id={prePermissionHeadlineId}
+            className="text-2xl font-semibold text-gray-900 mb-3"
+          >
             {t('prePermission.headline')}
           </h3>
 
-          <p className="text-gray-600 mb-8">{t('prePermission.body')}</p>
+          <p id={prePermissionBodyId} className="text-gray-600 mb-8">
+            {t('prePermission.body')}
+          </p>
 
-          <div className="w-full max-w-sm space-y-3 mb-8">
+          <ul
+            className="w-full max-w-sm space-y-3 mb-8"
+            role="list"
+            aria-label={t('prePermission.benefitsLabel')}
+          >
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-start gap-3 text-left">
-                <div className="mt-0.5 rounded-full bg-green-100 p-1 flex-shrink-0">
+              <li key={index} className="flex items-start gap-3 text-left">
+                <div className="mt-0.5 rounded-full bg-green-100 p-1 flex-shrink-0" aria-hidden="true">
                   <Check className="h-3 w-3 text-green-600" />
                 </div>
-                <p className="text-sm text-gray-700">{benefit}</p>
-              </div>
+                <span className="text-sm text-gray-700">{benefit}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div
@@ -366,21 +412,33 @@ export function NotificationsPopup({
             'flex flex-col gap-3',
             isMobile ? 'sticky bottom-0 bg-[#F4EDE8] py-4 border-t -mx-6 px-6' : 'pt-4'
           )}
+          role="group"
+          aria-label={t('prePermission.actionsLabel')}
         >
           <Button
             onClick={handlePrePermissionConfirm}
             disabled={isPushRegistering}
-            className="w-full bg-[#B56550] hover:bg-[#A05540] text-white font-medium"
+            className={cn(
+              'w-full bg-[#B56550] hover:bg-[#A05540] text-white font-medium',
+              focusRingStyles
+            )}
             size="lg"
+            aria-describedby={prePermissionBodyId}
           >
-            {isPushRegistering ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : null}
-            {t('prePermission.cta')}
+            {isPushRegistering ? (
+              <Loader2Icon className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : null}
+            {isPushRegistering ? t('prePermission.ctaLoading') : t('prePermission.cta')}
           </Button>
 
           <button
             onClick={handlePrePermissionSkip}
             disabled={isPushRegistering}
-            className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 disabled:opacity-50"
+            className={cn(
+              'w-full text-sm text-gray-600 hover:text-gray-900 transition-colors py-2 disabled:opacity-50',
+              focusRingStyles
+            )}
+            type="button"
           >
             {t('prePermission.skip')}
           </button>
@@ -396,6 +454,10 @@ export function NotificationsPopup({
     const isSaving = savingField === category.id;
     const isDisabled = !hasActiveChannel;
 
+    // Unique IDs for this category
+    const categoryToggleId = `category-toggle-${category.id}-${uniqueId}`;
+    const categoryDescriptionId = `category-desc-${category.id}-${uniqueId}`;
+
     return (
       <div
         key={category.id}
@@ -405,29 +467,38 @@ export function NotificationsPopup({
         )}
       >
         <div className="flex items-center gap-3 flex-1 min-w-0">
-          <div className={cn('p-2 rounded-lg flex-shrink-0', category.bgColor)}>
+          <div className={cn('p-2 rounded-lg flex-shrink-0', category.bgColor)} aria-hidden="true">
             <Icon className={cn('h-5 w-5', category.iconColor)} />
           </div>
           <div className="min-w-0">
-            <Label className={cn(
-              'text-base font-medium',
-              isDisabled ? 'text-gray-500' : 'text-gray-900'
-            )}>
+            <Label
+              htmlFor={categoryToggleId}
+              className={cn(
+                'text-base font-medium cursor-pointer',
+                isDisabled ? 'text-gray-500' : 'text-gray-900'
+              )}
+            >
               {t(`categories.${category.titleKey}`)}
             </Label>
-            <p className="text-sm text-gray-500 truncate">
+            <p id={categoryDescriptionId} className="text-sm text-gray-500 truncate">
               {t(`categories.${category.descriptionKey}`)}
             </p>
           </div>
         </div>
         <div className="ml-3 flex-shrink-0">
           {isSaving ? (
-            <Loader2Icon className="h-5 w-5 animate-spin text-[#B56550]" />
+            <Loader2Icon
+              className="h-5 w-5 animate-spin text-[#B56550]"
+              aria-label={t('saving')}
+              role="status"
+            />
           ) : (
             <Switch
+              id={categoryToggleId}
               checked={isEnabled}
               onCheckedChange={() => handleCategoryToggle(category.id)}
               disabled={isDisabled}
+              aria-describedby={categoryDescriptionId}
             />
           )}
         </div>
@@ -444,6 +515,13 @@ export function NotificationsPopup({
       ? t('categories.sectionTitleBusiness')
       : t('categories.title');
 
+    // Determine aria-describedby for push switch
+    const pushAriaDescribedBy = !isPushSupported
+      ? pushNotSupportedId
+      : isPushDenied
+        ? pushDeniedId
+        : undefined;
+
     return (
       <>
         <div className="flex items-center justify-between mb-6">
@@ -455,50 +533,80 @@ export function NotificationsPopup({
           </div>
           <button
             onClick={() => onOpenChange(false)}
-            className="p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors"
-            aria-label="Schließen"
+            className={cn(
+              'p-2 -mr-2 text-gray-500 hover:text-gray-900 transition-colors',
+              focusRingStyles
+            )}
+            aria-label={t('close')}
+            type="button"
           >
-            <X className="h-5 w-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
         {isFetchingPreferences || isContextLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2Icon className="h-8 w-8 animate-spin text-[#B56550]" />
+          <div
+            className="flex items-center justify-center py-12"
+            role="status"
+            aria-busy="true"
+            aria-label={t('loading')}
+          >
+            <Loader2Icon className="h-8 w-8 animate-spin text-[#B56550]" aria-hidden="true" />
+            <span className="sr-only">{t('loading')}</span>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-6" aria-busy={savingField !== null}>
             {/* Channels Section */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+            <div
+              className="space-y-3"
+              role="group"
+              aria-labelledby={channelsHeadingId}
+            >
+              <h3
+                id={channelsHeadingId}
+                className="text-sm font-medium text-gray-500 uppercase tracking-wide"
+              >
                 {t('channels.title')}
               </h3>
 
               {/* Push */}
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-[#B56550]/10">
+                  <div className="p-2 rounded-lg bg-[#B56550]/10" aria-hidden="true">
                     <Smartphone className="h-5 w-5 text-[#B56550]" />
                   </div>
                   <div>
-                    <Label className="text-base font-medium text-gray-900">
+                    <Label
+                      htmlFor={pushToggleId}
+                      className="text-base font-medium text-gray-900 cursor-pointer"
+                    >
                       {t('push.title')}
                     </Label>
                     {!isPushSupported && (
-                      <p className="text-xs text-gray-500">{t('push.notSupported')}</p>
+                      <p id={pushNotSupportedId} className="text-xs text-gray-500">
+                        {t('push.notSupported')}
+                      </p>
                     )}
                     {isPushDenied && (
-                      <p className="text-xs text-amber-600">{t('push.permissionDenied')}</p>
+                      <p id={pushDeniedId} className="text-xs text-amber-600">
+                        {t('push.permissionDenied')}
+                      </p>
                     )}
                   </div>
                 </div>
                 {isWaitingForPermission || savingField === 'push' ? (
-                  <Loader2Icon className="h-5 w-5 animate-spin text-[#B56550]" />
+                  <Loader2Icon
+                    className="h-5 w-5 animate-spin text-[#B56550]"
+                    aria-label={t('saving')}
+                    role="status"
+                  />
                 ) : (
                   <Switch
+                    id={pushToggleId}
                     checked={settings.pushEnabled || isPushRegistered}
                     onCheckedChange={handlePushToggle}
                     disabled={isDisabledDueToPermission || isPushDenied}
+                    aria-describedby={pushAriaDescribedBy}
                   />
                 )}
               </div>
@@ -506,24 +614,42 @@ export function NotificationsPopup({
               {/* Email */}
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-[#B56550]/10">
+                  <div className="p-2 rounded-lg bg-[#B56550]/10" aria-hidden="true">
                     <Mail className="h-5 w-5 text-[#B56550]" />
                   </div>
-                  <Label className="text-base font-medium text-gray-900">
+                  <Label
+                    htmlFor={emailToggleId}
+                    className="text-base font-medium text-gray-900 cursor-pointer"
+                  >
                     {t('email.title')}
                   </Label>
                 </div>
                 {savingField === 'email' ? (
-                  <Loader2Icon className="h-5 w-5 animate-spin text-[#B56550]" />
+                  <Loader2Icon
+                    className="h-5 w-5 animate-spin text-[#B56550]"
+                    aria-label={t('saving')}
+                    role="status"
+                  />
                 ) : (
-                  <Switch checked={settings.emailEnabled} onCheckedChange={handleEmailToggle} />
+                  <Switch
+                    id={emailToggleId}
+                    checked={settings.emailEnabled}
+                    onCheckedChange={handleEmailToggle}
+                  />
                 )}
               </div>
             </div>
 
             {/* Dynamic Categories Section */}
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
+            <div
+              className="space-y-3"
+              role="group"
+              aria-labelledby={categoriesHeadingId}
+            >
+              <h3
+                id={categoriesHeadingId}
+                className="text-sm font-medium text-gray-500 uppercase tracking-wide"
+              >
                 {sectionTitle}
               </h3>
 
@@ -531,7 +657,9 @@ export function NotificationsPopup({
             </div>
 
             {/* Info text */}
-            <p className="text-xs text-gray-500 text-center pt-2">{t('autoSaveInfo')}</p>
+            <p className="text-xs text-gray-500 text-center pt-2" role="note">
+              {t('autoSaveInfo')}
+            </p>
           </div>
         )}
       </>

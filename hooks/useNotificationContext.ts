@@ -73,16 +73,6 @@ export function useNotificationContext(): NotificationContextResult {
     ? 'STUDIO_OWNER'
     : 'CUSTOMER';
 
-  // Debug logging
-  console.log('[useNotificationContext]', {
-    pathname,
-    isBusinessContext,
-    primaryRole,
-    hasStudio,
-    isStudioOwner,
-    context,
-  });
-
   return {
     context,
     isStudioOwner,

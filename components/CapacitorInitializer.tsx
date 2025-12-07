@@ -38,17 +38,18 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
     initializationAttemptedRef.current = true;
 
     /**
-     * Initialize push notifications only if not already initialized
-     * The usePushRegistration hook may have already initialized push
+     * Initialize push notifications if permission is granted
+     *
+     * The push service uses an initialization lock pattern internally,
+     * so calling initialize() is safe even if called concurrently from
+     * multiple places (e.g., usePushRegistration hook and this component).
+     *
+     * This method checks permission first to avoid prompting the user
+     * before they explicitly request push notifications.
      */
     const initializePushIfNeeded = async (): Promise<void> => {
-      // Check if push service is already initialized (by usePushRegistration hook)
-      if (capacitorPushService.getInitialized()) {
-        logger.debug('[CapacitorInitializer] Push already initialized by hook');
-        return;
-      }
-
-      // Check if permission was already granted
+      // Check if permission was already granted before attempting initialization
+      // This avoids triggering permission prompts from this component
       const status = await capacitorPushService.getPermissionStatus();
       if (status !== 'granted') {
         // Don't auto-initialize if permission not granted
@@ -57,9 +58,10 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
         return;
       }
 
-      // Permission granted but not initialized - initialize now
+      // Permission granted - initialize push service
+      // The service handles deduplication internally via initialization lock pattern
       logger.info('[CapacitorInitializer] Auto-initializing push service');
-      await capacitorPushService.initialize({
+      const initialized = await capacitorPushService.initialize({
         onNotificationReceived: () => {
           void capacitorPushService.updateBadge();
           logger.info('[CapacitorInitializer] Notification received');
@@ -78,6 +80,12 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
           logger.error('[CapacitorInitializer] Push notification error', { error });
         },
       });
+
+      if (initialized) {
+        logger.debug('[CapacitorInitializer] Push service initialized successfully');
+      } else {
+        logger.debug('[CapacitorInitializer] Push service already initialized or initialization skipped');
+      }
     };
 
     // Initialize push if needed

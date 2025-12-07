@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePushRegistration } from '@/hooks/usePushRegistration';
+import { logger } from '@/lib/logger';
 
 const formSchema = z.object({
   // Global channel toggles
@@ -264,7 +265,9 @@ export function NotificationSettings() {
           });
         }
       } catch (error) {
-        console.error('Failed to fetch preferences:', error);
+        logger.error('[NotificationSettings] Failed to fetch preferences', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
         toast.error('Einstellungen konnten nicht geladen werden');
       } finally {
         setIsLoading(false);
@@ -290,7 +293,9 @@ export function NotificationSettings() {
 
       toast.success('Einstellungen gespeichert');
     } catch (error) {
-      console.error('Failed to save preferences:', error);
+      logger.error('[NotificationSettings] Failed to save preferences', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
       toast.error('Fehler beim Speichern');
     } finally {
       setIsSaving(false);
