@@ -52,9 +52,16 @@ interface PushServiceConfig {
  *
  * @class CapacitorPushService
  */
+/**
+ * Permission status for native push notifications
+ */
+export type NativePermissionStatus = 'granted' | 'denied' | 'prompt' | 'prompt-with-rationale';
+
 class CapacitorPushService {
   private isInitialized = false;
   private config: PushServiceConfig = {};
+  private currentToken: string | null = null;
+  private deviceId: string | null = null;
 
   /**
    * Initialize the push notification service
@@ -108,6 +115,7 @@ class CapacitorPushService {
       // Listen for registration
       await PushNotifications.addListener('registration', async (token: Token) => {
         logger.info('Push registration success:', { token: token.value });
+        this.currentToken = token.value;
         await this.registerToken(token.value);
         this.config.onTokenReceived?.(token.value);
       });
@@ -188,6 +196,11 @@ class CapacitorPushService {
 
       if (!response.ok) {
         throw new Error(`Failed to register token: ${response.statusText}`);
+      }
+
+      const responseData = await response.json();
+      if (responseData.device?.id) {
+        this.deviceId = responseData.device.id;
       }
     } catch (error) {
       logger.error('Failed to register token:', {
@@ -383,6 +396,191 @@ class CapacitorPushService {
    */
   getInitialized(): boolean {
     return this.isInitialized;
+  }
+
+  /**
+   * Get current push notification permission status
+   *
+   * Checks native permission status via Capacitor PushNotifications plugin.
+   * On web platforms, returns 'prompt' as a fallback.
+   *
+   * @returns {Promise<NativePermissionStatus>} Current permission status
+   */
+  async getPermissionStatus(): Promise<NativePermissionStatus> {
+    if (!Capacitor.isNativePlatform()) {
+      return 'prompt';
+    }
+
+    try {
+      const result = await PushNotifications.checkPermissions();
+      return result.receive as NativePermissionStatus;
+    } catch (error) {
+      logger.error('Failed to check permission status:', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return 'prompt';
+    }
+  }
+
+  /**
+   * Request push notification permission without full initialization
+   *
+   * Useful for checking/requesting permission before full service setup.
+   * Does not register device with backend.
+   *
+   * @returns {Promise<boolean>} True if permission granted
+   */
+  async requestPermission(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    try {
+      const result = await PushNotifications.requestPermissions();
+      return result.receive === 'granted';
+    } catch (error) {
+      logger.error('Failed to request permission:', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Get current push token (if available)
+   *
+   * Returns the cached token from last successful registration.
+   * Returns null if not registered or on web platform.
+   *
+   * @returns {string | null} Push token or null
+   */
+  getToken(): string | null {
+    return this.currentToken;
+  }
+
+  /**
+   * Get registered device ID (if available)
+   *
+   * Returns the backend device ID from last successful registration.
+   *
+   * @returns {string | null} Device ID or null
+   */
+  getDeviceId(): string | null {
+    return this.deviceId;
+  }
+
+  /**
+   * Check if device is registered with backend
+   *
+   * Queries backend to see if current device has an active registration.
+   *
+   * @returns {Promise<boolean>} True if registered
+   */
+  async isRegistered(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    try {
+      const response = await fetch('/api/notifications/devices');
+      if (!response.ok) {
+        return false;
+      }
+
+      const { devices } = await response.json();
+      const platform = this.getPlatform();
+      const nativeDevice = devices.find(
+        (device: { platform: string; isActive: boolean }) =>
+          device.platform === platform && device.isActive
+      );
+
+      if (nativeDevice) {
+        this.deviceId = nativeDevice.id;
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      logger.error('Failed to check registration:', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Unregister device from backend and cleanup
+   *
+   * Removes device registration from backend and clears local state.
+   * Use when user logs out or disables push notifications.
+   *
+   * @returns {Promise<boolean>} True if successfully unregistered
+   */
+  async unregisterDevice(): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    try {
+      if (this.deviceId) {
+        const response = await fetch(`/api/notifications/devices/${this.deviceId}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          logger.warn('Failed to delete device from backend:', { status: response.status });
+        }
+      }
+
+      // Clear local state
+      this.currentToken = null;
+      this.deviceId = null;
+
+      // Remove listeners but keep service usable
+      await PushNotifications.removeAllListeners();
+      this.isInitialized = false;
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to unregister device:', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return false;
+    }
+  }
+
+  /**
+   * Re-register device (e.g., after token refresh)
+   *
+   * Forces a new registration with APNS/FCM and updates backend.
+   * Useful for token refresh scenarios.
+   *
+   * @param {PushServiceConfig} [config] - Optional new config
+   * @returns {Promise<boolean>} True if registration successful
+   */
+  async reRegister(config?: PushServiceConfig): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      return false;
+    }
+
+    // If we have config updates, apply them
+    if (config) {
+      this.config = { ...this.config, ...config };
+    }
+
+    try {
+      // Clear old listeners
+      await PushNotifications.removeAllListeners();
+      this.isInitialized = false;
+
+      // Re-initialize
+      return await this.initialize(this.config);
+    } catch (error) {
+      logger.error('Failed to re-register:', {
+        error: error instanceof Error ? error : new Error(String(error)),
+      });
+      return false;
+    }
   }
 }
 

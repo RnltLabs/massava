@@ -1,1 +1,1 @@
-export { capacitorPushService, type DevicePlatform } from './push-service';
+export { capacitorPushService, type DevicePlatform, type NativePermissionStatus } from './push-service';
