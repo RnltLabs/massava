@@ -24,6 +24,8 @@ import {
   onForegroundMessage,
 } from '@/lib/firebase/firebase-client';
 import { capacitorPushService, type NativePermissionStatus } from '@/lib/capacitor';
+import { logger } from '@/lib/logger';
+import { isInternalUrl } from '@/lib/utils/url-validation';
 
 /**
  * Registration phase for optimistic UI
@@ -222,7 +224,9 @@ export function usePushRegistration(): UsePushRegistrationReturn {
           }
         }
       } catch (err) {
-        console.error('[usePushRegistration] Failed to check registration:', err);
+        logger.error('[usePushRegistration] Failed to check registration', {
+          error: err instanceof Error ? err : new Error(String(err)),
+        });
       }
     };
 
@@ -237,7 +241,7 @@ export function usePushRegistration(): UsePushRegistrationReturn {
     if (isNative || !isRegistered) return;
 
     const unsubscribe = onForegroundMessage((payload) => {
-      console.log('[usePushRegistration] Foreground message:', payload);
+      logger.info('[usePushRegistration] Foreground message received');
 
       // Show browser notification for foreground messages
       if (payload.title) {
@@ -339,18 +343,24 @@ export function usePushRegistration(): UsePushRegistrationReturn {
     try {
       // Initialize capacitor push service (requests permission + registers)
       const success = await capacitorPushService.initialize({
-        onNotificationReceived: (notification) => {
-          console.log('[usePushRegistration] Native notification received:', notification);
+        onNotificationReceived: () => {
+          logger.info('[usePushRegistration] Native notification received');
           void capacitorPushService.updateBadge();
         },
         onNotificationAction: (action) => {
           const actionUrl = action.notification.data?.['actionUrl'] as string | undefined;
-          if (actionUrl) {
+          if (actionUrl && isInternalUrl(actionUrl)) {
             window.location.href = actionUrl;
+          } else if (actionUrl) {
+            logger.warn('[usePushRegistration] Blocked navigation to external URL', {
+              url: actionUrl,
+            });
           }
         },
         onError: (err) => {
-          console.error('[usePushRegistration] Native push error:', err);
+          logger.error('[usePushRegistration] Native push error', {
+            error: err,
+          });
           setError(err.message);
         },
       });
@@ -434,7 +444,9 @@ export function usePushRegistration(): UsePushRegistrationReturn {
       return true;
     } catch (err) {
       // Log but don't rollback - device might already be deleted
-      console.error('[usePushRegistration] Unregister error:', err);
+      logger.error('[usePushRegistration] Unregister error', {
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
       return true;
     }
   }, [isSupported, isNative, deviceId]);

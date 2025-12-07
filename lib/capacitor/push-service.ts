@@ -14,6 +14,7 @@ import { PushNotifications, type Token, type PushNotificationSchema, type Action
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Badge } from '@capawesome/capacitor-badge';
 import { logger } from '@/lib/logger';
+import { isInternalUrl } from '@/lib/utils/url-validation';
 
 /**
  * Device platform type
@@ -328,6 +329,7 @@ class CapacitorPushService {
    * Handle notification tap/action
    *
    * Navigates to the action URL if provided in notification data.
+   * Validates URL to prevent open redirect vulnerabilities.
    * Called when user taps a notification.
    *
    * @param {ActionPerformed} action - The action that was performed
@@ -336,10 +338,17 @@ class CapacitorPushService {
    */
   private handleNotificationAction(action: ActionPerformed): void {
     const data = action.notification.data;
+    const actionUrl = data?.['actionUrl'] as string | undefined;
 
-    if (data?.['actionUrl']) {
-      // Navigate to action URL
-      window.location.href = data['actionUrl'] as string;
+    if (actionUrl) {
+      if (isInternalUrl(actionUrl)) {
+        // Navigate to validated internal URL
+        window.location.href = actionUrl;
+      } else {
+        logger.warn('[Push Service] Blocked navigation to external URL', {
+          url: actionUrl,
+        });
+      }
     }
   }
 

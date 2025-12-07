@@ -36,7 +36,12 @@
     "cap:ios": "npx cap open ios",
     "cap:android": "npx cap open android",
     "cap:sync": "npx cap sync",
-    "build:sw": "tsx scripts/build-service-worker.ts"
+    "build:sw": "tsx scripts/build-service-worker.ts",
+    "android:emulator": "./scripts/android-emulator.sh start",
+    "android:stop": "./scripts/android-emulator.sh stop",
+    "android:status": "./scripts/android-emulator.sh status",
+    "android:run": "./scripts/android-emulator.sh run",
+    "android:dev": "./scripts/android-emulator.sh dev"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.0",

@@ -4,6 +4,8 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 import { capacitorPushService } from '@/lib/capacitor/push-service';
+import { logger } from '@/lib/logger';
+import { isInternalUrl } from '@/lib/utils/url-validation';
 
 interface CapacitorInitializerProps {
   children: ReactNode;
@@ -42,7 +44,7 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
     const initializePushIfNeeded = async (): Promise<void> => {
       // Check if push service is already initialized (by usePushRegistration hook)
       if (capacitorPushService.getInitialized()) {
-        console.log('[CapacitorInitializer] Push already initialized by hook');
+        logger.debug('[CapacitorInitializer] Push already initialized by hook');
         return;
       }
 
@@ -51,25 +53,29 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
       if (status !== 'granted') {
         // Don't auto-initialize if permission not granted
         // The usePushRegistration hook will handle permission request
-        console.log('[CapacitorInitializer] Push permission not granted, skipping auto-init');
+        logger.debug('[CapacitorInitializer] Push permission not granted, skipping auto-init');
         return;
       }
 
       // Permission granted but not initialized - initialize now
-      console.log('[CapacitorInitializer] Auto-initializing push service');
+      logger.info('[CapacitorInitializer] Auto-initializing push service');
       await capacitorPushService.initialize({
-        onNotificationReceived: (notification) => {
+        onNotificationReceived: () => {
           void capacitorPushService.updateBadge();
-          console.log('[CapacitorInitializer] Notification received:', notification);
+          logger.info('[CapacitorInitializer] Notification received');
         },
         onNotificationAction: (action) => {
           const actionUrl = action.notification.data?.['actionUrl'] as string | undefined;
-          if (actionUrl) {
+          if (actionUrl && isInternalUrl(actionUrl)) {
             window.location.href = actionUrl;
+          } else if (actionUrl) {
+            logger.warn('[CapacitorInitializer] Blocked navigation to external URL', {
+              url: actionUrl,
+            });
           }
         },
         onError: (error) => {
-          console.error('[CapacitorInitializer] Push notification error:', error);
+          logger.error('[CapacitorInitializer] Push notification error', { error });
         },
       });
     };
@@ -87,16 +93,18 @@ export function CapacitorInitializer({ children }: CapacitorInitializerProps): R
 
     // Handle deep links
     const urlOpenListener = App.addListener('appUrlOpen', ({ url }) => {
-      console.log('[CapacitorInitializer] Deep link received:', url);
+      logger.info('[CapacitorInitializer] Deep link received');
       try {
         const parsedUrl = new URL(url);
         const pathname = parsedUrl.pathname;
 
-        if (pathname && pathname !== '/') {
+        if (pathname && pathname !== '/' && isInternalUrl(pathname)) {
           window.location.href = pathname;
         }
       } catch (error) {
-        console.error('[CapacitorInitializer] Failed to parse deep link:', error);
+        logger.error('[CapacitorInitializer] Failed to parse deep link', {
+          error: error instanceof Error ? error : new Error(String(error)),
+        });
       }
     });
 
