@@ -34,7 +34,10 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.test
+.env.test.local
 !.env.example
+!.env.local.example
 
 # vercel
 .vercel
@@ -64,3 +67,32 @@ android/
 .idea/
 
 /app/generated/prisma
+
+# Backup and temporary files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+tmp/
+temp/
+
+# Log files
+logs/
+*.log
+!.gitkeep
+
+# Local database dumps (keep migration SQL files)
+*.sql
+*.dump
+!prisma/migrations/**/*.sql
+
+# Coverage reports (additional paths)
+.nyc_output/
+lcov.info
+
+# Bundle analyzer output
+.next/analyze/
+
+# Sentry config
+.sentryclirc
