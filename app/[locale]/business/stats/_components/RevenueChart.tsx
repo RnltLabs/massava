@@ -46,7 +46,7 @@ export function RevenueChart({ data, title = 'Revenue Trend' }: RevenueChartProp
                 borderRadius: '8px',
                 padding: '8px 12px',
               }}
-              formatter={(value: number) => [`€${value.toFixed(2)}`, 'Revenue']}
+              formatter={(value: number | undefined) => [`€${(value ?? 0).toFixed(2)}`, 'Revenue']}
               labelStyle={{ fontWeight: 'bold', marginBottom: '4px' }}
             />
             <Line
