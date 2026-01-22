@@ -18,7 +18,7 @@
  * - Comprehensive logging
  *
  * Architecture:
- * - Uses Task automation to spawn specialized agents
+ * - Spawns specialized automation agents
  * - Tracks task status (pending → in_progress → completed/failed)
  * - Executes tasks in waves (groups of parallel tasks)
  * - Stops at human intervention points with clear instructions

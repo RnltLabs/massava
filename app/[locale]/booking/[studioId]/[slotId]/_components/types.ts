@@ -16,4 +16,6 @@ export interface GuestFormData {
   customerPhone: string;
   explicitHealthConsent: boolean;
   message?: string;
+  registeredUserId?: string;  // Falls User sich gerade registriert hat
+  isJustRegistered?: boolean; // Flag für Success Screen
 }

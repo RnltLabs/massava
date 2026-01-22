@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookingStatusBadge } from '@/components/business/BookingStatusBadge';
 import { CalendarIcon, ClockIcon, UserIcon } from 'lucide-react';
 import { NewBooking, BookingStatus } from '@/app/generated/prisma';
+import { format } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface UpcomingAppointmentsProps {
   userEmail: string;
@@ -93,11 +95,15 @@ export async function UpcomingAppointments({
                   </div>
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">{appointment.preferredDate}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(appointment.preferredDateTime, 'dd.MM.yyyy', { locale: de })}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                    <p className="text-xs text-muted-foreground">{appointment.preferredTime}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(appointment.preferredDateTime, 'HH:mm')} Uhr
+                    </p>
                   </div>
                   <p className="text-xs font-medium text-neutral-700">
                     {appointment.service?.name ?? 'No service selected'}

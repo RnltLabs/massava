@@ -12,7 +12,7 @@ import React from 'react';
 import { NewBooking, Service, User, BookingStatus } from '@/app/generated/prisma';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { format, parse, startOfWeek, addDays, isSameDay } from 'date-fns';
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Clock } from 'lucide-react';
@@ -44,7 +44,7 @@ export function WeekView({
   // Group bookings by date
   const bookingsByDate = new Map<string, BookingWithRelations[]>();
   bookings.forEach((booking) => {
-    const dateKey = booking.preferredDate;
+    const dateKey = format(booking.preferredDateTime, 'yyyy-MM-dd');
     if (!bookingsByDate.has(dateKey)) {
       bookingsByDate.set(dateKey, []);
     }
@@ -110,7 +110,7 @@ export function WeekView({
                         >
                           <div className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
-                            <span className="font-medium">{booking.preferredTime}</span>
+                            <span className="font-medium">{format(booking.preferredDateTime, 'HH:mm')}</span>
                           </div>
                           <div className="truncate">{booking.customerName}</div>
                           {booking.service && (

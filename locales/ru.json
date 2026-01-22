@@ -1,4 +1,12 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Открыть",
+      "bookings": "Бронирования",
+      "notifications": "Уведомления",
+      "account": "Аккаунт"
+    }
+  },
   "home": {
     "badge": "Доступно сегодня",
     "hero_title": "Ваш массаж",

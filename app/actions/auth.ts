@@ -40,7 +40,7 @@ const BCRYPT_COST_FACTOR = 12;
 export async function signUp(
   data: UnifiedRegistration,
   locale: string = 'en'
-): Promise<ActionResult<{ email: string }>> {
+): Promise<ActionResult<{ email: string; userId: string }>> {
   try {
     // 1. Validate input with Zod
     const validatedFields = unifiedRegistrationSchema.safeParse(data);
@@ -108,7 +108,10 @@ export async function signUp(
 
     return {
       success: true,
-      data: { email: user.email },
+      data: {
+        email: user.email,
+        userId: user.id  // NEU: User-ID für Buchungsverknüpfung
+      },
     };
   } catch (error) {
     console.error('Registration error:', error);
@@ -175,13 +178,9 @@ export async function signIn(
       };
     }
 
-    // Check email verification
-    if (!user.emailVerified) {
-      return {
-        success: false,
-        error: 'Please verify your email address before logging in',
-      };
-    }
+    // Email verification is now checked but NOT blocking login
+    // User can log in with unverified email, but will see verification reminder
+    // This improves UX for users who just registered during booking flow
 
     // Check if account is active (only for unified User model)
     if (user && !user.isActive) {

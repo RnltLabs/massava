@@ -34,7 +34,10 @@ yarn-error.log*
 .env
 .env.local
 .env.*.local
+.env.test
+.env.test.local
 !.env.example
+!.env.local.example
 
 # vercel
 .vercel
@@ -42,6 +45,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Firebase (sensitive credentials)
+*-firebase-adminsdk*.json
+GoogleService-Info.plist
+google-services.json
+
+# Generated service worker (contains Firebase config, generated from template)
+public/firebase-messaging-sw.js
+
+# Capacitor build outputs (native platforms)
+ios/
+android/
 
 # RNLT Labs Config (symlinked, private)
 .rnlt/
@@ -52,3 +67,32 @@ next-env.d.ts
 .idea/
 
 /app/generated/prisma
+
+# Backup and temporary files
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+tmp/
+temp/
+
+# Log files
+logs/
+*.log
+!.gitkeep
+
+# Local database dumps (keep migration SQL files)
+*.sql
+*.dump
+!prisma/migrations/**/*.sql
+
+# Coverage reports (additional paths)
+.nyc_output/
+lcov.info
+
+# Bundle analyzer output
+.next/analyze/
+
+# Sentry config
+.sentryclirc

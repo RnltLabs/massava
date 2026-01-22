@@ -1,0 +1,380 @@
+# Alertmanager Configuration for Notification System
+# Version: 1.0
+# Last Updated: December 2, 2025
+# Location: /monitoring/alertmanager/notification-routing.yaml
+#
+# Usage:
+#   1. Copy this file to your Alertmanager configuration directory
+#   2. Include in alertmanager.yml:
+#      global:
+#        slack_api_url: '${SLACK_WEBHOOK_URL}'
+#
+#      route:
+#        routes:
+#          - match:
+#              service: notification
+#            include_file: '/etc/alertmanager/notification-routing.yaml'
+#
+#   3. Set environment variables:
+#      - SLACK_WEBHOOK_URL: Your Slack webhook URL
+#      - PAGERDUTY_ROUTING_KEY: Your PagerDuty routing key
+#      - ONCALL_EMAIL: Email for on-call engineer
+#      - TEAM_LEAD_EMAIL: Email for team lead
+
+# Alert routing configuration for notification service
+global:
+  # Default resolve timeout for all alerts
+  resolve_timeout: 5m
+
+  # Slack API URL (set via environment variable)
+  slack_api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
+
+# Main route definition
+route:
+  # Match all alerts for the notification service
+  match:
+    service: notification
+
+  # Group alerts by alert name and cluster
+  group_by: ['alertname', 'service', 'group']
+
+  # Initial wait before sending grouped alerts
+  group_wait: 10s
+
+  # Time between re-sending grouped alerts
+  group_interval: 10s
+
+  # Time interval for repeating notifications
+  repeat_interval: 12h
+
+  # Default receiver
+  receiver: 'notification-default'
+
+  # Sub-routes for different severity levels
+  routes:
+
+    # CRITICAL ALERTS - Immediate escalation
+    - match:
+        severity: critical
+      match_re:
+        alertname: 'NotificationDeliveryFailureRateHigh|EmailBounceRateHigh|DatabaseConnectionPoolExhausted'
+      receiver: 'notification-critical'
+      group_wait: 0s          # Send immediately
+      group_interval: 5m       # Re-group every 5 minutes
+      repeat_interval: 5m      # Repeat every 5 minutes until resolved
+      continue: false
+
+    # WARNING ALERTS - Team notification
+    - match:
+        severity: warning
+      receiver: 'notification-warnings'
+      group_wait: 30s         # Wait 30 seconds before sending
+      group_interval: 10m      # Re-group every 10 minutes
+      repeat_interval: 30m     # Repeat every 30 minutes
+      continue: false
+
+    # INFO ALERTS - Slack notification channel
+    - match:
+        severity: info
+      receiver: 'notification-info'
+      group_wait: 1m           # Wait 1 minute before sending
+      group_interval: 30m      # Re-group every 30 minutes
+      repeat_interval: 4h      # Repeat every 4 hours
+      continue: false
+
+# Receiver definitions
+receivers:
+
+  # Default receiver (shouldn't normally be used)
+  - name: 'notification-default'
+    slack_configs:
+      - channel: '#notifications'
+        title: 'Notification Alert: {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+
+  # CRITICAL receivers - Multi-channel escalation
+  - name: 'notification-critical'
+
+    # Slack notification
+    slack_configs:
+      - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
+        channel: '#alerts'
+        title: '{{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
+        text: |
+          Severity: CRITICAL (P1)
+          SLA: Acknowledge within 15 minutes
+
+          {{ range .Alerts }}
+          Description: {{ .Annotations.description }}
+          Dashboard: {{ .Annotations.dashboard_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          Owner: {{ .Annotations.owner }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        actions:
+          - type: button
+            text: 'View Dashboard'
+            url: '{{ range .Alerts }}{{ .Annotations.dashboard_url }}{{ end }}'
+          - type: button
+            text: 'View Runbook'
+            url: '{{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}'
+
+    # PagerDuty integration
+    pagerduty_configs:
+      - routing_key: '{{ env "PAGERDUTY_ROUTING_KEY" }}'
+        description: '{{ .GroupLabels.alertname }}'
+        details:
+          firing: '{{ template "pagerduty.default.instances" .Alerts.Firing }}'
+          resolved: '{{ template "pagerduty.default.instances" .Alerts.Resolved }}'
+        links:
+          - href: '{{ range .Alerts }}{{ .Annotations.dashboard_url }}{{ end }}'
+            text: 'Grafana Dashboard'
+          - href: '{{ range .Alerts }}{{ .Annotations.runbook_url }}{{ end }}'
+            text: 'Runbook'
+        client: 'Prometheus Alert Manager'
+        client_url: 'https://prometheus.massava.com'
+
+    # Email to on-call engineer
+    email_configs:
+      - to: '{{ env "ONCALL_EMAIL" }}'
+        from: 'alerts@massava.com'
+        smarthost: 'smtp.sendgrid.net:587'
+        auth_username: 'apikey'
+        auth_password: '{{ env "SENDGRID_API_KEY" }}'
+        headers:
+          Subject: 'CRITICAL ALERT: {{ .GroupLabels.alertname }}'
+          Priority: 'urgent'
+        html: |
+          <html>
+            <body>
+              <h2 style="color: red;">CRITICAL ALERT - Immediate Action Required</h2>
+              <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+              <p><strong>Severity:</strong> CRITICAL (P1)</p>
+              <p><strong>SLA:</strong> Acknowledge within 15 minutes</p>
+              <p><strong>Time:</strong> {{ .GroupLabels.alertname }}</p>
+
+              <h3>Description</h3>
+              <p>{{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+
+              <h3>Actions</h3>
+              <ul>
+              {{ range .Alerts }}
+                <li><a href="{{ .Annotations.dashboard_url }}">View Dashboard</a></li>
+                <li><a href="{{ .Annotations.runbook_url }}">View Runbook</a></li>
+              {{ end }}
+              </ul>
+
+              <h3>Alert Details</h3>
+              <pre>{{ range .Alerts }}{{ .Annotations.description }}{{ end }}</pre>
+            </body>
+          </html>
+
+    # Slack mention for on-call
+    slack_configs:
+      - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
+        channel: '#alerts'
+        title: 'CRITICAL: On-Call Needed'
+        text: '{{ env "ONCALL_SLACK_USER_ID" }} <@{{ env "ONCALL_SLACK_USER_ID" }}>'
+        send_resolved: false
+
+  # WARNING receivers - Team notification
+  - name: 'notification-warnings'
+
+    # Slack notification
+    slack_configs:
+      - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
+        channel: '#warnings'
+        title: '{{ .Status | toUpper }}: {{ .GroupLabels.alertname }}'
+        text: |
+          Severity: WARNING (P2)
+          SLA: Investigate within 30 minutes
+
+          {{ range .Alerts }}
+          Description: {{ .Annotations.description }}
+          Dashboard: {{ .Annotations.dashboard_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          Owner: {{ .Annotations.owner }}
+          {{ end }}
+        send_resolved: true
+        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+
+    # Email to team lead
+    email_configs:
+      - to: '{{ env "TEAM_LEAD_EMAIL" }}'
+        from: 'alerts@massava.com'
+        smarthost: 'smtp.sendgrid.net:587'
+        auth_username: 'apikey'
+        auth_password: '{{ env "SENDGRID_API_KEY" }}'
+        headers:
+          Subject: 'WARNING: {{ .GroupLabels.alertname }}'
+        html: |
+          <html>
+            <body>
+              <h2 style="color: orange;">WARNING ALERT</h2>
+              <p><strong>Alert:</strong> {{ .GroupLabels.alertname }}</p>
+              <p><strong>Severity:</strong> WARNING (P2)</p>
+              <p><strong>SLA:</strong> Investigate within 30 minutes</p>
+
+              <h3>Description</h3>
+              <p>{{ range .Alerts }}{{ .Annotations.description }}{{ end }}</p>
+
+              <h3>Resources</h3>
+              <ul>
+              {{ range .Alerts }}
+                <li><a href="{{ .Annotations.dashboard_url }}">View Dashboard</a></li>
+                <li><a href="{{ .Annotations.runbook_url }}">View Runbook</a></li>
+              {{ end }}
+              </ul>
+            </body>
+          </html>
+
+  # INFO receivers - General notifications
+  - name: 'notification-info'
+
+    # Slack notification
+    slack_configs:
+      - api_url: '{{ env "SLACK_WEBHOOK_URL" }}'
+        channel: '#notifications'
+        title: 'INFO: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+
+          Dashboard: {{ .Annotations.dashboard_url }}
+          {{ end }}
+        send_resolved: false
+        color: 'good'
+
+---
+
+# Optional: Slack notification templates
+# Add to alertmanager.yml under templates section
+global:
+  templates:
+    - '/etc/alertmanager/slack-templates.tmpl'
+
+# Save as /monitoring/alertmanager/slack-templates.tmpl
+#
+# {{ define "slack.default.text" }}
+# {{ .GroupLabels.alertname }}
+# {{ range .Alerts -}}
+# {{ .Annotations.description }}
+# {{ end }}
+# {{ end }}
+
+---
+
+# Environment Variables Required:
+
+# Slack Configuration
+# SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+# ONCALL_SLACK_USER_ID=U123ABC456  # Slack user ID for on-call engineer
+
+# PagerDuty Configuration
+# PAGERDUTY_ROUTING_KEY=Your-Routing-Key-Here
+
+# Email Configuration
+# ONCALL_EMAIL=oncall@massava.com
+# TEAM_LEAD_EMAIL=teamlead@massava.com
+# SENDGRID_API_KEY=SG.xxx
+
+# Optional: Set via Docker Secrets or Kubernetes Secrets for security
+# docker run -e SLACK_WEBHOOK_URL=... alertmanager
+# kubectl create secret generic alertmanager-secrets --from-literal=slack-webhook-url=...
+
+---
+
+# Inhibition Rules
+# Prevent duplicate alerts when multiple conditions are triggered
+inhibit_rules:
+  # Don't alert on warning if critical is already firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+
+  # Don't alert on info if warning is already firing
+  - source_match:
+      severity: 'warning'
+    target_match:
+      severity: 'info'
+    equal: ['alertname', 'service']
+
+---
+
+# Implementation Checklist
+#
+# [ ] Set environment variables in your deployment:
+#     - SLACK_WEBHOOK_URL
+#     - ONCALL_EMAIL
+#     - TEAM_LEAD_EMAIL
+#     - PAGERDUTY_ROUTING_KEY
+#     - SENDGRID_API_KEY
+#
+# [ ] Test Slack integration:
+#     curl -X POST $SLACK_WEBHOOK_URL \
+#       -d '{"text":"Test message"}'
+#
+# [ ] Test PagerDuty integration:
+#     - Create test incident in PagerDuty
+#     - Verify it appears in your account
+#
+# [ ] Configure on-call schedule in PagerDuty
+#     - Add team members
+#     - Set escalation policy
+#
+# [ ] Run alert drills monthly
+#     - Fire a test alert
+#     - Verify all notification channels work
+#     - Measure response time
+#
+# [ ] Document on-call runbooks:
+#     - Where to find logs
+#     - Deployment procedures
+#     - Rollback procedures
+#     - Escalation contacts
+
+---
+
+# Example: Manually Test Alert Firing
+#
+# 1. Port-forward to Prometheus:
+#    kubectl port-forward svc/prometheus 9090:9090
+#
+# 2. Create rule temporarily with low threshold:
+#    - alert: TestNotificationAlert
+#      expr: rate(notification_delivery_total[1m]) > 0
+#      for: 1m
+#      labels:
+#        severity: warning
+#      annotations:
+#        summary: "Test alert"
+#
+# 3. Verify alert fires and notifications are sent
+#
+# 4. Remove test rule and reload Prometheus
+
+---
+
+# Performance Tuning
+#
+# Alert Resolution Time:
+# - Adjust group_wait to balance latency vs. grouping
+# - Lower for critical (0-10s), higher for info (30-60s)
+#
+# Alert Repetition:
+# - Critical: Repeat every 5 minutes (until acknowledged)
+# - Warning: Repeat every 30 minutes
+# - Info: Repeat every 4 hours
+#
+# If too many false positives:
+# - Increase alert evaluation period
+# - Increase threshold values
+# - Reduce sensitivity of anomaly detection
+#
+# If missing real incidents:
+# - Decrease alert evaluation period
+# - Decrease threshold values
+# - Add more specific alert conditions

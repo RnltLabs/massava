@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { BookingPageClient } from "./_components/BookingPageClient"
+import { calculateAvailableSlots } from "@/lib/slots"
+import { parseISO, format, isBefore } from "date-fns"
+import { toZonedTime } from "date-fns-tz"
 
 interface BookingPageProps {
   params: Promise<{
@@ -16,7 +19,7 @@ interface BookingPageProps {
 }
 
 /**
- * Booking Page (Mobile-First Redesign)
+ * Booking Page (Mobile-First Redesign) - DYNAMIC SLOTS VERSION
  *
  * Server component that fetches booking data and renders a mobile-first
  * booking experience using Sheet (mobile) / Dialog (desktop).
@@ -27,10 +30,15 @@ interface BookingPageProps {
  *
  * Flow:
  * 1. Fetch studio + services
- * 2. Fetch time slot
- * 3. Validate availability
+ * 2. Parse and validate slot DateTime (NO DB lookup - Dynamic Slots!)
+ * 3. Validate availability using calculateAvailableSlots()
  * 4. Open booking sheet automatically
  * 5. 3-step progressive flow (review → service → confirm → success)
+ *
+ * DYNAMIC SLOTS:
+ * - slotId is now an ISO DateTime string (e.g., "2025-11-18T12:15:00.000Z")
+ * - No TimeSlot table lookup needed
+ * - Real-time availability calculation based on opening hours + existing bookings
  *
  * Mobile-First Design:
  * - Sheet component slides from bottom (mobile)
@@ -40,14 +48,14 @@ interface BookingPageProps {
  *
  * Error Cases:
  * - Studio not found → 404
- * - Time slot not found → 404
+ * - Invalid DateTime format → 404
  * - Time slot unavailable/booked → Show error message + redirect
  */
 export default async function BookingPage({ params, searchParams }: BookingPageProps) {
   const { locale, studioId, slotId } = await params
   const search = await searchParams
 
-  // Fetch Studio with Services
+  // Fetch Studio with Services and Timezone
   const studio = await prisma.studio.findUnique({
     where: { id: studioId },
     include: {
@@ -57,18 +65,86 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
     },
   })
 
-  // Fetch TimeSlot
-  const timeSlot = await prisma.timeSlot.findUnique({
-    where: { id: slotId },
-  })
-
-  // Error Handling: Not Found
-  if (!studio || !timeSlot) {
+  // Error Handling: Studio Not Found
+  if (!studio) {
     notFound()
   }
 
+  // Parse slotId as ISO DateTime (Dynamic Slots)
+  let slotDateTime: Date
+  try {
+    slotDateTime = parseISO(decodeURIComponent(slotId))
+    if (isNaN(slotDateTime.getTime())) {
+      throw new Error("Invalid date")
+    }
+  } catch (error) {
+    // Invalid DateTime format
+    notFound()
+  }
+
+  // Validate slot is in the future
+  const now = new Date()
+  if (isBefore(slotDateTime, now)) {
+    return (
+      <div className="container mx-auto py-12 max-w-2xl px-4">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Termin in der Vergangenheit</AlertTitle>
+          <AlertDescription>
+            Der ausgewählte Termin liegt in der Vergangenheit. Bitte wählen Sie einen zukünftigen Zeitslot aus.
+          </AlertDescription>
+        </Alert>
+
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/search/appointments`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Zurück zur Terminsuche
+          </Link>
+        </Button>
+      </div>
+    )
+  }
+
+  // Calculate availability for the slot's date (Dynamic Slots)
+  const searchDate = format(slotDateTime, 'yyyy-MM-dd')
+  const slotsResult = await calculateAvailableSlots(
+    studioId,
+    searchDate,
+    undefined,
+    { includeUnavailable: false, minCapacity: 1 }
+  )
+
+  // Error Handling: Slot calculation failed
+  if (!slotsResult.ok) {
+    return (
+      <div className="container mx-auto py-12 max-w-2xl px-4">
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Verfügbarkeit konnte nicht geprüft werden</AlertTitle>
+          <AlertDescription>
+            Die Verfügbarkeit dieses Termins konnte nicht geprüft werden. Bitte versuchen Sie es später erneut.
+          </AlertDescription>
+        </Alert>
+
+        <Button asChild variant="outline">
+          <Link href={`/${locale}/search/appointments`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Zurück zur Terminsuche
+          </Link>
+        </Button>
+      </div>
+    )
+  }
+
+  // Find the specific slot in the calculated slots
+  const slotTimeStr = format(toZonedTime(slotDateTime, studio.timezone), 'HH:mm')
+  const selectedSlot = slotsResult.value.find((s) => {
+    const slotStart = format(toZonedTime(s.startTime, studio.timezone), 'HH:mm')
+    return slotStart === slotTimeStr
+  })
+
   // Error Handling: TimeSlot Unavailable
-  if (!timeSlot.isAvailable || timeSlot.isBooked) {
+  if (!selectedSlot || !selectedSlot.available) {
     return (
       <div className="container mx-auto py-12 max-w-2xl px-4">
         <Alert variant="destructive" className="mb-6">
@@ -81,7 +157,7 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
         </Alert>
 
         <Button asChild variant="outline">
-          <Link href="/search/appointments">
+          <Link href={`/${locale}/search/appointments`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zur Terminsuche
           </Link>
@@ -114,6 +190,13 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
     )
   }
 
+  // Create a timeSlot-compatible object from the selected dynamic slot
+  // This maintains backward compatibility with BookingPageClient
+  const timeSlot = {
+    startTime: selectedSlot.startTime, // Date object (UTC)
+    endTime: selectedSlot.endTime,     // Date object (UTC)
+  }
+
   // Render Mobile-First Booking Sheet
   return (
     <BookingPageClient
@@ -122,6 +205,9 @@ export default async function BookingPage({ params, searchParams }: BookingPageP
       timeSlot={timeSlot}
       studioId={studioId}
       slotId={slotId}
+      preferredDateTime={selectedSlot.startTime.toISOString()} // ISO DateTime for booking creation
+      locale={locale}
+      searchParams={search}
     />
   )
 }

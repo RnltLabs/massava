@@ -428,6 +428,4 @@ None currently identified.
 
 ---
 
-**Implemented by:** Development Team
-**Reviewed by:** N/A
 **Status:** Ready for Production

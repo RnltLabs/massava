@@ -16,6 +16,9 @@ interface AccountPageProps {
   params: Promise<{
     locale: string;
   }>;
+  searchParams: Promise<{
+    from?: string;
+  }>;
 }
 
 async function getUserData(userEmail: string) {
@@ -43,8 +46,10 @@ async function getUserData(userEmail: string) {
 
 export default async function AccountPage({
   params,
+  searchParams,
 }: AccountPageProps): Promise<React.JSX.Element> {
   const { locale } = await params;
+  const { from } = await searchParams;
   const session = await auth();
 
   if (!session) {
@@ -61,6 +66,9 @@ export default async function AccountPage({
 
   const studio = user.ownedStudios[0]?.studio ?? null;
 
+  // Hide back button if user comes from header navigation
+  const showBackButton = from !== 'header';
+
   return (
     <AccountSettingsClient
       user={{
@@ -70,6 +78,7 @@ export default async function AccountPage({
       }}
       studio={studio}
       locale={locale}
+      showBackButton={showBackButton}
     />
   );
 }

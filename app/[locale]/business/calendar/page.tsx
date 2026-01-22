@@ -63,7 +63,6 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
   // Calculate date range based on view
   let dateRangeStart: Date;
   let dateRangeEnd: Date;
-  let bookingDateFilter: string | string[];
 
   if (view === 'week') {
     // Week view: Monday to Sunday
@@ -71,23 +70,20 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 });
     dateRangeStart = startOfDay(weekStart);
     dateRangeEnd = endOfDay(weekEnd);
-
-    // Generate array of dates for the week
-    bookingDateFilter = Array.from({ length: 7 }, (_, i) => format(addDays(weekStart, i), 'yyyy-MM-dd'));
   } else {
     // Day view: single day
     dateRangeStart = startOfDay(selectedDate);
     dateRangeEnd = endOfDay(selectedDate);
-    bookingDateFilter = format(selectedDate, 'yyyy-MM-dd');
   }
 
   // Get bookings for the date range
   const rawBookings = await prisma.newBooking.findMany({
     where: {
       studioId: studio.id,
-      preferredDate: Array.isArray(bookingDateFilter)
-        ? { in: bookingDateFilter }
-        : bookingDateFilter,
+      preferredDateTime: {
+        gte: dateRangeStart,
+        lte: dateRangeEnd,
+      },
       status: {
         in: [BookingStatus.CONFIRMED, BookingStatus.PENDING],
       },
@@ -102,7 +98,7 @@ export default async function CalendarPage({ params, searchParams }: Props): Pro
         },
       },
     },
-    orderBy: { preferredTime: 'asc' },
+    orderBy: { preferredDateTime: 'asc' },
   });
 
   // Transform to match expected type

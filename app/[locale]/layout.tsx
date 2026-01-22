@@ -3,7 +3,7 @@
  * All rights reserved.
  */
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { NextIntlClientProvider } from 'next-intl';
@@ -16,11 +16,32 @@ import SessionProvider from '@/components/SessionProvider';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 import { Toaster } from '@/components/ui/toaster';
+import { MobileCustomerNavWrapper } from '@/components/customer';
+import { MobileBusinessNavWrapper } from '@/components/business/MobileBusinessNavWrapper';
+import { MainContentWrapper } from '@/components/layout';
+import { NotificationProvider } from '@/components/providers/NotificationProvider';
+import { CapacitorInitializer } from '@/components/CapacitorInitializer';
 import "../globals.css";
 
 export const metadata: Metadata = {
   title: "Massava - Spontane Massage-Buchungen",
   description: "Finde und buche deine Massage spontan – ohne Provisionen, transparent, unkompliziert.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Massava",
+  },
+  icons: {
+    icon: [
+      { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   robots: {
     index: false,
     follow: false,
@@ -30,6 +51,15 @@ export const metadata: Metadata = {
       follow: false,
     },
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+  themeColor: '#FAF8F5',
 };
 
 export default async function LocaleLayout({
@@ -60,12 +90,25 @@ export default async function LocaleLayout({
         <SessionProvider>
           <GoogleAnalytics />
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <UnifiedHeader />
-            <main className="pt-14 md:pt-16">
-              {children}
-            </main>
-            <CookieConsentBanner />
-            <Toaster />
+            <CapacitorInitializer>
+              <NotificationProvider>
+                <UnifiedHeader />
+              <MainContentWrapper>
+                {children}
+              </MainContentWrapper>
+              <MobileCustomerNavWrapper />
+              <MobileBusinessNavWrapper />
+              {/*
+                PushNotificationPrompt removed for DSGVO compliance.
+                Push notification prompts are now triggered contextually
+                (e.g., after appointment booking, before important notifications)
+                rather than automatically on page load. This respects user privacy
+                and provides a better UX by asking for permissions at relevant moments.
+              */}
+              <CookieConsentBanner />
+              <Toaster />
+              </NotificationProvider>
+            </CapacitorInitializer>
           </NextIntlClientProvider>
         </SessionProvider>
       </body>

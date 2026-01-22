@@ -1,13 +1,29 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Discover",
+      "bookings": "Bookings",
+      "notifications": "Alerts",
+      "account": "Account"
+    }
+  },
   "home": {
     "badge": "Available today",
+    "greeting": "Welcome, {name}",
     "hero_title": "Your massage",
     "hero_subtitle": "book today",
     "hero_description": "Relax spontaneously – find studios near you and book directly. No commissions, transparent, uncomplicated.",
+    "welcome_back": "Welcome back, {name}! Find your next massage",
     "search_location_placeholder": "Enter city or postal code...",
     "search_radius": "Radius",
     "search_button": "Search",
 
+    "trust_commission_free": "100% commission-free",
+    "trust_instant_booking": "Instant booking",
+    "trust_local_studios": "Local studios only",
+
+    "features_label": "Why Massava",
+    "features_title": "Book with confidence",
     "feature1_title": "Relax today",
     "feature1_description": "Spontaneous bookings possible. See immediately which studios still have appointments available today.",
     "feature2_title": "All info at a glance",
@@ -15,6 +31,7 @@
     "feature3_title": "Support local studios",
     "feature3_description": "100% of revenue goes directly to the studios. No commission, no intermediaries.",
 
+    "how_it_works_label": "Simple process",
     "how_it_works_title": "How it works",
     "step1_title": "Enter location",
     "step1_description": "Enter your city or postal code and choose your desired radius.",
@@ -22,6 +39,11 @@
     "step2_description": "View available appointments, prices, and reviews.",
     "step3_title": "Book appointment",
     "step3_description": "Book directly online – fast, simple, no detours.",
+
+    "studio_cta_badge": "For massage therapists",
+    "studio_cta_title": "Are you a massage therapist?",
+    "studio_cta_description": "Reach new customers and increase your occupancy. Completely free, no commissions.",
+    "studio_cta_button": "Register studio",
 
     "cta_title": "Ready for your break?",
     "cta_description": "Relax spontaneously – find studios near you and book today",
@@ -138,6 +160,12 @@
     "logout": "Logout",
     "my_account": "My Account",
     "my_bookings": "My Bookings",
+    "studio_dashboard": "Studio Dashboard",
+    "studio_settings": "Studio Settings",
+    "bookings": "Bookings",
+    "language": "Language",
+    "help": "Help",
+    "profile_menu": "Profile Menu",
     "customer_login": "Customer Login",
     "customer_login_button": "Sign In",
     "account_type_selector": {
@@ -301,10 +329,9 @@
   "business": {
     "nav": {
       "today": "Today",
-      "week": "Week",
-      "new": "New",
-      "requests": "Requests",
-      "more": "More"
+      "calendar": "Calendar",
+      "requests": "Bookings",
+      "settings": "Settings"
     },
     "dashboard": {
       "greeting": "Good {timeOfDay}, {name}",
@@ -339,6 +366,19 @@
       "declineBooking": "Decline Booking",
       "contactCustomer": "Contact Customer"
     },
+    "bookings": {
+      "title": "Bookings",
+      "subtitle": "Manage your appointments",
+      "total": "Total",
+      "pending": "Open",
+      "today": "Today",
+      "emptyTitle": "No bookings found",
+      "emptyWithFilters": "Try adjusting your filters or search.",
+      "emptyNoFilters": "New bookings will appear here automatically when customers book.",
+      "dateGroupToday": "TODAY",
+      "dateGroupTomorrow": "TOMORROW",
+      "dateGroupOlder": "OLDER REQUESTS"
+    },
     "quickActions": {
       "title": "Quick Actions",
       "blockTime": "Block Time",
@@ -365,6 +405,95 @@
       "accountDescription": "Email, Password & Settings",
       "help": "Help & Support",
       "signOut": "Sign Out"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "subtitle": {
+        "business": "For your studio"
+      },
+      "errorLoading": "Could not load settings",
+      "errorSaving": "Could not save settings",
+      "autoSaveInfo": "Changes are saved automatically",
+      "channels": {
+        "title": "Channels"
+      },
+      "categories": {
+        "title": "Notification Types",
+        "sectionTitleBusiness": "Business Notifications",
+        "studioOwner": {
+          "bookingRequests": {
+            "title": "New Booking Requests",
+            "description": "Instant notification for new requests"
+          },
+          "cancellations": {
+            "title": "Cancellations",
+            "description": "When a customer cancels their booking"
+          },
+          "reviews": {
+            "title": "Customer Reviews",
+            "description": "New reviews from customers"
+          },
+          "reminders": {
+            "title": "Appointment Reminders",
+            "description": "1 hour before the appointment"
+          }
+        },
+        "customer": {
+          "confirmations": {
+            "title": "Booking Confirmations",
+            "description": "Confirmation of your booking"
+          },
+          "reminders": {
+            "title": "Appointment Reminders",
+            "description": "24 hours before the appointment"
+          },
+          "studioCancellations": {
+            "title": "Studio Cancellations",
+            "description": "When the studio cancels an appointment"
+          },
+          "reviewRequests": {
+            "title": "Review Requests",
+            "description": "Request for feedback after your visit"
+          }
+        }
+      },
+      "push": {
+        "title": "Push Notifications",
+        "notSupported": "Not supported",
+        "permissionDenied": "Permission denied",
+        "permissionDeniedDescription": "Please enable notifications in your browser settings"
+      },
+      "email": {
+        "title": "Email Notifications"
+      },
+      "reminders": {
+        "toggle": "Appointment Reminders",
+        "toggleDesc": "24 hours before your appointments"
+      },
+      "marketing": {
+        "toggle": "Updates",
+        "toggleDesc": "New studios near you"
+      },
+      "prePermission": {
+        "headline": "Never miss an appointment",
+        "body": "Enable notifications to get timely reminders about your bookings.",
+        "benefits": {
+          "reminder": "Reminder 24h before your appointment",
+          "changes": "Instant updates on appointment changes",
+          "newStudios": "Discover new studios near you",
+          "bookingRequests": "Get notified instantly about new booking requests",
+          "cancellations": "Never miss a customer cancellation"
+        },
+        "cta": "Enable Notifications",
+        "skip": "Set up later"
+      },
+      "noChannelWarning": {
+        "title": "No channel active",
+        "description": "Enable push or email to receive notifications.",
+        "enablePush": "Enable push",
+        "enableEmail": "Enable email",
+        "inactive": "inactive"
+      }
     }
   }
 }

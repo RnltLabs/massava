@@ -5,24 +5,18 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Filter, X } from 'lucide-react';
-import { useMediaQuery } from '@/hooks/use-media-query';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
+import { Search, ChevronDown, ArrowUpDown } from 'lucide-react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { SERVICE_TYPE_OPTIONS } from '@/lib/constants/serviceTypes';
+import { SearchParameterSheet } from './SearchParameterSheet';
+import { useState } from 'react';
 
 interface SearchFiltersProps {
   /**
@@ -32,249 +26,167 @@ interface SearchFiltersProps {
 }
 
 /**
+ * Sort options for search results
+ */
+const SORT_OPTIONS = [
+  { value: 'distance', label: 'Entfernung' },
+  { value: 'price', label: 'Preis' },
+  { value: 'rating', label: 'Bewertung' },
+] as const;
+
+type SortValue = (typeof SORT_OPTIONS)[number]['value'];
+
+/**
  * SearchFilters Component
  *
- * Mobile-first filter UI with bottom sheet for mobile and sidebar for desktop.
- * Allows users to filter search results by service type and price range.
+ * Unified filter hub with integrated sticky header.
+ * Combines search location display, service type pills, and sort option.
  *
  * Features:
- * - Mobile: Bottom sheet (80vh height)
- * - Desktop: Sidebar card (> 1024px)
- * - Service type select with icons
- * - Price range slider (€0-€200)
- * - Active filter badges
+ * - Sticky header with location info (clickable to edit search parameters)
+ * - Sort dropdown in header row
+ * - Horizontal scrollable service type pills (instant apply)
  * - URL parameter sync
+ * - Same layout for mobile and desktop
  */
-export function SearchFilters({ onFiltersApplied }: SearchFiltersProps) {
+export function SearchFilters({ onFiltersApplied }: SearchFiltersProps): React.JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
 
-  // State for filters
-  const [serviceType, setServiceType] = useState(searchParams.get('serviceType') || '');
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    parseInt(searchParams.get('minPrice') || '0'),
-    parseInt(searchParams.get('maxPrice') || '200'),
-  ]);
-  const [isOpen, setIsOpen] = useState(false);
+  // Get current values from URL
+  const currentServiceType = searchParams.get('serviceType') || '';
+  const currentSort = (searchParams.get('sort') as SortValue) || 'distance';
+  const fullLocation = searchParams.get('location') || 'In deiner Nähe';
 
-  // Sync state with URL params when they change
-  useEffect(() => {
-    setServiceType(searchParams.get('serviceType') || '');
-    setPriceRange([
-      parseInt(searchParams.get('minPrice') || '0'),
-      parseInt(searchParams.get('maxPrice') || '200'),
-    ]);
-  }, [searchParams]);
+  // Extract only the street/first part of the location (before comma)
+  const displayLocation = fullLocation.split(',')[0].trim();
+
+  // Initial values for search parameter sheet
+  const initialSearchValues = useMemo(() => ({
+    location: searchParams.get('location') || '',
+    lat: parseFloat(searchParams.get('lat') || '') || null,
+    lng: parseFloat(searchParams.get('lng') || '') || null,
+    radius: searchParams.get('radius') || '10',
+    datetime: searchParams.get('datetime')
+      ? new Date(searchParams.get('datetime')!)
+      : undefined,
+    serviceType: searchParams.get('serviceType') || undefined,
+  }), [searchParams]);
+
+  // Combine "Alle" option with service type options
+  const allServiceTypes = [{ value: '', label: 'Alle', icon: '' }, ...SERVICE_TYPE_OPTIONS];
 
   /**
-   * Apply filters by updating URL params
+   * Handle service type change - applies immediately without sheet
    */
-  const applyFilters = () => {
+  const handleServiceTypeChange = (value: string): void => {
     const params = new URLSearchParams(searchParams.toString());
-
-    // Service type
-    if (serviceType) {
-      params.set('serviceType', serviceType);
+    if (value) {
+      params.set('serviceType', value);
     } else {
       params.delete('serviceType');
     }
-
-    // Price range
-    if (priceRange[0] > 0) {
-      params.set('minPrice', priceRange[0].toString());
-    } else {
-      params.delete('minPrice');
-    }
-
-    if (priceRange[1] < 200) {
-      params.set('maxPrice', priceRange[1].toString());
-    } else {
-      params.delete('maxPrice');
-    }
-
     router.push(`?${params.toString()}`);
-    setIsOpen(false);
     onFiltersApplied?.();
   };
 
   /**
-   * Remove a specific filter
+   * Handle sort change - applies immediately
    */
-  const removeFilter = (filterType: 'serviceType' | 'priceRange') => {
+  const handleSortChange = (value: SortValue): void => {
     const params = new URLSearchParams(searchParams.toString());
-
-    if (filterType === 'serviceType') {
-      params.delete('serviceType');
-      setServiceType('');
-    } else if (filterType === 'priceRange') {
-      params.delete('minPrice');
-      params.delete('maxPrice');
-      setPriceRange([0, 200]);
+    if (value === 'distance') {
+      // Distance is default, remove from URL
+      params.delete('sort');
+    } else {
+      params.set('sort', value);
     }
-
     router.push(`?${params.toString()}`);
+    onFiltersApplied?.();
   };
 
   /**
-   * Clear all filters
+   * Get current sort label
    */
-  const clearAllFilters = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete('serviceType');
-    params.delete('minPrice');
-    params.delete('maxPrice');
-
-    setServiceType('');
-    setPriceRange([0, 200]);
-
-    router.push(`?${params.toString()}`);
-  };
-
-  /**
-   * Check if any filters are active
-   */
-  const hasActiveFilters =
-    serviceType !== '' || priceRange[0] > 0 || priceRange[1] < 200;
-
-  /**
-   * Filter content (shared between mobile and desktop)
-   */
-  const FilterContent = () => (
-    <div className="space-y-6">
-      {/* Service Type Select */}
-      <div className="space-y-3">
-        <Label htmlFor="service-type" className="text-sm font-semibold">
-          Massage-Typ
-        </Label>
-        <Select value={serviceType || undefined} onValueChange={setServiceType}>
-          <SelectTrigger id="service-type">
-            <SelectValue placeholder="Alle Typen" />
-          </SelectTrigger>
-          <SelectContent>
-            {SERVICE_TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                <span className="flex items-center gap-2">
-                  <span>{opt.icon}</span>
-                  <span>{opt.label}</span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Price Range Slider */}
-      <div className="space-y-3">
-        <Label className="text-sm font-semibold">Preis-Spanne</Label>
-        <div className="px-2 pt-4">
-          <Slider
-            min={0}
-            max={200}
-            step={5}
-            value={priceRange}
-            onValueChange={(value) => setPriceRange(value as [number, number])}
-            className="wellness-slider"
-          />
-        </div>
-        <p className="text-sm text-muted-foreground text-center font-medium">
-          €{priceRange[0]} - €{priceRange[1]}
-        </p>
-      </div>
-
-      {/* Apply Button */}
-      <div className="pt-2">
-        <Button onClick={applyFilters} className="w-full">
-          Filter anwenden
-        </Button>
-      </div>
-
-      {/* Clear Filters */}
-      {hasActiveFilters && (
-        <Button
-          variant="ghost"
-          onClick={clearAllFilters}
-          className="w-full text-muted-foreground"
-        >
-          Alle Filter zurücksetzen
-        </Button>
-      )}
-    </div>
-  );
+  const currentSortLabel = SORT_OPTIONS.find(o => o.value === currentSort)?.label || 'Entfernung';
 
   return (
     <>
-      {/* Active Filter Badges */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {serviceType && (
-            <Badge variant="secondary" className="gap-1.5 pr-1">
-              <span className="flex items-center gap-1">
-                {SERVICE_TYPE_OPTIONS.find((o) => o.value === serviceType)?.icon}
-                {SERVICE_TYPE_OPTIONS.find((o) => o.value === serviceType)?.label}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('serviceType')}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
+      {/* Sticky Header - Always visible */}
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 px-4 py-3 mb-4">
+        {/* Location Row with Sort Dropdown */}
+        <div className="flex items-center gap-2 mb-3">
+          {/* Location - Clickable to open search sheet */}
+          <button
+            type="button"
+            onClick={() => setIsSearchSheetOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 flex-1 min-w-0 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors group"
+            aria-label="Suchparameter anpassen"
+          >
+            <Search className="h-4 w-4 text-gray-400 group-hover:text-gray-600 flex-shrink-0" />
+            <span className="text-sm text-gray-600 truncate">{displayLocation}</span>
+          </button>
 
-          {(priceRange[0] > 0 || priceRange[1] < 200) && (
-            <Badge variant="secondary" className="gap-1.5 pr-1">
-              <span>
-                €{priceRange[0]} - €{priceRange[1]}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-auto p-0.5 hover:bg-transparent"
-                onClick={() => removeFilter('priceRange')}
+          {/* Sort Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center justify-between gap-1.5 px-3 py-2 w-32 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors"
+                aria-label="Sortierung ändern"
               >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
+                <ArrowUpDown className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="flex-1 text-left">{currentSortLabel}</span>
+                <ChevronDown className="h-3 w-3 opacity-60 flex-shrink-0" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[140px]">
+              {SORT_OPTIONS.map((option) => (
+                <DropdownMenuItem
+                  key={option.value}
+                  onClick={() => handleSortChange(option.value)}
+                  className={currentSort === option.value ? 'bg-primary/10 text-primary' : ''}
+                >
+                  {option.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      )}
 
-      {/* Desktop: Sidebar */}
-      {isDesktop ? (
-        <Card className="wellness-shadow rounded-3xl p-6 sticky top-8">
-          <div className="flex items-center gap-2 mb-6">
-            <Filter className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-bold">Filter</h3>
-          </div>
-          <FilterContent />
-        </Card>
-      ) : (
-        /* Mobile: Bottom Sheet */
-        <Sheet open={isOpen} onOpenChange={setIsOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              className="gap-2 relative"
-            >
-              <Filter className="h-4 w-4" />
-              Filter
-              {hasActiveFilters && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 bg-primary rounded-full" />
-              )}
-            </Button>
-          </SheetTrigger>
+        {/* Service Type Pills - Horizontal Scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {allServiceTypes.map((option) => {
+            const isActive = currentServiceType === option.value;
 
-          <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
-            <SheetHeader className="mb-6">
-              <SheetTitle className="text-xl font-bold">Filter</SheetTitle>
-            </SheetHeader>
-            <FilterContent />
-          </SheetContent>
-        </Sheet>
-      )}
+            return (
+              <button
+                key={option.value}
+                onClick={() => handleServiceTypeChange(option.value)}
+                className={
+                  isActive
+                    ? 'px-4 py-2 text-sm font-medium rounded-full bg-[#B56550] text-white shadow-sm whitespace-nowrap transition-all flex-shrink-0'
+                    : 'px-4 py-2 text-sm font-medium rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 whitespace-nowrap transition-all flex-shrink-0'
+                }
+                type="button"
+                aria-pressed={isActive}
+                aria-label={`Filter: ${option.label}`}
+              >
+                {option.icon && <span className="mr-1.5">{option.icon}</span>}
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* Search Parameter Sheet */}
+      <SearchParameterSheet
+        open={isSearchSheetOpen}
+        onOpenChange={setIsSearchSheetOpen}
+        initialValues={initialSearchValues}
+      />
     </>
   );
 }

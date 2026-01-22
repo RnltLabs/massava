@@ -42,7 +42,7 @@ const NavItemComponent = React.memo(({
   return (
     <Link
       href={item.href}
-      className="flex flex-col items-center justify-center gap-1 px-3 min-w-[64px] h-full focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-inset rounded-lg"
+      className="flex flex-col items-center gap-1 px-3 min-w-[64px] py-1 focus:outline-none focus:ring-2 focus:ring-[#B56550] focus:ring-inset rounded-lg"
       aria-label={item.label}
       aria-current={isActive ? 'page' : undefined}
     >
@@ -120,11 +120,12 @@ function MobileBusinessNavComponent({ locale, pendingCount = 0 }: MobileBusiness
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg"
+      className="fixed bottom-0 left-0 right-0 z-[60] border-t border-gray-200 bg-white shadow-lg md:hidden"
       aria-label="Mobile navigation"
       role="navigation"
     >
-      <div className="flex items-center justify-around h-16">
+      {/* Content area with icons positioned at top */}
+      <div className="flex items-center justify-around pt-2 pb-3">
         {navItems.map((item) => (
           <NavItemComponent
             key={item.href}
@@ -133,6 +134,8 @@ function MobileBusinessNavComponent({ locale, pendingCount = 0 }: MobileBusiness
           />
         ))}
       </div>
+      {/* Safe area spacer for iOS home indicator */}
+      <div className="pb-safe" />
     </nav>
   );
 }

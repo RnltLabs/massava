@@ -160,6 +160,7 @@ export const customerRegistrationSchema = z.object({
 
 /**
  * Booking Schema with Health Data Consent
+ * Updated for DateTime migration - uses preferredDateTime instead of separate date/time fields
  */
 export const bookingSchema = z.object({
   studioId: z.string().cuid('Ungültige Studio-ID'),
@@ -167,8 +168,7 @@ export const bookingSchema = z.object({
   customerName: z.string().min(2, 'Name muss mindestens 2 Zeichen lang sein'),
   customerEmail: emailSchema,
   customerPhone: z.string().min(7, 'Telefonnummer zu kurz'),
-  preferredDate: z.string().min(1, 'Datum erforderlich'),
-  preferredTime: z.string().min(1, 'Uhrzeit erforderlich'),
+  preferredDateTime: z.string().datetime('Ungültiges Datum/Uhrzeit Format'),
   message: z.string().optional(),
   explicitHealthConsent: z.boolean().optional(),
   privacyPolicyAccepted: z.boolean().refine(val => val === true, {

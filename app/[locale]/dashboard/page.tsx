@@ -372,13 +372,13 @@ export default async function DashboardPage({ params }: Props) {
                           {booking.studio.address}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {new Date(booking.preferredDate).toLocaleDateString(locale, {
+                          {booking.preferredDateTime.toLocaleDateString(locale, {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
                           })}
-                          {booking.preferredTime && ` at ${booking.preferredTime}`}
+                          {` at ${booking.preferredDateTime.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`}
                         </p>
                       </div>
                       <div>

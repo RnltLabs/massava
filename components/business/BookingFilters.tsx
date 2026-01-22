@@ -7,17 +7,15 @@
 
 import React from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { SearchIcon, FilterIcon } from 'lucide-react';
+import { SearchIcon, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Alle' },
+  { value: 'PENDING', label: 'Offen' },
+  { value: 'CONFIRMED', label: 'Bestätigt' },
+  { value: 'CANCELLED', label: 'Storniert' },
+];
 
 export function BookingFilters(): React.JSX.Element {
   const router = useRouter();
@@ -55,51 +53,63 @@ export function BookingFilters(): React.JSX.Element {
     router.push(pathname ?? '');
   };
 
+  const hasActiveFilters = searchParams.get('status') || searchParams.get('search');
+
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      {/* Search */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Nach Kundenname oder E-Mail suchen..."
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch();
+    <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 px-4 py-3 mb-4">
+      {/* Search Input */}
+      <div className="relative mb-3">
+        <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Kunde suchen..."
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              handleSearch();
+            }
+          }}
+          className="w-full px-4 py-2.5 pl-10 rounded-xl border border-gray-200 bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#B56550]/20 focus:border-[#B56550]"
+        />
+      </div>
+
+      {/* Status Pills */}
+      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+        {STATUS_OPTIONS.map((option) => {
+          const isActive = statusValue === option.value;
+          return (
+            <button
+              key={option.value}
+              onClick={() => handleStatusChange(option.value)}
+              className={
+                isActive
+                  ? 'px-4 py-2 text-sm font-medium rounded-full bg-[#B56550] text-white shadow-sm whitespace-nowrap transition-all'
+                  : 'px-4 py-2 text-sm font-medium rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 whitespace-nowrap transition-all'
               }
-            }}
-            className="pl-10 w-full sm:w-64"
-          />
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Active Filter Badge */}
+      {hasActiveFilters && (
+        <div className="flex items-center gap-2 mt-3 text-xs text-gray-600">
+          <span className="inline-flex items-center gap-1">
+            <X className="h-3 w-3" />
+            Filter aktiv
+          </span>
+          <span className="text-gray-400">•</span>
+          <button
+            onClick={handleClearFilters}
+            className="text-[#B56550] hover:underline font-medium"
+          >
+            Zurücksetzen
+          </button>
         </div>
-        <Button onClick={handleSearch} variant="outline">
-          Suchen
-        </Button>
-      </div>
-
-      {/* Status Filter */}
-      <div className="flex gap-2 items-center">
-        <FilterIcon className="h-4 w-4 text-muted-foreground" />
-        <Select value={statusValue} onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Nach Status filtern" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle Buchungen</SelectItem>
-            <SelectItem value="PENDING">Ausstehend</SelectItem>
-            <SelectItem value="CONFIRMED">Bestätigt</SelectItem>
-            <SelectItem value="CANCELLED">Storniert</SelectItem>
-          </SelectContent>
-        </Select>
-
-        {(searchParams.get('status') || searchParams.get('search')) && (
-          <Button onClick={handleClearFilters} variant="ghost" size="sm">
-            Filter löschen
-          </Button>
-        )}
-      </div>
+      )}
     </div>
   );
 }

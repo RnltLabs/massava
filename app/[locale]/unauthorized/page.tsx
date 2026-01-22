@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { auth } from '@/auth';
 import { ShieldAlert, Home, LogIn, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { BLOB_ANIMATION_DELAY_FAST } from '@/lib/constants/animations';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 async function UnauthorizedContent({
@@ -49,7 +50,7 @@ async function UnauthorizedContent({
           background: 'oklch(0.88 0.03 80 / 0.2)',
           bottom: '-100px',
           left: '-100px',
-          animationDelay: '3s',
+          animationDelay: BLOB_ANIMATION_DELAY_FAST,
         }}
       />
 

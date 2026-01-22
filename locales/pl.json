@@ -1,4 +1,12 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Odkryj",
+      "bookings": "Rezerwacje",
+      "notifications": "Powiadomienia",
+      "account": "Konto"
+    }
+  },
   "home": {
     "badge": "Dostępne dziś",
     "hero_title": "Twój masaż",

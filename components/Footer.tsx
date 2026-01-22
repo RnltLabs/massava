@@ -16,85 +16,34 @@ export function Footer({ locale }: FooterProps) {
   const t = useTranslations('footer')
 
   return (
-    <footer className="relative py-12 px-4 sm:px-6 lg:px-8 border-t border-muted/20 bg-card/50">
+    <footer className="py-6 px-4 sm:px-6 lg:px-8 border-t border-muted/20">
       <div className="max-w-7xl mx-auto">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
-          {/* Brand */}
-          <div>
-            <h3 className="font-bold text-lg mb-4">Massava</h3>
-            <p className="text-sm text-muted-foreground">{t('tagline')}</p>
-          </div>
+        <div className="flex flex-col items-center gap-3">
+          {/* Legal Links */}
+          <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+            <a
+              href="https://rnltlabs.de/imprint"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2 py-1 hover:text-foreground transition-colors"
+            >
+              {t('imprint')}
+            </a>
+            <span className="text-muted-foreground/40">·</span>
+            <Link
+              href={`/${locale}/datenschutz`}
+              className="px-2 py-1 hover:text-foreground transition-colors"
+            >
+              {t('privacy')}
+            </Link>
+            <span className="text-muted-foreground/40">·</span>
+            <a href="#terms" className="px-2 py-1 hover:text-foreground transition-colors">
+              {t('terms')}
+            </a>
+          </nav>
 
-          {/* For Guests */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('forGuests')}</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a href="#how-it-works" className="hover:text-primary transition-colors">
-                  {t('howItWorks')}
-                </a>
-              </li>
-              <li>
-                <Link href={`/${locale}/studios`} className="hover:text-primary transition-colors">
-                  {t('findStudios')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* For Studios */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('forStudios')}</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <Link href={`/${locale}/business`} className="hover:text-primary transition-colors">
-                  {t('businessPortal')}
-                </Link>
-              </li>
-              <li>
-                <Link href={`/${locale}/business/onboarding`} className="hover:text-primary transition-colors">
-                  {t('registerStudio')}
-                </Link>
-              </li>
-              <li>
-                <a href="#pricing" className="hover:text-primary transition-colors">
-                  {t('pricing')}
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h4 className="font-semibold mb-4">{t('legal')}</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>
-                <a
-                  href="https://rnltlabs.de/imprint"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary transition-colors"
-                >
-                  {t('imprint')}
-                </a>
-              </li>
-              <li>
-                <Link href={`/${locale}/datenschutz`} className="hover:text-primary transition-colors">
-                  {t('privacy')}
-                </Link>
-              </li>
-              <li>
-                <a href="#terms" className="hover:text-primary transition-colors">
-                  {t('terms')}
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        {/* Copyright */}
-        <div className="text-center text-sm text-muted-foreground pt-8 border-t border-muted/20">
-          {t('copyright')}
+          {/* Copyright */}
+          <p className="text-sm text-muted-foreground/70">{t('copyright')}</p>
         </div>
       </div>
     </footer>

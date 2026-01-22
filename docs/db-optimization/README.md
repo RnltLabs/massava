@@ -536,6 +536,5 @@ After completion:
 
 ---
 
-**Created by**: Development Team
 **Last Updated**: 2025-11-05
 **Version**: 1.0

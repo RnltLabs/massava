@@ -1,4 +1,12 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Khám phá",
+      "bookings": "Đặt lịch",
+      "notifications": "Thông báo",
+      "account": "Tài khoản"
+    }
+  },
   "home": {
     "badge": "Còn chỗ hôm nay",
     "hero_title": "Massage của bạn",

@@ -1,4 +1,12 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "发现",
+      "bookings": "预约",
+      "notifications": "通知",
+      "account": "账户"
+    }
+  },
   "home": {
     "badge": "今天还可预约",
     "hero_title": "您的按摩",

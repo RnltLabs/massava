@@ -1,0 +1,1595 @@
+openapi: 3.0.3
+info:
+  title: Massava Notification API
+  description: |
+    Comprehensive API documentation for the Massava notification system.
+
+    The notification system provides:
+    - Real-time in-app notifications
+    - Push notifications (iOS, Android, Web)
+    - Email notifications (instant and digest)
+    - Server-Sent Events (SSE) for real-time updates
+    - Customizable user preferences
+    - Device token management for push notifications
+
+    All endpoints require authentication via Bearer token (JWT).
+  version: 1.0.0
+  contact:
+    name: Massava Development Team
+    url: https://github.com/roman/massava
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.massava.com
+    description: Production API
+  - url: https://staging-api.massava.com
+    description: Staging API
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Notifications
+    description: Notification management endpoints
+  - name: Devices
+    description: Push notification device token management
+  - name: Preferences
+    description: Notification preferences and settings
+  - name: Streaming
+    description: Real-time notification streaming (SSE)
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication endpoint
+
+  schemas:
+    # ============================================
+    # Notification Related Schemas
+    # ============================================
+
+    NotificationStatus:
+      type: string
+      enum:
+        - PENDING
+        - QUEUED
+        - SENDING
+        - DELIVERED
+        - FAILED
+        - EXPIRED
+        - ARCHIVED
+      description: |
+        Current delivery status of the notification.
+        - PENDING: Created, waiting to be processed
+        - QUEUED: Added to processing queue
+        - SENDING: Currently being sent via channels
+        - DELIVERED: Successfully delivered via all channels
+        - FAILED: Delivery failed permanently
+        - EXPIRED: Notification expired before delivery
+        - ARCHIVED: Marked for archival (read and older than threshold)
+
+    NotificationType:
+      type: string
+      enum:
+        - BOOKING_REQUEST_RECEIVED
+        - BOOKING_CANCELLED_BY_CUSTOMER
+        - BOOKING_REMINDER_STUDIO
+        - PAYMENT_RECEIVED
+        - REVIEW_POSTED
+        - LOW_AVAILABILITY_ALERT
+        - BOOKING_CONFIRMED
+        - BOOKING_REJECTED
+        - BOOKING_REMINDER_CUSTOMER
+        - BOOKING_CANCELLED_BY_STUDIO
+        - REVIEW_REQUEST
+        - STUDIO_PROMOTION
+        - ACCOUNT_LOGIN_NEW_DEVICE
+        - ACCOUNT_PASSWORD_CHANGED
+        - ACCOUNT_EMAIL_CHANGED
+        - ACCOUNT_TWO_FACTOR_ENABLED
+        - ACCOUNT_DELETION_SCHEDULED
+        - ACCOUNT_DELETION_CANCELLED
+        - SYSTEM_MAINTENANCE
+        - FEATURE_ANNOUNCEMENT
+        - TERMS_UPDATE
+        - WELCOME
+        - ONBOARDING_REMINDER
+        - SUBSCRIPTION_EXPIRING
+        - SUBSCRIPTION_EXPIRED
+      description: |
+        Categorizes the type of notification.
+        Used to determine default delivery channels and user preferences.
+
+    NotificationPriority:
+      type: string
+      enum:
+        - URGENT
+        - HIGH
+        - NORMAL
+        - LOW
+      description: |
+        Delivery priority level.
+        - URGENT: Bypass quiet hours, highest delivery priority
+        - HIGH: Respect quiet hours, high-priority queue
+        - NORMAL: Standard delivery behavior
+        - LOW: May be batched or delayed
+
+    NotificationChannel:
+      type: string
+      enum:
+        - PUSH
+        - EMAIL
+        - IN_APP
+      description: |
+        Delivery channel for the notification.
+        - PUSH: Push notification (iOS/Android/Web)
+        - EMAIL: Email delivery
+        - IN_APP: In-app notification center
+
+    StatusHistoryEntry:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 datetime when status changed
+        reason:
+          type: string
+          nullable: true
+          description: Human-readable reason for status change (e.g., "Expired", "Quiet hours")
+        channel:
+          $ref: '#/components/schemas/NotificationChannel'
+          nullable: true
+          description: Specific channel if status change is per-channel
+      example:
+        status: PENDING
+        timestamp: '2025-01-15T10:00:00Z'
+        reason: Created
+        channel: null
+
+    NotificationMetadata:
+      type: object
+      description: |
+        Type-specific metadata for the notification.
+        Schema varies based on notification type.
+        Examples for common types:
+      oneOf:
+        - type: object
+          title: BookingMetadata
+          properties:
+            bookingId:
+              type: string
+            customerName:
+              type: string
+            customerEmail:
+              type: string
+              format: email
+            serviceName:
+              type: string
+            servicePrice:
+              type: number
+              format: float
+            appointmentTime:
+              type: string
+              format: date-time
+            studioName:
+              type: string
+            studioId:
+              type: string
+        - type: object
+          title: PaymentMetadata
+          properties:
+            bookingId:
+              type: string
+            amount:
+              type: number
+              format: float
+            currency:
+              type: string
+            customerName:
+              type: string
+        - type: object
+          title: ReviewMetadata
+          properties:
+            reviewId:
+              type: string
+            bookingId:
+              type: string
+            rating:
+              type: integer
+              minimum: 1
+              maximum: 5
+            reviewerName:
+              type: string
+            studioName:
+              type: string
+            studioId:
+              type: string
+        - type: object
+          title: SecurityMetadata
+          properties:
+            ipAddress:
+              type: string
+            location:
+              type: string
+            device:
+              type: string
+            browser:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+        - type: object
+          title: SystemMetadata
+          properties:
+            maintenanceStart:
+              type: string
+              format: date-time
+            maintenanceEnd:
+              type: string
+              format: date-time
+            featureName:
+              type: string
+            version:
+              type: string
+            expirationDate:
+              type: string
+              format: date-time
+
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - title
+        - body
+        - status
+        - channels
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Unique notification identifier (CUID)
+        userId:
+          type: string
+          description: ID of the user receiving the notification
+        type:
+          $ref: '#/components/schemas/NotificationType'
+        title:
+          type: string
+          description: Notification title
+        body:
+          type: string
+          description: Notification body/content
+        metadata:
+          $ref: '#/components/schemas/NotificationMetadata'
+          nullable: true
+        status:
+          $ref: '#/components/schemas/NotificationStatus'
+        statusHistory:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusHistoryEntry'
+          nullable: true
+          description: History of status changes
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+          description: Delivery channels for this notification
+        priority:
+          $ref: '#/components/schemas/NotificationPriority'
+          nullable: true
+        pushDeliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        pushReadAt:
+          type: string
+          format: date-time
+          nullable: true
+        pushFailedAt:
+          type: string
+          format: date-time
+          nullable: true
+        pushError:
+          type: string
+          nullable: true
+        emailSentAt:
+          type: string
+          format: date-time
+          nullable: true
+        emailOpenedAt:
+          type: string
+          format: date-time
+          nullable: true
+        emailFailedAt:
+          type: string
+          format: date-time
+          nullable: true
+        emailError:
+          type: string
+          nullable: true
+        inAppSeenAt:
+          type: string
+          format: date-time
+          nullable: true
+        retryCount:
+          type: integer
+          description: Number of delivery retry attempts
+        maxRetries:
+          type: integer
+          description: Maximum retry attempts allowed
+        lastRetryAt:
+          type: string
+          format: date-time
+          nullable: true
+        nextRetryAt:
+          type: string
+          format: date-time
+          nullable: true
+        scheduledFor:
+          type: string
+          format: date-time
+          nullable: true
+          description: When to send the notification (for scheduled notifications)
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the notification expires if not delivered
+        idempotencyKey:
+          type: string
+          nullable: true
+          description: Key for idempotent creation
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: clh0z1j9d0000qz2lqz1z1z1z
+        userId: user123
+        type: BOOKING_CONFIRMED
+        title: Booking Confirmed
+        body: Your booking with Studio XYZ has been confirmed for January 15 at 2:00 PM
+        status: DELIVERED
+        channels:
+          - PUSH
+          - EMAIL
+          - IN_APP
+        priority: HIGH
+        pushDeliveredAt: '2025-01-15T10:00:30Z'
+        pushReadAt: '2025-01-15T10:05:00Z'
+        emailSentAt: '2025-01-15T10:00:15Z'
+        inAppSeenAt: '2025-01-15T10:01:00Z'
+        createdAt: '2025-01-15T10:00:00Z'
+        updatedAt: '2025-01-15T10:05:00Z'
+        metadata:
+          bookingId: booking456
+          customerName: John Doe
+          serviceName: Haircut
+          appointmentTime: '2025-01-15T14:00:00Z'
+          studioName: Studio XYZ
+          studioId: studio789
+
+    NotificationListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+          description: Array of notifications
+        pagination:
+          type: object
+          required:
+            - cursor
+            - hasMore
+          properties:
+            cursor:
+              type: string
+              nullable: true
+              description: Cursor for pagination (use as "cursor" query param in next request)
+            hasMore:
+              type: boolean
+              description: Whether there are more results available
+      example:
+        data:
+          - id: clh0z1j9d0000qz2lqz1z1z1z
+            userId: user123
+            type: BOOKING_CONFIRMED
+            title: Booking Confirmed
+            body: Your booking has been confirmed
+            status: DELIVERED
+            channels:
+              - PUSH
+              - EMAIL
+              - IN_APP
+            createdAt: '2025-01-15T10:00:00Z'
+            updatedAt: '2025-01-15T10:05:00Z'
+        pagination:
+          cursor: clh0z1j9d0000qz2lqz1z1z1z
+          hasMore: false
+
+    # ============================================
+    # Device Token Related Schemas
+    # ============================================
+
+    DevicePlatform:
+      type: string
+      enum:
+        - IOS
+        - ANDROID
+        - WEB
+      description: |
+        Mobile or web platform.
+        - IOS: Apple iOS devices
+        - ANDROID: Android devices
+        - WEB: Web browsers
+
+    DeviceToken:
+      type: object
+      required:
+        - id
+        - userId
+        - token
+        - platform
+        - isActive
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: Unique device token identifier (CUID)
+        userId:
+          type: string
+          description: User ID who registered this device
+        token:
+          type: string
+          description: Push notification token (FCM, APNs, or Web)
+        platform:
+          $ref: '#/components/schemas/DevicePlatform'
+        deviceName:
+          type: string
+          nullable: true
+          description: Human-readable device name (e.g., "John's iPhone 15")
+        deviceModel:
+          type: string
+          nullable: true
+          description: Device model (e.g., "iPhone15,2")
+        appVersion:
+          type: string
+          nullable: true
+          description: App version installed on device
+        osVersion:
+          type: string
+          nullable: true
+          description: Operating system version
+        isActive:
+          type: boolean
+          description: Whether the device is active and receiving notifications
+        lastUsedAt:
+          type: string
+          format: date-time
+          description: Last time this device was used
+        failureCount:
+          type: integer
+          description: Number of consecutive delivery failures
+        lastFailureAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last time delivery to this device failed
+        lastFailureReason:
+          type: string
+          nullable: true
+          description: Reason for last delivery failure
+        createdAt:
+          type: string
+          format: date-time
+      example:
+        id: device123
+        userId: user123
+        token: examplePushToken123456789
+        platform: IOS
+        deviceName: John's iPhone 15
+        deviceModel: iPhone15,2
+        appVersion: 1.0.0
+        osVersion: '17.2'
+        isActive: true
+        lastUsedAt: '2025-01-15T10:00:00Z'
+        failureCount: 0
+        createdAt: '2025-01-10T15:30:00Z'
+
+    RegisterDeviceRequest:
+      type: object
+      required:
+        - token
+        - platform
+      properties:
+        token:
+          type: string
+          description: |
+            Push notification token from the device.
+            - iOS (APNs): 64-character hex string
+            - Android (FCM): Base64-encoded token (1000+ chars)
+            - Web (Web Push): Base64-encoded subscription key
+          minLength: 1
+          example: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...
+        platform:
+          $ref: '#/components/schemas/DevicePlatform'
+        deviceName:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Optional human-readable device name
+          example: John's iPhone 15
+        deviceModel:
+          type: string
+          maxLength: 100
+          nullable: true
+          description: Optional device model identifier
+          example: iPhone15,2
+        appVersion:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Optional app version
+          example: '1.0.0'
+        osVersion:
+          type: string
+          maxLength: 50
+          nullable: true
+          description: Optional operating system version
+          example: '17.2'
+
+    # ============================================
+    # Preference Related Schemas
+    # ============================================
+
+    DigestFrequency:
+      type: string
+      enum:
+        - DAILY
+        - WEEKLY
+      description: |
+        Frequency for email digest notifications.
+        - DAILY: Digest sent daily
+        - WEEKLY: Digest sent weekly
+
+    TypePreference:
+      type: object
+      required:
+        - push
+        - email
+        - inApp
+      properties:
+        push:
+          type: boolean
+          description: Whether to send push notifications for this type
+        email:
+          type: string
+          enum:
+            - instant
+            - digest
+            - off
+          description: |
+            Email delivery mode.
+            - instant: Send email immediately
+            - digest: Batch in daily/weekly digest
+            - off: Don't send email
+        inApp:
+          type: boolean
+          description: Whether to show in-app notification
+      example:
+        push: true
+        email: instant
+        inApp: true
+
+    NotificationPreferences:
+      type: object
+      required:
+        - id
+        - userId
+        - pushEnabled
+        - emailEnabled
+        - inAppEnabled
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: Preferences identifier
+        userId:
+          type: string
+          description: User ID
+        pushEnabled:
+          type: boolean
+          description: Global enable/disable for push notifications
+        emailEnabled:
+          type: boolean
+          description: Global enable/disable for email notifications
+        inAppEnabled:
+          type: boolean
+          description: Global enable/disable for in-app notifications
+        quietHoursEnabled:
+          type: boolean
+          description: Whether quiet hours are enabled
+        quietHoursStart:
+          type: string
+          nullable: true
+          pattern: '^\d{2}:\d{2}$'
+          description: Quiet hours start time (HH:MM format)
+          example: '22:00'
+        quietHoursEnd:
+          type: string
+          nullable: true
+          pattern: '^\d{2}:\d{2}$'
+          description: Quiet hours end time (HH:MM format)
+          example: '08:00'
+        timezone:
+          type: string
+          description: User's timezone for quiet hours
+          example: Europe/Berlin
+        typePreferences:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TypePreference'
+          nullable: true
+          description: Per-type notification preferences
+        emailDigestEnabled:
+          type: boolean
+          description: Whether email digest is enabled
+        digestFrequency:
+          $ref: '#/components/schemas/DigestFrequency'
+        digestTime:
+          type: string
+          nullable: true
+          pattern: '^\d{2}:\d{2}$'
+          description: Time to send email digest (HH:MM format)
+          example: '09:00'
+        language:
+          type: string
+          description: Language for notification content
+          example: de
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        id: pref123
+        userId: user123
+        pushEnabled: true
+        emailEnabled: true
+        inAppEnabled: true
+        quietHoursEnabled: true
+        quietHoursStart: '22:00'
+        quietHoursEnd: '08:00'
+        timezone: Europe/Berlin
+        emailDigestEnabled: true
+        digestFrequency: DAILY
+        digestTime: '09:00'
+        language: de
+        typePreferences:
+          BOOKING_CONFIRMED:
+            push: true
+            email: instant
+            inApp: true
+          STUDIO_PROMOTION:
+            push: false
+            email: digest
+            inApp: false
+        createdAt: '2025-01-01T00:00:00Z'
+        updatedAt: '2025-01-15T10:00:00Z'
+
+    UpdateNotificationPreferencesRequest:
+      type: object
+      properties:
+        pushEnabled:
+          type: boolean
+        emailEnabled:
+          type: boolean
+        inAppEnabled:
+          type: boolean
+        quietHoursEnabled:
+          type: boolean
+        quietHoursStart:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          nullable: true
+        quietHoursEnd:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          nullable: true
+        timezone:
+          type: string
+        typePreferences:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TypePreference'
+        emailDigestEnabled:
+          type: boolean
+        digestFrequency:
+          $ref: '#/components/schemas/DigestFrequency'
+        digestTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          nullable: true
+        language:
+          type: string
+      example:
+        pushEnabled: true
+        emailEnabled: false
+        quietHoursEnabled: true
+        quietHoursStart: '22:00'
+        quietHoursEnd: '08:00'
+
+    UnreadCountResponse:
+      type: object
+      required:
+        - count
+      properties:
+        count:
+          type: integer
+          description: Number of unread notifications
+          minimum: 0
+      example:
+        count: 5
+
+    # ============================================
+    # Error Schemas
+    # ============================================
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+        message:
+          type: string
+          nullable: true
+          description: Additional error details
+        details:
+          type: object
+          nullable: true
+          description: Structured error details (e.g., validation errors)
+        statusCode:
+          type: integer
+          description: HTTP status code
+      example:
+        error: Invalid request
+        message: Request validation failed
+        details:
+          token:
+            - Invalid device token format
+
+    UnauthorizedError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - Unauthorized
+            - Nicht autorisiert
+        message:
+          type: string
+          nullable: true
+
+    NotFoundError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - Notification not found
+            - Device not found
+        message:
+          type: string
+          nullable: true
+
+    ForbiddenError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - Forbidden
+            - Access denied. This notification belongs to another user.
+
+    ValidationError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+          description: Field-level validation errors
+
+    RateLimitError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum:
+            - Too many requests
+            - Rate limit exceeded
+
+    SSEEvent:
+      type: object
+      required:
+        - type
+        - data
+      properties:
+        type:
+          type: string
+          enum:
+            - notification
+            - heartbeat
+            - error
+          description: Event type
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/Notification'
+            - type: string
+          description: Event data (notification object or heartbeat marker)
+        timestamp:
+          type: string
+          format: date-time
+      example:
+        type: notification
+        data:
+          id: clh0z1j9d0000qz2lqz1z1z1z
+          userId: user123
+          type: BOOKING_CONFIRMED
+          title: Booking Confirmed
+          body: Your booking has been confirmed
+          status: DELIVERED
+          channels:
+            - PUSH
+            - EMAIL
+            - IN_APP
+          createdAt: '2025-01-15T10:00:00Z'
+          updatedAt: '2025-01-15T10:05:00Z'
+        timestamp: '2025-01-15T10:00:00Z'
+
+  responses:
+    UnauthorizedResponse:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UnauthorizedError'
+
+    ForbiddenResponse:
+      description: User not authorized to access this resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ForbiddenError'
+
+    NotFoundResponse:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/NotFoundError'
+
+    BadRequestResponse:
+      description: Invalid request parameters or body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    UnprocessableEntityResponse:
+      description: Request entity could not be processed (e.g., invalid token format)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    TooManyRequestsResponse:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
+      headers:
+        Retry-After:
+          description: Seconds to wait before retrying
+          schema:
+            type: integer
+        X-RateLimit-Limit:
+          description: Rate limit ceiling
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          description: Remaining requests in current window
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          description: Unix timestamp when rate limit resets
+          schema:
+            type: integer
+
+    InternalServerErrorResponse:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Internal server error
+            statusCode: 500
+
+security:
+  - BearerAuth: []
+
+paths:
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List user notifications
+      operationId: listNotifications
+      description: |
+        Retrieve a paginated list of notifications for the authenticated user.
+
+        Supports cursor-based pagination for efficient data retrieval.
+        Results are ordered by creation date (newest first).
+      parameters:
+        - name: limit
+          in: query
+          description: Number of results per page (max 50)
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 50
+        - name: cursor
+          in: query
+          description: Pagination cursor from previous response
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by status (comma-separated for multiple)
+          schema:
+            type: string
+          examples:
+            single:
+              value: DELIVERED
+            multiple:
+              value: DELIVERED,PENDING
+        - name: type
+          in: query
+          description: Filter by notification type (comma-separated for multiple)
+          schema:
+            type: string
+          examples:
+            single:
+              value: BOOKING_CONFIRMED
+            multiple:
+              value: BOOKING_CONFIRMED,BOOKING_REMINDER_CUSTOMER
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    post:
+      tags:
+        - Notifications
+      summary: Create notification (Admin only)
+      operationId: createNotification
+      description: |
+        Create a new notification for a user.
+
+        Requires admin privileges (SUPER_ADMIN or STUDIO_OWNER role).
+
+        Supports:
+        - Immediate delivery
+        - Scheduled delivery (scheduledFor parameter)
+        - Customizable channels (push, email, in-app)
+        - Type-specific metadata
+        - Idempotent creation (via idempotencyKey)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - type
+                - title
+                - body
+              properties:
+                userId:
+                  type: string
+                  description: User ID to send notification to
+                type:
+                  $ref: '#/components/schemas/NotificationType'
+                title:
+                  type: string
+                  description: Notification title
+                  minLength: 1
+                body:
+                  type: string
+                  description: Notification body/content
+                  minLength: 1
+                channels:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/NotificationChannel'
+                  nullable: true
+                  description: Delivery channels (defaults based on type)
+                  example:
+                    - PUSH
+                    - EMAIL
+                    - IN_APP
+                priority:
+                  $ref: '#/components/schemas/NotificationPriority'
+                  nullable: true
+                  description: Delivery priority (defaults based on type)
+                metadata:
+                  $ref: '#/components/schemas/NotificationMetadata'
+                  nullable: true
+                scheduledFor:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Schedule notification for future delivery
+                expiresAt:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Notification expiration time
+                idempotencyKey:
+                  type: string
+                  nullable: true
+                  description: Unique key for idempotent creation
+              example:
+                userId: user123
+                type: BOOKING_CONFIRMED
+                title: Booking Confirmed
+                body: Your booking has been confirmed for January 15
+                channels:
+                  - PUSH
+                  - EMAIL
+                  - IN_APP
+                priority: HIGH
+                metadata:
+                  bookingId: booking456
+                  customerName: John Doe
+                  serviceName: Haircut
+                  appointmentTime: '2025-01-15T14:00:00Z'
+                  studioName: Studio XYZ
+                  studioId: studio789
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      status:
+                        $ref: '#/components/schemas/NotificationStatus'
+              example:
+                success: true
+                data:
+                  id: clh0z1j9d0000qz2lqz1z1z1z
+                  status: PENDING
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/{id}:
+    get:
+      tags:
+        - Notifications
+      summary: Get single notification
+      operationId: getNotification
+      description: Retrieve details of a specific notification by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Notification'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    delete:
+      tags:
+        - Notifications
+      summary: Delete notification
+      operationId: deleteNotification
+      description: Delete a specific notification (soft delete / archive)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/read:
+    post:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      operationId: markNotificationAsRead
+      description: |
+        Mark a specific notification as read.
+
+        Triggers status update and records read timestamp based on channel.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - notificationId
+              properties:
+                notificationId:
+                  type: string
+                  description: ID of notification to mark as read
+              example:
+                notificationId: clh0z1j9d0000qz2lqz1z1z1z
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '404':
+          $ref: '#/components/responses/NotFoundResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Get unread notification count
+      operationId: getUnreadCount
+      description: |
+        Get the count of unread notifications for the authenticated user.
+
+        Useful for badge display in UI.
+      responses:
+        '200':
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/devices:
+    get:
+      tags:
+        - Devices
+      summary: List registered devices
+      operationId: listDevices
+      description: |
+        Get all registered push notification devices for the authenticated user.
+
+        Returns devices ordered by most recently used.
+      responses:
+        '200':
+          description: List of registered devices
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - devices
+                properties:
+                  devices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DeviceToken'
+              example:
+                devices:
+                  - id: device123
+                    userId: user123
+                    token: examplePushToken123456789
+                    platform: IOS
+                    deviceName: John's iPhone 15
+                    isActive: true
+                    createdAt: '2025-01-10T15:30:00Z'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    post:
+      tags:
+        - Devices
+      summary: Register device token
+      operationId: registerDevice
+      description: |
+        Register a new push notification device token.
+
+        Creates or updates device registration with comprehensive validation:
+        - Token format validation based on platform
+        - Duplicate token handling (upsert)
+        - Device information tracking
+
+        **Token Format Requirements**:
+        - **iOS (APNs)**: 64-character hexadecimal string
+        - **Android (FCM)**: Base64-encoded token from Firebase Cloud Messaging
+        - **Web**: Base64-encoded Web Push subscription key
+
+        Returns 422 if token format is invalid for the specified platform.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '200':
+          description: Device registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - device
+                properties:
+                  device:
+                    $ref: '#/components/schemas/DeviceToken'
+        '400':
+          description: Invalid request (missing required fields)
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '422':
+          description: Invalid device token format for specified platform
+          $ref: '#/components/responses/UnprocessableEntityResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/devices/{id}:
+    delete:
+      tags:
+        - Devices
+      summary: Unregister device
+      operationId: deleteDevice
+      description: |
+        Remove a device token (unregister from push notifications).
+
+        User can only delete their own devices.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Device ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Device deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    enum: [true]
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '403':
+          $ref: '#/components/responses/ForbiddenResponse'
+        '404':
+          description: Device not found
+          $ref: '#/components/responses/NotFoundResponse'
+        '429':
+          $ref: '#/components/responses/TooManyRequestsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/preferences:
+    get:
+      tags:
+        - Preferences
+      summary: Get notification preferences
+      operationId: getPreferences
+      description: |
+        Retrieve notification preferences for the authenticated user.
+
+        Returns default preferences if none have been set yet.
+      responses:
+        '200':
+          description: Notification preferences
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+    patch:
+      tags:
+        - Preferences
+      summary: Update notification preferences
+      operationId: updatePreferences
+      description: |
+        Update notification preferences for the authenticated user.
+
+        Supports partial updates - only changed fields need to be provided.
+
+        **Features**:
+        - Global channel enable/disable (push, email, in-app)
+        - Quiet hours configuration (time range + timezone)
+        - Per-notification-type preferences (channel selection + email mode)
+        - Email digest settings (frequency + delivery time)
+        - Language selection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNotificationPreferencesRequest'
+      responses:
+        '200':
+          description: Preferences updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPreferences'
+        '400':
+          $ref: '#/components/responses/BadRequestResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+
+  /api/notifications/stream:
+    get:
+      tags:
+        - Streaming
+      summary: Stream notifications (Server-Sent Events)
+      operationId: streamNotifications
+      description: |
+        Establish a Server-Sent Events (SSE) connection for real-time notifications.
+
+        **Features**:
+        - Real-time notification delivery
+        - Automatic heartbeat (every 30 seconds)
+        - Automatic reconnection on client side
+        - Ordered notification delivery
+
+        **Events**:
+        - `notification`: New notification for user
+        - `heartbeat`: Connection health check
+        - `error`: Connection or processing error
+
+        **Usage**:
+        ```javascript
+        const eventSource = new EventSource('/api/notifications/stream', {
+          headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+        });
+
+        eventSource.addEventListener('notification', (event) => {
+          const notification = JSON.parse(event.data);
+          console.log('New notification:', notification);
+        });
+
+        eventSource.addEventListener('heartbeat', (event) => {
+          console.log('Connection alive');
+        });
+
+        eventSource.addEventListener('error', (event) => {
+          console.error('Stream error:', event.data);
+        });
+        ```
+
+        **Configuration**:
+        - Heartbeat interval: 30 seconds
+        - Poll interval: 2 seconds
+      responses:
+        '200':
+          description: Server-Sent Events stream
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  event:
+                    type: string
+                    enum:
+                      - notification
+                      - heartbeat
+                      - error
+                  data:
+                    oneOf:
+                      - $ref: '#/components/schemas/Notification'
+                      - type: string
+              example:
+                event: notification
+                data: '{"id":"clh0z1j9d0000qz2lqz1z1z1z","type":"BOOKING_CONFIRMED"}'
+        '401':
+          $ref: '#/components/responses/UnauthorizedResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerErrorResponse'
+      x-codeSamples:
+        - lang: bash
+          source: |
+            curl -N \
+              -H "Authorization: Bearer YOUR_TOKEN" \
+              https://api.massava.com/api/notifications/stream
+        - lang: javascript
+          source: |
+            const eventSource = new EventSource('/api/notifications/stream', {
+              headers: { 'Authorization': 'Bearer YOUR_TOKEN' }
+            });
+
+            eventSource.addEventListener('notification', (event) => {
+              const notification = JSON.parse(event.data);
+              console.log('New notification:', notification);
+            });
+        - lang: python
+          source: |
+            import requests
+
+            headers = {'Authorization': 'Bearer YOUR_TOKEN'}
+            response = requests.get(
+              'https://api.massava.com/api/notifications/stream',
+              headers=headers,
+              stream=True
+            )
+
+            for line in response.iter_lines():
+              if line:
+                print(line.decode('utf-8'))
+
+# ============================================
+# API Documentation & Examples
+# ============================================
+
+externalDocs:
+  description: Find more information about the Notification System
+  url: https://github.com/roman/massava/docs/notifications
+
+x-logo:
+  url: https://massava.com/logo.svg
+  altText: Massava Logo
