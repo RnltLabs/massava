@@ -30,16 +30,24 @@ export interface SearchResultStudio {
   name: string;
   description: string | null;
   logoUrl: string | null;
+  galleryImages?: unknown | null;
   address: string;
   city: string;
   postalCode: string | null;
   phone: string;
   email: string;
+  website?: string | null;
+  openingHours?: unknown | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  timezone: string;
   distance: number;
   services: Service[];
   matchedServices: Service[];
   minPrice: number;
   availableSlots: TimeSlotWithService[];
+  averageRating?: number | null;
+  totalReviews?: number;
 }
 
 /**

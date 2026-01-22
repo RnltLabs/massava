@@ -19,7 +19,7 @@ interface ProgressDotsProps {
 export function ProgressDots({ current, total }: ProgressDotsProps) {
   return (
     <div
-      className="flex items-center justify-center gap-2 mb-6"
+      className="flex items-center justify-center gap-2 mb-2"
       role="progressbar"
       aria-valuenow={current}
       aria-valuemin={1}

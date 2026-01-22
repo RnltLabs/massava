@@ -10,10 +10,11 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useSession, signOut } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { User, LogOut, ChevronDown, Calendar } from 'lucide-react';
+import { User, LogOut, ChevronDown, Calendar, Building2 } from 'lucide-react';
 import { UnifiedAuthDialog } from './auth/UnifiedAuthDialog';
 import LanguageSwitcher from './LanguageSwitcher';
 import { getAuthCallbackUrl } from '@/lib/navigation';
+import { UserRole } from '@/app/generated/prisma';
 
 export default function Header() {
   const locale = useLocale();
@@ -60,6 +61,17 @@ export default function Header() {
     return session?.user?.name || session?.user?.email || t('my_account');
   };
 
+  // Check if user is a studio owner
+  const isStudioOwner = session?.user?.roles?.includes(UserRole.STUDIO_OWNER) ?? false;
+
+  // Get the correct account URL based on role
+  const getAccountUrl = () => {
+    if (isStudioOwner) {
+      return `/${locale}/business/settings/account?from=header`;
+    }
+    return `/${locale}/customer/account?from=header`;
+  };
+
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-40 bg-card/80 backdrop-blur-lg border-b border-muted/20">
@@ -96,8 +108,18 @@ export default function Header() {
                         onClick={() => setShowUserMenu(false)}
                       />
                       <div className="absolute right-0 mt-2 w-48 bg-card wellness-shadow rounded-2xl overflow-hidden z-50">
+                        {isStudioOwner && (
+                          <Link
+                            href={`/${locale}/business`}
+                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <Building2 className="h-4 w-4" />
+                            {t('studio_dashboard')}
+                          </Link>
+                        )}
                         <Link
-                          href={`/${locale}/customer/dashboard`}
+                          href={`/${locale}/customer/bookings`}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >
@@ -105,7 +127,7 @@ export default function Header() {
                           {t('my_bookings')}
                         </Link>
                         <Link
-                          href={`/${locale}/dashboard`}
+                          href={getAccountUrl()}
                           className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm hover:bg-accent/10 transition-colors text-foreground"
                           onClick={() => setShowUserMenu(false)}
                         >

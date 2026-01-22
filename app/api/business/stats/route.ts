@@ -10,6 +10,7 @@
 
 import { auth } from '@/auth'
 import { requireBusinessAccess } from '@/lib/auth/business-portal-guard'
+import { getErrorStatusCode } from '@/lib/auth/errors'
 import { prisma } from '@/lib/prisma'
 import { statsQuerySchema } from '@/lib/validations/business'
 import { BookingStatus } from '@/app/generated/prisma'
@@ -47,13 +48,17 @@ export async function GET(request: Request) {
   try {
     // 1. Authenticate and authorize
     const session = await auth()
-    requireBusinessAccess(session?.user)
+    const accessResult = requireBusinessAccess(session?.user)
+    if (!accessResult.ok) {
+      const status = getErrorStatusCode(accessResult.error)
+      return NextResponse.json({ error: accessResult.error.message }, { status })
+    }
 
     // 2. Parse and validate query parameters
     const { searchParams } = new URL(request.url)
     const queryResult = statsQuerySchema.safeParse({
-      startDate: searchParams.get('startDate'),
-      endDate: searchParams.get('endDate'),
+      startDate: searchParams.get('startDate') ?? undefined,
+      endDate: searchParams.get('endDate') ?? undefined,
       period: searchParams.get('period') || 'month',
     })
 

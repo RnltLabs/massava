@@ -176,7 +176,6 @@ npx tsx scripts/verify-newbooking-constraints.ts
 ## Support
 
 **Questions?** Contact:
-- Migration Author: Migration Tool
 - Database Team: For production deployment approval
 - DevOps Team: For deployment assistance
 

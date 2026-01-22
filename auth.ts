@@ -110,10 +110,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        // Check email verification
+        // Email verification is NOT blocking login anymore
+        // Users can log in with unverified email but will see verification reminder
+        // This improves UX for users who just registered during booking flow
         if (!user.emailVerified) {
-          console.log('[auth.ts] Email not verified');
-          throw new Error('Email not verified');
+          console.log('[auth.ts] Email not verified - allowing login anyway');
         }
 
         // Check if account is suspended

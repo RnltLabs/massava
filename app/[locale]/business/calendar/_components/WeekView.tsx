@@ -54,7 +54,7 @@ export function WeekView({
   // Filter bookings by day
   const getBookingsForDay = (day: Date): BookingWithService[] => {
     const dayStr = format(day, 'yyyy-MM-dd');
-    return bookings.filter((b) => b.preferredDate === dayStr);
+    return bookings.filter((b) => format(b.preferredDateTime, 'yyyy-MM-dd') === dayStr);
   };
 
   // Filter blocked times by day
@@ -62,13 +62,15 @@ export function WeekView({
     return blockedTimes.filter((b) => isSameDay(b.startTime, day));
   };
 
-  // Count bookings for a specific day and time
+  // Count bookings for a specific day and time (Phase 4: DateTime migration)
   const getBookingCountForDayAndTime = (day: Date, hour: number): number => {
     const dayStr = format(day, 'yyyy-MM-dd');
     const timeSlot = format(new Date().setHours(hour, 0, 0, 0), 'HH:mm');
-    return bookings.filter(
-      (b) => b.preferredDate === dayStr && b.preferredTime === timeSlot && b.status === 'CONFIRMED'
-    ).length;
+    return bookings.filter((b) => {
+      const bookingDate = format(b.preferredDateTime, 'yyyy-MM-dd');
+      const bookingTime = format(b.preferredDateTime, 'HH:mm');
+      return bookingDate === dayStr && bookingTime === timeSlot && b.status === 'CONFIRMED';
+    }).length;
   };
 
   // Get customer/service initials
@@ -179,7 +181,7 @@ export function WeekView({
               >
                 {/* Render booking blocks */}
                 {dayBookings.map((booking) => {
-                  const startTime = createDateTime(booking.preferredDate, booking.preferredTime);
+                  const startTime = booking.preferredDateTime;
                   const durationMinutes = booking.service?.duration || 60;
                   const endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
                   const { top, height } = calculateBlockPosition(startTime, endTime);

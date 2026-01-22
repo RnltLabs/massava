@@ -1,0 +1,503 @@
+# Notification System Alert Rules
+# Version: 1.0
+# Last Updated: December 2, 2025
+# Location: /monitoring/prometheus/notification-alerts.yaml
+#
+# Usage:
+#   1. Copy this file to your Prometheus configuration directory
+#   2. Add to prometheus.yml:
+#      rule_files:
+#        - '/etc/prometheus/rules/notification-alerts.yaml'
+#   3. Reload Prometheus configuration
+
+groups:
+  - name: notification_delivery
+    interval: 30s
+    rules:
+      # Alert 1: High delivery failure rate
+      - alert: NotificationDeliveryFailureRateHigh
+        expr: |
+          (
+            rate(notification_delivery_failures_total[5m])
+            /
+            rate(notification_delivery_total[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          group: delivery
+          service: notification
+          sla_minutes: 15
+        annotations:
+          summary: "High notification delivery failure rate"
+          description: |
+            Notification delivery failure rate is {{ $value | humanizePercentage }} (threshold: 5%)
+
+            Service: notification
+            Severity: CRITICAL
+            SLA: 15 minutes to acknowledge
+
+            Immediate Actions:
+            1. Check delivery provider status pages (FCM, SendGrid, AWS SES)
+            2. Review application error logs for patterns
+            3. Check database connectivity and performance
+            4. Verify network connectivity to external services
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-1"
+          dashboard_url: "https://grafana.massava.com/d/notification-delivery"
+          runbook_title: "Notification Delivery Failure Rate High"
+          owner: "notification-team"
+          slack_channel: "#alerts"
+          pagerduty_routing: "high_urgency"
+
+      # Alert 2: Queue backlog accumulating
+      - alert: NotificationQueueBacklogCritical
+        expr: notification_queue_backlog > 1000
+        for: 10m
+        labels:
+          severity: warning
+          group: delivery
+          service: notification
+          sla_minutes: 30
+        annotations:
+          summary: "Notification queue backlog critical"
+          description: |
+            Queue backlog is {{ $value }} messages (threshold: 1000)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 30 minutes to investigate
+
+            Immediate Actions:
+            1. Check queue processor/consumer status
+            2. Measure queue processing rate vs. incoming rate
+            3. Review database slow query logs
+            4. Verify consumer application health
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-2"
+          dashboard_url: "https://grafana.massava.com/d/notification-queue"
+          runbook_title: "Queue Backlog Accumulating"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+      # Alert 3: Push delivery latency high
+      - alert: PushDeliveryLatencyP99High
+        expr: |
+          histogram_quantile(
+            0.99,
+            rate(notification_delivery_latency_seconds_bucket{channel="push"}[5m])
+          ) > 30
+        for: 5m
+        labels:
+          severity: warning
+          group: performance
+          service: notification
+          sla_minutes: 60
+        annotations:
+          summary: "Push notification delivery latency high"
+          description: |
+            P99 push delivery latency is {{ $value | humanizeDuration }} (threshold: 30s)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 1 hour to investigate
+
+            Immediate Actions:
+            1. Check Firebase Cloud Messaging (FCM) status and latency
+            2. Review network latency metrics
+            3. Check application request latency
+            4. Verify database query performance
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-3"
+          dashboard_url: "https://grafana.massava.com/d/notification-latency"
+          runbook_title: "Push Delivery Latency High"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+      # Alert 4: Email bounce rate high
+      - alert: EmailBounceRateHigh
+        expr: |
+          (
+            rate(notification_email_bounces_total[15m])
+            /
+            rate(notification_delivery_total{channel="email"}[15m])
+          ) > 0.10
+        for: 15m
+        labels:
+          severity: critical
+          group: delivery
+          service: notification
+          sla_minutes: 15
+        annotations:
+          summary: "High email bounce rate"
+          description: |
+            Email bounce rate is {{ $value | humanizePercentage }} (threshold: 10%)
+
+            Service: notification
+            Severity: CRITICAL
+            SLA: 15 minutes to acknowledge
+
+            Immediate Actions:
+            1. Check email provider status (SendGrid, AWS SES, etc.)
+            2. Review bounce analytics in email provider console
+            3. Check sender reputation scores
+            4. Verify email domain DNS records (SPF, DKIM, DMARC)
+            5. Identify bounce patterns (permanent vs. temporary)
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-4"
+          dashboard_url: "https://grafana.massava.com/d/notification-email"
+          runbook_title: "Email Bounce Rate High"
+          owner: "notification-team"
+          slack_channel: "#alerts"
+          pagerduty_routing: "high_urgency"
+
+  - name: notification_performance
+    interval: 30s
+    rules:
+      # Alert 5: API response time slow
+      - alert: APIResponseTimeP95Slow
+        expr: |
+          histogram_quantile(
+            0.95,
+            rate(notification_api_request_duration_seconds_bucket[5m])
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          group: performance
+          service: notification
+          sla_minutes: 30
+        annotations:
+          summary: "API response time slow"
+          description: |
+            P95 API response time is {{ $value | humanizeDuration }} (threshold: 1s)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 30 minutes to investigate
+
+            Immediate Actions:
+            1. Check if this is normal for current request volume
+            2. Review slow query logs for database issues
+            3. Check database connection pool status
+            4. Monitor CPU and memory usage
+            5. Check garbage collection pause times
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-5"
+          dashboard_url: "https://grafana.massava.com/d/notification-api"
+          runbook_title: "API Response Time Slow"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+      # Alert 6: API error rate increasing
+      - alert: APIErrorRateHigh
+        expr: |
+          (
+            rate(notification_api_errors_total[5m])
+            /
+            rate(notification_api_requests_total[5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          group: performance
+          service: notification
+          sla_minutes: 30
+        annotations:
+          summary: "API error rate high"
+          description: |
+            API error rate is {{ $value | humanizePercentage }} (threshold: 5%)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 30 minutes to investigate
+
+            Immediate Actions:
+            1. Review application error logs by error type
+            2. Check for recently deployed code changes
+            3. Verify external service connectivity
+            4. Check database health and connectivity
+            5. Review rate limiting configuration
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-5"
+          dashboard_url: "https://grafana.massava.com/d/notification-api"
+          runbook_title: "API Error Rate High"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+  - name: notification_security
+    interval: 30s
+    rules:
+      # Alert 6: Rate limit triggered frequently
+      - alert: RateLimitTriggeredFrequently
+        expr: rate(notification_rate_limit_triggered_total[1m]) > 100
+        for: 2m
+        labels:
+          severity: info
+          group: security
+          service: notification
+          sla_minutes: "N/A"
+        annotations:
+          summary: "Rate limit triggered frequently"
+          description: |
+            Rate limit triggered {{ $value | humanize }} times/minute (threshold: 100/minute)
+
+            Service: notification
+            Severity: INFO
+
+            Investigation Actions:
+            1. Check if this is expected (marketing campaign, bulk operation)
+            2. Identify source IPs/users triggering limits
+            3. Review request patterns and timestamps
+            4. Check for bot/crawler activity
+            5. Look for specific endpoints being hammered
+
+            Note: This alert is informational. Monitor for patterns and abuse.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-6"
+          dashboard_url: "https://grafana.massava.com/d/notification-ratelimit"
+          runbook_title: "Rate Limiting Analysis"
+          owner: "notification-team"
+          slack_channel: "#notifications"
+
+      # Alert 7: Invalid device tokens
+      - alert: DeviceTokenInvalidRateHigh
+        expr: |
+          (
+            rate(notification_device_token_invalid_total[10m])
+            /
+            rate(notification_device_token_attempts_total[10m])
+          ) > 0.20
+        for: 10m
+        labels:
+          severity: warning
+          group: security
+          service: notification
+          sla_minutes: 60
+        annotations:
+          summary: "High device token invalid rate"
+          description: |
+            Invalid token rate is {{ $value | humanizePercentage }} (threshold: 20%)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 1 hour to investigate
+
+            Immediate Actions:
+            1. Check database for old/expired tokens
+            2. Verify iOS app certificate status
+            3. Check Firebase project configuration
+            4. Review token lifecycle and retirement policies
+            5. Identify affected user cohort if applicable
+
+            Recommended Actions:
+            - Implement token validation cleanup job
+            - Check if specific user segment has issues
+            - Review mobile app update adoption rates
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-7"
+          dashboard_url: "https://grafana.massava.com/d/notification-devices"
+          runbook_title: "Invalid Device Tokens"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+  - name: notification_infrastructure
+    interval: 30s
+    rules:
+      # Alert 8: Database connection pool exhausted
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            database_connections_used{service="notification"}
+            /
+            database_connections_max{service="notification"}
+          ) > 0.90
+        for: 2m
+        labels:
+          severity: critical
+          group: infrastructure
+          service: notification
+          sla_minutes: 5
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: |
+            Connection pool usage is {{ $value | humanizePercentage }} (threshold: 90%)
+            Used: {{ $value }} / Max
+
+            Service: notification
+            Severity: CRITICAL
+            SLA: Acknowledge immediately
+
+            Immediate Actions:
+            1. Check for open/stuck transactions
+            2. Review slow query logs
+            3. Look for connection leaks in application code
+            4. Check pg_stat_activity for blocking queries
+            5. Monitor connection usage trend
+
+            If pool runs out:
+            - All database operations will fail
+            - Application will become unresponsive
+            - Need to restart service or kill blocking queries
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-8"
+          dashboard_url: "https://grafana.massava.com/d/database-connections"
+          runbook_title: "Database Connection Pool Issue"
+          owner: "platform-team"
+          slack_channel: "#alerts"
+          pagerduty_routing: "high_urgency"
+
+      # Alert 9: High memory usage
+      - alert: ApplicationMemoryUsageHigh
+        expr: |
+          (
+            nodejs_heap_size_used_bytes{job="notification-service"}
+            /
+            nodejs_heap_size_limit_bytes{job="notification-service"}
+          ) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          group: infrastructure
+          service: notification
+          sla_minutes: 30
+        annotations:
+          summary: "Application memory usage high"
+          description: |
+            Memory usage is {{ $value | humanizePercentage }} (threshold: 85%)
+            Used: {{ $value }} / Limit
+
+            Service: notification
+            Severity: WARNING
+            SLA: 30 minutes to investigate
+
+            Immediate Actions:
+            1. Check if memory usage is continuously growing (memory leak)
+            2. Review heap snapshots to identify large objects
+            3. Monitor garbage collection frequency and pause times
+            4. Check for unbounded caches or data structures
+            5. Profile the application to find memory consumers
+
+            If memory reaches 100%:
+            - Application will crash (OOMKilled)
+            - In-flight requests will be lost
+            - Service will restart and lose state
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-9"
+          dashboard_url: "https://grafana.massava.com/d/notification-memory"
+          runbook_title: "Memory Leak Investigation"
+          owner: "notification-team"
+          slack_channel: "#warnings"
+
+      # Alert 10: Pod restart rate high
+      - alert: ServicePodRestartRateHigh
+        expr: |
+          rate(kube_pod_container_status_restarts_total{pod=~"notification-.*"}[1h]) > 0.016
+        for: 1h
+        labels:
+          severity: warning
+          group: infrastructure
+          service: notification
+          sla_minutes: 60
+        annotations:
+          summary: "Service pod restart rate high"
+          description: |
+            Pod restart rate is {{ $value | humanize }} restarts/hour (threshold: 1/hour)
+
+            Service: notification
+            Severity: WARNING
+            SLA: 1 hour to investigate
+
+            Immediate Actions:
+            1. Check pod restart reason (OOMKilled, CrashLoopBackOff, etc.)
+            2. Review application logs for crash messages
+            3. Check for recently deployed changes
+            4. Review cluster events for infrastructure issues
+            5. Monitor pod CPU and memory usage before crashes
+
+            If OOMKilled:
+            - Increase memory limit
+            - Investigate memory leak
+            - Review heap dump
+
+            If CrashLoopBackOff:
+            - Check application logs
+            - Verify configuration
+            - Check dependency health
+
+            See runbook for detailed investigation steps.
+          runbook_url: "https://docs.massava.com/notifications/runbook#issue-10"
+          dashboard_url: "https://grafana.massava.com/d/pods"
+          runbook_title: "Pod Restart Loop"
+          owner: "platform-team"
+          slack_channel: "#warnings"
+
+  - name: notification_recording_rules
+    interval: 1m
+    rules:
+      # Recording rule: Delivery success rate (useful for dashboards)
+      - record: notification:delivery:success_rate
+        expr: |
+          (
+            rate(notification_delivery_total[5m])
+            -
+            rate(notification_delivery_failures_total[5m])
+          ) / rate(notification_delivery_total[5m])
+        labels:
+          severity: info
+
+      # Recording rule: Average delivery latency by channel
+      - record: notification:delivery:latency_avg:by_channel
+        expr: |
+          avg by (channel) (
+            rate(notification_delivery_latency_seconds_sum[5m])
+            /
+            rate(notification_delivery_latency_seconds_count[5m])
+          )
+        labels:
+          severity: info
+
+      # Recording rule: API error rate
+      - record: notification:api:error_rate
+        expr: |
+          rate(notification_api_errors_total[5m])
+          /
+          rate(notification_api_requests_total[5m])
+        labels:
+          severity: info
+
+      # Recording rule: Queue processing time
+      - record: notification:queue:processing_time_avg
+        expr: |
+          rate(notification_queue_processing_time_seconds_sum[5m])
+          /
+          rate(notification_queue_processing_time_seconds_count[5m])
+        labels:
+          severity: info
+
+      # Recording rule: P99 latency by channel
+      - record: notification:delivery:latency_p99:by_channel
+        expr: |
+          histogram_quantile(
+            0.99,
+            rate(notification_delivery_latency_seconds_bucket[5m])
+          ) by (channel)
+        labels:
+          severity: info
+
+      # Recording rule: Queue consumer lag
+      - record: notification:queue:lag
+        expr: |
+          notification_queue_backlog
+          /
+          rate(notification_queue_processed_total[1m])
+        labels:
+          severity: info

@@ -13,6 +13,8 @@ import { prisma } from '@/lib/prisma';
 import { BookingStatus } from '@/app/generated/prisma';
 import { revalidatePath } from 'next/cache';
 import { sendBookingConfirmationEmail, sendBookingCancellationEmail } from '@/lib/email/send';
+import { formatInTimezone } from '@/lib/timezone/utils';
+import { de } from 'date-fns/locale';
 
 export interface ActionResult {
   success: boolean;
@@ -89,6 +91,7 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
 
     // Send confirmation email to customer
     try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
       const emailResult = await sendBookingConfirmationEmail(
         booking.customerEmail,
         {
@@ -96,13 +99,8 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          bookingTime: booking.preferredTime,
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
           studioAddress: booking.studio.address || undefined,
           studioPhone: booking.studio.phone || undefined,
           message: booking.message || undefined,
@@ -119,6 +117,34 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
       // Note: We don't fail the entire operation if email fails
     }
 
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_CONFIRMED -> Customer
+    // =====================================================
+    try {
+      const { sendBookingConfirmedNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingConfirmedNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for booking confirmation');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending confirmation push notification:', notificationError);
+      // Notification-Fehler sollten den Bestätigungsprozess NICHT blockieren
+    }
+
     // Revalidate business dashboard pages
     revalidatePath('/[locale]/business');
     revalidatePath('/[locale]/business/calendar');
@@ -129,6 +155,160 @@ export async function confirmBooking(bookingId: string): Promise<ActionResult> {
     };
   } catch (error) {
     console.error('Error confirming booking:', error);
+    return {
+      success: false,
+      error: 'Ein Fehler ist aufgetreten',
+    };
+  }
+}
+
+/**
+ * Cancel a confirmed booking
+ * This is different from declineBooking which only handles PENDING bookings.
+ * This function allows studios to cancel already confirmed bookings.
+ */
+export async function cancelConfirmedBooking(
+  bookingId: string,
+  reason?: string
+): Promise<ActionResult> {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return {
+        success: false,
+        error: 'Nicht authentifiziert',
+      };
+    }
+
+    // Get booking with studio and service details
+    const booking = await prisma.newBooking.findUnique({
+      where: { id: bookingId },
+      include: {
+        studio: {
+          include: {
+            ownerships: {
+              where: {
+                userId: session.user.id,
+              },
+            },
+          },
+        },
+        service: {
+          select: {
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!booking) {
+      return {
+        success: false,
+        error: 'Buchung nicht gefunden',
+      };
+    }
+
+    // Verify user owns the studio
+    if (booking.studio.ownerships.length === 0) {
+      return {
+        success: false,
+        error: 'Keine Berechtigung für diese Buchung',
+      };
+    }
+
+    // Check if booking is already cancelled
+    if (booking.status === BookingStatus.CANCELLED) {
+      return {
+        success: false,
+        error: 'Diese Buchung wurde bereits storniert',
+      };
+    }
+
+    // Only allow canceling CONFIRMED bookings (not PENDING)
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      return {
+        success: false,
+        error: 'Diese Buchung kann nicht storniert werden. Bitte verwenden Sie "Ablehnen" für ausstehende Buchungen.',
+      };
+    }
+
+    // Update booking status
+    await prisma.newBooking.update({
+      where: { id: bookingId },
+      data: {
+        status: BookingStatus.CANCELLED,
+        cancelledBy: session.user.id,
+        cancelledAt: new Date(),
+        cancellationReason: reason,
+      },
+    });
+
+    // Send cancellation email to customer
+    try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
+      const emailResult = await sendBookingCancellationEmail(
+        booking.customerEmail,
+        {
+          bookingId: booking.id,
+          customerName: booking.customerName || 'Kunde',
+          studioName: booking.studio.name,
+          serviceName: booking.service?.name || 'Massage',
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
+          cancellationReason: reason,
+        },
+        'de'
+      );
+
+      if (!emailResult.success) {
+        console.error('Failed to send cancellation email:', emailResult.error);
+        // Note: We don't fail the entire operation if email fails
+      }
+    } catch (emailError) {
+      console.error('Exception sending cancellation email:', emailError);
+      // Note: We don't fail the entire operation if email fails
+    }
+
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_CANCELLED_BY_STUDIO -> Customer
+    // =====================================================
+    try {
+      const { sendBookingCancelledByStudioNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingCancelledByStudioNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+        cancellationReason: reason,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for studio cancellation');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending studio cancellation push notification:', notificationError);
+      // Notification-Fehler sollten den Stornierungsprozess NICHT blockieren
+    }
+
+    // Revalidate business dashboard pages
+    revalidatePath('/[locale]/business');
+    revalidatePath('/[locale]/business/calendar');
+    revalidatePath('/[locale]/business/bookings');
+
+    return {
+      success: true,
+    };
+  } catch (error) {
+    console.error('Error canceling confirmed booking:', error);
     return {
       success: false,
       error: 'Ein Fehler ist aufgetreten',
@@ -210,6 +390,7 @@ export async function declineBooking(
 
     // Send cancellation email to customer
     try {
+      const studioTimezone = booking.studio.timezone || 'Europe/Berlin';
       const emailResult = await sendBookingCancellationEmail(
         booking.customerEmail,
         {
@@ -217,13 +398,8 @@ export async function declineBooking(
           customerName: booking.customerName || 'Kunde',
           studioName: booking.studio.name,
           serviceName: booking.service?.name || 'Massage',
-          bookingDate: new Date(booking.preferredDate).toLocaleDateString('de-DE', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          bookingTime: booking.preferredTime,
+          bookingDate: formatInTimezone(booking.preferredDateTime, studioTimezone, 'EEEE, d. MMMM yyyy', { locale: de }),
+          bookingTime: formatInTimezone(booking.preferredDateTime, studioTimezone, 'HH:mm'),
           cancellationReason: reason,
         },
         'de'
@@ -236,6 +412,35 @@ export async function declineBooking(
     } catch (emailError) {
       console.error('Exception sending cancellation email:', emailError);
       // Note: We don't fail the entire operation if email fails
+    }
+
+    // =====================================================
+    // PUSH NOTIFICATION: BOOKING_REJECTED -> Customer
+    // =====================================================
+    try {
+      const { sendBookingRejectedNotification } = await import(
+        '@/lib/notifications/booking-notification-helper'
+      );
+
+      const notificationResult = await sendBookingRejectedNotification({
+        bookingId: booking.id,
+        studioId: booking.studioId,
+        studioName: booking.studio.name,
+        studioTimezone: booking.studio.timezone || 'Europe/Berlin',
+        customerName: booking.customerName || 'Kunde',
+        customerEmail: booking.customerEmail,
+        serviceName: booking.service?.name || 'Massage',
+        preferredDateTime: booking.preferredDateTime,
+        customerId: booking.customerId,
+        cancellationReason: reason,
+      });
+
+      if (notificationResult.ok && notificationResult.value.sent > 0) {
+        console.log('Push notification sent to customer for booking rejection');
+      }
+    } catch (notificationError) {
+      console.error('Exception sending rejection push notification:', notificationError);
+      // Notification-Fehler sollten den Ablehnungsprozess NICHT blockieren
     }
 
     // Revalidate business dashboard pages

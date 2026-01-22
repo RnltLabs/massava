@@ -1,4 +1,11 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Entdecken",
+      "bookings": "Buchungen",
+      "profile": "Profil"
+    }
+  },
   "search": {
     "title": "Verfügbare Termine in {location}",
     "subtitle": "Im Umkreis von {radius} km",
@@ -83,6 +90,19 @@
       "declineBooking": "Buchung ablehnen",
       "contactCustomer": "Kunde kontaktieren"
     },
+    "bookings": {
+      "title": "Buchungen",
+      "subtitle": "Verwalte deine Termine",
+      "total": "Gesamt",
+      "pending": "Offen",
+      "today": "Heute",
+      "emptyTitle": "Keine Buchungen gefunden",
+      "emptyWithFilters": "Versuche, deine Filter anzupassen oder die Suche zu ändern.",
+      "emptyNoFilters": "Neue Buchungen werden hier automatisch angezeigt, sobald Kunden buchen.",
+      "dateGroupToday": "HEUTE",
+      "dateGroupTomorrow": "MORGEN",
+      "dateGroupOlder": "ÄLTERE ANFRAGEN"
+    },
     "quickActions": {
       "title": "Schnellaktionen",
       "blockTime": "Zeit blockieren",
@@ -109,6 +129,69 @@
       "accountDescription": "E-Mail, Passwort & Einstellungen",
       "help": "Hilfe & Support",
       "signOut": "Abmelden"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "saved": "Einstellungen gespeichert",
+      "savedDescription": "Ihre Benachrichtigungseinstellungen wurden aktualisiert",
+      "errorLoading": "Einstellungen konnten nicht geladen werden",
+      "errorSaving": "Einstellungen konnten nicht gespeichert werden",
+      "push": {
+        "title": "Push-Benachrichtigungen",
+        "notSupported": "Nicht unterstützt",
+        "permissionDenied": "Berechtigung verweigert",
+        "permissionDeniedDescription": "Bitte aktivieren Sie Benachrichtigungen in Ihren Browser-Einstellungen"
+      },
+      "email": {
+        "title": "E-Mail-Benachrichtigungen"
+      },
+      "essential": {
+        "title": "Wichtige Benachrichtigungen",
+        "badge": "Immer aktiv",
+        "bookingConfirmed": "Buchungsbestätigungen",
+        "bookingConfirmedDesc": "Wenn eine neue Buchung eingeht",
+        "bookingCancelled": "Stornierungen",
+        "bookingCancelledDesc": "Wenn ein Kunde eine Buchung storniert"
+      },
+      "reminders": {
+        "title": "Erinnerungen",
+        "headline": "Entspannt zum Termin",
+        "body": "Wir erinnern dich 24 Stunden vorher – damit du dich auf deine Auszeit freuen kannst.",
+        "socialProof": "94% unserer Gäste nutzen diese Erinnerung.",
+        "toggle": "24 Stunden vor einem Termin",
+        "toggleDesc": "Erinnerung vor dem Termin"
+      },
+      "marketing": {
+        "title": "Marketing & Tipps",
+        "headline": "Exklusiv für dich",
+        "incentive": "10% auf deine nächste Massage",
+        "benefits": {
+          "earlyAccess": "Frühzeitigen Zugang zu freien Terminen",
+          "wellnessTips": "Wellness-Tipps von unseren Therapeuten",
+          "exclusiveOffers": "Exklusive Angebote (nur für Newsletter)"
+        },
+        "frequency": "1-2x pro Monat",
+        "toggle": "Marketing & Tipps erhalten"
+      },
+      "prePermission": {
+        "headline": "Darf Massava dich erinnern?",
+        "body": "Gleich fragt dein Browser, ob wir dir Benachrichtigungen senden dürfen.",
+        "whatYouGet": "Was du bekommst",
+        "whatYouGetItems": {
+          "reminder": "Erinnerung 24h vor deinem Termin",
+          "changes": "Info bei Termin-Änderungen",
+          "availability": "Nachricht wenn dein Wunschtermin frei wird"
+        },
+        "whatYouDontGet": "Was du NICHT bekommst",
+        "whatYouDontGetItems": {
+          "noAds": "Keine Werbung ohne deine Zustimmung",
+          "maxFrequency": "Maximal 2 Nachrichten pro Woche"
+        },
+        "cta": "Ja, Benachrichtigungen erlauben",
+        "decline": "Vielleicht später"
+      }
     }
   }
 }

@@ -12,6 +12,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { parseISO } from 'date-fns';
 
 // Validation schemas
 const blockTimeSchema = z.object({
@@ -76,9 +77,9 @@ export async function blockTime(input: BlockTimeInput): Promise<{
       where: {
         studioId: studioId,
         status: 'CONFIRMED',
-        preferredDate: {
-          gte: start.toISOString().split('T')[0],
-          lte: end.toISOString().split('T')[0],
+        preferredDateTime: {
+          gte: start,
+          lte: end,
         },
       },
     });
@@ -314,11 +315,11 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
     }
 
     // Check capacity: Count existing confirmed bookings at this time
+    const preferredDateTime = parseISO(`${date}T${time}:00`);
     const existingBookings = await prisma.newBooking.findMany({
       where: {
         studioId: studioId,
-        preferredDate: date,
-        preferredTime: time,
+        preferredDateTime: preferredDateTime,
         status: 'CONFIRMED',
       },
       include: {
@@ -378,8 +379,7 @@ export async function createManualBooking(input: CreateManualBookingInput): Prom
         customerName: customerName,
         customerEmail: user.email,
         customerPhone: customerPhone,
-        preferredDate: date,
-        preferredTime: time,
+        preferredDateTime: preferredDateTime,
         message: notes,
         status: 'CONFIRMED',
         confirmedAt: new Date(),

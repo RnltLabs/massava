@@ -11,6 +11,7 @@ import { verifyEmailVerificationToken } from '@/lib/email-verification';
 import { prisma } from '@/lib/prisma';
 import { XCircle, Mail } from 'lucide-react';
 import { VerifyEmailSuccess } from './VerifyEmailClient';
+import { BLOB_ANIMATION_DELAY_FAST } from '@/lib/constants/animations';
 
 async function VerifyEmailContent({
   searchParams,
@@ -43,7 +44,7 @@ async function VerifyEmailContent({
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -96,7 +97,7 @@ async function VerifyEmailContent({
             background: 'oklch(0.88 0.03 80 / 0.2)',
             bottom: '-100px',
             left: '-100px',
-            animationDelay: '3s',
+            animationDelay: BLOB_ANIMATION_DELAY_FAST,
           }}
         />
 
@@ -128,10 +129,30 @@ async function VerifyEmailContent({
   }
 
   // Update unified User model with email verification
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { email },
     data: { emailVerified: new Date() },
   });
+
+  // Send welcome email after successful verification
+  try {
+    const { sendWelcomeEmail } = await import('@/lib/email/send');
+    await sendWelcomeEmail(
+      user.email,
+      user.name || 'Nutzer',
+      locale === 'en' ? 'en' : 'de'
+    );
+  } catch (emailError) {
+    // SECURITY FIX #4 & #11: Use structured logging instead of console.error
+    const { logger, generateCorrelationId } = await import('@/lib/logger');
+    logger.error('Failed to send welcome email', {
+      action: 'WELCOME_EMAIL_FAILED',
+      correlationId: generateCorrelationId(),
+      email: user.email,
+      error: emailError instanceof Error ? emailError.message : 'Unknown error',
+    });
+    // Don't fail verification if welcome email fails
+  }
 
   // Success - Use client component for auto-redirect to login
   return <VerifyEmailSuccess email={email} locale={locale} />;

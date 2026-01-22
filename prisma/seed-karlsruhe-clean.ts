@@ -6,10 +6,12 @@
  *
  * Creates realistic test data:
  * - 6 Studios with dedicated owners (1:1 relationship)
+ * - Gallery images for each studio (3-5 images)
  * - 3-5 Services per studio
  * - 80-120 TimeSlots per studio (next 14 days, based on opening hours)
  * - 15-20 Demo bookings
  * - 5 Customer test accounts
+ * - Reviews with ratings for studios
  *
  * Key principle: Every studio MUST have an owner!
  *
@@ -24,6 +26,46 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 const BCRYPT_COST = 10;
 const PASSWORD = 'Test1234!'; // Same password for all test accounts
+
+// ============================================
+// Gallery Images (using Unsplash for realistic spa/massage images)
+// ============================================
+
+// High-quality spa/massage images from Unsplash
+const GALLERY_IMAGES = [
+  // Spa & Wellness images
+  'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&q=80', // Spa stones
+  'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80', // Massage
+  'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=800&q=80', // Spa room
+  'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&q=80', // Wellness
+  'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800&q=80', // Spa setup
+  'https://images.unsplash.com/photo-1552693673-1bf958298935?w=800&q=80', // Thai massage
+  'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&q=80', // Spa flowers
+  'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800&q=80', // Treatment room
+  'https://images.unsplash.com/photo-1596178060810-72f53ce9a65c?w=800&q=80', // Hot stones
+  'https://images.unsplash.com/photo-1591343395082-e120087004b4?w=800&q=80', // Wellness space
+  'https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=800&q=80', // Zen spa
+  'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&q=80', // Massage therapy
+];
+
+// Review comments templates
+const REVIEW_COMMENTS = [
+  'Wunderbare Entspannung! Die Therapeutin war sehr professionell und einfühlsam.',
+  'Tolle Massage, sehr zu empfehlen. Werde definitiv wiederkommen.',
+  'Angenehme Atmosphäre und kompetentes Personal. Hat mir sehr gut geholfen.',
+  'Endlich meine Verspannungen losgeworden! Vielen Dank!',
+  'Super Service und sehr freundlich. Die Massage war genau richtig.',
+  'Professionelle Behandlung in schönem Ambiente. Sehr zufrieden!',
+  'Hatte eine Thai-Massage und bin begeistert. Sehr authentisch!',
+  'Perfekt zum Abschalten nach einer stressigen Woche.',
+  'Die beste Massage, die ich je hatte. Absolut empfehlenswert!',
+  'Sehr gutes Preis-Leistungs-Verhältnis. Komme gerne wieder.',
+  'Freundlicher Empfang und top Behandlung. Fühle mich wie neugeboren!',
+  'Genau das, was ich gebraucht habe. Therapeut hat genau richtig gedrückt.',
+  'Schönes Studio, tolle Atmosphäre, professionelle Massage.',
+  'Bin sehr zufrieden. Die 90 Minuten haben sich gelohnt!',
+  'Kann dieses Studio nur weiterempfehlen. Top!',
+];
 
 // ============================================
 // Studio & Owner Data
@@ -449,6 +491,7 @@ async function clearDatabase(): Promise<void> {
   console.log('🧹 Clearing database...\n');
 
   // Delete all data in correct order (respecting foreign keys)
+  await prisma.review.deleteMany({});
   await prisma.newBooking.deleteMany({});
   await prisma.blockedTime.deleteMany({});
   await prisma.timeSlot.deleteMany({});
@@ -520,7 +563,12 @@ async function createStudiosWithOwners(): Promise<Map<string, { studioId: string
       },
     });
 
-    // 2. Create Studio
+    // 2. Create Studio with gallery images
+    // Select 3-5 random images for this studio
+    const imageCount = randomInt(3, 5);
+    const shuffledImages = [...GALLERY_IMAGES].sort(() => Math.random() - 0.5);
+    const studioImages = shuffledImages.slice(0, imageCount);
+
     const studio = await prisma.studio.create({
       data: {
         name: data.studioName,
@@ -534,6 +582,10 @@ async function createStudiosWithOwners(): Promise<Map<string, { studioId: string
         longitude: data.longitude,
         openingHours: data.openingHours,
         capacity: data.capacity,
+        galleryImages: studioImages,
+        // Initial rating will be updated after reviews are created
+        averageRating: null,
+        totalReviews: 0,
       },
     });
 
@@ -592,9 +644,10 @@ async function generateTimeSlots(
     let availableSlots = 0;
     let bookedSlots = 0;
 
-    // Generate slots for next 14 days
-    for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+    // Generate slots for past 7 days (for completed bookings/reviews) and next 14 days
+    for (let dayOffset = -7; dayOffset < 14; dayOffset++) {
       const currentDay = addDays(today, dayOffset);
+      const isPastDay = dayOffset < 0;
 
       // 30-minute intervals
       const slotInterval = 30;
@@ -618,9 +671,18 @@ async function generateTimeSlots(
           // Randomly select service
           const serviceId = randomElement(data.serviceIds);
 
-          // 70% available, 30% booked
-          const isBooked = Math.random() < 0.3;
-          const isAvailable = !isBooked;
+          // For past days: 60% booked (for reviews), 40% available (not used)
+          // For future days: 70% available, 30% booked
+          let isBooked: boolean;
+          let isAvailable: boolean;
+
+          if (isPastDay) {
+            isBooked = Math.random() < 0.6; // 60% booked for past
+            isAvailable = false; // Past slots are not available
+          } else {
+            isBooked = Math.random() < 0.3; // 30% booked for future
+            isAvailable = !isBooked;
+          }
 
           const slot = await prisma.timeSlot.create({
             data: {
@@ -657,12 +719,55 @@ async function generateTimeSlots(
 async function createBookings(
   bookedSlotIds: string[],
   customerMap: Map<string, string>
-): Promise<void> {
+): Promise<string[]> {
   console.log('📝 Creating demo bookings...\n');
 
   const customerIds = Array.from(customerMap.values());
-  const bookingCount = Math.min(20, bookedSlotIds.length);
-  const selectedSlotIds = bookedSlotIds.slice(0, bookingCount);
+
+  // Group booked slots by studio to ensure even distribution
+  const slotsByStudio = new Map<string, string[]>();
+  for (const slotId of bookedSlotIds) {
+    const slot = await prisma.timeSlot.findUnique({
+      where: { id: slotId },
+      select: { studioId: true },
+    });
+    if (slot) {
+      const existing = slotsByStudio.get(slot.studioId) || [];
+      existing.push(slotId);
+      slotsByStudio.set(slot.studioId, existing);
+    }
+  }
+
+  // Select ~3-4 bookings per studio (ensuring past bookings for reviews)
+  const selectedSlotIds: string[] = [];
+  for (const [studioId, slots] of slotsByStudio) {
+    // Separate past and future slots
+    const pastSlots: string[] = [];
+    const futureSlots: string[] = [];
+
+    for (const slotId of slots) {
+      const slot = await prisma.timeSlot.findUnique({
+        where: { id: slotId },
+        select: { startTime: true },
+      });
+      if (slot) {
+        if (slot.startTime < new Date()) {
+          pastSlots.push(slotId);
+        } else {
+          futureSlots.push(slotId);
+        }
+      }
+    }
+
+    // Take 3-4 past bookings (for reviews) and 1-2 future bookings per studio
+    const shuffledPast = pastSlots.sort(() => Math.random() - 0.5);
+    const shuffledFuture = futureSlots.sort(() => Math.random() - 0.5);
+
+    selectedSlotIds.push(...shuffledPast.slice(0, randomInt(3, 4)));
+    selectedSlotIds.push(...shuffledFuture.slice(0, randomInt(1, 2)));
+  }
+
+  const createdBookingIds: string[] = [];
 
   for (const slotId of selectedSlotIds) {
     const slot = await prisma.timeSlot.findUnique({
@@ -679,7 +784,11 @@ async function createBookings(
 
     if (!customer) continue;
 
-    await prisma.newBooking.create({
+    // Create booking - past bookings should be CONFIRMED (completed)
+    const isPast = slot.startTime < new Date();
+    const status = isPast ? 'CONFIRMED' : (Math.random() < 0.8 ? 'CONFIRMED' : 'PENDING');
+
+    const booking = await prisma.newBooking.create({
       data: {
         studioId: slot.studioId,
         serviceId: slot.serviceId,
@@ -687,16 +796,162 @@ async function createBookings(
         customerName: customer.name || '',
         customerEmail: customer.email,
         customerPhone: customer.phone || '',
-        preferredDate: format(slot.startTime, 'yyyy-MM-dd'),
-        preferredTime: format(slot.startTime, 'HH:mm'),
-        status: Math.random() < 0.8 ? 'CONFIRMED' : 'PENDING',
+        preferredDateTime: slot.startTime,
+        status,
         explicitHealthConsent: true,
         healthConsentGivenAt: new Date(),
       },
     });
+
+    createdBookingIds.push(booking.id);
   }
 
-  console.log(`   ✅ Created ${bookingCount} bookings\n`);
+  console.log(`   ✅ Created ${createdBookingIds.length} bookings\n`);
+  return createdBookingIds;
+}
+
+async function createReviews(
+  bookingIds: string[],
+  customerMap: Map<string, string>
+): Promise<void> {
+  console.log('⭐ Creating reviews...\n');
+
+  // Get all past confirmed bookings (they can have reviews)
+  const completedBookings = await prisma.newBooking.findMany({
+    where: {
+      id: { in: bookingIds },
+      status: 'CONFIRMED',
+      preferredDateTime: { lt: new Date() }, // Only past bookings
+    },
+    include: {
+      studio: true,
+    },
+  });
+
+  // Group by studio to ensure all studios get reviews
+  const bookingsByStudio = new Map<string, typeof completedBookings>();
+  for (const booking of completedBookings) {
+    const existing = bookingsByStudio.get(booking.studioId) || [];
+    existing.push(booking);
+    bookingsByStudio.set(booking.studioId, existing);
+  }
+
+  // For studios without past bookings, create additional bookings
+  const allStudios = await prisma.studio.findMany({ select: { id: true, name: true } });
+  const customerIds = Array.from(customerMap.values());
+
+  for (const studio of allStudios) {
+    if (!bookingsByStudio.has(studio.id) || bookingsByStudio.get(studio.id)!.length === 0) {
+      // Find past booked slots for this studio
+      const pastBookedSlots = await prisma.timeSlot.findMany({
+        where: {
+          studioId: studio.id,
+          isBooked: true,
+          startTime: { lt: new Date() },
+        },
+        include: { service: true },
+        take: 3,
+      });
+
+      for (const slot of pastBookedSlots) {
+        if (!slot.service) continue;
+
+        const customerId = randomElement(customerIds);
+        const customer = await prisma.user.findUnique({
+          where: { id: customerId },
+        });
+
+        if (!customer) continue;
+
+        const booking = await prisma.newBooking.create({
+          data: {
+            studioId: studio.id,
+            serviceId: slot.serviceId,
+            customerId: customer.id,
+            customerName: customer.name || '',
+            customerEmail: customer.email,
+            customerPhone: customer.phone || '',
+            preferredDateTime: slot.startTime,
+            status: 'CONFIRMED',
+            explicitHealthConsent: true,
+            healthConsentGivenAt: new Date(),
+          },
+          include: { studio: true },
+        });
+
+        const existing = bookingsByStudio.get(studio.id) || [];
+        existing.push(booking);
+        bookingsByStudio.set(studio.id, existing);
+      }
+    }
+  }
+
+  // Create reviews for each studio
+  const bookingsToReview: typeof completedBookings = [];
+  for (const [studioId, studioBookings] of bookingsByStudio) {
+    // Take 60-80% of bookings per studio
+    const count = Math.max(1, Math.floor(studioBookings.length * (0.6 + Math.random() * 0.2)));
+    bookingsToReview.push(...studioBookings.slice(0, count));
+  }
+
+  // Track ratings per studio for average calculation
+  const studioRatings: Map<string, number[]> = new Map();
+
+  for (const booking of bookingsToReview) {
+    if (!booking.customerId) continue;
+
+    // Generate rating (weighted towards positive reviews: 4-5 stars more common)
+    const ratingRand = Math.random();
+    let rating: number;
+    if (ratingRand < 0.05) {
+      rating = 2; // 5% chance of 2 stars
+    } else if (ratingRand < 0.15) {
+      rating = 3; // 10% chance of 3 stars
+    } else if (ratingRand < 0.45) {
+      rating = 4; // 30% chance of 4 stars
+    } else {
+      rating = 5; // 55% chance of 5 stars
+    }
+
+    const comment = randomElement(REVIEW_COMMENTS);
+
+    // Create review (with a past date)
+    const reviewDate = new Date(booking.preferredDateTime);
+    reviewDate.setDate(reviewDate.getDate() + randomInt(1, 7)); // 1-7 days after booking
+
+    await prisma.review.create({
+      data: {
+        studioId: booking.studioId,
+        userId: booking.customerId,
+        bookingId: booking.id,
+        rating,
+        comment,
+        isVisible: true,
+        createdAt: reviewDate,
+        updatedAt: reviewDate,
+      },
+    });
+
+    // Track for average calculation
+    if (!studioRatings.has(booking.studioId)) {
+      studioRatings.set(booking.studioId, []);
+    }
+    studioRatings.get(booking.studioId)!.push(rating);
+  }
+
+  // Update studio average ratings
+  for (const [studioId, ratings] of studioRatings) {
+    const averageRating = ratings.reduce((a, b) => a + b, 0) / ratings.length;
+    await prisma.studio.update({
+      where: { id: studioId },
+      data: {
+        averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+        totalReviews: ratings.length,
+      },
+    });
+  }
+
+  console.log(`   ✅ Created ${bookingsToReview.length} reviews\n`);
 }
 
 // ============================================
@@ -717,7 +972,15 @@ async function main() {
 
     const bookedSlotIds = await generateTimeSlots(studioMap);
 
-    await createBookings(bookedSlotIds, customerMap);
+    const bookingIds = await createBookings(bookedSlotIds, customerMap);
+
+    await createReviews(bookingIds, customerMap);
+
+    // Get final review counts
+    const totalReviews = await prisma.review.count();
+    const studios = await prisma.studio.findMany({
+      select: { name: true, averageRating: true, totalReviews: true, galleryImages: true },
+    });
 
     console.log('═'.repeat(60));
     console.log('\n✅ Seed complete!\n');
@@ -726,6 +989,19 @@ async function main() {
     console.log(`   Studio Owners: ${KARLSRUHE_STUDIOS.length}`);
     console.log(`   Customers: ${CUSTOMERS.length}`);
     console.log(`   Bookings: ~20`);
+    console.log(`   Reviews: ${totalReviews}`);
+    console.log();
+    console.log('🖼️  Gallery Images:');
+    studios.forEach((s) => {
+      const imageCount = Array.isArray(s.galleryImages) ? s.galleryImages.length : 0;
+      console.log(`   ${s.name}: ${imageCount} images`);
+    });
+    console.log();
+    console.log('⭐ Studio Ratings:');
+    studios.forEach((s) => {
+      const rating = s.averageRating ? `${s.averageRating.toFixed(1)} ⭐ (${s.totalReviews} reviews)` : 'No reviews yet';
+      console.log(`   ${s.name}: ${rating}`);
+    });
     console.log();
     console.log('🔑 All accounts use password: Test1234!');
     console.log();

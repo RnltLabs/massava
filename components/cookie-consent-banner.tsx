@@ -8,9 +8,12 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { X, Cookie, Settings } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -28,6 +31,8 @@ import {
 } from "@/lib/cookie-consent"
 
 export function CookieConsentBanner() {
+  const { data: session, status } = useSession()
+  const pathname = usePathname()
   const [showBanner, setShowBanner] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [consent, setConsentState] = useState<Omit<CookieConsent, "timestamp" | "version">>({
@@ -35,6 +40,22 @@ export function CookieConsentBanner() {
     analytics: false,
     marketing: false,
   })
+
+  // Check if any mobile nav will be shown (customer OR business)
+  const mobileNavVisible = (() => {
+    if (status !== 'authenticated' || !session?.user) return false
+    if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/verify')) return false
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const primaryRole = (session.user as any)?.primaryRole || 'CUSTOMER'
+    // Studio owners on /business - business layout handles its own nav
+    if (primaryRole === 'STUDIO_OWNER' && pathname?.includes('/business')) return false
+    // Studio owners outside /business - business nav shows
+    if (primaryRole === 'STUDIO_OWNER') return true
+    // Customers on /business - shouldn't happen
+    if (pathname?.includes('/business')) return false
+    // Customers elsewhere - customer nav shows
+    return true
+  })()
 
   useEffect(() => {
     // Check if user has already given consent
@@ -100,7 +121,11 @@ export function CookieConsentBanner() {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg">
+      {/* Cookie banner is always topmost (GDPR important), positioned above mobile nav and all dialogs/sheets */}
+      <div className={cn(
+        "fixed left-0 right-0 z-[9999] p-4 bg-background/95 backdrop-blur-sm border-t shadow-lg",
+        mobileNavVisible ? "bottom-16 md:bottom-0" : "bottom-0"
+      )}>
         <Card className="max-w-6xl mx-auto p-6">
           <div className="flex items-start gap-4">
             <Cookie className="w-8 h-8 text-primary flex-shrink-0 mt-1" />
@@ -163,9 +188,9 @@ export function CookieConsentBanner() {
         </Card>
       </div>
 
-      {/* Settings Dialog */}
+      {/* Settings Dialog - must be above all other dialogs (GDPR important) */}
       <Dialog open={showSettings} onOpenChange={setShowSettings}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl z-[9999]">
           <DialogHeader>
             <DialogTitle>Cookie-Einstellungen</DialogTitle>
             <DialogDescription>

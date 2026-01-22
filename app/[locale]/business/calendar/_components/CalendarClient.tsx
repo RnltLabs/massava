@@ -15,6 +15,7 @@ import { WeekView } from './WeekView';
 import { BlockTimeDialog } from './BlockTimeDialog';
 import { BookingDetailSheet } from './BookingDetailSheet';
 import { UnblockConfirmDialog } from './UnblockConfirmDialog';
+import { StudioOwnerPushPrompt } from './StudioOwnerPushPrompt';
 import { addDays, subDays, addWeeks, subWeeks, format, startOfDay, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -148,7 +149,7 @@ export function CalendarClient({
 
   // Filter bookings based on view
   const displayBookings = view === 'day'
-    ? initialBookings.filter((booking) => booking.preferredDate === format(selectedDate, 'yyyy-MM-dd'))
+    ? initialBookings.filter((booking) => format(booking.preferredDateTime, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd'))
     : initialBookings; // Week view shows all bookings (filtered by WeekView component)
 
   // Filter blocked times based on view
@@ -265,6 +266,9 @@ export function CalendarClient({
         onOpenChange={setUnblockDialogOpen}
         blocked={selectedBlocked}
       />
+
+      {/* Push Notification Prompt for First Booking Request */}
+      <StudioOwnerPushPrompt studioId={studioId} />
     </div>
   );
 }

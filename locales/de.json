@@ -1,13 +1,29 @@
 {
+  "customer": {
+    "nav": {
+      "discover": "Entdecken",
+      "bookings": "Buchungen",
+      "notifications": "Hinweise",
+      "account": "Konto"
+    }
+  },
   "home": {
     "badge": "Heute noch verfügbar",
+    "greeting": "Willkommen, {name}",
     "hero_title": "Deine Massage",
     "hero_subtitle": "heute noch buchen",
     "hero_description": "Spontan entspannen – finde Studios in deiner Nähe und buche direkt. Ohne Provisionen, transparent, unkompliziert.",
+    "welcome_back": "Willkommen zurück, {name}! Finde deine nächste Massage",
     "search_location_placeholder": "Stadt oder PLZ eingeben...",
     "search_radius": "Umkreis",
     "search_button": "Suchen",
 
+    "trust_commission_free": "100% provisionsfrei",
+    "trust_instant_booking": "Sofortige Buchung",
+    "trust_local_studios": "Nur lokale Studios",
+
+    "features_label": "Warum Massava",
+    "features_title": "Buche mit Vertrauen",
     "feature1_title": "Heute noch entspannen",
     "feature1_description": "Spontane Buchungen möglich. Sieh sofort, welche Studios heute noch Termine frei haben.",
     "feature2_title": "Alle Infos auf einen Blick",
@@ -15,6 +31,7 @@
     "feature3_title": "Lokale Studios unterstützen",
     "feature3_description": "100% der Einnahmen gehen direkt an die Studios. Keine Provision, keine Zwischenhändler.",
 
+    "how_it_works_label": "Einfacher Ablauf",
     "how_it_works_title": "So funktioniert's",
     "step1_title": "Standort eingeben",
     "step1_description": "Gib deine Stadt oder PLZ ein und wähle deinen Wunsch-Radius.",
@@ -22,6 +39,11 @@
     "step2_description": "Sieh dir verfügbare Termine, Preise und Bewertungen an.",
     "step3_title": "Termin buchen",
     "step3_description": "Buche direkt online – schnell, einfach, ohne Umwege.",
+
+    "studio_cta_badge": "Für Massage-Therapeuten",
+    "studio_cta_title": "Du bist Massage-Therapeut?",
+    "studio_cta_description": "Erreiche neue Kunden und steigere deine Auslastung. Komplett kostenlos, ohne Provisionen.",
+    "studio_cta_button": "Studio registrieren",
 
     "cta_title": "Bereit für deine Auszeit?",
     "cta_description": "Spontan entspannen – finde Studios in deiner Nähe und buche heute noch",
@@ -136,8 +158,14 @@
     "dashboard": "Dashboard",
     "register_studio": "Studio registrieren",
     "logout": "Abmelden",
-    "my_account": "Mein Account",
+    "my_account": "Mein Konto",
     "my_bookings": "Meine Buchungen",
+    "studio_dashboard": "Studio Dashboard",
+    "studio_settings": "Studio Einstellungen",
+    "bookings": "Buchungen",
+    "language": "Sprache",
+    "help": "Hilfe",
+    "profile_menu": "Profilmenü",
     "customer_login": "Kundenlogin",
     "customer_login_button": "Anmelden",
     "account_type_selector": {
@@ -310,7 +338,7 @@
     "nav": {
       "today": "Heute",
       "calendar": "Kalender",
-      "requests": "Anfragen",
+      "requests": "Buchungen",
       "settings": "Einstellungen"
     },
     "dashboard": {
@@ -346,6 +374,19 @@
       "declineBooking": "Buchung ablehnen",
       "contactCustomer": "Kunde kontaktieren"
     },
+    "bookings": {
+      "title": "Buchungen",
+      "subtitle": "Verwalte deine Termine",
+      "total": "Gesamt",
+      "pending": "Offen",
+      "today": "Heute",
+      "emptyTitle": "Keine Buchungen gefunden",
+      "emptyWithFilters": "Versuche, deine Filter anzupassen oder die Suche zu ändern.",
+      "emptyNoFilters": "Neue Buchungen werden hier automatisch angezeigt, sobald Kunden buchen.",
+      "dateGroupToday": "HEUTE",
+      "dateGroupTomorrow": "MORGEN",
+      "dateGroupOlder": "ÄLTERE ANFRAGEN"
+    },
     "quickActions": {
       "title": "Schnellaktionen",
       "blockTime": "Zeit blockieren",
@@ -372,6 +413,145 @@
       "accountDescription": "E-Mail, Passwort & Einstellungen",
       "help": "Hilfe & Support",
       "signOut": "Abmelden"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "subtitle": {
+        "business": "Für dein Studio"
+      },
+      "errorLoading": "Einstellungen konnten nicht geladen werden",
+      "errorSaving": "Einstellungen konnten nicht gespeichert werden",
+      "autoSaveInfo": "Änderungen werden automatisch gespeichert",
+      "channels": {
+        "title": "Kanäle"
+      },
+      "categories": {
+        "title": "Benachrichtigungstypen",
+        "sectionTitleBusiness": "Business-Benachrichtigungen",
+        "studioOwner": {
+          "bookingRequests": {
+            "title": "Neue Buchungsanfragen",
+            "description": "Sofortige Benachrichtigung bei neuen Anfragen"
+          },
+          "cancellations": {
+            "title": "Stornierungen",
+            "description": "Wenn ein Kunde seine Buchung absagt"
+          },
+          "reviews": {
+            "title": "Kundenbewertungen",
+            "description": "Neue Bewertungen von Kunden"
+          },
+          "reminders": {
+            "title": "Terminerinnerungen",
+            "description": "1 Stunde vor dem Termin"
+          }
+        },
+        "customer": {
+          "confirmations": {
+            "title": "Buchungsbestätigungen",
+            "description": "Bestätigung deiner Buchung"
+          },
+          "reminders": {
+            "title": "Terminerinnerungen",
+            "description": "24 Stunden vor dem Termin"
+          },
+          "studioCancellations": {
+            "title": "Studio-Stornierungen",
+            "description": "Wenn das Studio einen Termin absagt"
+          },
+          "reviewRequests": {
+            "title": "Bewertungsanfragen",
+            "description": "Bitte um Feedback nach dem Besuch"
+          }
+        }
+      },
+      "push": {
+        "title": "Push-Benachrichtigungen",
+        "notSupported": "Nicht unterstützt",
+        "permissionDenied": "Berechtigung verweigert",
+        "permissionDeniedDescription": "Bitte aktiviere Benachrichtigungen in deinen Browser-Einstellungen"
+      },
+      "email": {
+        "title": "E-Mail-Benachrichtigungen"
+      },
+      "reminders": {
+        "toggle": "Terminerinnerungen",
+        "toggleDesc": "24 Stunden vor deinen Terminen"
+      },
+      "marketing": {
+        "toggle": "Neuigkeiten",
+        "toggleDesc": "Neue Studios in deiner Nähe"
+      },
+      "prePermission": {
+        "headline": "Verpasse keinen Termin",
+        "body": "Aktiviere Benachrichtigungen, um rechtzeitig an deine Buchungen erinnert zu werden.",
+        "benefits": {
+          "reminder": "Erinnerung 24h vor deinem Termin",
+          "changes": "Sofortige Info bei Terminänderungen",
+          "newStudios": "Neue Studios in deiner Nähe entdecken",
+          "bookingRequests": "Sofort über neue Buchungsanfragen informiert",
+          "cancellations": "Stornierungen durch Kunden nicht verpassen"
+        },
+        "cta": "Benachrichtigungen aktivieren",
+        "skip": "Später einrichten"
+      },
+      "noChannelWarning": {
+        "title": "Kein Zustellkanal aktiv",
+        "description": "Aktiviere Push oder E-Mail, um Benachrichtigungen zu erhalten.",
+        "enablePush": "Push aktivieren",
+        "enableEmail": "E-Mail aktivieren",
+        "inactive": "inaktiv"
+      }
+    }
+  },
+  "pushConsent": {
+    "title": "Push-Benachrichtigungen aktivieren",
+    "subtitle": "Bleibe immer auf dem Laufenden",
+    "close": "Schließen",
+    "preview": {
+      "customer": "Erinnerung: Dein Termin bei Wellness Studio beginnt morgen um 14:00 Uhr",
+      "studioOwner": "Neue Buchungsanfrage: Sarah M. möchte morgen um 15:30 Uhr buchen"
+    },
+    "benefits": {
+      "customer": {
+        "reminders": "Rechtzeitige Erinnerung 24h vor deinem Termin",
+        "changes": "Sofortige Benachrichtigung bei Terminänderungen",
+        "discover": "Neue Studios in deiner Nähe entdecken"
+      },
+      "studioOwner": {
+        "realtime": "Echtzeit-Benachrichtigungen bei Buchungsanfragen",
+        "noMiss": "Keine Kundenanfrage mehr verpassen",
+        "control": "Volle Kontrolle über deine Benachrichtigungen"
+      }
+    },
+    "categories": {
+      "description": "Wähle aus, worüber du benachrichtigt werden möchtest:"
+    },
+    "gdpr": {
+      "title": "Datenschutzinformationen",
+      "dataProcessing": "Wir verarbeiten deine Push-Token und Geräteinformationen, um dir Benachrichtigungen senden zu können. Die Daten werden verschlüsselt übertragen und sicher gespeichert.",
+      "thirdParty": "Für die Zustellung nutzen wir Firebase Cloud Messaging (Google). Deine Daten werden dabei gemäß DSGVO verarbeitet.",
+      "rights": "Du kannst deine Einwilligung jederzeit in den Einstellungen widerrufen. Deine Daten werden dann umgehend gelöscht.",
+      "privacyLink": "Zur vollständigen Datenschutzerklärung",
+      "consentCheckbox": "Ich habe die Datenschutzinformationen gelesen und stimme der Verarbeitung meiner Daten für Push-Benachrichtigungen zu."
+    },
+    "actions": {
+      "accept": "Benachrichtigungen aktivieren",
+      "decline": "Nicht jetzt"
+    },
+    "validation": {
+      "consentRequired": "Einwilligung erforderlich",
+      "consentRequiredDescription": "Bitte bestätige, dass du die Datenschutzinformationen gelesen hast."
+    },
+    "errors": {
+      "notSupported": "Nicht unterstützt",
+      "notSupportedDescription": "Dein Browser unterstützt keine Push-Benachrichtigungen.",
+      "failed": "Aktivierung fehlgeschlagen",
+      "unknownError": "Ein unbekannter Fehler ist aufgetreten. Bitte versuche es erneut."
+    },
+    "success": {
+      "title": "Benachrichtigungen aktiviert",
+      "description": "Du erhältst ab sofort Push-Benachrichtigungen."
     }
   }
 }

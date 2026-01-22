@@ -82,7 +82,7 @@ export function SearchWidget({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto wellness-shadow rounded-2xl bg-card p-4 md:p-5">
+    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto glass-card-strong rounded-2xl p-5 md:p-6">
       <div className="flex flex-col gap-3">
         {/* First row: Location and Radius */}
         <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3">
@@ -104,7 +104,7 @@ export function SearchWidget({
               id="radius-select"
               value={radius}
               onChange={(e) => setRadius(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-sm bg-card cursor-pointer"
+              className="w-full h-11 px-4 rounded-xl border-2 border-muted focus:border-primary outline-none transition-colors text-base md:text-sm bg-card cursor-pointer"
               aria-label="Suchradius auswählen"
             >
               <option value="5">5 km</option>
@@ -126,7 +126,7 @@ export function SearchWidget({
           >
             <SelectTrigger
               id="service-type-select"
-              className="w-full h-11 wellness-shadow"
+              className="w-full h-11 shadow-soft-sm"
               aria-label="Massage-Typ auswählen"
             >
               <SelectValue placeholder="Massage-Typ wählen (optional)" />
@@ -157,7 +157,7 @@ export function SearchWidget({
         <Button
           type="submit"
           disabled={isSubmitting || !location.trim() || !lat || !lng}
-          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 transition-all wellness-shadow hover:shadow-lg text-sm"
+          className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-soft-md hover:shadow-soft-lg text-sm"
         >
           <Search className="h-4 w-4" aria-hidden="true" />
           {isSubmitting ? 'Suche läuft...' : searchButtonText}

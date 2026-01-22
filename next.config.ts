@@ -15,9 +15,6 @@ const nextConfig: NextConfig = {
   // Now: massava.app and staging.massava.app run without basePath
   basePath: '',
   output: 'standalone',
-  eslint: {
-    ignoreDuringBuilds: true, // Temporarily ignore ESLint warnings during build (TODO: fix warnings)
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -40,6 +37,13 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 31536000, // 1 year (images are immutable)
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
   },
 
   /**
@@ -131,6 +135,40 @@ const nextConfig: NextConfig = {
       },
 
       /**
+       * SECURITY: Auth API Routes - Enhanced Security Headers
+       * Applies to /api/auth/* endpoints for additional security
+       * - X-Frame-Options: Prevents clickjacking attacks
+       * - X-Content-Type-Options: Prevents MIME sniffing
+       * - Referrer-Policy: Controls referrer information leakage
+       * - X-XSS-Protection: Legacy XSS protection (defense in depth)
+       */
+      {
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "DENY",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
+          },
+          {
+            key: "Cache-Control",
+            value: "no-store, must-revalidate",
+          },
+        ],
+      },
+
+      /**
        * PHASE 3: Auth Routes - No Caching (Security)
        * Cache-Control: no-store, must-revalidate
        * - Never cache sensitive auth data
@@ -175,12 +213,13 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline for dev
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.gstatic.com", // Next.js requires unsafe-inline for dev + Firebase SDK
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: blob: https:", // Allow external images (studio photos) + blob for previews
               "font-src 'self' data:",
-              "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de https://photon.komoot.io", // Allow Sentry/GlitchTip + Photon Geocoding API
+              "connect-src 'self' https://errors.rnltlabs.de https://glitchtip.rnltlabs.de https://photon.komoot.io https://fcmregistrations.googleapis.com https://firebaseinstallations.googleapis.com", // Allow Sentry/GlitchTip + Photon Geocoding API + Firebase
               "frame-ancestors 'none'",
+              "worker-src 'self' blob:", // Service Workers
             ].join('; '),
           },
           {

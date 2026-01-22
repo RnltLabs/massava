@@ -182,4 +182,3 @@ This migration supports GDPR "Right to be Deleted" (Art. 17):
 
 **Migration Status**: ✅ APPLIED
 **Applied At**: 2025-11-01 21:19:16 UTC
-**Applied By**: Migration Tool

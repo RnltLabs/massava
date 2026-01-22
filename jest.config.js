@@ -3,10 +3,11 @@ const config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/__tests__'],
-  testMatch: ['**/*.test.ts'],
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
     '^jose$': '<rootDir>/__tests__/__mocks__/jose.ts',
+    '^@/lib/email/templates$': '<rootDir>/__tests__/__mocks__/email-templates.ts',
   },
   collectCoverageFrom: [
     'lib/**/*.{ts,tsx}',
@@ -24,6 +25,13 @@ const config = {
   },
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
   testTimeout: 30000,
+  globals: {
+    'ts-jest': {
+      tsconfig: {
+        jsx: 'react',
+      },
+    },
+  },
 };
 
 module.exports = config;

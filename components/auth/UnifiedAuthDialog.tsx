@@ -20,6 +20,7 @@ interface UnifiedAuthDialogProps {
   isOpen: boolean;
   onClose: () => void;
   initialMode?: AuthMode;
+  initialAccountType?: AccountType;
   onSuccess?: () => void;
 }
 
@@ -42,11 +43,12 @@ export function UnifiedAuthDialog({
   isOpen,
   onClose,
   initialMode = 'signup',
+  initialAccountType,
   onSuccess,
 }: UnifiedAuthDialogProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [step, setStep] = useState<AuthStep>('account-type');
-  const [accountType, setAccountType] = useState<AccountType>('customer');
+  const [accountType, setAccountType] = useState<AccountType>(initialAccountType ?? 'customer');
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -65,12 +67,18 @@ export function UnifiedAuthDialog({
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      // Both signup AND login start with account-type selection
-      setStep('account-type');
-      setAccountType('customer');
+      // If initialAccountType is provided, skip account-type selection
+      if (initialAccountType) {
+        setAccountType(initialAccountType);
+        setStep('email-choice');
+      } else {
+        // Both signup AND login start with account-type selection
+        setStep('account-type');
+        setAccountType('customer');
+      }
       setIsLoading(false);
     }
-  }, [isOpen, initialMode]);
+  }, [isOpen, initialMode, initialAccountType]);
 
   // Step navigation
   const handleAccountTypeSelected = (type: AccountType): void => {
@@ -361,7 +369,7 @@ export function UnifiedAuthDialog({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent
           side="bottom"
-          className="h-[80vh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
+          className="h-[80dvh] rounded-t-3xl p-0 border-t-2 border-gray-200 bg-white"
           showCloseButton={false}
         >
           {/* Accessibility: Hidden title for screen readers */}
@@ -421,7 +429,7 @@ export function UnifiedAuthDialog({
         </button>
 
         {/* Content */}
-        <div className="p-6 pt-12 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 pt-12 max-h-[90dvh] overflow-y-auto">
           {renderContent()}
         </div>
       </DialogContent>

@@ -11,55 +11,127 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Seeding database...');
 
-  // Create a test studio owner in unified User model
+  // Clear existing data
+  console.log('🗑️  Clearing existing data...');
+  await prisma.review.deleteMany();
+  await prisma.newBooking.deleteMany();
+  await prisma.studioOwnership.deleteMany();
+  await prisma.service.deleteMany();
+  await prisma.studio.deleteMany();
+  await prisma.user.deleteMany();
+
   const hashedPassword = await bcrypt.hash('test123', 10);
-  const owner = await prisma.user.create({
+
+  // Create studio owners (one per studio for MVP)
+  const owner1 = await prisma.user.create({
     data: {
-      email: 'owner@example.com',
-      name: 'Test Studio Owner',
+      email: 'maria.schmidt@thai-wellness-oase.de',
+      name: 'Maria Schmidt',
       password: hashedPassword,
       primaryRole: 'STUDIO_OWNER',
       emailVerified: new Date(),
     },
   });
 
-  console.log('✅ Created test owner:', owner.email);
+  const owner2 = await prisma.user.create({
+    data: {
+      email: 'sabine.meyer@sabai-massage.de',
+      name: 'Sabine Meyer',
+      password: hashedPassword,
+      primaryRole: 'STUDIO_OWNER',
+      emailVerified: new Date(),
+    },
+  });
 
-  // Create test studios in Karlsruhe
+  const owner3 = await prisma.user.create({
+    data: {
+      email: 'petra.wagner@lotus-spa.de',
+      name: 'Petra Wagner',
+      password: hashedPassword,
+      primaryRole: 'STUDIO_OWNER',
+      emailVerified: new Date(),
+    },
+  });
+
+  console.log('✅ Created studio owners:', {
+    owner1: owner1.email,
+    owner2: owner2.email,
+    owner3: owner3.email,
+  });
+
+  // Create customer accounts (sequential to avoid memory issues in containers)
+  const customerData = [
+    { email: 'anna.mueller@example.com', name: 'Anna Müller' },
+    { email: 'thomas.weber@example.com', name: 'Thomas Weber' },
+    { email: 'sarah.fischer@example.com', name: 'Sarah Fischer' },
+    { email: 'michael.hoffmann@example.com', name: 'Michael Hoffmann' },
+    { email: 'julia.becker@example.com', name: 'Julia Becker' },
+    { email: 'markus.klein@example.com', name: 'Markus Klein' },
+    { email: 'lisa.zimmermann@example.com', name: 'Lisa Zimmermann' },
+    { email: 'david.schulz@example.com', name: 'David Schulz' },
+  ];
+
+  const customers = [];
+  for (const data of customerData) {
+    const customer = await prisma.user.create({
+      data: {
+        email: data.email,
+        name: data.name,
+        password: hashedPassword,
+        primaryRole: 'CUSTOMER',
+        emailVerified: new Date(),
+      },
+    });
+    customers.push(customer);
+  }
+
+  console.log('✅ Created customers:', customers.length);
+
+  // Create studios with images and coordinates
   const studio1 = await prisma.studio.create({
     data: {
       name: 'Thai Wellness Oase',
-      description: 'Traditionelle Thai-Massage in Karlsruhe. Entspannung pur mit erfahrenen Therapeuten.',
+      description: 'Traditionelle Thai-Massage in Karlsruhe. Entspannung pur mit erfahrenen Therapeuten aus Thailand.',
       address: 'Kaiserstraße 123',
       city: 'Karlsruhe',
       postalCode: '76133',
       phone: '+49 721 12345678',
       email: 'info@thai-wellness-oase.de',
+      website: 'https://thai-wellness-oase.de',
+      latitude: 49.0069,
+      longitude: 8.4037,
+      logoUrl: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&h=600&fit=crop',
+      ],
       openingHours: {
-        monday: '10:00-20:00',
-        tuesday: '10:00-20:00',
-        wednesday: '10:00-20:00',
-        thursday: '10:00-20:00',
-        friday: '10:00-20:00',
-        saturday: '11:00-19:00',
-        sunday: 'Geschlossen',
+        monday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        tuesday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        wednesday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        thursday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        friday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        saturday: { isOpen: true, openTime: '11:00', closeTime: '19:00' },
+        sunday: { isOpen: false },
       },
       services: {
         create: [
           {
-            name: 'Thai-Massage 60 Minuten',
+            name: 'Thai-Massage Klassik',
             description: 'Klassische Thai-Massage zur Entspannung und Lockerung',
             price: 65.0,
             duration: 60,
           },
           {
-            name: 'Thai-Massage 90 Minuten',
+            name: 'Thai-Massage Premium',
             description: 'Ausführliche Thai-Massage für tiefe Entspannung',
             price: 90.0,
             duration: 90,
           },
           {
-            name: 'Ölmassage 60 Minuten',
+            name: 'Ölmassage',
             description: 'Sanfte Ölmassage mit aromatischen Ölen',
             price: 70.0,
             duration: 60,
@@ -78,25 +150,36 @@ async function main() {
       postalCode: '76131',
       phone: '+49 721 98765432',
       email: 'kontakt@sabai-massage.de',
+      website: 'https://sabai-massage.de',
+      latitude: 49.0094,
+      longitude: 8.4044,
+      logoUrl: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=400&fit=crop',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1519823551278-64ac92734fb1?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
+      ],
       openingHours: {
-        monday: '09:00-21:00',
-        tuesday: '09:00-21:00',
-        wednesday: '09:00-21:00',
-        thursday: '09:00-21:00',
-        friday: '09:00-21:00',
-        saturday: '10:00-20:00',
-        sunday: '10:00-18:00',
+        monday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        tuesday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        wednesday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        thursday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        friday: { isOpen: true, openTime: '09:00', closeTime: '21:00' },
+        saturday: { isOpen: true, openTime: '10:00', closeTime: '20:00' },
+        sunday: { isOpen: true, openTime: '10:00', closeTime: '18:00' },
       },
       services: {
         create: [
           {
-            name: 'Thai-Massage 60 Minuten',
+            name: 'Thai-Massage Traditionell',
             description: 'Traditionelle Thai-Massage',
             price: 60.0,
             duration: 60,
           },
           {
-            name: 'Thai-Massage 120 Minuten',
+            name: 'Thai-Massage Deluxe',
             description: 'Premium Thai-Massage mit ausgiebiger Behandlung',
             price: 110.0,
             duration: 120,
@@ -127,19 +210,29 @@ async function main() {
       postalCode: '76133',
       phone: '+49 721 55566677',
       email: 'hello@lotus-spa.de',
+      website: 'https://lotus-spa.de',
+      latitude: 49.0048,
+      longitude: 8.3858,
+      logoUrl: 'https://images.unsplash.com/photo-1590487996738-cbe449f39629?w=400&h=400&fit=crop',
+      galleryImages: [
+        'https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
+      ],
       openingHours: {
-        monday: '10:00-22:00',
-        tuesday: '10:00-22:00',
-        wednesday: '10:00-22:00',
-        thursday: '10:00-22:00',
-        friday: '10:00-22:00',
-        saturday: '11:00-21:00',
-        sunday: '12:00-20:00',
+        monday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        tuesday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        wednesday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        thursday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        friday: { isOpen: true, openTime: '10:00', closeTime: '22:00' },
+        saturday: { isOpen: true, openTime: '11:00', closeTime: '21:00' },
+        sunday: { isOpen: true, openTime: '12:00', closeTime: '20:00' },
       },
       services: {
         create: [
           {
-            name: 'Thai-Massage 75 Minuten',
+            name: 'Thai-Massage Luxus',
             description: 'Premium Thai-Massage in luxuriösem Ambiente',
             price: 85.0,
             duration: 75,
@@ -161,39 +254,214 @@ async function main() {
     },
   });
 
-  console.log('✅ Created studios:', {
+  console.log('✅ Created studios with images:', {
     studio1: studio1.name,
     studio2: studio2.name,
     studio3: studio3.name,
   });
 
-  // Create StudioOwnership records for the new unified model
+  // Create studio ownerships (1:1 mapping for MVP) - sequential to avoid memory issues
   await prisma.studioOwnership.create({
-    data: {
-      userId: owner.id,
-      studioId: studio1.id,
-      canTransfer: true,
-    },
+    data: { userId: owner1.id, studioId: studio1.id, canTransfer: true, acceptedAt: new Date() },
   });
-
   await prisma.studioOwnership.create({
-    data: {
-      userId: owner.id,
-      studioId: studio2.id,
-      canTransfer: true,
-    },
+    data: { userId: owner2.id, studioId: studio2.id, canTransfer: true, acceptedAt: new Date() },
   });
-
   await prisma.studioOwnership.create({
-    data: {
-      userId: owner.id,
-      studioId: studio3.id,
-      canTransfer: true,
-    },
+    data: { userId: owner3.id, studioId: studio3.id, canTransfer: true, acceptedAt: new Date() },
   });
 
   console.log('✅ Created studio ownerships');
+
+  // Get services for bookings
+  const studio1Services = await prisma.service.findMany({ where: { studioId: studio1.id } });
+  const studio2Services = await prisma.service.findMany({ where: { studioId: studio2.id } });
+  const studio3Services = await prisma.service.findMany({ where: { studioId: studio3.id } });
+
+  // Create past bookings (for reviews)
+  const pastDate1 = new Date();
+  pastDate1.setDate(pastDate1.getDate() - 5);
+  const pastDate2 = new Date();
+  pastDate2.setDate(pastDate2.getDate() - 10);
+  const pastDate3 = new Date();
+  pastDate3.setDate(pastDate3.getDate() - 15);
+  const pastDate4 = new Date();
+  pastDate4.setDate(pastDate4.getDate() - 20);
+  const pastDate5 = new Date();
+  pastDate5.setDate(pastDate5.getDate() - 25);
+
+  // Create future bookings (for testing availability)
+  const futureDate1 = new Date();
+  futureDate1.setDate(futureDate1.getDate() + 1); // Tomorrow
+  const futureDate2 = new Date();
+  futureDate2.setDate(futureDate2.getDate() + 2); // 2 days from now
+  const futureDate3 = new Date();
+  futureDate3.setDate(futureDate3.getDate() + 3); // 3 days from now
+
+  // Create bookings sequentially to avoid memory issues in containers
+  const bookingData = [
+    // Studio 1 bookings
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[0].id, customerName: customers[0].name!, customerEmail: customers[0].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio1.id, serviceId: studio1Services[1].id, customerId: customers[1].id, customerName: customers[1].name!, customerEmail: customers[1].email, preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T16:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate2, reviewRequestSent: true },
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[2].id, customerName: customers[2].name!, customerEmail: customers[2].email, preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T11:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate3, reviewRequestSent: true },
+    // Studio 2 bookings
+    { studioId: studio2.id, serviceId: studio2Services[0].id, customerId: customers[3].id, customerName: customers[3].name!, customerEmail: customers[3].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T15:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[1].id, customerId: customers[4].id, customerName: customers[4].name!, customerEmail: customers[4].email, preferredDateTime: new Date(pastDate2.toISOString().split('T')[0] + 'T10:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate2, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[2].id, customerId: customers[5].id, customerName: customers[5].name!, customerEmail: customers[5].email, preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T17:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate4, reviewRequestSent: true },
+    { studioId: studio2.id, serviceId: studio2Services[0].id, customerId: customers[6].id, customerName: customers[6].name!, customerEmail: customers[6].email, preferredDateTime: new Date(pastDate5.toISOString().split('T')[0] + 'T13:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate5, reviewRequestSent: true },
+    // Studio 3 bookings
+    { studioId: studio3.id, serviceId: studio3Services[0].id, customerId: customers[7].id, customerName: customers[7].name!, customerEmail: customers[7].email, preferredDateTime: new Date(pastDate1.toISOString().split('T')[0] + 'T18:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate1, reviewRequestSent: true },
+    { studioId: studio3.id, serviceId: studio3Services[1].id, customerId: customers[0].id, customerName: customers[0].name!, customerEmail: customers[0].email, preferredDateTime: new Date(pastDate3.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate3, reviewRequestSent: true },
+    { studioId: studio3.id, serviceId: studio3Services[2].id, customerId: customers[1].id, customerName: customers[1].name!, customerEmail: customers[1].email, preferredDateTime: new Date(pastDate4.toISOString().split('T')[0] + 'T19:00:00'), status: 'CONFIRMED' as const, confirmedAt: pastDate4, reviewRequestSent: true },
+    // FUTURE BOOKINGS
+    { studioId: studio1.id, serviceId: studio1Services[0].id, customerId: customers[2].id, customerName: customers[2].name!, customerEmail: customers[2].email, preferredDateTime: new Date(futureDate1.toISOString().split('T')[0] + 'T14:00:00'), status: 'CONFIRMED' as const, confirmedAt: new Date() },
+    { studioId: studio2.id, serviceId: studio2Services[1].id, customerId: customers[3].id, customerName: customers[3].name!, customerEmail: customers[3].email, preferredDateTime: new Date(futureDate2.toISOString().split('T')[0] + 'T11:30:00'), status: 'PENDING' as const },
+    { studioId: studio3.id, serviceId: studio3Services[2].id, customerId: customers[4].id, customerName: customers[4].name!, customerEmail: customers[4].email, preferredDateTime: new Date(futureDate3.toISOString().split('T')[0] + 'T16:45:00'), status: 'CONFIRMED' as const, confirmedAt: new Date() },
+  ];
+
+  const bookings = [];
+  for (const data of bookingData) {
+    const booking = await prisma.newBooking.create({ data });
+    bookings.push(booking);
+  }
+
+  console.log('✅ Created bookings:', bookings.length);
+
+  // Create reviews sequentially to avoid memory issues in containers
+  const reviewData = [
+    // Studio 1 reviews
+    { studioId: studio1.id, userId: customers[0].id, bookingId: bookings[0].id, rating: 5, comment: 'Absolut fantastisch! Die Therapeutin war super professionell und die Massage war genau das, was ich brauchte. Sehr entspannende Atmosphäre.', isVisible: true },
+    { studioId: studio1.id, userId: customers[1].id, bookingId: bookings[1].id, rating: 5, comment: 'Beste Thai-Massage in Karlsruhe! Ich komme definitiv wieder. Das Personal ist sehr freundlich und kompetent.', isVisible: true },
+    { studioId: studio1.id, userId: customers[2].id, bookingId: bookings[2].id, rating: 4, comment: 'Sehr gute Massage, nur die Terminvergabe könnte etwas flexibler sein. Ansonsten top!', isVisible: true },
+    // Studio 2 reviews
+    { studioId: studio2.id, userId: customers[3].id, bookingId: bookings[3].id, rating: 5, comment: 'Hervorragende Thai-Massage! Die Atmosphäre ist wunderschön und das Team sehr professionell. Absolut empfehlenswert!', isVisible: true },
+    { studioId: studio2.id, userId: customers[4].id, bookingId: bookings[4].id, rating: 5, comment: 'Die 120-Minuten-Massage war jeden Cent wert. Ich fühlte mich danach wie neugeboren. Sehr zu empfehlen!', isVisible: true, response: 'Vielen Dank für Ihre positive Bewertung! Es freut uns sehr, dass Sie sich bei uns wohl gefühlt haben. Wir freuen uns auf Ihren nächsten Besuch!', respondedAt: new Date(), respondedBy: owner2.id },
+    { studioId: studio2.id, userId: customers[5].id, bookingId: bookings[5].id, rating: 4, comment: 'Tolle Fußmassage! Sehr entspannend. Nur die Parkplatzsituation ist etwas schwierig.', isVisible: true },
+    { studioId: studio2.id, userId: customers[6].id, bookingId: bookings[6].id, rating: 4, comment: 'Gute Massage und angenehmes Ambiente. Komme gerne wieder!', isVisible: true },
+    // Studio 3 reviews
+    { studioId: studio3.id, userId: customers[7].id, bookingId: bookings[7].id, rating: 5, comment: 'Luxuriöses Ambiente und erstklassige Massage. Die Hot Stone Massage war unglaublich entspannend. Preis-Leistung stimmt absolut!', isVisible: true },
+    { studioId: studio3.id, userId: customers[0].id, bookingId: bookings[8].id, rating: 4, comment: 'Sehr schönes Studio mit hochwertiger Ausstattung. Die Aromatherapie-Massage war toll, nur etwas teurer als andere Studios.', isVisible: true, response: 'Vielen Dank für Ihr Feedback! Wir legen großen Wert auf Qualität und Premium-Service. Wir hoffen, Sie bald wiederzusehen!', respondedAt: new Date(), respondedBy: owner3.id },
+    { studioId: studio3.id, userId: customers[1].id, bookingId: bookings[9].id, rating: 4, comment: 'Die Hot Stone Massage war fantastisch! Sehr professionelles Team und wunderschöne Räumlichkeiten.', isVisible: true },
+  ];
+
+  const reviews = [];
+  for (const data of reviewData) {
+    const review = await prisma.review.create({ data });
+    reviews.push(review);
+  }
+
+  console.log('✅ Created reviews:', reviews.length);
+
+  // Calculate and update studio ratings sequentially
+  const studio1Reviews = reviews.filter(r => r.studioId === studio1.id && r.isVisible);
+  const studio1AvgRating = studio1Reviews.reduce((sum, r) => sum + r.rating, 0) / studio1Reviews.length;
+
+  const studio2Reviews = reviews.filter(r => r.studioId === studio2.id && r.isVisible);
+  const studio2AvgRating = studio2Reviews.reduce((sum, r) => sum + r.rating, 0) / studio2Reviews.length;
+
+  const studio3Reviews = reviews.filter(r => r.studioId === studio3.id && r.isVisible);
+  const studio3AvgRating = studio3Reviews.reduce((sum, r) => sum + r.rating, 0) / studio3Reviews.length;
+
+  await prisma.studio.update({
+    where: { id: studio1.id },
+    data: { averageRating: parseFloat(studio1AvgRating.toFixed(2)), totalReviews: studio1Reviews.length },
+  });
+  await prisma.studio.update({
+    where: { id: studio2.id },
+    data: { averageRating: parseFloat(studio2AvgRating.toFixed(2)), totalReviews: studio2Reviews.length },
+  });
+  await prisma.studio.update({
+    where: { id: studio3.id },
+    data: { averageRating: parseFloat(studio3AvgRating.toFixed(2)), totalReviews: studio3Reviews.length },
+  });
+
+  console.log('✅ Updated studio ratings:', {
+    [studio1.name]: `${studio1AvgRating.toFixed(2)} (${studio1Reviews.length} reviews)`,
+    [studio2.name]: `${studio2AvgRating.toFixed(2)} (${studio2Reviews.length} reviews)`,
+    [studio3.name]: `${studio3AvgRating.toFixed(2)} (${studio3Reviews.length} reviews)`,
+  });
+
+  // ========================================
+  // PHASE 4: TimeSlot generation DEPRECATED
+  // ========================================
+  // TimeSlots are now calculated dynamically using calculateAvailableSlots()
+  // Static TimeSlot table is kept for backward compatibility but no longer populated
+  //
+  // To re-enable TimeSlot generation, uncomment the code below and set:
+  // FEATURE_DYNAMIC_SLOTS=false
+  //
+  // console.log('⏰ Creating time slots for next 14 days...');
+  //
+  // const timeSlots: any[] = [];
+  // const studios = [
+  //   { studio: studio1, services: studio1Services, hours: { start: 10, end: 20 } },
+  //   { studio: studio2, services: studio2Services, hours: { start: 9, end: 21 } },
+  //   { studio: studio3, services: studio3Services, hours: { start: 10, end: 22 } },
+  // ];
+  //
+  // // Generate slots for next 14 days
+  // for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+  //   const date = new Date();
+  //   date.setDate(date.getDate() + dayOffset);
+  //   const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
+  //
+  //   // Skip if it's Sunday for Studio 1 (closed on Sundays)
+  //   for (const { studio, services, hours } of studios) {
+  //     // Studio 1 closed on Sunday
+  //     if (studio.id === studio1.id && dayOfWeek === 0) continue;
+  //
+  //     // Create slots for each service
+  //     for (const service of services) {
+  //       // Create hourly slots
+  //       for (let hour = hours.start; hour < hours.end; hour++) {
+  //         const startTime = new Date(date);
+  //         startTime.setHours(hour, 0, 0, 0);
+  //
+  //         const endTime = new Date(startTime);
+  //         endTime.setMinutes(service.duration);
+  //
+  //         // Only create slots if endTime is within business hours
+  //         if (endTime.getHours() <= hours.end) {
+  //           timeSlots.push({
+  //             studioId: studio.id,
+  //             serviceId: service.id,
+  //             startTime,
+  //             endTime,
+  //             isAvailable: true,
+  //             isBooked: false,
+  //           });
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
+  //
+  // // Batch create time slots
+  // await prisma.timeSlot.createMany({
+  //   data: timeSlots,
+  // });
+  //
+  // console.log('✅ Created time slots:', timeSlots.length);
+
+  console.log('ℹ️  TimeSlot generation skipped (using dynamic slots)');
+
   console.log('🎉 Seeding completed!');
+  console.log('');
+  console.log('📊 Summary:');
+  console.log(`   - Users: ${customers.length + 3} (3 owners, ${customers.length} customers)`);
+  console.log(`   - Studios: 3 (with images and coordinates)`);
+  console.log(`   - Bookings: ${bookings.length}`);
+  console.log(`   - Reviews: ${reviews.length}`);
+  console.log(`   - TimeSlots: 0 (using dynamic slot calculation)`);
+  console.log('');
+  console.log('🔐 Test Credentials:');
+  console.log('   Owner 1 (Thai Wellness Oase): maria.schmidt@thai-wellness-oase.de / test123');
+  console.log('   Owner 2 (Sabai Massage): sabine.meyer@sabai-massage.de / test123');
+  console.log('   Owner 3 (Lotus Spa): petra.wagner@lotus-spa.de / test123');
+  console.log('   Customer: anna.mueller@example.com / test123');
+  console.log('');
+  console.log('ℹ️  Dynamic Slots: Enabled by default');
+  console.log('   To disable: Set FEATURE_DYNAMIC_SLOTS=false');
 }
 
 main()

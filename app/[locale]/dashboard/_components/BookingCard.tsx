@@ -15,7 +15,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, X, Clock, User as UserIcon, Phone, Mail, MessageSquare } from 'lucide-react';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { confirmBooking, declineBooking } from '@/app/actions/studio/confirmBooking';
 import { useToast } from '@/components/ui/use-toast';
@@ -60,9 +60,9 @@ export function BookingCard({
   const isConfirmed = displayStatus === BookingStatus.CONFIRMED;
   const isCancelled = displayStatus === BookingStatus.CANCELLED;
 
-  // Parse date
-  const bookingDate = parse(booking.preferredDate, 'yyyy-MM-dd', new Date());
-  const formattedDate = format(bookingDate, 'EEEE, d. MMMM yyyy', { locale: de });
+  // Format date and time
+  const formattedDate = format(booking.preferredDateTime, 'EEEE, d. MMMM yyyy', { locale: de });
+  const formattedTime = format(booking.preferredDateTime, 'HH:mm');
 
   const handleConfirm = async (): Promise<void> => {
     setIsConfirming(true);
@@ -176,7 +176,7 @@ export function BookingCard({
             <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             <div className="text-sm">
               <p className="font-medium text-foreground">{formattedDate}</p>
-              <p className="text-muted-foreground">{booking.preferredTime} Uhr</p>
+              <p className="text-muted-foreground">{formattedTime} Uhr</p>
             </div>
           </div>
 

@@ -607,8 +607,7 @@ async function seedBookings(bookedSlotIds: string[]): Promise<void> {
         customerName,
         customerEmail,
         customerPhone,
-        preferredDate: format(slot.startTime, 'dd.MM.yyyy'),
-        preferredTime: format(slot.startTime, 'HH:mm'),
+        preferredDateTime: slot.startTime,
         message,
         status: randomElement(['CONFIRMED', 'CONFIRMED', 'CONFIRMED', 'PENDING']), // 75% confirmed
         explicitHealthConsent: false,
